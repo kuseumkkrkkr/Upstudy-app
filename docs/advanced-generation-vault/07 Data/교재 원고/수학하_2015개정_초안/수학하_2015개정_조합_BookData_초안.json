@@ -1,0 +1,134 @@
+{
+  "title": "수학(하) 2015 개정 · 조합 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "확률과 통계",
+    "조합",
+    "순서가 없는 선택",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "조합",
+      "pages": [
+        {
+          "id": "math-lower-combinations-opening",
+          "template": "opening",
+          "title": "뽑힌 사람의 순서를 따질까?",
+          "kicker": "조합",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "학생 3명 중에서 대표 2명을 뽑는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "순서를 바꾸어 보기",
+              "text": "민수와 지수를 뽑은 경우와 지수와 민수를 뽑은 경우를 서로 다른 방법으로 세어야 할까요?"
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "대표로 뽑힌 두 사람만 같으면 같은 선택입니다. 순서를 구별하지 않으므로 3가지입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-concept",
+          "template": "concept",
+          "title": "순서를 구별하지 않고 r개를 고르는 방법",
+          "kicker": "nCr로 나타내기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "조합",
+              "text": "서로 다른 n개에서 순서를 구별하지 않고 r개를 고르는 방법을 조합이라고 하며 nCr로 나타냅니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "순열과 연결",
+              "items": [
+                "먼저 순서를 구별해 r개를 뽑으면 nPr가지입니다.",
+                "같은 r개를 뽑는 순서는 r!가지씩 반복해 세었습니다.",
+                "따라서 nCr=nPr/r!=n!/{r!(n−r)!}입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "역할이 다르면 순열",
+              "text": "대표 두 명을 뽑는 일은 순서를 구별하지 않지만, 회장과 부회장을 정하는 일은 역할이 달라 순서를 구별합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-example",
+          "template": "example",
+          "title": "다섯 명 중 대표 두 명 뽑기",
+          "kicker": "5C2 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "서로 다른 5명 중에서 대표 2명을 뽑는 방법의 수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "뽑힌 두 사람의 순서는 구별하지 않습니다.",
+                "5C2=5!/{2!·3!}=5·4/(2·1)=10입니다.",
+                "순열 5P2에서 두 사람의 순서 2!가 중복되므로 20÷2=10으로도 구할 수 있습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "10가지"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-practice",
+          "template": "practice",
+          "title": "조합 계산 연습",
+          "kicker": "선택된 사람만 중요",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "서로 다른 6명 중에서 순서를 정하지 않고 3명을 뽑는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "순서를 구별하지 않으므로 6C3을 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6C3=6!/{3!·3!}=20가지"
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "선택 순서를 구별하지 않았나요?",
+                "분모에 3!을 포함했나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

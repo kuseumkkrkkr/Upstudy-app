@@ -1,0 +1,86 @@
+"""Create a focused 2015 Math (Lower) proposition subunit draft."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
+OUTPUT = MANUSCRIPTS / "수학하_2015개정_초안"
+TAGS = ["수학(하)", "2015 개정", "수와 연산", "명제", "조건", "신규 시범", "공식 코드 대조 전"]
+
+
+def main() -> None:
+    pages = [
+        {
+            "id": "math-lower-propositions-opening",
+            "template": "opening",
+            "title": "참인지 거짓인지 판단할 수 있을까?",
+            "kicker": "명제와 조건",
+            "blocks": [
+                {"type": "lead", "title": "오늘의 질문", "text": "‘7은 소수이다’와 ‘x는 소수이다’는 같은 종류의 문장일까요?"},
+                {"type": "thinking", "title": "판단해 보기", "text": "첫 문장은 참·거짓을 정할 수 있습니다. 두 번째 문장은 x의 값에 따라 달라집니다."},
+                {"type": "answer", "title": "확인", "text": "참·거짓을 분명히 판단할 수 있는 문장을 명제라고 합니다. x의 값이 정해지지 않은 문장은 조건입니다."},
+            ],
+        },
+        {
+            "id": "math-lower-propositions-concept",
+            "template": "concept",
+            "title": "명제는 참·거짓이 분명한 문장",
+            "kicker": "조건에 값을 넣어 참인 경우 찾기",
+            "blocks": [
+                {"type": "definition", "title": "명제와 조건", "text": "명제는 참·거짓을 분명히 판단할 수 있는 문장입니다. 문자를 포함해 그 값에 따라 참·거짓이 달라지는 문장은 조건이라고 합니다."},
+                {"type": "solutionStep", "title": "조건의 진리집합", "items": ["전체집합 U 안에서 조건 p(x)가 참이 되게 하는 원소를 모읍니다.", "U={1,2,3,4}에서 p(x): x는 짝수이다를 생각합니다.", "조건이 참인 원소는 2,4이므로 진리집합은 {2,4}입니다."]},
+                {"type": "misconception", "title": "문장만 보고 단정하지 않기", "text": "‘x는 짝수이다’는 x가 정해지기 전에는 참·거짓을 하나로 결정할 수 없습니다. 전체집합과 조건을 함께 확인하세요."},
+            ],
+        },
+        {
+            "id": "math-lower-propositions-example",
+            "template": "example",
+            "title": "조건의 진리집합 구하기",
+            "kicker": "전체집합 안에서 원소 확인",
+            "blocks": [
+                {"type": "question", "title": "예제", "text": "U={−2,−1,0,1,2}일 때 조건 p(x): x²=1의 진리집합을 구하세요."},
+                {"type": "solutionStep", "title": "풀이", "items": ["U의 원소를 조건에 대입합니다.", "(−1)²=1이고 1²=1이므로 −1과 1에서 조건이 참입니다.", "나머지 원소에서는 x²=1이 성립하지 않습니다."]},
+                {"type": "answer", "title": "답", "text": "진리집합은 {−1,1}입니다."},
+            ],
+        },
+        {
+            "id": "math-lower-propositions-practice",
+            "template": "practice",
+            "title": "명제와 조건 구별 연습",
+            "kicker": "참·거짓 판단이 가능한지 먼저 보기",
+            "blocks": [
+                {"type": "question", "title": "문제", "text": "다음 문장을 명제 또는 조건으로 구분하고, 명제는 참·거짓을 판단하세요. (가) 9는 홀수이다. (나) x+1=4."},
+                {"type": "thinking", "title": "생각 순서", "text": "문자 값이 정해지지 않아도 참·거짓이 결정되는 문장인지 확인하세요."},
+                {"type": "answer", "title": "정답", "text": "(가)는 명제이고 참입니다. (나)는 x의 값에 따라 달라지므로 조건입니다."},
+                {"type": "checklist", "title": "마무리", "items": ["참·거짓 판단 가능성을 기준으로 구분했나요?", "조건의 문자를 미리 특정 값으로 가정하지 않았나요?"]},
+            ],
+        },
+    ]
+    book = {
+        "title": "수학(하) 2015 개정 · 명제와 조건 시범",
+        "subtitle": "태그 기반 신규 소단원 초안",
+        "category": "concept_textbook",
+        "tags": TAGS,
+        "chapters": [{"title": "명제와 조건", "pages": pages}],
+        "metadata": {"status": "authored_partial_draft", "edition_status": "editorial_split_candidate", "standard_code_status": "not_crosschecked"},
+    }
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    filename = "수학하_2015개정_명제와조건_BookData_초안.json"
+    target = OUTPUT / filename
+    target.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    verified = json.loads(target.read_text(encoding="utf-8"))
+    if len(verified["chapters"][0]["pages"]) != 4 or len({page["id"] for page in pages}) != len(pages):
+        raise RuntimeError("Generated draft structure or page IDs are invalid")
+    readme_path = OUTPUT / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+    if filename not in readme:
+        readme += f"\n## 명제와 조건\n\n- [{filename}]({filename}): 도입·개념·예제·연습 4쪽\n- 태그: {' · '.join(TAGS)}\n- 성취기준 코드 대조·교사 검수·학생 파일럿은 미완료입니다.\n"
+    readme_path.write_text(readme.rstrip() + "\n", encoding="utf-8")
+    print(f"Created one tagged subunit with {len(pages)} pages.")
+
+
+if __name__ == "__main__":
+    main()

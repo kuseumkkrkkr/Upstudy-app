@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 유리수와 순환소수</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:860px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:210px;flex:1}.controls input{width:100%}button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #d99a19;outline-offset:2px}button:disabled{opacity:.5;cursor:not-allowed}.status{font-weight:650;min-height:1.5em}.step{background:#f7f9fd;padding:12px;border-radius:10px;min-height:3em}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;min-width:430px}th,td{padding:8px 10px;border-bottom:1px solid var(--line);text-align:center}th{background:#f7f9fd}.cycle{color:var(--red);font-weight:750}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-06] 원문 대조 · 학년·학기 미지정</p>
+<h1>나머지가 반복되면 소수도 반복될까?</h1>
+<p>분수를 소수로 바꾸는 나눗셈을 직접 진행해 보세요. 같은 나머지가 돌아오거나 0이 되는 순간을 찾아봅니다.</p>
+
+<section class="card" aria-labelledby="toolTitle">
+<h2 id="toolTitle">나눗셈을 한 단계씩</h2>
+<div class="controls">
+<label>분자 <output id="numeratorOut" for="numerator">1</output><input id="numerator" type="range" min="1" max="9" step="1" value="1" aria-label="분자"></label>
+<label>분모 <output id="denominatorOut" for="denominator">6</output><input id="denominator" type="range" min="2" max="12" step="1" value="6" aria-label="분모"></label>
+</div>
+<p id="fractionResult" class="status" aria-live="polite"></p>
+<div class="controls"><button id="prevStep" type="button">이전 나눗셈</button><button id="nextStep" type="button">다음 나눗셈</button><button id="resetSteps" type="button">처음부터</button><span id="stepCount" class="muted" aria-live="polite"></span></div>
+<p id="stepText" class="step" aria-live="polite"></p>
+<div class="table-wrap"><table><caption class="sr">소수 나눗셈 각 자리의 나머지 기록</caption><thead><tr><th scope="col">자리</th><th scope="col">현재 나머지</th><th scope="col">10배</th><th scope="col">다음 숫자</th><th scope="col">다음 나머지</th></tr></thead><tbody id="divisionRows"></tbody></table></div>
+<p id="stopReason" class="muted" aria-live="polite"></p>
+</section>
+
+<section class="card" aria-labelledby="ruleTitle">
+<h2 id="ruleTitle">기약분수의 분모로 먼저 판단</h2>
+<p>분모에서 2와 5만 소인수로 나오면 유한소수입니다. 다른 소인수가 있으면 순환소수입니다. 약분 전 분모로 판단하지 마세요.</p>
+<div class="quiz"><p><strong>3/30</strong>은 유한소수일까요?</p><div class="controls"><button type="button" data-termination="yes">유한소수</button><button type="button" data-termination="no">순환소수</button></div><p id="terminationFeedback" class="feedback" role="status" aria-live="polite">먼저 약분한 뒤 분모의 소인수를 확인하세요.</p><button id="terminationHint" type="button">힌트 보기</button></div>
+<div class="quiz"><p><strong>0.2(7)</strong>을 분수로 나타내면 무엇일까요?</p><div class="controls"><button type="button" data-fraction="5/18">5/18</button><button type="button" data-fraction="2/7">2/7</button><button type="button" data-fraction="7/25">7/25</button></div><p id="fractionFeedback" class="feedback" role="status" aria-live="polite">반복 구간을 없애려면 10x와 100x 중 무엇을 빼면 좋을까요?</p><button id="fractionHint" type="button">Socratic 힌트</button></div>
+</section>
+
+<section class="card"><h2>도구 없이 확인하기</h2><p>1/6에서 나머지 4가 다시 나오는 이유를 설명하세요. 이어서 7/20과 2/7이 유한소수인지 순환소수인지 기약분모로 판단해 보세요.</p><p class="muted">확인: 1/6은 나머지 4에서 같은 나머지 4로 되돌아가 숫자 6이 반복됩니다. 20=2²×5이므로 7/20은 유한소수, 분모 7이 남는 2/7은 순환소수입니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData, 구매, 학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const numerator=document.querySelector('#numerator'),denominator=document.querySelector('#denominator');
+const numeratorOut=document.querySelector('#numeratorOut'),denominatorOut=document.querySelector('#denominatorOut');
+const result=document.querySelector('#fractionResult'),rows=document.querySelector('#divisionRows'),stepText=document.querySelector('#stepText'),stepCount=document.querySelector('#stepCount'),stopReason=document.querySelector('#stopReason');
+let states=[],step=0,stopped='',activeDenominator=1;
+function gcd(a,b){while(b){[a,b]=[b,a%b]}return a}
+function build(){
+ const n=Number(numerator.value),d=Number(denominator.value),g=gcd(n,d),rn=n/g,rd=d/g;activeDenominator=rd;
+ numeratorOut.value=n;denominatorOut.value=d;
+ let rem=rn%rd,integer=Math.floor(rn/rd),digits=[],seen=new Map();states=[];stopped='';
+ while(rem!==0&&!seen.has(rem)&&states.length<rd+1){
+  seen.set(rem,states.length);const scaled=rem*10,digit=Math.floor(scaled/rd),next=scaled%rd;
+  states.push({rem,scaled,digit,next});digits.push(String(digit));rem=next;
+ }
+ let decimal;
+ if(rem===0){decimal=`${integer}.${digits.join('')||'0'}`;stopped='나머지가 0이 되어 소수 표현이 끝납니다.'}
+ else{const cycleStart=seen.get(rem),prefix=digits.slice(0,cycleStart).join(''),cycle=digits.slice(cycleStart).join('');decimal=`${integer}.${prefix}(${cycle})`;stopped=`나머지 ${rem}가 ${cycleStart+1}단계 전과 같아졌습니다. 괄호 안 숫자가 반복됩니다.`}
+ const sign=numerator.value<0?'−':'';
+ result.textContent=`${sign}${n}/${d} = ${sign}${rn}/${rd} = ${sign}${decimal}`;
+ step=0;render();
+}
+function render(){
+ rows.replaceChildren();
+ states.forEach((s,i)=>{const tr=document.createElement('tr');if(i===step-1)tr.className='cycle';[i+1,s.rem,s.scaled,s.digit,s.next].forEach(v=>{const td=document.createElement('td');td.textContent=v;tr.append(td)});rows.append(tr)});
+ if(states.length===0){stepText.textContent='나머지가 처음부터 0입니다. 소수 표현이 끝났습니다.';stepCount.textContent='0/0';stopReason.textContent=stopped;}
+ else if(step===0){stepText.textContent='다음 나눗셈을 예측하세요. 현재 나머지에 10을 곱하면 다음 소수 숫자와 나머지를 얻습니다.';stepCount.textContent=`0/${states.length}`;stopReason.textContent='';}
+ else{const s=states[step-1];stepText.textContent=`나머지 ${s.rem}에 10을 곱하면 ${s.scaled}입니다. ${s.scaled}을 기약분모 ${activeDenominator}로 나누면 다음 숫자는 ${s.digit}, 나머지는 ${s.next}입니다.`;stepCount.textContent=`${step}/${states.length}`;stopReason.textContent=step===states.length?stopped:'';}
+ document.querySelector('#prevStep').disabled=step===0;document.querySelector('#nextStep').disabled=step>=states.length;
+}
+numerator.addEventListener('input',build);denominator.addEventListener('input',build);
+document.querySelector('#prevStep').addEventListener('click',()=>{step=Math.max(0,step-1);render()});
+document.querySelector('#nextStep').addEventListener('click',()=>{step=Math.min(states.length,step+1);render()});
+document.querySelector('#resetSteps').addEventListener('click',()=>{step=0;render()});
+document.querySelectorAll('[data-termination]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#terminationFeedback').textContent=button.dataset.termination==='yes'?'맞아요. 3/30=1/10이고 기약분모 10의 소인수는 2와 5뿐입니다.':'다시 확인해 보세요. 먼저 3/30을 약분하면 분모가 10입니다.'}));
+document.querySelector('#terminationHint').addEventListener('click',()=>{document.querySelector('#terminationFeedback').textContent='3과 30을 3으로 나누어 1/10으로 고친 다음 분모를 소인수분해하세요.'});
+document.querySelectorAll('[data-fraction]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#fractionFeedback').textContent=button.dataset.fraction==='5/18'?'맞아요. x=0.2(7), 100x=27.7(7), 10x=2.7(7)이므로 90x=25, x=5/18입니다.':'다시 계산해 보세요. 순환마디를 없애도록 100x−10x를 만들어 보세요.'}));
+document.querySelector('#fractionHint').addEventListener('click',()=>{document.querySelector('#fractionFeedback').textContent='x=0.2(7)이라 두면 100x=27.7(7), 10x=2.7(7)입니다. 두 식을 빼면 순환마디가 사라집니다.'});
+build();
+})();
+</script>
+</body></html>

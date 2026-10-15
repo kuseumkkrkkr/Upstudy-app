@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>수학Ⅱ 개념서 | 한 점에서 연속 · 2015 개정 시범</title>
+<style>
+:root{color-scheme:light;--ink:#17243a;--muted:#52627a;--line:#d6deea;--paper:#fff;--bg:#f3f6fb;--blue:#2457c5;--green:#15803d;--orange:#c2410c;--red:#b91c1c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:980px;margin:auto;padding:18px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}h1{font-size:1.55rem;margin:.15rem 0}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(270px,.9fr);gap:16px}.plot{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px;background:#fff}.control{display:grid;grid-template-columns:94px 1fr 50px;gap:10px;align-items:center;margin:13px 0}.control select{font:inherit;padding:8px;border:1px solid #9aa9bd;border-radius:8px;background:#fff;color:var(--ink)}.control input{width:100%;accent-color:var(--blue)}output{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.legend{display:flex;flex-wrap:wrap;gap:8px 16px;color:var(--muted);font-size:.94rem}.legend span{display:inline-flex;align-items:center;gap:6px}.swatch{width:20px;height:4px;background:var(--blue)}.swatch.left{background:var(--blue)}.swatch.right{background:var(--green)}.swatch.point{height:10px;width:10px;border-radius:50%;background:var(--orange)}button{font:inherit;color:var(--ink);background:#fff;border:1px solid #9aa9bd;border-radius:10px;padding:9px 13px;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}button:disabled{opacity:.55;cursor:not-allowed}.actions{display:flex;gap:8px;flex-wrap:wrap}.feedback{min-height:2em;font-weight:650}.quiz label{display:block;margin:8px 0}.criteria{padding:12px;border-radius:10px;background:#f3f6fb}.criteria p{margin:4px 0}svg text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}@media(max-width:700px){.wrap{padding:10px}.layout{grid-template-columns:1fr}.card,header{padding:14px}.control{grid-template-columns:82px 1fr 42px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style>
+</head>
+<body><main class="wrap">
+<header><p class="muted">수학Ⅱ 개념서 · 함수의 연속 · 2015 개정 시범</p><h1>한 점에서 연속인지 어떻게 알까?</h1><p>좌극한·우극한·실제 함수값을 따로 비교해 보세요. 성취기준 [12수학Ⅱ01-03].</p></header>
+<section class="card"><h2>그래프 모양을 고르고 조건을 관찰</h2><div class="layout">
+<div><svg id="plot" class="plot" viewBox="0 0 560 340" role="img" aria-label="x=a에서 연속 여부를 관찰하는 조각별 그래프"><title>한 점에서의 연속 판정</title><desc id="graphDesc">이어진 그래프 y=x에서 a=2의 함수값은 2입니다.</desc><g id="grid"></g><path d="M55 251H520M171 24V310" stroke="#64748b" stroke-width="2"/><text x="512" y="245">x</text><text x="178" y="31">y</text><path id="leftCurve" fill="none" stroke="#2457c5" stroke-width="3"/><path id="rightCurve" fill="none" stroke="#15803d" stroke-width="3"/><line id="xGuide" x1="0" y1="0" x2="0" y2="0" stroke="#c2410c" stroke-width="2" stroke-dasharray="6 5" visibility="hidden"/><line id="leftGuide" x1="0" y1="0" x2="0" y2="0" stroke="#2457c5" stroke-width="2" stroke-dasharray="6 5" visibility="hidden"/><line id="rightGuide" x1="0" y1="0" x2="0" y2="0" stroke="#15803d" stroke-width="2" stroke-dasharray="3 5" visibility="hidden"/><circle id="leftLimit" r="7" fill="#fff" stroke="#2457c5" stroke-width="3" visibility="hidden"/><circle id="rightLimit" r="7" fill="#fff" stroke="#15803d" stroke-width="3" visibility="hidden"/><circle id="functionValue" r="7" fill="#c2410c" stroke="#fff" stroke-width="2" visibility="hidden"/><text id="axisLabelA" y="270" text-anchor="middle" fill="#c2410c">a</text></svg>
+<p class="legend"><span><i class="swatch left"></i>왼쪽에서 다가감</span><span><i class="swatch right"></i>오른쪽에서 다가감</span><span><i class="swatch point"></i>실제 f(a)</span></p></div>
+<div><label class="control"><span>그래프 모양</span><select id="mode" aria-label="그래프 모양 선택"><option value="continuous">이어진 선</option><option value="hole">구멍 · f(a) 없음</option><option value="point">점만 다른 높이</option><option value="jump">점프</option></select><output id="modeOut">연속</output></label>
+<label class="control"><span>기준 위치 a</span><input id="aValue" type="range" min="-1" max="4" step="1" value="2" aria-label="연속을 검사할 x좌표 a"><output id="aOut">2</output></label>
+<div class="actions"><button id="nextStage" type="button">다음 관찰 단계</button><button id="resetStage" type="button">단계 처음</button><button id="resetAll" type="button">모두 초기화</button></div>
+<p id="stageText" class="feedback" aria-live="polite">그래프를 고르고 먼저 연속인지 예상해 보세요.</p>
+<div id="criteria" class="criteria" aria-live="polite"><p>좌극한: 확인 전</p><p>우극한: 확인 전</p><p>f(a): 확인 전</p></div></div></div></section>
+<section class="card quiz"><h2>Socratic 확인</h2><p>현재 그래프가 x=a에서 연속이 아니라면 어떤 조건이 실패했나요?</p>
+<label><input type="radio" name="reason" value="jump"> 좌극한과 우극한이 다르다</label><label><input type="radio" name="reason" value="hole"> f(a)가 정의되지 않았다</label><label><input type="radio" name="reason" value="point"> 극한과 f(a)가 다르다</label><label><input type="radio" name="reason" value="continuous"> 세 조건이 모두 성립한다</label>
+<div class="actions"><button id="checkAnswer" type="button">선택 확인</button><button id="nextHint" type="button">힌트 다음 단계</button><button id="showSolution" type="button">판정 풀이 보기</button></div><p id="quizFeedback" class="feedback" aria-live="polite">그래프의 빈 점·색 점·양쪽 높이를 근거로 답해 보세요.</p></section>
+<details class="card"><summary>도구 없이 연습</summary><p>x≠1일 때 g(x)=x+2, g(1)=3이다. x=1에서 연속인지 세 조건으로 답하세요.</p><button id="practiceAnswer" type="button">정답 보기</button><p id="practiceFeedback" class="feedback" aria-live="polite"></p></details>
+<footer class="muted">시범 자료입니다. 성취기준 연결은 [12수학Ⅱ01-03]이며 교사 검수·학생 파일럿·모바일/보조기기 실측은 완료되지 않았습니다. 조작값은 저장·전송하지 않습니다.</footer>
+</main><script>
+(()=>{
+ 'use strict';
+ const modeEl=document.getElementById('mode'),aEl=document.getElementById('aValue'),grid=document.getElementById('grid');
+ const X=x=>55+(x+2)*58.125,Y=y=>285-(y+1)*34;
+ for(let x=-2;x<=6;x++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M${X(x)} 24V310`);p.setAttribute('stroke',x===0?'#64748b':'#e7ecf3');grid.appendChild(p);if(x!==0){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',X(x));t.setAttribute('y',270);t.setAttribute('text-anchor','middle');t.textContent=x;grid.appendChild(t)}}
+ for(let y=-1;y<=7;y++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M55 ${Y(y)}H520`);p.setAttribute('stroke',y===0?'#64748b':'#e7ecf3');grid.appendChild(p);if(y!==0){const t=document.createElementNS('http://www.w3.org/2000/svg','text');t.setAttribute('x',43);t.setAttribute('y',Y(y)+4);t.setAttribute('text-anchor','end');t.textContent=y;grid.appendChild(t)}}
+ let stage=0,hint=0;
+ const fmt=x=>Number.isInteger(x)?String(x):Number(x.toFixed(3)).toString();
+ function makePath(start,end,fn){let d='';const n=100;for(let i=0;i<=n;i++){const x=start+(end-start)*i/n,y=fn(x);d+=(i?'L':'M')+X(x)+' '+Y(y)+' '}return d}
+ function getData(mode,a){return {continuous:{left:a,right:a,value:a},hole:{left:a,right:a,value:null},point:{left:a,right:a,value:a+1},jump:{left:a,right:a+1,value:a+1}}[mode]}
+ function draw(){
+  const mode=modeEl.value,a=+aEl.value,d=getData(mode,a),px=X(a),pyL=Y(d.left),pyR=Y(d.right),left=document.getElementById('leftCurve'),right=document.getElementById('rightCurve');
+  if(mode==='jump'){left.setAttribute('d',makePath(-2,a-.08,x=>x));right.setAttribute('d',makePath(a+.08,6,x=>x+1))}else{left.setAttribute('d',makePath(-2,6,x=>x));right.setAttribute('d','')}
+  const leftDot=document.getElementById('leftLimit'),rightDot=document.getElementById('rightLimit'),valueDot=document.getElementById('functionValue');
+  for(const [dot,y] of [[leftDot,d.left],[rightDot,d.right]]){dot.setAttribute('cx',px);dot.setAttribute('cy',Y(y))}
+  const isHole=mode==='hole'||mode==='point'||mode==='jump';leftDot.setAttribute('visibility',isHole?'visible':'hidden');rightDot.setAttribute('visibility',mode==='jump'?'visible':'hidden');
+  valueDot.setAttribute('cx',px);valueDot.setAttribute('cy',d.value===null?Y(d.left):Y(d.value));valueDot.setAttribute('visibility',d.value===null?'hidden':'visible');
+  const xGuide=document.getElementById('xGuide');xGuide.setAttribute('x1',px);xGuide.setAttribute('x2',px);xGuide.setAttribute('y1',251);xGuide.setAttribute('y2',Math.min(pyL,pyR));xGuide.setAttribute('visibility',stage>=1?'visible':'hidden');
+  for(const [id,y1] of [['leftGuide',d.left],['rightGuide',d.right]]){const g=document.getElementById(id),isLeft=id==='leftGuide';g.setAttribute('x1',isLeft?X(-2):px);g.setAttribute('x2',isLeft?px:X(6));g.setAttribute('y1',Y(y1));g.setAttribute('y2',Y(y1));g.setAttribute('visibility',stage>=2?'visible':'hidden')}
+  document.getElementById('axisLabelA').setAttribute('x',px);document.getElementById('aOut').value=fmt(a);document.getElementById('modeOut').value={continuous:'연속 후보',hole:'구멍',point:'점 불일치',jump:'점프'}[mode];
+  const exists=d.value!==null,limitsEqual=d.left===d.right,match=exists&&limitsEqual&&d.value===d.left;
+  const criteria=document.getElementById('criteria');criteria.innerHTML=`<p>좌극한: ${fmt(d.left)}</p><p>우극한: ${fmt(d.right)}</p><p>f(a): ${exists?fmt(d.value):'정의되지 않음'}</p>`;
+  document.getElementById('graphDesc').textContent=`${{continuous:'이어진 선',hole:'구멍',point:'점만 다른 높이',jump:'점프'}[mode]}, a=${fmt(a)}. 좌극한 ${fmt(d.left)}, 우극한 ${fmt(d.right)}, f(a) ${exists?fmt(d.value):'정의되지 않음'}. ${match?'연속입니다.':'연속이 아닙니다.'}`;
+  const messages=['그래프를 보고 먼저 연속인지 예상하세요.',`1단계 · x=a=${fmt(a)}인 위치를 표시했습니다. 이제 좌우에서 다가가는 높이를 살펴봅니다.`,`2단계 · 좌극한은 ${fmt(d.left)}, 우극한은 ${fmt(d.right)}입니다. 양쪽 극한이 ${limitsEqual?'같습니다':'다릅니다'}.`,`3단계 · f(a)는 ${exists?fmt(d.value):'정의되지 않습니다'}. 세 조건을 모두 확인하면 ${match?'연속':'불연속'}입니다.`];
+  document.getElementById('stageText').textContent=messages[stage];document.getElementById('nextStage').disabled=stage>=3;
+  document.getElementById('quizFeedback').textContent='그래프의 빈 점·색 점·양쪽 높이를 근거로 답해 보세요.';document.querySelectorAll('input[name="reason"]').forEach(x=>x.checked=false);hint=0;
+ }
+ modeEl.addEventListener('change',()=>{stage=0;draw()});aEl.addEventListener('input',()=>{stage=0;draw()});
+ document.getElementById('nextStage').addEventListener('click',()=>{stage=Math.min(3,stage+1);draw()});
+ document.getElementById('resetStage').addEventListener('click',()=>{stage=0;draw()});
+ document.getElementById('resetAll').addEventListener('click',()=>{modeEl.value='continuous';aEl.value=2;stage=0;draw()});
+ document.getElementById('checkAnswer').addEventListener('click',()=>{const q=document.querySelector('input[name="reason"]:checked');if(!q){document.getElementById('quizFeedback').textContent='판정 이유 하나를 고르세요.';return}const key=modeEl.value,correct=q.value===key;document.getElementById('quizFeedback').textContent=correct?'맞아요. 표시된 좌우 극한과 f(a)를 근거로 조건 실패를 찾았습니다.':'다시 살펴보세요. 단계 버튼으로 좌우 높이와 실제 점을 차례로 확인해 보세요.'});
+ document.getElementById('nextHint').addEventListener('click',()=>{hint=Math.min(2,hint+1);document.getElementById('quizFeedback').textContent=hint===1?'힌트 1: 먼저 x=a의 왼쪽과 오른쪽에서 다가가는 높이를 비교하세요.':hint===2?'힌트 2: 좌우가 같다면 빈 점인지, 실제 f(a)가 그 높이와 같은지 확인하세요.':'힌트는 두 단계입니다. 필요하면 판정 풀이를 직접 요청하세요.'});
+ document.getElementById('showSolution').addEventListener('click',()=>{const d=getData(modeEl.value,+aEl.value),exists=d.value!==null,equal=d.left===d.right,match=exists&&equal&&d.value===d.left;document.getElementById('quizFeedback').textContent=`좌극한 ${fmt(d.left)}, 우극한 ${fmt(d.right)}, f(a) ${exists?fmt(d.value):'정의되지 않음'}입니다. ${match?'세 조건이 모두 성립하므로 연속입니다.':!equal?'좌극한과 우극한이 달라 연속이 아닙니다.':!exists?'f(a)가 정의되지 않아 연속이 아닙니다.':'극한값과 f(a)가 달라 연속이 아닙니다.'}`});
+ document.getElementById('practiceAnswer').addEventListener('click',()=>{document.getElementById('practiceFeedback').textContent='좌극한과 우극한은 모두 3이고 g(1)=3이므로 연속입니다.'});draw();
+})();
+</script></body></html>

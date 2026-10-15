@@ -1,0 +1,135 @@
+{
+  "title": "수학(상) 2015 개정 · 평면좌표 거리와 중점 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "도형의 방정식",
+    "평면좌표",
+    "두 점 사이의 거리",
+    "선분의 중점",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "두 점 사이의 거리와 선분의 중점",
+      "pages": [
+        {
+          "id": "math-upper-coordinate-distance-opening",
+          "template": "opening",
+          "title": "좌표만으로 두 점 사이를 잴 수 있을까?",
+          "kicker": "거리와 중점",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A(−1,2), B(3,5) 사이의 거리를 좌표로 구할 수 있을까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "가로·세로 이동",
+              "text": "두 점 사이의 가로 차와 세로 차를 직각삼각형의 두 변으로 생각해 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "가로 차는 4, 세로 차는 3이므로 거리는 √(4²+3²)=5입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-coordinate-distance-concept",
+          "template": "concept",
+          "title": "거리에는 제곱합의 제곱근, 중점에는 좌표 평균",
+          "kicker": "좌표 계산 공식",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "거리와 중점 공식",
+              "text": "두 점 A(x₁,y₁), B(x₂,y₂) 사이의 거리는 √{(x₂−x₁)²+(y₂−y₁)²}입니다. 선분 AB의 중점은 ((x₁+x₂)/2,(y₁+y₂)/2)입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "공식 적용",
+              "items": [
+                "거리에서는 x좌표 차와 y좌표 차를 각각 제곱해 더합니다.",
+                "중점에서는 x좌표끼리, y좌표끼리 더한 뒤 각각 2로 나눕니다.",
+                "좌표의 순서를 바꾸어도 거리는 같고 중점도 같습니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "좌표를 짝지어 계산",
+              "text": "거리 공식에서 x좌표와 y좌표를 서로 섞지 않습니다. 중점도 x좌표끼리, y좌표끼리 평균을 냅니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-coordinate-distance-example",
+          "template": "example",
+          "title": "거리와 중점을 함께 구하기",
+          "kicker": "P(1,−2), Q(5,4)",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "P(1,−2), Q(5,4) 사이의 거리와 선분 PQ의 중점을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "거리: √{(5−1)²+(4−(−2))²}=√52=2√13입니다.",
+                "중점의 x좌표는 (1+5)/2=3입니다.",
+                "중점의 y좌표는 (−2+4)/2=1입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "거리 2√13, 중점 (3,1)"
+            }
+          ]
+        },
+        {
+          "id": "math-upper-coordinate-distance-practice",
+          "template": "practice",
+          "title": "두 점의 거리와 중점 연습",
+          "kicker": "좌표 차와 평균",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "A(−2,1), B(4,9) 사이의 거리와 중점을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "좌표 차의 제곱합으로 거리를 구하고, 같은 좌표끼리 평균을 내어 중점을 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "거리 √(6²+8²)=10, 중점 ((−2+4)/2,(1+9)/2)=(1,5)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "음수 좌표의 차를 괄호로 계산했나요?",
+                "중점 좌표를 각각 평균 냈나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

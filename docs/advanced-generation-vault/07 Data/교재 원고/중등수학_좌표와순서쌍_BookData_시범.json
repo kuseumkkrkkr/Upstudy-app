@@ -1,0 +1,71 @@
+{
+  "title": "중1 수학 개념서 · 순서쌍과 좌표",
+  "subtitle": "좌표를 직접 움직이며 순서와 위치의 관계 이해하기",
+  "category": "concept_textbook_prototype",
+  "tags": ["중1 수학", "좌표평면", "순서쌍", "시범", "판본 대조 전"],
+  "chapters": [
+    {
+      "title": "순서쌍은 점의 위치를 어떻게 정할까?",
+      "intro": [
+        "좌표평면에서 첫 번째 수는 가로 위치, 두 번째 수는 세로 위치를 나타낸다. 순서를 바꾸면 일반적으로 다른 점이 된다.",
+        "이 시범 원고는 교육과정 판본·성취기준 교사 대조 전이며 승인·판매용이 아니다."
+      ],
+      "sections": [
+        {
+          "title": "가로 먼저, 세로 다음",
+          "paragraphs": [
+            "좌표평면의 한 점은 (x,y)로 나타낸다. 원점에서 x축 방향으로 x만큼, 이어서 y축 방향으로 y만큼 이동해 그 점에 도착한다.",
+            "x가 음수이면 왼쪽, 양수이면 오른쪽이다. y가 음수이면 아래, 양수이면 위다. 좌표의 순서는 위치를 읽는 규칙이므로 (x,y)와 (y,x)는 대개 다른 점을 뜻한다.",
+            "두 좌표가 모두 0이 아닌 점은 부호에 따라 사분면을 정한다. x축이나 y축 위의 점은 어떤 사분면에도 속하지 않는다."
+          ],
+          "visuals": [
+            {
+              "kind": "table",
+              "title": "좌표의 부호로 사분면 읽기",
+              "caption": "축 위의 점은 사분면에 넣지 않는다.",
+              "rows": [["위치", "x 부호", "y 부호"], ["제1사분면", "+", "+"], ["제2사분면", "−", "+"], ["제3사분면", "−", "−"], ["제4사분면", "+", "−"]]
+            }
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms1-coordinate-predict",
+          "template": "opening",
+          "title": "도착점을 먼저 예측하기",
+          "kicker": "좌표 읽기",
+          "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "원점에서 왼쪽으로 2칸, 위로 3칸 가면 좌표를 어떤 순서로 적을까?"},
+            {"type": "thinking", "title": "잠깐 생각하기", "text": "가로 이동과 세로 이동 중 무엇을 첫 번째 수로 적는지 말해 보자."}
+          ]
+        },
+        {
+          "id": "ms1-coordinate-experiment",
+          "template": "experiment",
+          "title": "점을 움직여 좌표 확인하기",
+          "kicker": "가로·세로를 따로 조작",
+          "blocks": [
+            {"type": "lead", "title": "실험", "text": "그래프에서 점을 끌거나 x·y 조절값을 바꾸어 보자. 이동 경로는 달라도 도착 좌표가 같으면 같은 점이다."},
+            {"type": "graph", "title": "좌표평면", "text": "A=(-2,3)과 B=(3,-2)를 찾아 두 수의 순서가 바뀌면 점도 달라짐을 확인한다.", "graph": {"items": [{"id": "point-a", "type": "scatter", "label": "A=(-2,3)", "colorHex": "#C2410C", "enabled": true, "xValues": [-2], "yValues": [3]}, {"id": "point-b", "type": "scatter", "label": "B=(3,-2)", "colorHex": "#1D4ED8", "enabled": true, "xValues": [3], "yValues": [-2]}], "settings": {"showAxes": true, "showGrid": true, "lockViewport": true, "degreeMode": false, "viewport": {"left": -5, "right": 5, "top": 5, "bottom": -5}}}},
+            {"type": "question", "title": "도구 퀴즈", "text": "점 C=(-4,0)은 어느 사분면에 있을까? 축 위의 점을 억지로 사분면에 넣어도 될까?"},
+            {"type": "verification", "title": "확인", "text": "C는 x축 위에 있으므로 어떤 사분면에도 속하지 않는다."},
+            {"type": "misconception", "title": "순서 주의", "text": "좌표를 읽을 때 y부터 읽지 않는다. 괄호 안 첫 수가 x, 둘째 수가 y다."}
+          ]
+        },
+        {
+          "id": "ms1-coordinate-practice",
+          "template": "practice",
+          "title": "좌표와 사분면 설명하기",
+          "kicker": "정답 전에 부호를 설명",
+          "blocks": [
+            {"type": "question", "title": "연습", "text": "점 P=(2,-5)는 어느 사분면에 있는가? x와 y의 부호를 이용해 설명하라."},
+            {"type": "thinking", "title": "Socratic 질문", "text": "먼저 오른쪽/왼쪽 중 어디인지 판단하자. 그다음 위/아래 중 어디인지 판단하면 어떤 사분면이 남을까?"},
+            {"type": "hint", "title": "힌트", "text": "첫째 좌표 2는 양수, 둘째 좌표 -5는 음수다. 표에서 (+,−)에 해당하는 위치를 찾아라."},
+            {"type": "answer", "title": "정답 확인", "text": "제4사분면이다. x>0이므로 오른쪽, y<0이므로 아래쪽에 있다."},
+            {"type": "checklist", "title": "마무리", "items": ["순서쌍에서 첫째 수는 x, 둘째 수는 y라고 설명한다.", "축 위의 점과 사분면의 점을 구분한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

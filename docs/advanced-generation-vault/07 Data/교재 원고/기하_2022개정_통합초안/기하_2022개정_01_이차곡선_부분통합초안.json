@@ -1,0 +1,553 @@
+{
+  "title": "기하 2022 개정 · 이차곡선 부분 통합 초안",
+  "tags": [
+    "기하",
+    "2022 개정",
+    "이차곡선",
+    "12기하01",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "초점과 준선까지의 거리가 같은 점",
+      "pages": [
+        {
+          "title": "초점과 준선까지의 거리가 같은 점 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 기하 · 이차곡선 · 포물선 · 2022 개정 · 12기하01-01 · 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12기하01-01. 공식 원문 대조 전 후보입니다."
+            }
+          ],
+          "id": "geometry-01-01-001"
+        },
+        {
+          "id": "geometry-01-01-002",
+          "template": "opening",
+          "title": "포물선 위의 점은 어떤 약속을 지킬까?",
+          "kicker": "도입 · 먼저 예상하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "포물선 위 점 P를 움직이면 초점 F와 준선 l까지의 거리는 어떻게 변할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "P가 초점에서 멀어질 때 준선까지의 거리도 어떻게 되어야 포물선 위에 남을까?"
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-01-003",
+          "template": "experiment",
+          "title": "초점·준선·점을 조작하기",
+          "kicker": "실험 · p와 x를 바꾸기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험 안내",
+              "text": "p를 바꾸어 포물선의 폭과 초점 위치를 살펴본다. x를 정하면 포물선 식으로 점 P의 y좌표를 계산한다."
+            },
+            {
+              "type": "graph",
+              "title": "포물선 그래프",
+              "text": "함수 y=x²/(4p)의 형태를 비교한다. 실제 점 P와 초점·준선 거리 측정은 아래 HTML 체험 도구에서 조작한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "focus-directrix-parabola",
+                    "type": "function",
+                    "label": "포물선 y=x²/(4p)",
+                    "colorHex": "#315DA8",
+                    "enabled": true,
+                    "expression": "x*x/(4*p)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -6,
+                    "right": 6,
+                    "top": 10,
+                    "bottom": -4
+                  },
+                  "parameters": [
+                    {
+                      "id": "p",
+                      "label": "초점 거리 p (p>0)",
+                      "value": 2,
+                      "min": 0.5,
+                      "max": 3,
+                      "step": 0.5
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "조작 퀴즈",
+              "text": "p=2, x=4로 설정하자. P의 y좌표와 초점까지의 거리를 구하고 준선까지의 거리와 비교하라."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "y=4²/(4·2)=2, F=(0,2)이므로 PF=4이다. 준선 y=-2까지의 수직 거리는 |2-(-2)|=4로 같다."
+            },
+            {
+              "type": "misconception",
+              "title": "정의 범위",
+              "text": "같은 거리 조건은 포물선 위 점에 대한 정의다. 평면의 모든 점이 초점·준선에서 같은 거리라는 뜻은 아니다."
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-01-004",
+          "template": "practice",
+          "title": "거리를 식으로 설명하기",
+          "kicker": "연습 · 계산 뒤 이유 말하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "독립 연습",
+              "text": "p=1, x=2일 때 포물선 위 점 P의 좌표와 초점·준선까지의 거리를 각각 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "포물선 식으로 y를 구한 다음, 점과 초점 사이의 거리 및 점과 수평 준선 사이의 거리를 따로 계산해 보자. 거리 등식의 절댓값과 제곱근은 어떤 공통 성질이 있을까?"
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "거리식은 √(x²+(y-p)²)=|y+p|이다. 제곱근과 절댓값은 각각 0 이상이다. 제곱한 뒤 p>0과 x²≥0을 사용해 y의 부호를 추론하자."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "P=(2,1), F=(0,1)이므로 PF=2이다. 준선은 y=-1이고 P와의 거리는 |1-(-1)|=2이다. 유도에서는 √(x²+(y-p)²)=|y+p|의 양변이 모두 0 이상이므로 제곱이 동치다. 전개 후 x²=4py이고 p>0이므로 y≥0, 따라서 |y+p|=y+p이다."
+            },
+            {
+              "type": "question",
+              "title": "조건 확인 퀴즈",
+              "text": "√(x²+(y-p)²)=|y+p|를 제곱해도 동치인 이유는? 정답: 제곱근과 절댓값은 모두 0 이상이므로 양변 제곱이 동치다. 이어서 x²=4py와 p>0에서 y≥0을 얻는다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "초점과 준선으로 포물선을 정의한다.",
+                "y≥0, p>0에서 거리 등식 제곱이 동치임을 설명한다.",
+                "거리 조건을 방정식 x²=4py와 연결하고 새 점으로 검산한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_포물선_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12기하01-01"
+      ]
+    },
+    {
+      "title": "두 초점까지의 거리 차로 쌍곡선 이해하기",
+      "pages": [
+        {
+          "title": "두 초점까지의 거리 차로 쌍곡선 이해하기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 기하 · 이차곡선 · 쌍곡선 · 2022 개정 · 12기하01-03 · 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12기하01-03. 공식 원문 대조 전 후보입니다."
+            }
+          ],
+          "id": "geometry-01-02-001"
+        },
+        {
+          "id": "geometry-01-02-002",
+          "template": "opening",
+          "title": "두 초점까지 거리의 차는 왜 일정할까?",
+          "kicker": "합이 아닌 차를 생각하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 초점에서 점까지 거리의 차를 일정하게 하면 어떤 자취가 될까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예상하기",
+              "text": "오른쪽 가지에서 왼쪽 초점과 오른쪽 초점 중 어느 쪽이 P에 더 가까울까요?"
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-02-003",
+          "template": "experiment",
+          "title": "a·b·u를 바꾸어 거리 차 확인하기",
+          "kicker": "가로축 가지의 점과 두 초점 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 안내",
+              "text": "a와 b를 정하면 c=√(a²+b²)로 두 초점이 정해집니다. u를 바꾸어 오른쪽 가지의 P를 움직이세요."
+            },
+            {
+              "type": "visual",
+              "title": "초점과 거리선",
+              "text": "F₁=(−c,0), F₂=(c,0), P=(a cosh u,b sinh u)입니다. P에서 각 초점까지의 거리를 표시하고 d₁−d₂를 계산합니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "u가 변하면 d₁과 d₂는 어떻게 달라지고, 오른쪽 가지의 d₁−d₂는 어떤 값으로 유지되나요?"
+            },
+            {
+              "type": "hint",
+              "title": "요청형 힌트",
+              "text": "P가 오른쪽 가지에 있으므로 왼쪽 초점까지 거리가 더 큽니다. 거리 차의 순서를 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "d₁은 왼쪽 초점까지 거리이고 d₂는 오른쪽 초점까지 거리입니다. 오른쪽 가지에서 d₁−d₂=2a입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "오개념 점검",
+              "text": "거리 차를 부호 없이 말할 때는 절댓값을 붙입니다. 오른쪽 가지와 왼쪽 가지에서는 양의 차를 만드는 뺄셈 순서가 서로 반대입니다."
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-02-004",
+          "template": "practice",
+          "title": "초점과 거리 차 계산하기",
+          "kicker": "조작값을 가리고 새 조건 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=3,b=4,u=0일 때 c, 두 초점, 점 P, 두 거리와 거리 차를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "c²=a²+b²로 초점 간격을 구한 뒤 P=(a cosh u,b sinh u)에 대입하세요."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "c=5, 초점은 (−5,0),(5,0), P=(3,0)입니다. 거리는 8과 2이므로 차의 절댓값은 6=2a입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "c와 a,b의 관계를 확인한다.",
+                "P가 오른쪽 가지에 있음을 확인한다.",
+                "거리의 차와 거리 차의 절댓값을 구별한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "기하_쌍곡선_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12기하01-03"
+      ]
+    },
+    {
+      "title": "두 초점까지의 거리합으로 타원 이해하기",
+      "pages": [
+        {
+          "title": "두 초점까지의 거리합으로 타원 이해하기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 기하 · 이차곡선 · 타원 · 2022 개정 · 12기하01-02 · 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12기하01-02. 공식 원문 대조 전 후보입니다."
+            }
+          ],
+          "id": "geometry-01-03-001"
+        },
+        {
+          "id": "geometry-01-03-002",
+          "template": "opening",
+          "title": "두 초점까지의 거리 합은 어떻게 될까?",
+          "kicker": "점이 움직여도 일정한 값 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 초점에서 점까지의 거리 합이 일정한 점을 모으면 어떤 곡선이 될까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예상하기",
+              "text": "θ를 바꾸면 두 초점까지의 거리 각각은 변할 수 있습니다. 그 합도 변할까요?"
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-03-003",
+          "template": "experiment",
+          "title": "a·c·θ를 움직여 거리합 확인하기",
+          "kicker": "그래프와 거리 수치를 동시에 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 안내",
+              "text": "a는 긴 반지름, c는 중심에서 초점까지 거리, θ는 타원 위 점의 위치를 정합니다. 0<c<a 범위에서 하나씩 바꾸세요."
+            },
+            {
+              "type": "visual",
+              "title": "두 초점과 점 P",
+              "text": "F₁=(−c,0), F₂=(c,0), P=(a cosθ,b sinθ), b=√(a²−c²)입니다. 표시는 P와 두 초점을 잇고 각각의 거리 및 합을 갱신합니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "θ를 바꾸었을 때 d₁, d₂, d₁+d₂는 각각 어떻게 변하나요?"
+            },
+            {
+              "type": "hint",
+              "title": "요청형 힌트",
+              "text": "두 초점에서 P까지의 거리 제곱을 각각 계산하세요. 좌표에 삼각함수 항등식 sin²θ+cos²θ=1을 사용해 볼 수 있습니다."
+            },
+            {
+              "type": "thinking",
+              "title": "일반 성질을 식으로 확인",
+              "text": "b²=a²−c²를 대입하면 d₁²=(a+c cosθ)², d₂²=(a−c cosθ)²이다. a>c라 두 괄호는 양수이므로 d₁=a+c cosθ, d₂=a−c cosθ이며 합은 2a다."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "P의 위치에 따라 두 거리는 달라질 수 있지만 표준 타원 위에서는 d₁+d₂=2a입니다. a를 바꾸면 합의 기준도 달라집니다."
+            },
+            {
+              "type": "misconception",
+              "title": "오개념 점검",
+              "text": "몇 개의 점을 움직여 합이 같게 보인 것만으로 전체 타원의 성질이 증명된 것은 아닙니다. 수식 또는 정의를 함께 사용해야 합니다."
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-03-004",
+          "template": "practice",
+          "title": "새 조건에서 거리합 설명하기",
+          "kicker": "도구 값을 보지 않고 먼저 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=5,c=3,θ=90°일 때 b, P 좌표, 각 초점까지의 거리와 거리합을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "먼저 a²=b²+c²로 b를 구하고, P=(a cosθ,b sinθ)를 계산한 뒤 두 초점까지 거리를 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "b=4, P=(0,4). F₁=(−3,0), F₂=(3,0)에서 각각의 거리는 5이므로 합은 10=2a입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "a와 c의 허용 관계 0<c<a를 확인한다.",
+                "두 거리와 그 합을 구별한다.",
+                "계산 사례와 타원의 일반 정의를 혼동하지 않는다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "기하_타원_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12기하01-02"
+      ]
+    },
+    {
+      "title": "포물선의 접선은 어떻게 정할까?",
+      "pages": [
+        {
+          "title": "포물선의 접선은 어떻게 정할까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 기하 · 이차곡선 · 포물선 · 2022 개정 · 12기하01-04 · 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12기하01-04. 공식 원문 대조 전 후보입니다."
+            }
+          ],
+          "id": "geometry-01-04-001"
+        },
+        {
+          "id": "geometry-01-04-002",
+          "template": "opening",
+          "title": "직선이 포물선에 접한다는 뜻은?",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "질문",
+              "text": "포물선 x²=4py와 직선 y=mx+n이 한 점에서 만날 때, 두 식을 연립한 이차방정식의 근은 어떻게 될까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "두 교점이 겹치는 경우",
+              "text": "접할 때 교점의 x좌표가 하나로 겹칩니다. 이차방정식에서 중근을 나타내는 조건은 무엇인지 떠올려 보세요."
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-04-003",
+          "template": "experiment",
+          "title": "기울기를 바꾸며 접선 확인하기",
+          "kicker": "p와 m 조작",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "p와 m을 바꾸면 포물선·접선·접점이 함께 바뀝니다. 화면의 Q 좌표를 포물선 식과 접선 식에 각각 대입해 보세요."
+            },
+            {
+              "type": "graph",
+              "title": "포물선과 접선",
+              "text": "곡선 y=x²/(4p)와 접선 y=mx−pm²을 비교합니다. p>0, m은 실수이며 이 시범의 화면 범위는 제한되어 있습니다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "geometry-parabola-tangent-curve",
+                    "type": "function",
+                    "label": "포물선 y=x²/(4p)",
+                    "colorHex": "#2457A6",
+                    "enabled": true,
+                    "expression": "x*x/(4*p)"
+                  },
+                  {
+                    "id": "geometry-parabola-tangent-line",
+                    "type": "function",
+                    "label": "접선 y=mx−pm²",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "m*x-p*m*m"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -8,
+                    "right": 8,
+                    "top": 8,
+                    "bottom": -3
+                  },
+                  "parameters": [
+                    {
+                      "id": "p",
+                      "label": "포물선 폭 p (p>0)",
+                      "value": 2,
+                      "min": 1.5,
+                      "max": 3,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "m",
+                      "label": "접선 기울기 m",
+                      "value": 1,
+                      "min": -1.25,
+                      "max": 1.25,
+                      "step": 0.25
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "p=2, m=1이면 접선과 접점은 무엇인가요? 접점이 두 식을 모두 만족하는지 확인해 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "한 단계 풀이",
+              "text": "n=−pm²=−2이므로 y=x−2입니다. Q=(2pm,pm²)=(4,2)이고 4²=8·2, 2=4−2이므로 두 식을 모두 만족합니다."
+            }
+          ]
+        },
+        {
+          "id": "geometry-01-04-004",
+          "template": "practice",
+          "title": "새 조건에서 접선 판별하기",
+          "kicker": "도구를 닫고 적용",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x²=12y 위에서 기울기 −1인 접선의 방정식과 접점을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "4p=12이므로 p=3입니다. 접선 절편은 n=−pm²이고 접점은 (2pm,pm²)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "y=−x−3, 접점 Q=(−6,3)입니다. 36=12·3이며 3=6−3입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "직선 대입으로 교점 이차방정식을 만들었다.",
+                "판별식 0으로 접선의 조건을 구했다.",
+                "중근과 접점 좌표를 원래 두 식에 대입해 검산했다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "기하_포물선접선_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12기하01-04"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "고등수학_기하_포물선_BookData_시범.json",
+      "기하_쌍곡선_BookData_시범.json",
+      "기하_타원_BookData_시범.json",
+      "기하_포물선접선_BookData_시범.json"
+    ]
+  }
+}

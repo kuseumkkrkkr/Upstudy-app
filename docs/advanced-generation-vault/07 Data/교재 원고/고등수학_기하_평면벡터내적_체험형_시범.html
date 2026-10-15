@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기하 개념서 | 평면벡터의 내적</title>
+<style>
+:root{color-scheme:light;--ink:#17233b;--muted:#52617a;--blue:#2358c5;--teal:#087e75;--line:#d8e0ee;--paper:#f4f7fc}
+*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 system-ui,"Malgun Gothic",sans-serif}main{max-width:920px;margin:auto;padding:24px 18px 48px}h1{font-size:clamp(1.6rem,4vw,2.15rem);line-height:1.25}.note,.small{color:var(--muted)}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:4px;min-width:180px;flex:1}.controls input{width:100%;accent-color:var(--blue)}button{font:inherit;border:1px solid var(--line);border-radius:10px;background:white;color:var(--ink);padding:9px 13px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #ffbf47;outline-offset:3px}.plot{display:block;width:100%;height:auto;margin:12px 0}.axis{stroke:#718096;stroke-width:2}.uvec{stroke:var(--blue);stroke-width:5;transition:all .18s ease}.vvec{stroke:var(--teal);stroke-width:5;transition:all .18s ease}.projection{stroke:#9a5b00;stroke-width:3;stroke-dasharray:7 5;transition:all .18s ease}.dot{fill:#9a5b00}.equation{font-variant-numeric:tabular-nums;font-weight:700}.quiz{padding:12px;background:#f7f9fd;border-radius:10px}.choices{display:flex;gap:8px;flex-wrap:wrap}.choices button{min-width:90px}.feedback{min-height:2.5em;font-weight:650}.steptext{min-height:3em;padding:10px;background:#f7f9fd;border-radius:10px}@media(max-width:600px){main{padding:16px 12px 32px}.controls label{min-width:100%;flex:auto}.card{padding:14px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="note">2015 개정 기하 개념서 시범 · 성취기준 후보 [12기하02-04] · 원문 표 셀·교사 검수 전</p>
+<h1>평면벡터의 내적: 방향을 숫자로 나타내기</h1>
+<p>각도와 벡터의 크기를 직접 바꾸며, 투영과 내적의 부호를 예측해 보세요.</p>
+<section class="card" aria-labelledby="toolTitle">
+<h2 id="toolTitle">먼저 내적의 부호를 예상하고 조작하기</h2>
+<p class="small">기본값 |u|=3, |v|=4, θ=60°에서 시작합니다. 점선은 v를 u 방향으로 비춘 부호 있는 투영을 보여 줍니다.</p>
+<div class="controls" aria-label="벡터 조건 조절">
+<label for="uLength">벡터 u의 크기 |u| <output id="uOut" for="uLength">3</output><input id="uLength" type="range" min="1" max="5" step="1" value="3"></label>
+<label for="vLength">벡터 v의 크기 |v| <output id="vOut" for="vLength">4</output><input id="vLength" type="range" min="1" max="5" step="1" value="4"></label>
+<label for="angle">끼인각 θ <output id="angleOut" for="angle">60°</output><input id="angle" type="range" min="0" max="180" step="15" value="60"></label>
+</div>
+<svg class="plot" viewBox="0 0 800 360" role="img" aria-labelledby="plotLabel plotDesc">
+<title id="plotLabel">두 평면벡터와 투영</title><desc id="plotDesc">크기 3인 u와 크기 4인 v가 60도 각을 이룹니다.</desc>
+<defs><marker id="arrowU" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#2358c5"></path></marker><marker id="arrowV" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#087e75"></path></marker></defs>
+<line class="axis" x1="80" y1="285" x2="740" y2="285"></line><line class="axis" x1="400" y1="325" x2="400" y2="35"></line>
+<line id="uLine" class="uvec" x1="400" y1="285" x2="535" y2="285" marker-end="url(#arrowU)"></line>
+<line id="vLine" class="vvec" x1="400" y1="285" x2="490" y2="129" marker-end="url(#arrowV)"></line><line id="projectionLine" class="projection" x1="490" y1="285" x2="490" y2="129"></line><circle id="projectionPoint" class="dot" cx="490" cy="285" r="5"></circle>
+<text id="uLabel" x="543" y="275" fill="#2358c5">u</text><text id="vLabel" x="498" y="121" fill="#087e75">v</text><text x="730" y="310">u 방향</text><text x="410" y="52">수직 방향</text><text id="projectionLabel" x="445" y="305" fill="#805000">투영</text>
+</svg>
+<p id="liveValues" class="equation" aria-live="polite">투영 |v|cosθ = 2.00 · 내적 u·v = 6.00</p>
+<div class="quiz"><h3>조작 확인 퀴즈</h3><p id="quizPrompt">현재 각도에서 u·v의 부호는?</p><div class="choices"><button class="choice" data-sign="positive">양수</button><button class="choice" data-sign="zero">0</button><button class="choice" data-sign="negative">음수</button></div><p id="feedback" class="feedback" role="status" aria-live="polite">먼저 예측한 뒤 각도 슬라이더를 움직여 확인하세요.</p></div>
+</section>
+<section class="card" aria-labelledby="deriveTitle"><h2 id="deriveTitle">투영에서 내적 공식까지</h2><p id="stepText" class="steptext" aria-live="polite">1단계: v를 u 방향으로 비춘 부호 있는 길이는 |v|cosθ입니다.</p><div class="controls"><button id="nextStep" type="button">다음 단계</button><button id="resetStep" type="button">처음부터</button><output id="stepCount" aria-live="polite">1 / 3</output></div></section>
+<section class="card"><h2>도구 없이 전이하기</h2><ol><li>크기 2와 5, 끼인각 120°인 두 벡터의 내적을 구하세요. <details><summary>풀이 확인</summary><p>2×5×cos120°=−5.</p></details></li><li>u=(3,0), v=(2,2)일 때 내적을 구하세요. <details><summary>풀이 확인</summary><p>3×2+0×2=6.</p></details></li></ol></section>
+<p class="small">이 독립 HTML은 앱의 학생 응답 저장과 연동되지 않는 시범입니다. 교육과정 코드·교사 검수·모바일 및 보조기기 점검·학생 파일럿 전이며 판매 승인 자료가 아닙니다.</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const u=document.querySelector('#uLength'),v=document.querySelector('#vLength'),angle=document.querySelector('#angle');
+  const uLine=document.querySelector('#uLine'),vLine=document.querySelector('#vLine'),projectionLine=document.querySelector('#projectionLine'),projectionPoint=document.querySelector('#projectionPoint');
+  const desc=document.querySelector('#plotDesc'),live=document.querySelector('#liveValues'),feedback=document.querySelector('#feedback');
+  let step=1;
+  const steps=[
+    ()=>`1단계: v를 u 방향으로 비춘 부호 있는 길이는 |v|cosθ입니다. 현재 값은 ${Number(v.value)}×cos(${Number(angle.value)}°)=${(Number(v.value)*Math.cos(Number(angle.value)*Math.PI/180)).toFixed(2)}입니다.`,
+    ()=>`2단계: 투영 길이에 |u|=${Number(u.value)}를 곱합니다. 내적은 ${Number(u.value)}×${(Number(v.value)*Math.cos(Number(angle.value)*Math.PI/180)).toFixed(2)}입니다.`,
+    ()=>`3단계: u·v=|u||v|cosθ=${Number(u.value)}×${Number(v.value)}×cos(${Number(angle.value)}°)=${(Number(u.value)*Number(v.value)*Math.cos(Number(angle.value)*Math.PI/180)).toFixed(2)}입니다.`
+  ];
+  function updateStep(){document.querySelector('#stepText').textContent=steps[step-1]();document.querySelector('#stepCount').textContent=`${step} / ${steps.length}`}
+  function render(){
+    const p=Number(u.value),q=Number(v.value),deg=Number(angle.value),rad=deg*Math.PI/180,scale=45,originX=400,originY=285;
+    const ux=originX+p*scale,vx=originX+q*Math.cos(rad)*scale,vy=originY-q*Math.sin(rad)*scale,dot=p*q*Math.cos(rad),proj=q*Math.cos(rad);
+    uLine.setAttribute('x2',String(ux));vLine.setAttribute('x2',String(vx));vLine.setAttribute('y2',String(vy));
+    projectionLine.setAttribute('x1',String(vx));projectionLine.setAttribute('x2',String(vx));projectionLine.setAttribute('y1',String(originY));projectionLine.setAttribute('y2',String(vy));
+    projectionPoint.setAttribute('cx',String(vx));projectionPoint.setAttribute('cy',String(originY));
+    document.querySelector('#uLabel').setAttribute('x',String(ux+8));document.querySelector('#vLabel').setAttribute('x',String(vx+8));document.querySelector('#vLabel').setAttribute('y',String(vy-8));document.querySelector('#projectionLabel').setAttribute('x',String((originX+vx)/2));
+    document.querySelector('#uOut').textContent=String(p);document.querySelector('#vOut').textContent=String(q);document.querySelector('#angleOut').textContent=`${deg}°`;
+    document.querySelector('#quizPrompt').textContent=`현재 각도 θ=${deg}°에서 u·v의 부호는?`;live.textContent=`투영 |v|cosθ = ${proj.toFixed(2)} · 내적 u·v = ${dot.toFixed(2)}`;
+    desc.textContent=`크기 ${p}인 u와 크기 ${q}인 v가 ${deg}도 각을 이룹니다. v의 u 방향 투영은 ${proj.toFixed(2)}, 내적은 ${dot.toFixed(2)}입니다.`;
+    document.querySelectorAll('.choice').forEach(b=>b.setAttribute('aria-pressed','false'));
+    feedback.textContent='현재 각도에서 투영이 u와 같은 쪽인지 반대쪽인지 먼저 살펴보세요.';updateStep();
+  }
+  for(const control of [u,v,angle])control.addEventListener('input',()=>{step=1;render()});
+  document.querySelectorAll('.choice').forEach(b=>b.addEventListener('click',()=>{
+    const deg=Number(angle.value),expected=deg<90?'positive':deg===90?'zero':'negative',guess=b.dataset.sign;
+    document.querySelectorAll('.choice').forEach(x=>x.setAttribute('aria-pressed',String(x===b)));
+    if(guess===expected)feedback.textContent=expected==='zero'?`맞아요. θ=${deg}°이면 투영과 내적이 0입니다.`:`맞아요. θ=${deg}°에서 투영이 u와 ${expected==='positive'?'같은':'반대'} 방향이므로 내적은 ${expected==='positive'?'양수':'음수'}입니다.`;
+    else feedback.textContent=`다시 생각해 보세요. θ=${deg}°에서 cosθ는 ${deg<90?'양수':deg===90?'0':'음수'}입니다. 점선 투영이 u와 같은 쪽인지 확인하세요.`;
+  }));
+  document.querySelector('#nextStep').addEventListener('click',()=>{step=Math.min(steps.length,step+1);updateStep()});
+  document.querySelector('#resetStep').addEventListener('click',()=>{step=1;updateStep()});
+  render();
+})();
+</script>
+</body></html>

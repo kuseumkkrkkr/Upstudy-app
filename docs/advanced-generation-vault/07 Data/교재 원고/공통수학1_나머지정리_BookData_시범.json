@@ -1,0 +1,50 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-01-02 중 이차식을 x−k로 나눌 때 나머지",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-01-02", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-01-02"],
+  "standard_coverage": "partial_remainder_theorem_for_monic_divisors",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [{
+    "title": "나머지는 f(k)",
+    "intro": [
+      "나눗셈 항등식에서 나누는 식 x−k를 0으로 만드는 값 x=k를 대입해 나머지를 구한다.",
+      "2022 개정 별책 8의 10공수1-01-02 중 이차식과 일차식의 나머지 관계만 다루는 부분 시범이다."
+    ],
+    "sections": [{
+      "title": "몫을 몰라도 나머지를 구할 수 있다",
+      "paragraphs": [
+        "f(x)=(x−k)Q(x)+R에서 x=k를 대입하면 f(k)=0·Q(k)+R=R이다.",
+        "f(x)=x²+px+q라면 f(x)=(x−k)(x+p+k)+(k²+pk+q)다. 몫은 x+p+k, 나머지는 f(k)=k²+pk+q다.",
+        "그래프에서 x=k일 때 y=f(k)인 점의 높이는 나머지와 같다. 그래프 관찰은 항등식 대입 검증을 대신하지 않는다."
+      ],
+      "graph": {
+        "items": [
+          {"id":"polynomial-f","type":"function","label":"f(x)=x²+px+q","colorHex":"#315DA8","enabled":true,"expression":"x^2+p*x+q"},
+          {"id":"remainder-line","type":"function","label":"y=R=f(k)","colorHex":"#D97925","enabled":true,"expression":"k^2+p*k+q"}
+        ],
+        "settings": {
+          "showAxes": true,
+          "showGrid": true,
+          "lockViewport": false,
+          "degreeMode": false,
+          "viewport": {"left":-4,"right":4,"top":30,"bottom":-14},
+          "parameters": [
+            {"id":"p","label":"x 계수 p","value":1,"min":-3,"max":3,"step":1},
+            {"id":"q","label":"상수항 q","value":-2,"min":-3,"max":3,"step":1},
+            {"id":"k","label":"나누는 값 k","value":2,"min":-3,"max":3,"step":1}
+          ]
+        }
+      }
+    }],
+    "pages": [
+      {"id":"cm1-remainder-opening","template":"opening","title":"긴 나눗셈 없이 나머지를 찾을 수 있을까?","kicker":"나누는 식부터 0으로 만들기","blocks":[{"type":"lead","title":"오늘의 질문","text":"f(x)=x²+x−2를 x−2로 나눌 때 나머지를 바로 구할 수 있을까요?"},{"type":"thinking","title":"먼저 예측","text":"x−2를 0으로 만드는 x값을 찾고 f에 넣어 나머지를 예상하세요."}]},
+      {"id":"cm1-remainder-concept","template":"concept","title":"나눗셈 항등식에 대입하기","kicker":"몫 항을 0으로 만들기","blocks":[{"type":"definition","title":"나눗셈 항등식","text":"f(x)=(x−k)Q(x)+R에서 R은 상수 나머지다. x=k를 대입하면 f(k)=R이다."},{"type":"solutionStep","title":"이차식의 몫과 나머지","items":["f(x)=x²+px+q로 둔다.","전개해 f(x)=(x−k)(x+p+k)+(k²+pk+q)를 확인한다.","따라서 몫은 x+p+k, 나머지는 f(k)=k²+pk+q다."]},{"type":"misconception","title":"그래프만 보면 증명일까?","text":"그래프는 f(k)와 나머지가 같은 높이라는 것을 보여 준다. 일반 관계의 근거는 항등식에 x=k를 대입하는 것이다."}]},
+      {"id":"cm1-remainder-experiment","template":"experiment","title":"나누는 값과 나머지 높이 연결하기","kicker":"계수 조작 → 점 읽기 → 항등식 검산","blocks":[{"type":"lead","title":"조작 순서","text":"p,q,k를 바꾸어 보세요. f(k), 나머지 수평선, 그래프의 점 (k,f(k))가 같은 y값인지 비교하세요."},{"type":"graph","title":"함숫값과 나머지","text":"그래프는 f(x)=x²+px+q와 y=f(k)를 표시합니다. 독립 체험 HTML에서는 x=k 세로선과 교점을 움직여 읽을 수 있습니다.","graph":{"items":[{"id":"polynomial-f","type":"function","label":"f(x)=x²+px+q","colorHex":"#315DA8","enabled":true,"expression":"x^2+p*x+q"},{"id":"remainder-line","type":"function","label":"y=R=f(k)","colorHex":"#D97925","enabled":true,"expression":"k^2+p*k+q"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-4,"right":4,"top":30,"bottom":-14},"parameters":[{"id":"p","label":"x 계수 p","value":1,"min":-3,"max":3,"step":1},{"id":"q","label":"상수항 q","value":-2,"min":-3,"max":3,"step":1},{"id":"k","label":"나누는 값 k","value":2,"min":-3,"max":3,"step":1}]}}},{"type":"question","title":"Socratic 질문","text":"왜 몫 Q(k)를 계산하지 않고도 나머지를 알 수 있을까요?"},{"type":"hint","title":"힌트","text":"x=k일 때 나누는 식 x−k는 0입니다."},{"type":"verification","title":"전개로 다시 확인","text":"현재 도구의 이차식은 (x−k)(x+p+k)+(k²+pk+q)로 다시 쓸 수 있습니다. 전개하면 x²+px+q가 됩니다."}]},
+      {"id":"cm1-remainder-example","template":"example","title":"x²+x−2를 x−2로 나누기","kicker":"대입과 항등식 두 번 확인","blocks":[{"type":"question","title":"예제","text":"f(x)=x²+x−2를 x−2로 나눌 때 나머지를 구하세요."},{"type":"solutionStep","title":"풀이","items":["x−2=0에서 x=2다.","f(2)=4+2−2=4이므로 나머지는 4다.","x²+x−2=(x−2)(x+3)+4로 전개 검산한다."]},{"type":"thinking","title":"이 방법이 짧은 이유","text":"나누는 식을 0으로 만드는 값을 선택해 몫 항 전체를 없앴습니다."}]},
+      {"id":"cm1-remainder-practice","template":"practice","title":"다른 나누는 값에 적용하기","kicker":"대입값을 먼저 적고 검산","blocks":[{"type":"question","title":"연습","text":"g(x)=x²+2x−3을 x+1로 나눌 때 나머지를 구하세요."},{"type":"hint","title":"힌트","text":"x+1=0을 만족하는 x값을 g에 대입합니다."},{"type":"answer","title":"정답 확인","text":"x=−1이고 g(−1)=1−2−3=−4이므로 나머지는 −4입니다."},{"type":"checklist","title":"스스로 점검","items":["나누는 식을 0으로 만드는 값을 찾았다.","f(k)=R로 나머지를 계산했다.","나눗셈 항등식이나 전개로 결과를 검산했다."]}]}
+    ]
+  }]
+}

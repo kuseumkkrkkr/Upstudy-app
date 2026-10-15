@@ -1,0 +1,81 @@
+{
+  "title": "2022 개정 미적분Ⅱ 개념서 · 사인함수의 미분계수",
+  "subtitle": "할선의 기울기에서 순간변화율로",
+  "category": "concept_textbook_prototype",
+  "tags": ["미적분Ⅱ", "2022 개정", "성취기준 후보: 12미적Ⅱ-02-03", "삼각함수", "사인함수", "미분계수", "한 차시 부분 시범", "교사 검수 전"],
+  "chapters": [
+    {
+      "title": "사인곡선의 한 점에서 기울기는 어떻게 찾을까?",
+      "intro": [
+        "라디안으로 나타낸 a에서 평균변화율 (sin(a+h)-sin(a))/h를 관찰하고 h→0일 때 cos(a)에 가까워지는 관계를 살핀다.",
+        "2022 개정 [12미적Ⅱ-02-03] 후보와 연결한 한 차시 시범이다. 최종 고시 대조·교사 검수 전이며 승인·판매용이 아니다."
+      ],
+      "sections": [
+        {
+          "title": "평균변화율과 순간변화율",
+          "paragraphs": [
+            "두 점을 이은 할선의 기울기는 평균변화율이다. 한 점을 고정하고 다른 점을 가까이 옮기면 순간변화율인 접선의 기울기를 관찰할 수 있다.",
+            "사인함수의 도함수는 cos(x)다. 각 x는 라디안으로 읽으며, h=0을 차분몫에 직접 대입하지 않고 h≠0에서 극한을 본다.",
+            "덧셈정리로 차분몫을 sin(a)·[(cos(h)-1)/h]+cos(a)·[sin(h)/h]로 바꾼다. 라디안에서 h→0일 때 두 기본 극한은 각각 0과 1이므로 순간변화율은 cos(a)다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"sine-curve","type":"function","label":"y=sin(x)","colorHex":"#2457C5","enabled":true,"expression":"sin(x)"},
+              {"id":"sine-tangent","type":"function","label":"x=a 접선","colorHex":"#C2410C","enabled":true,"expression":"sin(a)+cos(a)*(x-a)"},
+              {"id":"sine-secant","type":"function","label":"두 점을 잇는 할선","colorHex":"#15803D","enabled":true,"expression":"sin(a)+((sin(a+h)-sin(a))/h)*(x-a)"}
+            ],
+            "settings": {
+              "showAxes": true,
+              "showGrid": true,
+              "lockViewport": true,
+              "degreeMode": false,
+              "viewport": {"left":-1,"right":7,"top":2,"bottom":-2},
+              "parameters": [
+                {"id":"a","label":"기준 각 a (라디안)","value":1.0471975512,"min":0.2,"max":5.8,"step":0.1},
+                {"id":"h","label":"간격 h (0 제외)","value":0.4,"min":0.05,"max":0.8,"step":0.05}
+              ]
+            }
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"calc2-sine-derivative-opening",
+          "template":"opening",
+          "title":"곡선 위 두 점의 기울기",
+          "kicker":"결과를 보기 전에 예측하기",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"사인곡선 위 두 점을 잇는 직선의 기울기를 한 점의 순간 기울기로 연결할 수 있을까?"},
+            {"type":"thinking","title":"먼저 예상하기","text":"두 점 사이 간격 h를 작게 하면 할선과 접선의 방향은 어떻게 달라질까? 각도 단위가 라디안인지도 확인하자."}
+          ]
+        },
+        {
+          "id":"calc2-sine-derivative-experiment",
+          "template":"experiment",
+          "title":"할선과 접선의 기울기 비교",
+          "kicker":"a와 h를 직접 조절",
+          "blocks":[
+            {"type":"lead","title":"조작 안내","text":"a는 기준 각, h는 0이 아닌 간격이다. 사인곡선·할선·접선을 함께 보고 평균변화율이 cos(a)에 가까워지는지 확인한다. 모든 각은 라디안이다."},
+            {"type":"graph","title":"움직이는 두 번째 점","text":"그래프의 a와 h 슬라이더를 움직여 할선 기울기와 접선 기울기 cos(a)를 비교한다. h=0은 직접 대입하지 않는다.","graph":{"items":[{"id":"sine-curve","type":"function","label":"y=sin(x)","colorHex":"#2457C5","enabled":true,"expression":"sin(x)"},{"id":"sine-tangent","type":"function","label":"x=a 접선","colorHex":"#C2410C","enabled":true,"expression":"sin(a)+cos(a)*(x-a)"},{"id":"sine-secant","type":"function","label":"할선","colorHex":"#15803D","enabled":true,"expression":"sin(a)+((sin(a+h)-sin(a))/h)*(x-a)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-1,"right":7,"top":2,"bottom":-2},"parameters":[{"id":"a","label":"기준 각 a (라디안)","value":1.0471975512,"min":0.2,"max":5.8,"step":0.1},{"id":"h","label":"간격 h (0 제외)","value":0.4,"min":0.05,"max":0.8,"step":0.05}]}}},
+            {"type":"question","title":"Socratic 확인","text":"할선의 기울기를 구하는 분자는 무엇의 차이고, h가 0이면 왜 식이 정의되지 않을까?"},
+            {"type":"hint","title":"단계 힌트","text":"두 함수값의 차를 먼저 적고 x좌표 차 h로 나누자. 그런 다음 h=0 직접 대입과 h→0 극한을 구분하자."},
+            {"type":"verification","title":"관찰 확인","text":"사인 덧셈정리로 차분몫을 두 기본 극한의 합으로 바꾼다. sin(h)/h→1, (cos(h)-1)/h→0이므로 결과는 cos(a)다. 유한한 h에서의 평균변화율은 cos(a)와 일반적으로 같지 않다."}
+          ]
+        },
+        {
+          "id":"calc2-sine-derivative-practice",
+          "template":"practice",
+          "title":"한 점에서 변화율 설명하기",
+          "kicker":"수치와 극한을 구분",
+          "blocks":[
+            {"type":"question","title":"연습","text":"a=π/3, h=0.1일 때 평균변화율을 구하고 cos(π/3)과 비교하라."},
+            {"type":"thinking","title":"Socratic 질문","text":"계산값이 1/2와 다르면 사인함수의 도함수가 cos(x)라는 사실이 틀린 것일까? h의 크기를 확인해 보자."},
+            {"type":"hint","title":"힌트","text":"sin(π/3)≈0.8660, sin(π/3+0.1)≈0.9116이다. 함수값의 차를 0.1로 나누자."},
+            {"type":"answer","title":"정답 확인","text":"평균변화율은 약 0.455902(소수 셋째 자리 반올림 0.456)다. cos(π/3)=0.5와는 다르지만 h가 유한한 값이기 때문이다. h→0일 때 평균변화율의 극한이 순간변화율 0.5다."},
+            {"type":"checklist","title":"마무리","items":["각 입력은 라디안이다.","평균변화율과 순간변화율을 구별한다.","h=0 대입이 아니라 h→0 극한을 해석한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

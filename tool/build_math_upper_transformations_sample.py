@@ -1,0 +1,55 @@
+"""Create a focused 2015 Math (Upper) coordinate transformation subunit draft."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
+OUTPUT = MANUSCRIPTS / "수학상_2015개정_초안"
+TAGS = ["수학(상)", "2015 개정", "도형의 방정식", "도형의 이동", "평행이동", "대칭이동", "신규 시범", "공식 코드 대조 전"]
+
+
+def main() -> None:
+    pages = [
+        {"id": "math-upper-transformations-opening", "template": "opening", "title": "좌표를 옮기거나 뒤집으면 어디로 갈까?", "kicker": "평행이동과 대칭이동", "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "점 P(−1,4)를 오른쪽으로 3, 아래로 2만큼 옮기면 어디에 놓일까요?"},
+            {"type": "thinking", "title": "좌표별 변화", "text": "가로 이동은 x좌표, 세로 이동은 y좌표에 각각 어떻게 반영되는지 생각해 보세요."},
+            {"type": "answer", "title": "확인", "text": "x좌표에 3을 더하고 y좌표에서 2를 빼므로 P′=(2,2)입니다."},
+        ]},
+        {"id": "math-upper-transformations-concept", "template": "concept", "title": "평행이동과 대칭은 좌표 규칙으로 나타낸다", "kicker": "점 (x,y)의 이동", "blocks": [
+            {"type": "definition", "title": "이동 규칙", "text": "점 (x,y)를 평행이동하면 (x+a,y+b)가 됩니다. x축 대칭은 (x,−y), y축 대칭은 (−x,y), 원점 대칭은 (−x,−y)입니다."},
+            {"type": "solutionStep", "title": "규칙 적용", "items": ["평행이동은 가로·세로 변화량을 해당 좌표에 더합니다.", "x축 대칭은 y좌표의 부호를 바꿉니다.", "y축 대칭은 x좌표의 부호를 바꾸고, 원점 대칭은 두 좌표의 부호를 바꿉니다."]},
+            {"type": "misconception", "title": "대칭축에 따라 바뀌는 좌표", "text": "x축 대칭에서 x좌표를 바꾸거나 y축 대칭에서 y좌표를 바꾸지 않도록 축의 위치를 확인하세요."},
+        ]},
+        {"id": "math-upper-transformations-example", "template": "example", "title": "한 점을 여러 방향으로 이동하기", "kicker": "P(2,−3)", "blocks": [
+            {"type": "question", "title": "예제", "text": "P(2,−3)을 x축 대칭, y축 대칭, 원점 대칭한 점의 좌표를 각각 구하세요."},
+            {"type": "solutionStep", "title": "풀이", "items": ["x축 대칭은 y좌표 부호를 바꾸어 (2,3)입니다.", "y축 대칭은 x좌표 부호를 바꾸어 (−2,−3)입니다.", "원점 대칭은 두 좌표 부호를 바꾸어 (−2,3)입니다."]},
+            {"type": "answer", "title": "답", "text": "x축 대칭 (2,3), y축 대칭 (−2,−3), 원점 대칭 (−2,3)"},
+        ]},
+        {"id": "math-upper-transformations-practice", "template": "practice", "title": "평행이동과 대칭이동 연습", "kicker": "좌표 규칙을 적용", "blocks": [
+            {"type": "question", "title": "문제", "text": "점 A(−2,5)를 오른쪽으로 4, 아래로 3만큼 평행이동한 뒤 원점 대칭한 점의 좌표를 구하세요."},
+            {"type": "thinking", "title": "생각 순서", "text": "먼저 (x+4,y−3)을 적용하고, 그 결과의 두 좌표 부호를 바꾸세요."},
+            {"type": "answer", "title": "정답", "text": "평행이동 후 (2,2), 원점 대칭 후 (−2,−2)입니다."},
+            {"type": "checklist", "title": "마무리", "items": ["이동 방향을 좌표 부호에 반영했나요?", "원점 대칭에서 두 좌표 부호를 바꾸었나요?"]},
+        ]},
+    ]
+    book = {"title": "수학(상) 2015 개정 · 도형의 이동 시범", "subtitle": "태그 기반 신규 소단원 초안", "category": "concept_textbook", "tags": TAGS, "chapters": [{"title": "좌표평면에서 평행이동과 대칭이동", "pages": pages}], "metadata": {"status": "authored_partial_draft", "edition_status": "editorial_split_candidate", "standard_code_status": "not_crosschecked"}}
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    filename = "수학상_2015개정_도형의이동_BookData_초안.json"
+    target = OUTPUT / filename
+    target.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    verified = json.loads(target.read_text(encoding="utf-8"))
+    if len(verified["chapters"][0]["pages"]) != 4 or len({page["id"] for page in pages}) != len(pages):
+        raise RuntimeError("Generated draft structure or page IDs are invalid")
+    readme_path = OUTPUT / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+    if filename not in readme:
+        readme += f"\n## 도형의 이동\n\n- [{filename}]({filename}): 도입·개념·예제·연습 4쪽\n- 태그: {' · '.join(TAGS)}\n- 성취기준 코드 대조·교사 검수·학생 파일럿은 미완료입니다.\n"
+    readme_path.write_text(readme.rstrip() + "\n", encoding="utf-8")
+    print(f"Created one tagged subunit with {len(pages)} pages.")
+
+
+if __name__ == "__main__":
+    main()

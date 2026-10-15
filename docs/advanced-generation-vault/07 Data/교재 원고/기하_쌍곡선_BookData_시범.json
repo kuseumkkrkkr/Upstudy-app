@@ -1,0 +1,65 @@
+{
+  "title": "기하 개념서 · 두 초점까지 거리의 차",
+  "subtitle": "점과 초점을 움직여 쌍곡선의 거리 차 관찰",
+  "category": "concept_textbook_prototype",
+  "tags": ["기하", "이차곡선", "쌍곡선", "2022 개정", "12기하01-03", "부분 시범", "교사 검수 전"],
+  "curriculum_version": "2022",
+  "standard_codes": ["12기하01-03"],
+  "chapters": [
+    {
+      "title": "두 초점까지의 거리 차로 쌍곡선 이해하기",
+      "intro": [
+        "교육부 공식 기준 [12기하01-03]에 부분 연결한 중심 원점·가로축 표준형 시범이다.",
+        "전체 기준 충족·교사 검수 전이며 승인·판매 콘텐츠가 아니다."
+      ],
+      "sections": [
+        {
+          "title": "초점까지의 거리 차",
+          "paragraphs": [
+            "쌍곡선은 두 초점에서 점까지의 거리 차의 절댓값이 일정한 점들의 모임이다.",
+            "가로축 표준형에서 c=√(a²+b²), 오른쪽 가지는 d₁−d₂=2a, 왼쪽 가지는 d₂−d₁=2a이다.",
+            "오른쪽 가지의 P=(a cosh u,b sinh u)에서 u가 달라져도 두 거리의 차는 2a로 유지된다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "geometry-hyperbola-opening",
+          "template": "opening",
+          "title": "두 초점까지 거리의 차는 왜 일정할까?",
+          "kicker": "합이 아닌 차를 생각하기",
+          "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "두 초점에서 점까지 거리의 차를 일정하게 하면 어떤 자취가 될까요?"},
+            {"type": "thinking", "title": "먼저 예상하기", "text": "오른쪽 가지에서 왼쪽 초점과 오른쪽 초점 중 어느 쪽이 P에 더 가까울까요?"}
+          ]
+        },
+        {
+          "id": "geometry-hyperbola-experiment",
+          "template": "experiment",
+          "title": "a·b·u를 바꾸어 거리 차 확인하기",
+          "kicker": "가로축 가지의 점과 두 초점 비교",
+          "blocks": [
+            {"type": "lead", "title": "조작 안내", "text": "a와 b를 정하면 c=√(a²+b²)로 두 초점이 정해집니다. u를 바꾸어 오른쪽 가지의 P를 움직이세요."},
+            {"type": "visual", "title": "초점과 거리선", "text": "F₁=(−c,0), F₂=(c,0), P=(a cosh u,b sinh u)입니다. P에서 각 초점까지의 거리를 표시하고 d₁−d₂를 계산합니다."},
+            {"type": "question", "title": "Socratic 확인", "text": "u가 변하면 d₁과 d₂는 어떻게 달라지고, 오른쪽 가지의 d₁−d₂는 어떤 값으로 유지되나요?"},
+            {"type": "hint", "title": "요청형 힌트", "text": "P가 오른쪽 가지에 있으므로 왼쪽 초점까지 거리가 더 큽니다. 거리 차의 순서를 확인하세요."},
+            {"type": "answer", "title": "확인", "text": "d₁은 왼쪽 초점까지 거리이고 d₂는 오른쪽 초점까지 거리입니다. 오른쪽 가지에서 d₁−d₂=2a입니다."},
+            {"type": "misconception", "title": "오개념 점검", "text": "거리 차를 부호 없이 말할 때는 절댓값을 붙입니다. 오른쪽 가지와 왼쪽 가지에서는 양의 차를 만드는 뺄셈 순서가 서로 반대입니다."}
+          ]
+        },
+        {
+          "id": "geometry-hyperbola-practice",
+          "template": "practice",
+          "title": "초점과 거리 차 계산하기",
+          "kicker": "조작값을 가리고 새 조건 계산",
+          "blocks": [
+            {"type": "question", "title": "연습", "text": "a=3,b=4,u=0일 때 c, 두 초점, 점 P, 두 거리와 거리 차를 구하세요."},
+            {"type": "thinking", "title": "생각 순서", "text": "c²=a²+b²로 초점 간격을 구한 뒤 P=(a cosh u,b sinh u)에 대입하세요."},
+            {"type": "answer", "title": "풀이", "text": "c=5, 초점은 (−5,0),(5,0), P=(3,0)입니다. 거리는 8과 2이므로 차의 절댓값은 6=2a입니다."},
+            {"type": "checklist", "title": "마무리", "items": ["c와 a,b의 관계를 확인한다.", "P가 오른쪽 가지에 있음을 확인한다.", "거리의 차와 거리 차의 절댓값을 구별한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

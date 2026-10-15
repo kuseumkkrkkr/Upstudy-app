@@ -1,0 +1,111 @@
+{
+  "title": "수학Ⅰ 개념서 · 삼각함수 시범",
+  "subtitle": "단위원의 좌표와 사인 그래프를 연결하는 2015 개정 후보 원고 · 성취기준 코드/교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["수학Ⅰ", "삼각함수", "단위원", "호도법", "2015 개정", "시범", "미검수"],
+  "chapters": [
+    {
+      "title": "단위원에서 그래프까지",
+      "intro": [
+        "각 θ를 움직이며 단위원 위 점 P=(cos θ, sin θ)의 좌표와 사인 그래프의 y값을 연결한다.",
+        "2015 개정 수학Ⅰ 시범이다. 코드 표 대조, 교사 검수 및 학생 파일럿은 미완료다."
+      ],
+      "sections": [
+        {
+          "title": "단위원의 좌표로 사인과 코사인 이해하기",
+          "paragraphs": [
+            "반지름이 1인 원을 단위원이라고 한다. 양의 x축에서 반시계 방향으로 θ만큼 회전한 반직선이 단위원과 만나는 점 P의 좌표는 (cos θ, sin θ)다.",
+            "cos θ는 점의 x좌표이고 sin θ는 y좌표다. 좌표의 부호는 점이 놓인 사분면으로 확인할 수 있다.",
+            "호의 길이가 s, 반지름이 r인 원에서 각의 크기는 θ=s/r 라디안이다. 단위원은 r=1이므로 호의 길이와 라디안 값이 같다. 한 바퀴는 2π 라디안, 즉 360°다."
+          ],
+          "visuals": [
+            {"kind":"steps","title":"각 θ와 점 P","caption":"가로좌표는 cos θ, 세로좌표는 sin θ다.","formula":"P=(cos θ, sin θ)","items":["양의 x축에서 반시계 방향으로 회전","단위원과 만나는 점 P를 표시","P의 가로·세로 좌표를 cos θ·sin θ로 읽기","한 바퀴: 360°=2π rad"],"rows":[]}
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id":"m1-trig-opening",
+          "template":"opening",
+          "title":"각을 움직이면 무엇이 바뀔까?",
+          "kicker":"먼저 예측하기",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"각이 회전할 때 단위원의 점과 사인 그래프는 어떻게 연결될까?"},
+            {"type":"thinking","title":"예측","text":"각이 0°에서 90°로 움직이면 점의 x좌표와 y좌표가 각각 어떻게 변할지 먼저 예상한다."}
+          ]
+        },
+        {
+          "id":"m1-trig-concept",
+          "template":"concept",
+          "title":"단위원의 두 좌표",
+          "kicker":"cos는 가로, sin은 세로",
+          "blocks":[
+            {"type":"definition","title":"정의","text":"단위원 위에서 양의 x축을 기준으로 θ만큼 회전한 점 P의 좌표는 P=(cos θ, sin θ)다."},
+            {"type":"formula","title":"좌표와 함수값","text":"cos θ는 x좌표, sin θ는 y좌표다. 점의 사분면으로 각 값의 부호를 확인한다.","formula":"P=(cos θ, sin θ)"},
+            {"type":"definition","title":"라디안","text":"반지름 r인 원에서 호의 길이가 s인 중심각의 크기는 θ=s/r 라디안이다. 단위원에서는 s=θ이며 360°=2π rad다."},
+            {"type":"misconception","title":"각의 단위","text":"60°와 π/3 rad는 크기가 다른 각이 아니라 같은 회전량을 서로 다른 단위로 표시한 것이다."}
+          ]
+        },
+        {
+          "id":"m1-trig-experiment",
+          "template":"experiment",
+          "title":"원 위의 점과 그래프를 함께 움직이기",
+          "kicker":"조작 → 관찰 → 설명",
+          "blocks":[
+            {"type":"lead","title":"조작 순서","text":"각도 슬라이더를 움직이고 단위원의 점 P와 사인 그래프의 점을 비교한다. 같은 θ에서 그래프의 y값이 점 P의 y좌표와 같은지 확인한다."},
+            {"type":"visual","title":"독립 체험 페이지","text":"수학Ⅰ_삼각함수_단위원과그래프_체험형_시범.html","items":["각도 조절과 도·라디안 동시 표시","단위원의 cos/sin 좌표","사인 그래프의 대응점","15° 단계 이동과 재생/정지"]},
+            {"type":"question","title":"Socratic 질문","text":"점 P가 단위원 아래쪽에 있다. sin θ의 부호는 무엇이며, 그림에서 무엇을 보고 판단했나?"},
+            {"type":"hint","title":"힌트","text":"sin θ는 점 P의 y좌표다. 좌표축 아래쪽에 있는 점의 y좌표 부호를 확인한다."},
+            {"type":"answer","title":"확인","text":"음수다. 점이 x축 아래에 있어 y좌표가 음수이고, sin θ가 그 y좌표이기 때문이다."}
+          ]
+        },
+        {
+          "id":"m1-trig-graph",
+          "template":"concept",
+          "title":"한 바퀴 뒤에 반복되는 그래프",
+          "kicker":"주기 2π",
+          "blocks":[
+            {"type":"graph","title":"기본 사인 그래프","text":"가로축은 라디안이다. 그래프와 단위원 조작의 연결은 독립 HTML에서 확인한다. 앱 그래프 블록은 사인 곡선의 정적 참고 그래프이며 HTML 조작 상태를 공유하지 않는다.","graph":{"items":[{"id":"sine-reference","type":"function","label":"y=sin x","colorHex":"#2457C5","enabled":true,"expression":"sin(x)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-6.2831853072,"right":6.2831853072,"top":1.5,"bottom":-1.5},"parameters":[]}}},
+            {"type":"thinking","title":"주기 설명","text":"θ에서 2π를 더하면 한 바퀴 회전해 같은 점에 도착한다. 따라서 sin(θ+2π)=sin θ다."}
+          ]
+        },
+        {
+          "id":"m1-trig-example",
+          "template":"example",
+          "title":"제3사분면에서 부호 판단하기",
+          "kicker":"기준각과 사분면",
+          "blocks":[
+            {"type":"question","title":"예제","text":"sin 210°와 cos 210°의 부호를 판단하고 값을 구한다."},
+            {"type":"solutionStep","title":"기준각","text":"210°=180°+30°이므로 기준각은 30°이고 점은 제3사분면에 있다."},
+            {"type":"solutionStep","title":"좌표의 부호","text":"제3사분면에서는 x좌표와 y좌표가 모두 음수다."},
+            {"type":"answer","title":"결과","text":"cos 210°=−√3/2, sin 210°=−1/2다."},
+            {"type":"verification","title":"도구로 확인","text":"HTML에서 210°를 설정하고 단위원 점의 좌표 부호와 그래프 y값을 대조한다."}
+          ]
+        },
+        {
+          "id":"m1-trig-practice",
+          "template":"practice",
+          "title":"각의 단위·부호·주기 연습",
+          "kicker":"도구 없이 먼저 풀기",
+          "blocks":[
+            {"type":"question","title":"1번","text":"150°에서 sin 값의 부호를 사분면으로 설명한다."},
+            {"type":"question","title":"2번","text":"π/3 rad를 도 단위로 바꾼다."},
+            {"type":"question","title":"3번","text":"sin 390°와 sin 30°가 같은 이유를 주기로 설명한다."},
+            {"type":"hint","title":"힌트","text":"각이 놓인 사분면, 180°=π rad, 한 바퀴 회전 360°=2π rad를 차례로 확인한다."},
+            {"type":"answer","title":"정답","text":"1. 제2사분면이므로 양수. 2. 60°. 3. 390°=360°+30°이므로 같은 단위원 점을 가리킨다."}
+          ]
+        },
+        {
+          "id":"m1-trig-summary",
+          "template":"summary",
+          "title":"좌표로 다시 설명하기",
+          "kicker":"핵심 회상",
+          "blocks":[
+            {"type":"summary","title":"한 줄 정리","text":"단위원 위 P=(cos θ, sin θ). cos θ는 가로좌표, sin θ는 세로좌표이며 한 바퀴마다 값이 반복된다."},
+            {"type":"checklist","title":"스스로 확인","items":["sin과 cos를 각각 좌표로 설명한다.","각의 사분면에서 sin·cos 부호를 판단한다.","도와 라디안의 관계를 변환한다.","sin의 주기를 단위원의 회전으로 설명한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

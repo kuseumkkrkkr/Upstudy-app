@@ -1,0 +1,70 @@
+{
+  "title": "미적분Ⅰ 개념서 · 미분가능성과 연속성",
+  "subtitle": "끊기지 않는 그래프와 하나로 정해지는 기울기를 구분하기",
+  "category": "concept_textbook_prototype",
+  "tags": ["미적분Ⅰ", "미분가능성", "연속성", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-02"],
+  "chapters": [
+    {
+      "title": "연속이면 언제나 미분가능할까?",
+      "intro": [
+        "f(x)=x²과 f(x)=|x|를 같은 기준점에서 비교한다. 기준점과 간격을 바꾸어 왼쪽·오른쪽 할선 기울기가 어떤 값에 가까워지는지 관찰한다.",
+        "핵심은 그래프가 끊기지 않는 것과 좌우 기울기가 한 값으로 모이는 것을 구분하는 것이다. 이 시범은 성취기준 후보이며 교사 검수와 공식 원문 대조 전이다."
+      ],
+      "sections": [
+        {
+          "title": "연속성과 미분가능성은 다른 질문",
+          "paragraphs": [
+            "연속성은 함수값이 주변에서 끊김 없이 이어지는지 묻는다. 미분가능성은 한 점에서 차분몫의 극한, 즉 하나의 순간 기울기가 정해지는지 묻는다.",
+            "미분가능하면 연속이지만, 연속이라고 해서 미분가능한 것은 아니다. f(x)=|x|의 x=0은 이 역이 성립하지 않는 대표 반례다.",
+            "|x|에서 a=0일 때 h>0의 차분몫은 1, h<0의 차분몫은 −1이다. 좌우 값이 다르므로 미분계수는 존재하지 않지만 함수는 0에서 연속이다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"parabola","type":"function","label":"f(x)=x²","colorHex":"#2457C5","enabled":true,"expression":"x^2"},
+              {"id":"absolute","type":"function","label":"g(x)=|x|","colorHex":"#C2410C","enabled":true,"expression":"abs(x)"}
+            ],
+            "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-3,"right":3,"top":5,"bottom":-1}}
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"calc1-differentiability-opening",
+          "template":"opening",
+          "title":"이어지는 그래프에 모서리가 있을까?",
+          "kicker":"먼저 예상하고 이유를 남기기",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"f(x)=|x|는 x=0에서 연속이다. 그렇다면 그 점의 접선 기울기도 하나로 정해질까? 도구를 열기 전에 예상과 이유를 한 문장으로 적어 보자."},
+            {"type":"thinking","title":"두 질문을 분리","text":"함수값이 주변에서 이어지는가? 왼쪽과 오른쪽의 기울기는 같은 값에 가까워지는가? 각각 따로 답해 보자."}
+          ]
+        },
+        {
+          "id":"calc1-differentiability-experiment",
+          "template":"experiment",
+          "title":"왼쪽·오른쪽 할선 기울기 비교",
+          "kicker":"같은 기준점에서 두 함수를 비교",
+          "blocks":[
+            {"type":"lead","title":"실험","text":"함수 x² 또는 |x|를 고르고 a와 h를 조절한다. h는 0이 아닌 값만 사용한다. h>0과 h<0에서 할선 기울기가 같은 값으로 가까워지는지 비교한다."},
+            {"type":"graph","title":"움직이는 점과 기울기","text":"HTML 시범 도구는 y=f(x), 기준점 (a,f(a)), 이동점 (a+h,f(a+h))와 할선을 표시한다. |x|, a=0에서는 오른쪽 기울기 1, 왼쪽 기울기 −1이다. x², a=0에서는 양쪽 기울기가 0에 가까워진다.","graph":{"items":[{"id":"parabola","type":"function","label":"x²","colorHex":"#2457C5","enabled":true,"expression":"x^2"},{"id":"absolute","type":"function","label":"|x|","colorHex":"#C2410C","enabled":true,"expression":"abs(x)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-3,"right":3,"top":5,"bottom":-1}}}},
+            {"type":"question","title":"Socratic 질문","text":"|x|의 그래프가 이어진다는 사실만으로 좌우 기울기가 같다고 결론 내릴 수 있을까? a=0, h=±0.1을 비교해 근거를 말해 보자."},
+            {"type":"verification","title":"관찰 확인","text":"|x|는 0에서 연속이지만 좌우 차분몫이 1과 −1로 달라 미분가능하지 않다. x²는 0에서 좌우 차분몫이 모두 0으로 모인다."},
+            {"type":"misconception","title":"역은 자동으로 따라오지 않음","text":"미분가능하면 연속이다. 그러나 연속이면 미분가능하다는 역은 |x|의 0에서 성립하지 않는다."}
+          ]
+        },
+        {
+          "id":"calc1-differentiability-practice",
+          "template":"practice",
+          "title":"도구 없이 판정하기",
+          "kicker":"좌우 계산과 논리 방향 확인",
+          "blocks":[
+            {"type":"question","title":"연습","text":"g(x)=|x−2|는 x=2에서 연속인가, 미분가능한가? 두 판단을 각각 설명하라."},
+            {"type":"thinking","title":"Socratic 발판","text":"h>0과 h<0에서 [g(2+h)−g(2)]/h를 따로 계산하면 어떤 값이 나오는가? 함수값 자체는 2 근처에서 어디로 가는가?"},
+            {"type":"hint","title":"힌트","text":"g(2)=0이다. h>0이면 |h|=h, h<0이면 |h|=−h임을 사용한다."},
+            {"type":"answer","title":"정답 확인","text":"연속이다. 함수값 |x−2|는 x→2일 때 0에 가까워진다. 하지만 오른쪽 차분몫은 1, 왼쪽은 −1이므로 미분가능하지 않다."},
+            {"type":"checklist","title":"마무리","items":["미분가능이면 연속이라는 방향을 설명한다.","연속이지만 미분가능하지 않은 반례를 좌우 기울기로 설명한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

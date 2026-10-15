@@ -1,0 +1,77 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 문자를 사용한 식",
+  "subtitle": "[9수02-01] 교육부 원문 대조표 문구 · 문자식/표/그래프 체험 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "문자와 식", "문자를 사용한 식", "9수02-01", "부분 시범", "교육부 원문 문구 대조 완료", "학기 미지정", "교사 검수 전"],
+  "chapters": [
+    {
+      "title": "문자를 사용해 여러 상황을 한 식으로",
+      "intro": [
+        "문자는 상황에 따라 달라지는 양을 간단한 기호로 나타내어 여러 경우를 한 식으로 표현하게 한다.",
+        "처음 수량 b와 한 사람마다 더하는 수 k, 사람 수 x가 있을 때 전체는 b+kx다.",
+        "2015 개정 중학교 수학 [9수02-01] 원문 대조표 기반 시범이다. 학년·학기 미지정, 교사 검수 전이다."
+      ],
+      "sections": [
+        {
+          "title": "변하는 수와 고정한 수 구분하기",
+          "paragraphs": [
+            "x는 참여자 수처럼 변하는 양이다. b는 처음 수량, k는 한 사람마다 늘어나는 양으로 이 상황에서 정해 둔 값이다.",
+            "k를 x번 더하면 kx다. 처음 수량 b를 더한 전체 식은 b+kx다.",
+            "곱셈 기호를 생략한 kx는 k+x가 아니라 k×x다. x=0을 대입하면 처음 수량 b만 남는다."
+          ]
+        },
+        {
+          "title": "식과 그래프 연결하기",
+          "paragraphs": [
+            "b와 k를 고정하면 x가 바뀔 때 전체 y=b+kx가 어떻게 변하는지 표와 그래프에서 볼 수 있다.",
+            "그래프는 변화 관계를 시각적으로 살피는 도구다. 정확한 식과 대입 계산은 문자식으로 확인한다."
+          ],
+          "graph": {
+            "items": [{"id":"group-total","type":"function","label":"y=b+kx","colorHex":"#2457C5","enabled":true,"expression":"b+k*x"}],
+            "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":0,"right":12,"top":70,"bottom":0},"parameters":[{"id":"b","label":"처음 수량 b","value":2,"min":0,"max":10,"step":1},{"id":"k","label":"한 사람마다 k","value":3,"min":0,"max":5,"step":1}]}
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms-2015-expression-opening",
+          "template": "opening",
+          "title": "여러 상황을 한 식으로 나타내기",
+          "kicker": "변하는 양에 문자 붙이기",
+          "blocks": [
+            {"type":"lead","title":"오늘의 질문","text":"처음 스티커 b장에 참여자 한 명마다 k장을 더한다. 참여자가 x명일 때 전체를 한 식으로 나타낼 수 있을까요?"},
+            {"type":"thinking","title":"먼저 생각하기","text":"참여자가 1명, 2명, 5명일 때 각각 써 본 뒤 반복되는 부분을 찾아보세요."},
+            {"type":"answer","title":"확인","text":"한 사람마다 k장을 x번 더하므로 kx장이고, 처음 있던 b장을 합하면 b+kx장입니다."}
+          ]
+        },
+        {
+          "id": "ms-2015-expression-experiment",
+          "template": "experiment",
+          "title": "문자·표·그래프 함께 움직이기",
+          "kicker": "기존 그래프 모듈과 독립 HTML 체험",
+          "blocks": [
+            {"type":"lead","title":"체험 도구","text":"처음 수량 b, 1인당 수량 k, 참여자 수 x를 조절하며 반복 덧셈·문자식·표·그래프를 연결합니다."},
+            {"type":"thinking","title":"관찰","text":"x만 바꾸면 y=b+kx에서 어느 부분이 바뀌나요? x=0일 때는 어떤 값이 남나요?"},
+            {"type":"question","title":"Socratic 질문","text":"x=4일 때 k를 네 번 더한 값은 왜 4k이며, k+4와 어떻게 다를까요?"},
+            {"type":"hint","title":"힌트","text":"k+k+k+k를 곱셈으로 간단히 나타내 보세요."},
+            {"type":"answer","title":"확인","text":"k+k+k+k=4k이므로 전체는 b+4k입니다. x=0이면 b+k×0=b입니다."},
+            {"type":"misconception","title":"기호 읽기","text":"kx는 k+x가 아니라 k×x입니다. 곱셈 기호를 생략한 표기입니다."}
+          ]
+        },
+        {
+          "id": "ms-2015-expression-practice",
+          "template": "practice",
+          "title": "상황을 문자식으로 만들고 대입하기",
+          "kicker": "새 상황에 전이",
+          "blocks": [
+            {"type":"question","title":"문제","text":"상자에 처음 c자루가 있고, 한 묶음마다 m자루씩 n묶음을 더한다. 전체 연필 수를 식으로 나타내고 c=2, m=4, n=3일 때 값을 구하세요."},
+            {"type":"thinking","title":"생각 순서","text":"처음 수량과 반복해서 더하는 수량을 분리한 뒤, 반복 횟수를 문자로 쓰세요."},
+            {"type":"hint","title":"힌트","text":"m이 n번 더해지는 부분은 mn입니다."},
+            {"type":"answer","title":"정답","text":"전체는 c+mn이고, 대입하면 2+4×3=14자루입니다."},
+            {"type":"checklist","title":"마무리","items":["변하는 양과 고정한 양을 구분했다.","반복 덧셈을 곱셈 문자식으로 나타냈다.","문자에 값을 대입하고 상황의 단위를 확인했다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

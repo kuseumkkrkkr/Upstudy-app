@@ -1,0 +1,141 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="2015 개정 수학Ⅰ 삼각함수 시범: 단위원 위 좌표와 사인 그래프의 점을 직접 움직여 연결합니다.">
+  <title>수학Ⅰ 개념서 | 단위원과 사인 그래프</title>
+  <style>
+    :root{color-scheme:light;--ink:#17243a;--muted:#52627a;--line:#d6deea;--paper:#fff;--bg:#f3f6fb;--blue:#2457c5;--orange:#c2410c;--green:#14735b}
+    *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:1040px;margin:auto;padding:18px}
+    header,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}h1{font-size:1.55rem;margin:.15rem 0}h2{font-size:1.12rem;margin:.1rem 0 .65rem}.muted{color:var(--muted)}.eyebrow{font-size:.9rem;color:var(--muted);margin:0}.layout{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(280px,.9fr);gap:14px;align-items:start}
+    .plot{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px}.plot text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}.control{display:grid;grid-template-columns:90px minmax(120px,1fr) 90px;gap:10px;align-items:center;margin:12px 0}.control input{width:100%;accent-color:var(--blue)}output{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.formula{font-size:1.08rem;font-weight:700;font-variant-numeric:tabular-nums}.legend{display:flex;gap:14px;flex-wrap:wrap;font-size:.9rem;color:var(--muted)}.legend span{display:inline-flex;align-items:center;gap:6px}.swatch{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--blue)}.swatch.orange{background:var(--orange)}
+    button{min-height:44px;font:inherit;color:var(--ink);background:#fff;border:1px solid #9aa9bd;border-radius:10px;padding:8px 12px;cursor:pointer}button:hover{background:#f1f5fb}button:focus-visible,input:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap}.feedback{min-height:2.1em;font-weight:650}.choices{display:flex;gap:8px;flex-wrap:wrap}.choices button[aria-pressed=true]{border-color:var(--blue);background:#eaf0ff}.good{color:var(--green)}.bad{color:#a33b20}.practice label{display:block;padding:7px 0}details summary{cursor:pointer;font-weight:700;min-height:44px;padding:8px 0}small{color:var(--muted)}
+    @media(max-width:720px){.wrap{padding:10px}.layout{grid-template-columns:1fr}.card,header{padding:14px}.control{grid-template-columns:76px 1fr 82px}.plot text{font-size:12px}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<main class="wrap">
+  <header>
+    <p class="eyebrow">수학Ⅰ 개념서 · 2015 개정 시범</p>
+    <h1>각을 움직이면 사인과 코사인은 어떻게 바뀔까?</h1>
+    <p>단위원 위 점의 가로좌표는 cos θ, 세로좌표는 sin θ입니다. 한 각을 원과 그래프에서 함께 움직여 확인해 보세요.</p>
+  </header>
+
+  <section class="card" aria-labelledby="experiment-title">
+    <h2 id="experiment-title">단위원과 사인 그래프를 연결하기</h2>
+    <div class="layout">
+      <div>
+        <svg class="plot" viewBox="0 0 360 340" role="img" aria-labelledby="circle-title circle-desc">
+          <title id="circle-title">각 θ가 만드는 단위원 위 점</title>
+          <desc id="circle-desc">반지름 1인 원 위의 점이 움직이고, 점의 가로와 세로 좌표가 cos와 sin으로 표시됩니다.</desc>
+          <circle cx="180" cy="165" r="112" fill="none" stroke="#d6deea" stroke-width="2"/>
+          <path d="M42 165H320M180 28V302" stroke="#64748b" stroke-width="1.5"/>
+          <path id="radius" d="" stroke="#2457c5" stroke-width="3"/>
+          <path id="projection-x" d="" stroke="#c2410c" stroke-width="2" stroke-dasharray="5 4"/>
+          <path id="projection-y" d="" stroke="#14735b" stroke-width="2" stroke-dasharray="5 4"/>
+          <circle id="point" cx="292" cy="165" r="7" fill="#2457c5"/>
+          <text x="310" y="158">x</text><text x="187" y="34">y</text><text id="point-label" x="298" y="148">P</text>
+          <text x="8" y="326">가로 cos θ · 세로 sin θ</text>
+        </svg>
+        <div class="legend" aria-hidden="true"><span><i class="swatch"></i>점 P</span><span><i class="swatch orange"></i>가로좌표</span><span><i class="swatch" style="background:#14735b"></i>세로좌표</span></div>
+      </div>
+      <div>
+        <svg class="plot" viewBox="0 0 500 210" role="img" aria-labelledby="sine-title sine-desc">
+          <title id="sine-title">0도부터 360도까지의 사인 그래프</title>
+          <desc id="sine-desc">현재 각도와 같은 가로 위치에 점을 표시하며 점의 세로값은 단위원 점의 y좌표와 같습니다.</desc>
+          <path d="M34 105H474M34 28V180" stroke="#64748b" stroke-width="1.5"/>
+          <path d="M34 35V175M144 35V175M254 35V175M364 35V175M474 35V175" stroke="#e7ecf3"/>
+          <path id="sine-curve" d="" fill="none" stroke="#2457c5" stroke-width="3"/>
+          <path id="graph-guide" d="" stroke="#c2410c" stroke-dasharray="5 4"/>
+          <circle id="graph-point" cx="34" cy="105" r="6" fill="#c2410c"/>
+          <text x="27" y="198">0°</text><text x="132" y="198">90°</text><text x="239" y="198">180°</text><text x="349" y="198">270°</text><text x="455" y="198">360°</text>
+          <text x="4" y="40">1</text><text x="8" y="111">0</text><text x="1" y="179">−1</text>
+        </svg>
+        <p id="coordinates" class="formula" aria-live="polite">θ=0° = 0 rad · cos θ=1 · sin θ=0</p>
+        <p id="relation" class="muted" aria-live="polite">그래프 점의 y값과 원 위 점의 세로좌표를 비교하세요.</p>
+        <label class="control" for="angle"><span>각도 θ</span><input id="angle" type="range" min="0" max="360" step="15" value="0" aria-describedby="angle-help"><output id="angle-out" for="angle">0°</output></label>
+        <small id="angle-help">슬라이더 또는 키보드 방향키로 15°씩 조절합니다.</small>
+        <div class="actions" style="margin-top:12px"><button id="prev" type="button">이전 각 −15°</button><button id="next" type="button">다음 각 +15°</button><button id="play" type="button">한 바퀴 재생</button><button id="reset" type="button">0°로</button></div>
+        <p id="motion-note" class="muted" aria-live="polite"></p>
+      </div>
+    </div>
+  </section>
+
+  <section class="card" aria-labelledby="socratic-title">
+    <h2 id="socratic-title">질문으로 이유 찾기</h2>
+    <p id="socratic-question">1 / 2 · sin θ는 단위원 위 점 P의 어느 좌표일까요?</p>
+    <div id="socratic-choices" class="choices" role="group" aria-label="질문 답 선택"></div>
+    <p id="socratic-feedback" class="feedback" aria-live="polite">답을 고르면 필요한 힌트를 받을 수 있습니다.</p>
+    <button id="socratic-reset" type="button">질문 처음부터</button>
+  </section>
+
+  <section class="card practice" aria-labelledby="practice-title">
+    <h2 id="practice-title">새 조건에 적용하기</h2>
+    <p>sin 390°와 sin 30°는 같은 값일까요?</p>
+    <label><input type="radio" name="practice" value="same"> 같다. 한 바퀴 뒤 같은 점으로 돌아온다.</label>
+    <label><input type="radio" name="practice" value="different"> 다르다. 각의 숫자가 다르면 함수값도 다르다.</label>
+    <label><input type="radio" name="practice" value="zero"> 둘 다 0이다.</label>
+    <button id="check-practice" type="button">답 확인</button>
+    <p id="practice-feedback" class="feedback" aria-live="polite"></p>
+    <details><summary>풀이와 추가 연습 보기</summary><p>390°=360°+30°이므로 두 각은 단위원에서 같은 점을 가리킵니다. sin 390°=sin 30°=1/2입니다.</p><p>추가 연습: 330°와 −30°가 같은 점을 가리키는 이유를 회전 방향으로 설명하세요.</p></details>
+  </section>
+
+  <footer class="card"><strong>학습 범위 메모</strong><p class="muted">이 시범은 단위원을 이용한 삼각함수의 정의, 도·라디안 연결, 기본 사인 그래프까지입니다. 사인법칙·코사인법칙은 후속 활동이며 이 페이지에는 포함하지 않았습니다. 입력·응답은 저장되지 않습니다.</p></footer>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const angle=document.getElementById('angle'), angleOut=document.getElementById('angle-out');
+  const circle={cx:180,cy:165,r:112}, graph={left:34,width:440,mid:105,amp:70};
+  const fmt=n=>{const v=Math.round(n*1000)/1000;return Object.is(v,-0)?'0':String(v)};
+  function radLabel(deg){if(deg===0)return '0';const g=(a,b)=>b?g(b,a%b):a;const d=g(deg,180),num=deg/d,den=180/d;return `${num===1?'':num+' '}π${den===1?'':'/'+den}`}
+  function update(){
+    const deg=Number(angle.value),rad=deg*Math.PI/180,c=Math.cos(rad),s=Math.sin(rad);
+    const px=circle.cx+circle.r*c,py=circle.cy-circle.r*s;
+    document.getElementById('point').setAttribute('cx',px);document.getElementById('point').setAttribute('cy',py);
+    document.getElementById('radius').setAttribute('d',`M${circle.cx} ${circle.cy}L${px} ${py}`);
+    document.getElementById('projection-x').setAttribute('d',`M${circle.cx} ${circle.cy}L${px} ${circle.cy}`);
+    document.getElementById('projection-y').setAttribute('d',`M${px} ${circle.cy}L${px} ${py}`);
+    const label=document.getElementById('point-label');label.setAttribute('x',px+(c>=0?9:-25));label.setAttribute('y',py+(s>=0?-10:18));
+    const gx=graph.left+graph.width*deg/360,gy=graph.mid-graph.amp*s;
+    document.getElementById('graph-point').setAttribute('cx',gx);document.getElementById('graph-point').setAttribute('cy',gy);
+    document.getElementById('graph-guide').setAttribute('d',`M${gx} 105V${gy}`);
+    angleOut.value=`${deg}°`;
+    document.getElementById('coordinates').textContent=`θ=${deg}° = ${radLabel(deg)} rad · cos θ≈${fmt(c)} · sin θ≈${fmt(s)}`;
+    document.getElementById('relation').textContent=`원 위 점의 y좌표 ${fmt(s)} = 그래프 y값 ${fmt(s)}`;
+    document.getElementById('circle-desc').textContent=`각 ${deg}도에서 점 P의 좌표는 (${fmt(c)}, ${fmt(s)})이며 가로좌표가 cos, 세로좌표가 sin입니다.`;
+    document.getElementById('sine-desc').textContent=`현재 ${deg}도에 해당하는 사인 그래프 점의 y값은 ${fmt(s)}입니다.`;
+  }
+  let timer=null;
+  function stop(){if(timer){clearInterval(timer);timer=null}document.getElementById('play').textContent='한 바퀴 재생'}
+  function move(delta){angle.value=String(Math.max(0,Math.min(360,Number(angle.value)+delta)));update()}
+  const curve=[];for(let i=0;i<=120;i++){const x=graph.left+graph.width*i/120,deg=360*i/120,y=graph.mid-graph.amp*Math.sin(deg*Math.PI/180);curve.push(`${i?'L':'M'}${x.toFixed(1)} ${y.toFixed(1)}`)}
+  document.getElementById('sine-curve').setAttribute('d',curve.join(' '));
+  angle.addEventListener('input',()=>{stop();update()});
+  document.getElementById('prev').addEventListener('click',()=>{stop();move(-15)});
+  document.getElementById('next').addEventListener('click',()=>{stop();move(15)});
+  document.getElementById('reset').addEventListener('click',()=>{stop();angle.value='0';update()});
+  document.getElementById('play').addEventListener('click',()=>{
+    if(timer){stop();return}
+    if(matchMedia('(prefers-reduced-motion: reduce)').matches){document.getElementById('motion-note').textContent='움직임 감소 설정이 켜져 있어 자동 재생하지 않습니다. 이전/다음 버튼이나 각도 슬라이더를 사용하세요.';return}
+    document.getElementById('motion-note').textContent='15°씩 이동 중입니다. 재생 버튼을 다시 누르면 멈춥니다.';
+    if(Number(angle.value)>=360){angle.value='0';update()}
+    document.getElementById('play').textContent='정지';timer=setInterval(()=>{if(Number(angle.value)>=360){stop();document.getElementById('motion-note').textContent='한 바퀴를 마쳤습니다. 0°와 360°의 좌표를 비교해 보세요.';return}move(15)},450)
+  });
+
+  const questions=[
+    {prompt:'1 / 2 · sin θ는 단위원 위 점 P의 어느 좌표일까요?',options:[['x','가로좌표 x'],['y','세로좌표 y'],['r','반지름'],],answer:'y',hint:'점 P의 세로 위치를 보고, 원점보다 위인지 아래인지 확인하세요.',correct:'맞아요. sin θ는 점 P의 y좌표입니다.'},
+    {prompt:'2 / 2 · θ에 360°를 더하면 단위원의 점은 어떻게 될까요?',options:[['same','같은 점으로 돌아온다'],['opposite','반대편 점으로 간다'],['none','원 위에서 사라진다']],answer:'same',hint:'360°는 한 바퀴 전체의 회전입니다.',correct:'맞아요. 한 바퀴 뒤 같은 점이므로 sin(θ+360°)=sin θ입니다.'}
+  ];
+  let qIndex=0,selected=null;
+  function renderQuestion(){const q=questions[qIndex];document.getElementById('socratic-question').textContent=q?q.prompt:'질문을 모두 마쳤습니다. 각도 도구에서 다른 값을 골라 스스로 설명해 보세요.';const group=document.getElementById('socratic-choices');group.replaceChildren();selected=null;if(!q)return;q.options.forEach(([value,label])=>{const b=document.createElement('button');b.type='button';b.textContent=label;b.setAttribute('aria-pressed','false');b.addEventListener('click',()=>{selected=value;group.querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',String(x===b))) });group.append(b)})}
+  document.getElementById('socratic-choices').addEventListener('click',e=>{if(!(e.target instanceof HTMLButtonElement))return;const q=questions[qIndex];if(!q)return;const out=document.getElementById('socratic-feedback');if(!selected){out.className='feedback bad';out.textContent='먼저 답을 선택해 보세요.';return}if(selected!==q.answer){out.className='feedback bad';out.textContent=q.hint;return}out.className='feedback good';out.textContent=q.correct;qIndex++;setTimeout(renderQuestion,650)});
+  document.getElementById('socratic-reset').addEventListener('click',()=>{qIndex=0;renderQuestion();const out=document.getElementById('socratic-feedback');out.className='feedback';out.textContent='답을 고르면 필요한 힌트를 받을 수 있습니다.'});
+  document.getElementById('check-practice').addEventListener('click',()=>{const choice=document.querySelector('input[name="practice"]:checked'),out=document.getElementById('practice-feedback');if(!choice){out.className='feedback bad';out.textContent='답을 하나 고른 뒤 확인하세요.';return}const correct=choice.value==='same';out.className=`feedback ${correct?'good':'bad'}`;out.textContent=correct?'맞아요. 390°는 30°에서 한 바퀴 더 돈 각이므로 같은 함수값입니다.':'한 바퀴 회전은 같은 점으로 돌아옵니다. 390°를 360°+30°으로 나눠 보세요.'});
+  update();renderQuestion();
+})();
+</script>
+</body>
+</html>

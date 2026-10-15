@@ -1,0 +1,81 @@
+{
+  "title": "기하 개념서 · 포물선의 초점과 준선",
+  "subtitle": "정의에서 방정식까지 직접 움직여 확인하는 시범",
+  "category": "concept_textbook_prototype",
+  "tags": ["기하", "이차곡선", "포물선", "2022 개정", "12기하01-01", "부분 시범", "교사 검수 전"],
+  "curriculum_version": "2022",
+  "standard_codes": ["12기하01-01"],
+  "chapters": [
+    {
+      "title": "초점과 준선까지의 거리가 같은 점",
+      "intro": [
+        "포물선의 거리 정의를 좌표와 방정식으로 연결한다.",
+        "교육부 공식 기준 [12기하01-01]에 부분 연결한 시범이며, 전체 기준 충족·교사 검수 전으로 판매·배포용이 아니다."
+      ],
+      "sections": [
+        {
+          "title": "거리 조건에서 포물선 식 만들기",
+          "paragraphs": [
+            "초점 F(0,p), 준선 y=-p에서 같은 거리에 있는 점 P(x,y)를 생각한다. 위쪽 가지에서는 y≥0이다.",
+            "PF=d(P,y=-p)이므로 √(x²+(y-p)²)=|y+p|이다. 제곱근과 절댓값은 모두 0 이상이므로 양변을 제곱해도 동치가 유지된다.",
+            "x²+(y-p)²=(y+p)²을 전개하면 x²=4py이다. p>0이므로 y=x²/(4p)≥0이고, 따라서 |y+p|=y+p이다. 이 식은 거리 정의와 동치이며 꼭짓점은 (0,0), 초점은 (0,p), 준선은 y=-p이다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"focus-directrix-parabola","type":"function","label":"포물선 y=x²/(4p)","colorHex":"#315DA8","enabled":true,"expression":"x*x/(4*p)"}
+            ],
+            "settings": {
+              "showAxes": true,
+              "showGrid": true,
+              "lockViewport": false,
+              "degreeMode": false,
+              "viewport": {"left":-6,"right":6,"top":10,"bottom":-4},
+              "parameters": [
+                {"id":"p","label":"초점 거리 p (p>0)","value":2,"min":0.5,"max":3,"step":0.5}
+              ]
+            }
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"geometry-parabola-opening",
+          "template":"opening",
+          "title":"포물선 위의 점은 어떤 약속을 지킬까?",
+          "kicker":"도입 · 먼저 예상하기",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"포물선 위 점 P를 움직이면 초점 F와 준선 l까지의 거리는 어떻게 변할까?"},
+            {"type":"thinking","title":"예측","text":"P가 초점에서 멀어질 때 준선까지의 거리도 어떻게 되어야 포물선 위에 남을까?"}
+          ]
+        },
+        {
+          "id":"geometry-parabola-experiment",
+          "template":"experiment",
+          "title":"초점·준선·점을 조작하기",
+          "kicker":"실험 · p와 x를 바꾸기",
+          "blocks":[
+            {"type":"lead","title":"실험 안내","text":"p를 바꾸어 포물선의 폭과 초점 위치를 살펴본다. x를 정하면 포물선 식으로 점 P의 y좌표를 계산한다."},
+            {"type":"graph","title":"포물선 그래프","text":"함수 y=x²/(4p)의 형태를 비교한다. 실제 점 P와 초점·준선 거리 측정은 아래 HTML 체험 도구에서 조작한다.","graph":{"items":[{"id":"focus-directrix-parabola","type":"function","label":"포물선 y=x²/(4p)","colorHex":"#315DA8","enabled":true,"expression":"x*x/(4*p)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-6,"right":6,"top":10,"bottom":-4},"parameters":[{"id":"p","label":"초점 거리 p (p>0)","value":2,"min":0.5,"max":3,"step":0.5}]}}},
+            {"type":"question","title":"조작 퀴즈","text":"p=2, x=4로 설정하자. P의 y좌표와 초점까지의 거리를 구하고 준선까지의 거리와 비교하라."},
+            {"type":"verification","title":"검산","text":"y=4²/(4·2)=2, F=(0,2)이므로 PF=4이다. 준선 y=-2까지의 수직 거리는 |2-(-2)|=4로 같다."},
+            {"type":"misconception","title":"정의 범위","text":"같은 거리 조건은 포물선 위 점에 대한 정의다. 평면의 모든 점이 초점·준선에서 같은 거리라는 뜻은 아니다."}
+          ]
+        },
+        {
+          "id":"geometry-parabola-practice",
+          "template":"practice",
+          "title":"거리를 식으로 설명하기",
+          "kicker":"연습 · 계산 뒤 이유 말하기",
+          "blocks":[
+            {"type":"question","title":"독립 연습","text":"p=1, x=2일 때 포물선 위 점 P의 좌표와 초점·준선까지의 거리를 각각 구하라."},
+            {"type":"thinking","title":"먼저 생각하기","text":"포물선 식으로 y를 구한 다음, 점과 초점 사이의 거리 및 점과 수평 준선 사이의 거리를 따로 계산해 보자. 거리 등식의 절댓값과 제곱근은 어떤 공통 성질이 있을까?"},
+            {"type":"hint","title":"Socratic 힌트","text":"거리식은 √(x²+(y-p)²)=|y+p|이다. 제곱근과 절댓값은 각각 0 이상이다. 제곱한 뒤 p>0과 x²≥0을 사용해 y의 부호를 추론하자."},
+            {"type":"answer","title":"정답 확인","text":"P=(2,1), F=(0,1)이므로 PF=2이다. 준선은 y=-1이고 P와의 거리는 |1-(-1)|=2이다. 유도에서는 √(x²+(y-p)²)=|y+p|의 양변이 모두 0 이상이므로 제곱이 동치다. 전개 후 x²=4py이고 p>0이므로 y≥0, 따라서 |y+p|=y+p이다."},
+            {"type":"question","title":"조건 확인 퀴즈","text":"√(x²+(y-p)²)=|y+p|를 제곱해도 동치인 이유는? 정답: 제곱근과 절댓값은 모두 0 이상이므로 양변 제곱이 동치다. 이어서 x²=4py와 p>0에서 y≥0을 얻는다."},
+            {"type":"checklist","title":"마무리","items":["초점과 준선으로 포물선을 정의한다.","y≥0, p>0에서 거리 등식 제곱이 동치임을 설명한다.","거리 조건을 방정식 x²=4py와 연결하고 새 점으로 검산한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

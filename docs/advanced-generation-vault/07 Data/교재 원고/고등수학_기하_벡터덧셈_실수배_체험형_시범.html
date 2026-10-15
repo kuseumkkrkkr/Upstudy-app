@@ -1,0 +1,406 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="2015 개정 기하 범위 중 벡터의 덧셈, 뺄셈, 실수배를 조작해 이해하는 부분 시범">
+  <title>2015 개정 기하 개념서 | 벡터의 덧셈과 실수배</title>
+  <style>
+    :root {
+      color-scheme: light;
+      font-family: system-ui, "Noto Sans KR", sans-serif;
+      color: #18253b;
+      background: #f3f6fa;
+      --ink: #18253b;
+      --muted: #607086;
+      --line: #d8e0e9;
+      --blue: #315da8;
+      --teal: #168b83;
+      --orange: #c45a36;
+      --paper: #fff;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 18px; line-height: 1.6; }
+    main { max-width: 1040px; margin: 0 auto; }
+    header, section { background: var(--paper); border: 1px solid var(--line); border-radius: 16px; padding: clamp(16px, 3vw, 24px); margin-bottom: 14px; }
+    h1, h2 { line-height: 1.3; margin: 0 0 10px; }
+    h1 { font-size: clamp(1.45rem, 4vw, 2.1rem); }
+    h2 { font-size: 1.18rem; }
+    p { margin: 8px 0; }
+    .eyebrow, .muted { color: var(--muted); }
+    .eyebrow { margin: 0 0 6px; font-weight: 700; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(260px, .8fr); gap: 14px; align-items: stretch; }
+    .tool { min-width: 0; }
+    svg { display: block; width: 100%; height: auto; background: #fff; border: 1px solid #e5ebf3; border-radius: 12px; }
+    .grid-line { stroke: #e8edf3; stroke-width: 1; }
+    .axis { stroke: #64748b; stroke-width: 1.8; }
+    .tick-label { fill: #607086; font-size: 12px; }
+    .vector { stroke-width: 4; stroke-linecap: round; transition: x1 .22s, y1 .22s, x2 .22s, y2 .22s; }
+    .u-line { stroke: var(--blue); }
+    .v-line { stroke: var(--teal); }
+    .result-line { stroke: var(--orange); stroke-width: 5; }
+    .guide-line { stroke: #94a3b8; stroke-width: 2; stroke-dasharray: 6 5; }
+    .point { stroke: #fff; stroke-width: 2; }
+    .label { font-size: 14px; font-weight: 750; paint-order: stroke; stroke: #fff; stroke-width: 4px; stroke-linejoin: round; }
+    .controls { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px 16px; margin-top: 14px; }
+    label { display: grid; gap: 4px; font-weight: 650; }
+    select, input[type="range"] { width: 100%; }
+    select { min-height: 44px; border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; background: white; color: var(--ink); font: inherit; }
+    input[type="range"] { accent-color: var(--blue); min-height: 32px; }
+    output { color: var(--blue); font-variant-numeric: tabular-nums; }
+    button { min-height: 44px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 9px 14px; background: white; color: var(--ink); font: inherit; font-weight: 700; cursor: pointer; }
+    button:hover { border-color: var(--blue); background: #f4f7fc; }
+    button:focus-visible, input:focus-visible, select:focus-visible { outline: 3px solid #e5a53b; outline-offset: 2px; }
+    button:disabled { opacity: .5; cursor: not-allowed; }
+    .primary { background: var(--blue); border-color: var(--blue); color: white; }
+    .primary:hover { background: #254a8a; }
+    .actions { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    .metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-top: 12px; }
+    .metric { padding: 10px 12px; border-radius: 10px; background: #f1f5f9; }
+    .metric strong { display: block; font-size: 1.08rem; font-variant-numeric: tabular-nums; }
+    .step-card { min-height: 210px; padding: 16px; border-radius: 12px; background: #f1f5f9; }
+    .step-count { color: var(--blue); font-weight: 750; }
+    .status, .feedback { min-height: 1.7em; font-weight: 650; }
+    .status[data-state="correct"], .feedback[data-state="correct"] { color: #176b4a; }
+    .feedback[data-state="wrong"] { color: #a33926; }
+    fieldset { border: 0; padding: 0; margin: 14px 0 0; }
+    legend { font-weight: 750; margin-bottom: 6px; }
+    .choice { display: flex; align-items: flex-start; gap: 10px; padding: 8px 4px; }
+    .choice input { margin-top: 6px; accent-color: var(--blue); }
+    .socratic-prompt { font-weight: 700; }
+    details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font-weight: 750; }
+    .formula { font-family: ui-monospace, "Cascadia Code", monospace; }
+    @media (max-width: 720px) {
+      body { padding: 10px; }
+      .layout { grid-template-columns: 1fr; }
+      .step-card { min-height: 0; }
+    }
+    @media (max-width: 420px) {
+      .controls { grid-template-columns: 1fr; }
+      .metrics { grid-template-columns: 1fr 1fr; }
+      header, section { border-radius: 12px; }
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <p class="eyebrow">2015 개정 기하 개념서 · 벡터 부분 시범</p>
+    <h1>화살표를 더하고, 방향을 바꾸어 보자</h1>
+    <p class="muted">벡터를 조작하기 전에 결과를 먼저 예상하세요. 화살표와 성분 계산이 같은 결과를 가리키는지 확인합니다.</p>
+    <p class="muted">교육과정 범위의 벡터 뜻·연산·성분 중 평면 덧셈·뺄셈·실수배만 다룹니다. 내적·공간 벡터와 세부 성취기준 코드, 교사 검수는 미완료입니다.</p>
+  </header>
+
+  <section class="layout" aria-label="벡터 체험 도구와 단계 설명">
+    <div class="tool">
+      <svg id="plane" viewBox="0 0 640 500" role="img" aria-labelledby="plane-title plane-description">
+        <title id="plane-title">벡터를 조작하는 좌표평면</title>
+        <desc id="plane-description">파란색 u, 청록색 v, 주황색 결과 벡터를 화살표로 표시합니다.</desc>
+        <defs>
+          <marker id="arrow-u" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,4.5 L0,9 z" fill="#315da8"/></marker>
+          <marker id="arrow-v" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,4.5 L0,9 z" fill="#168b83"/></marker>
+          <marker id="arrow-result" markerWidth="9" markerHeight="9" refX="7" refY="4.5" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L9,4.5 L0,9 z" fill="#c45a36"/></marker>
+        </defs>
+        <g id="grid" aria-hidden="true"></g>
+        <line id="x-axis" class="axis" x1="40" x2="600" y1="240" y2="240"/>
+        <line id="y-axis" class="axis" x1="320" x2="320" y1="40" y2="440"/>
+        <g id="ticks" aria-hidden="true"></g>
+        <line id="u-vector" class="vector u-line" marker-end="url(#arrow-u)"/>
+        <line id="v-vector" class="vector v-line" marker-end="url(#arrow-v)"/>
+        <line id="guide-vector" class="guide-line"/>
+        <line id="result-vector" class="vector result-line" marker-end="url(#arrow-result)"/>
+        <circle id="origin-dot" class="point" cx="320" cy="240" r="4" fill="#64748b"/>
+        <circle id="u-point" class="point" r="5" fill="#315da8"/>
+        <circle id="v-point" class="point" r="5" fill="#168b83"/>
+        <text id="u-label" class="label" fill="#315da8">u</text>
+        <text id="v-label" class="label" fill="#168b83">v</text>
+        <text id="result-label" class="label" fill="#a84324">u+v</text>
+      </svg>
+      <div class="controls">
+        <label for="operation">연산
+          <select id="operation">
+            <option value="sum">덧셈 u + v</option>
+            <option value="difference">뺄셈 u − v</option>
+            <option value="scalar">실수배 αu</option>
+          </select>
+        </label>
+        <label for="alpha">실수배 계수 α <output id="alpha-value" for="alpha">2</output>
+          <input id="alpha" type="range" min="-2" max="2" step="0.5" value="2">
+        </label>
+        <label for="ux">u의 x성분 <output id="ux-value" for="ux">3</output>
+          <input id="ux" type="range" min="-3" max="3" step="1" value="3">
+        </label>
+        <label for="uy">u의 y성분 <output id="uy-value" for="uy">1</output>
+          <input id="uy" type="range" min="-3" max="3" step="1" value="1">
+        </label>
+        <label for="vx">v의 x성분 <output id="vx-value" for="vx">1</output>
+          <input id="vx" type="range" min="-3" max="3" step="1" value="1">
+        </label>
+        <label for="vy">v의 y성분 <output id="vy-value" for="vy">2</output>
+          <input id="vy" type="range" min="-3" max="3" step="1" value="2">
+        </label>
+      </div>
+      <div class="metrics" aria-label="현재 벡터 성분">
+        <div class="metric">입력 벡터<strong id="input-values">u=(3,1), v=(1,2)</strong></div>
+        <div class="metric">결과 벡터<strong id="result-values">(4,3)</strong></div>
+        <div class="metric">결과 크기<strong id="result-length">5</strong></div>
+        <div class="metric">화살표 해석<strong id="direction">처음에서 (4,3)까지</strong></div>
+      </div>
+      <p id="tool-status" class="status" aria-live="polite">덧셈: u의 끝에서 v를 시작하고, 처음에서 마지막 점까지 연결합니다.</p>
+    </div>
+
+    <div>
+      <h2>변화를 한 단계씩 보기</h2>
+      <div class="step-card" aria-live="polite" aria-atomic="true">
+        <p id="step-count" class="step-count">1 / 3 · 입력 벡터</p>
+        <p id="step-title"><strong>두 이동을 놓아 보세요</strong></p>
+        <p id="step-copy">u와 v를 조작하고 결과를 먼저 예상합니다. 두 화살표는 원점에서 시작합니다.</p>
+        <p id="step-equation" class="formula">u=(3,1), v=(1,2)</p>
+      </div>
+      <div class="actions">
+        <button id="step-back" type="button" disabled>이전</button>
+        <button id="step-next" class="primary" type="button">다음 단계</button>
+        <button id="step-reset" type="button">처음부터</button>
+      </div>
+      <p class="muted">단계를 넘기기 어려우면 정지 상태로 읽고 슬라이더를 직접 조작해도 됩니다.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>질문으로 이유 찾기</h2>
+    <p id="socratic-count" class="eyebrow">질문 1 / 2</p>
+    <p id="socratic-question" class="socratic-prompt">u−v를 만들 때, v를 어떤 벡터로 바꾸어 u에 더해야 할까요?</p>
+    <div id="socratic-choices" role="group" aria-label="질문 답 선택">
+      <button type="button" data-answer="uv">u+v</button>
+      <button type="button" data-answer="u-negv">u+(−v)</button>
+      <button type="button" data-answer="neguv">(−u)+v</button>
+    </div>
+    <p id="socratic-feedback" class="feedback" aria-live="polite">먼저 뺄셈의 정의를 떠올려 보세요.</p>
+    <div class="actions"><button id="socratic-reset" type="button">질문 처음부터</button></div>
+  </section>
+
+  <section>
+    <h2>결과를 확인하고 새 값에 적용하기</h2>
+    <fieldset>
+      <legend>u=(3,1), v=(1,2)일 때 u−v의 성분은?</legend>
+      <label class="choice"><input type="radio" name="practice" value="a"> (4,3)</label>
+      <label class="choice"><input type="radio" name="practice" value="b"> (2,−1)</label>
+      <label class="choice"><input type="radio" name="practice" value="c"> (−2,1)</label>
+      <button id="practice-check" class="primary" type="button">답 확인</button>
+      <p id="practice-feedback" class="feedback" aria-live="polite"></p>
+    </fieldset>
+    <details>
+      <summary>풀이와 새 연습 보기</summary>
+      <p>u−v=(3−1, 1−2)=(2,−1)입니다. 그림에서는 v의 반대 벡터 −v를 u의 끝에 붙입니다.</p>
+      <p>새 연습: u=(−2,3), v=(4,−1)일 때 u+v, u−v, −2u를 구하고 각 결과의 방향을 성분 부호로 설명하세요.</p>
+      <p>정답: (2,2), (−6,4), (4,−6). −2u는 u의 반대 방향이고 길이는 2배입니다.</p>
+    </details>
+  </section>
+</main>
+<script>
+(() => {
+  'use strict';
+  const ns = 'http://www.w3.org/2000/svg';
+  const center = 320;
+  const scale = 28;
+  const xy = (x, y) => ({ x: center + x * scale, y: 240 - y * scale });
+  const $ = (id) => document.getElementById(id);
+  const grid = $('grid');
+  const ticks = $('ticks');
+  for (let value = -7; value <= 7; value += 1) {
+    if (value === 0) continue;
+    const vertical = document.createElementNS(ns, 'line');
+    vertical.setAttribute('x1', xy(value, 0).x);
+    vertical.setAttribute('x2', xy(value, 0).x);
+    vertical.setAttribute('y1', 40);
+    vertical.setAttribute('y2', 440);
+    vertical.setAttribute('class', 'grid-line');
+    grid.append(vertical);
+    const horizontal = document.createElementNS(ns, 'line');
+    horizontal.setAttribute('x1', 68);
+    horizontal.setAttribute('x2', 572);
+    horizontal.setAttribute('y1', xy(0, value).y);
+    horizontal.setAttribute('y2', xy(0, value).y);
+    horizontal.setAttribute('class', 'grid-line');
+    grid.append(horizontal);
+    if (value % 2 === 0) {
+      for (const [x, y, text, anchor] of [
+        [xy(value, 0).x, 258, String(value), 'middle'],
+        [310, xy(0, value).y + 4, String(value), 'end'],
+      ]) {
+        const label = document.createElementNS(ns, 'text');
+        label.setAttribute('x', x);
+        label.setAttribute('y', y);
+        label.setAttribute('text-anchor', anchor);
+        label.setAttribute('class', 'tick-label');
+        label.textContent = text;
+        ticks.append(label);
+      }
+    }
+  }
+  const read = (id) => Number($(id).value);
+  const pointText = (x, y) => `(${x}, ${y})`;
+  let step = 0;
+  const steps = [
+    { title: '두 이동을 놓아 보세요', copy: 'u와 v를 조작하고 결과를 먼저 예상합니다. 두 화살표는 원점에서 시작합니다.' },
+    { title: '머리와 꼬리를 이어 보세요', copy: '덧셈·뺄셈에서는 두 번째 화살표를 첫 벡터의 끝으로 옮깁니다. 성분은 같은 자리에 있는 좌표끼리 계산합니다.' },
+    { title: '처음과 마지막을 연결하세요', copy: '주황색 화살표가 합성 결과입니다. 실수배에서는 α의 부호가 방향, |α|가 길이 배율을 정합니다.' },
+  ];
+  function setLine(id, from, to) {
+    const line = $(id);
+    line.setAttribute('x1', from.x); line.setAttribute('y1', from.y);
+    line.setAttribute('x2', to.x); line.setAttribute('y2', to.y);
+  }
+  function setText(id, x, y, value) {
+    const node = $(id);
+    node.setAttribute('x', x + 8); node.setAttribute('y', y - 8);
+    node.textContent = value;
+  }
+  function render() {
+    const ux = read('ux'), uy = read('uy'), vx = read('vx'), vy = read('vy'), alpha = read('alpha');
+    const op = $('operation').value;
+    const u = xy(ux, uy);
+    const origin = xy(0, 0);
+    let result = [ux + vx, uy + vy];
+    let resultLabel = 'u+v';
+    let formula = `(${ux}+${vx}, ${uy}+${vy})`;
+    let guideVisible = true;
+    if (op === 'difference') {
+      result = [ux - vx, uy - vy];
+      resultLabel = 'u−v';
+      formula = `(${ux}−${vx}, ${uy}−${vy})`;
+    } else if (op === 'scalar') {
+      result = [alpha * ux, alpha * uy];
+      resultLabel = 'αu';
+      formula = `${alpha}·(${ux}, ${uy})`;
+    }
+    const resultPoint = xy(result[0], result[1]);
+    const uPoint = xy(ux, uy), vPoint = xy(vx, vy);
+    setLine('u-vector', origin, uPoint);
+    if (op === 'sum') {
+      setLine('v-vector', step === 0 ? origin : uPoint, step === 0 ? vPoint : resultPoint);
+      $('v-vector').style.display = '';
+      $('guide-vector').style.display = 'none';
+    } else if (op === 'difference') {
+      setLine('v-vector', step === 0 ? origin : uPoint, step === 0 ? vPoint : resultPoint);
+      $('v-vector').style.display = '';
+      setLine('guide-vector', origin, xy(-vx, -vy));
+      $('guide-vector').style.display = step === 0 ? 'none' : '';
+    } else {
+      setLine('v-vector', origin, resultPoint);
+      $('v-vector').style.display = step === 0 ? 'none' : '';
+      setLine('guide-vector', origin, uPoint);
+      $('guide-vector').style.display = step === 0 ? 'none' : '';
+    }
+    setLine('result-vector', origin, resultPoint);
+    $('result-vector').style.display = step < 2 ? 'none' : '';
+    $('u-point').setAttribute('cx', uPoint.x); $('u-point').setAttribute('cy', uPoint.y);
+    $('v-point').setAttribute('cx', vPoint.x); $('v-point').setAttribute('cy', vPoint.y);
+    $('v-point').style.display = step === 0 && op !== 'scalar' ? '' : 'none';
+    setText('u-label', uPoint.x, uPoint.y, 'u');
+    const translatedV = op === 'sum' && step > 0 || op === 'difference' && step > 0;
+    const labelPoint = op === 'sum' && translatedV
+      ? xy(ux + vx / 2, uy + vy / 2)
+      : (op === 'difference' && translatedV
+        ? xy(ux - vx / 2, uy - vy / 2)
+        : (op === 'scalar' ? xy(alpha * ux / 2, alpha * uy / 2) : vPoint));
+    const vectorLabel = op === 'difference' ? (step === 0 ? 'v' : '−v') : (op === 'scalar' ? 'αu' : 'v');
+    setText('v-label', labelPoint.x, labelPoint.y, vectorLabel);
+    $('v-label').style.display = op === 'scalar' && step === 0 ? 'none' : '';
+    setText('result-label', resultPoint.x, resultPoint.y, resultLabel);
+    $('result-label').style.display = step < 2 ? 'none' : '';
+    $('alpha').disabled = op !== 'scalar';
+    $('alpha-value').value = String(alpha);
+    for (const id of ['ux', 'uy', 'vx', 'vy']) $(`${id}-value`).value = String(read(id));
+    $('input-values').textContent = `u=${pointText(ux, uy)}, v=${pointText(vx, vy)}`;
+    $('result-values').textContent = pointText(result[0], result[1]);
+    $('result-length').textContent = Math.hypot(...result).toFixed(2).replace(/\.00$/, '');
+    $('direction').textContent = result[0] === 0 && result[1] === 0 ? '영벡터' : `처음에서 ${pointText(result[0], result[1])}까지`;
+    const opText = op === 'sum' ? 'u+v' : (op === 'difference' ? 'u−v=u+(−v)' : `αu, α=${alpha}`);
+    $('tool-status').textContent = `${opText} = ${pointText(result[0], result[1])}. 화살표의 끝점과 성분 계산을 비교하세요.`;
+    const stepTitle = op === 'scalar'
+      ? ['원래 벡터 u', 'α의 부호와 크기', '실수배 결과'][step]
+      : steps[step].title;
+    const stepCopy = op === 'scalar'
+      ? ['u의 끝점과 방향을 확인합니다. α를 움직이기 전 결과를 예상하세요.', 'α가 음수이면 방향이 반대가 되고, |α|가 2이면 길이는 두 배가 됩니다. α=0이면 영벡터입니다.', '주황색 화살표의 성분과 길이를 확인하고, 부호로 방향을 설명하세요.'][step]
+      : steps[step].copy;
+    $('step-title').innerHTML = `<strong>${stepTitle}</strong>`;
+    $('step-copy').textContent = stepCopy;
+    $('step-count').textContent = `${step + 1} / ${steps.length} · ${op === 'scalar' ? '실수배' : (op === 'difference' ? '반대 벡터 이어 붙이기' : '벡터 합성')}`;
+    $('step-equation').textContent = `${opText} = ${formula} = ${pointText(result[0], result[1])}`;
+    $('step-back').disabled = step === 0;
+    $('step-next').disabled = step === steps.length - 1;
+    $('plane-description').textContent = step < 2
+      ? `단계 ${step + 1}: 입력 벡터 u=${pointText(ux, uy)}, v=${pointText(vx, vy)}를 비교합니다.`
+      : `결과 ${resultLabel}=${pointText(result[0], result[1])}. u와 v의 성분 계산과 화살표를 비교합니다.`;
+  }
+  for (const id of ['operation', 'alpha', 'ux', 'uy', 'vx', 'vy']) $(id).addEventListener('input', render);
+  $('step-back').addEventListener('click', () => { step = Math.max(0, step - 1); render(); });
+  $('step-next').addEventListener('click', () => { step = Math.min(steps.length - 1, step + 1); render(); });
+  $('step-reset').addEventListener('click', () => { step = 0; render(); });
+  render();
+
+  let question = 0, wrong = 0;
+  const prompts = [
+    { text: 'u−v를 만들 때, v를 어떤 벡터로 바꾸어 u에 더해야 할까요?', choices: [['uv', 'u+v'], ['u-negv', 'u+(−v)'], ['neguv', '(−u)+v']], answer: 'u-negv', wrong: '뺄셈은 두 번째 벡터의 방향을 그대로 두는 연산일까요?', hint: 'u−v=u+(−v)입니다. v와 크기는 같고 방향이 반대인 벡터를 찾아보세요.', success: '맞아요. v를 −v로 바꾸어 u에 더합니다.' },
+    { text: 'α를 2에서 −2로 바꾸면 αu의 방향과 길이는 어떻게 될까요?', choices: [['same', '같은 방향, 같은 길이'], ['opposite-double', '반대 방향, 두 배 길이'], ['same-double', '같은 방향, 두 배 길이']], answer: 'opposite-double', wrong: '계수의 부호와 절댓값을 따로 살펴보세요.', hint: '음수는 방향을 뒤집고, |−2|=2는 길이를 두 배로 합니다.', success: '맞아요. 방향은 반대가 되고 길이는 두 배입니다.' },
+  ];
+  function renderQuestion() {
+    const prompt = prompts[question];
+    $('socratic-count').textContent = question < prompts.length ? `질문 ${question + 1} / ${prompts.length}` : '질문 마침';
+    $('socratic-question').textContent = prompt ? prompt.text : '이제 다른 성분을 조작하고 u−v와 αu를 직접 설명해 보세요.';
+    const choices = $('socratic-choices');
+    choices.replaceChildren();
+    if (prompt) {
+      for (const [value, label] of prompt.choices) {
+        const button = document.createElement('button');
+        button.type = 'button'; button.dataset.answer = value; button.textContent = label;
+        choices.append(button);
+      }
+      $('socratic-feedback').textContent = wrong >= 2 ? prompt.hint : '답을 고른 뒤 성분과 화살표를 함께 설명해 보세요.';
+      $('socratic-feedback').dataset.state = '';
+    } else {
+      $('socratic-feedback').textContent = '두 질문을 마쳤습니다. 도구를 닫고 새 벡터에 적용해 보세요.';
+      $('socratic-feedback').dataset.state = 'correct';
+    }
+  }
+  $('socratic-choices').addEventListener('click', (event) => {
+    const button = event.target.closest('button[data-answer]');
+    if (!button || !prompts[question]) return;
+    const prompt = prompts[question];
+    if (button.dataset.answer === prompt.answer) {
+      $('socratic-feedback').textContent = prompt.success;
+      $('socratic-feedback').dataset.state = 'correct';
+      wrong = 0;
+      for (const option of $('socratic-choices').querySelectorAll('button')) option.disabled = true;
+      window.setTimeout(() => { question += 1; renderQuestion(); }, 500);
+    } else {
+      wrong += 1;
+      $('socratic-feedback').textContent = wrong >= 2 ? prompt.hint : prompt.wrong;
+      $('socratic-feedback').dataset.state = 'wrong';
+    }
+  });
+  $('socratic-reset').addEventListener('click', () => { question = 0; wrong = 0; renderQuestion(); });
+  renderQuestion();
+
+  $('practice-check').addEventListener('click', () => {
+    const selected = document.querySelector('input[name="practice"]:checked');
+    const feedback = $('practice-feedback');
+    if (!selected) {
+      feedback.textContent = '먼저 답을 선택하세요.';
+      feedback.dataset.state = 'wrong';
+    } else if (selected.value === 'b') {
+      feedback.textContent = '맞아요. u−v=(3−1, 1−2)=(2,−1)입니다.';
+      feedback.dataset.state = 'correct';
+    } else {
+      feedback.textContent = '아직 아니에요. 각 성분에서 v를 빼고, 특히 y성분의 부호를 확인하세요.';
+      feedback.dataset.state = 'wrong';
+    }
+  });
+})();
+</script>
+</body>
+</html>

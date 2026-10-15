@@ -1,0 +1,49 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 연립일차방정식",
+  "subtitle": "두 조건을 소거법·그래프로 연결해 풀기 · 부분 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "문자와 식", "연립일차방정식", "9수02-11", "부분 시범", "교사 검수 전"],
+  "chapters": [{
+    "title": "두 식을 함께 만족하는 순서쌍",
+    "intro": [
+      "연립방정식의 해는 두 식을 모두 참으로 만드는 순서쌍이다.",
+      "계수에 맞춰 한 미지수를 소거하고, 구한 값을 원래 두 식에 대입해 검산한다.",
+      "두 식을 직선으로 그리면 교점과 해의 관계를 연결할 수 있다."
+    ],
+    "sections": [{
+      "title": "소거법과 두 직선의 교점",
+      "paragraphs": [
+        "2x+y=7, x+y=4에서 첫째 식과 둘째 식의 차를 구하면 x=3, y=1이다.",
+        "(3,1)을 두 원래 식에 대입하면 7=7, 4=4로 모두 성립한다.",
+        "일반형 a₁x+b₁y=c₁, a₂x+b₂y=c₂에서 y계수를 맞추어 더하거나 빼면 한 미지수를 없앨 수 있다."
+      ],
+      "graph": {
+        "items": [
+          {"id":"eq-one","type":"function","label":"첫째 식 a₁x+b₁y=c₁","colorHex":"#176B4A","enabled":true,"expression":"(-a1*x+c1)/b1"},
+          {"id":"eq-two","type":"function","label":"둘째 식 a₂x+b₂y=c₂","colorHex":"#B94C2B","enabled":true,"expression":"(-a2*x+c2)/b2"}
+        ],
+        "settings": {
+          "showAxes": true,
+          "showGrid": true,
+          "lockViewport": true,
+          "degreeMode": false,
+          "viewport": {"left":-6,"right":6,"top":8,"bottom":-8},
+          "parameters": [
+            {"id":"a1","label":"첫째 식 x 계수","value":2,"min":-4,"max":4,"step":1},
+            {"id":"b1","label":"첫째 식 y 계수","value":1,"min":1,"max":4,"step":1},
+            {"id":"c1","label":"첫째 식 상수항","value":7,"min":-30,"max":30,"step":1},
+            {"id":"a2","label":"둘째 식 x 계수","value":1,"min":-4,"max":4,"step":1},
+            {"id":"b2","label":"둘째 식 y 계수","value":1,"min":1,"max":4,"step":1},
+            {"id":"c2","label":"둘째 식 상수항","value":4,"min":-30,"max":30,"step":1}
+          ]
+        }
+      },
+      "visuals": [{"kind":"table","title":"교점과 해의 개수","caption":"두 직선이 연립방정식의 공통 해를 나타낸다.","rows":[["직선 관계","연립방정식의 해"],["한 점에서 만남","순서쌍 하나"],["서로 다른 평행선","해 없음"],["같은 직선이 겹침","해 무수히 많음"]]}]
+    }],
+    "pages": [
+      {"id":"ms15-linear-system-opening","template":"opening","title":"두 조건을 동시에 만족하는 점","kicker":"해는 순서쌍","blocks":[{"type":"lead","title":"오늘의 질문","text":"2x+y=7과 x−y=2를 동시에 참으로 만드는 값은 무엇일까요?"},{"type":"thinking","title":"먼저 예상하기","text":"한 식만 만족하면 연립방정식의 해라고 할 수 있을까요?"},{"type":"answer","title":"핵심","text":"해는 두 식을 모두 만족하는 순서쌍 (x,y)입니다."}]},
+      {"id":"ms15-linear-system-experiment","template":"experiment","title":"계수를 움직여 교점 찾기","kicker":"그래프·소거·검산","blocks":[{"type":"lead","title":"체험 도구","text":"a₁x+b₁y=c₁, a₂x+b₂y=c₂의 계수를 바꾸고 교점·해의 개수를 관찰합니다."},{"type":"graph","title":"두 직선과 공통 해","text":"교점이 하나인지, 평행인지, 겹치는지 먼저 예측하고 계수로 확인하세요."},{"type":"thinking","title":"Socratic 질문","text":"y계수를 맞춘 뒤 두 식을 더하거나 빼면 어떤 미지수가 사라질까요?"},{"type":"hint","title":"힌트","text":"y계수가 서로 반대가 되도록 한 식에 곱한 수를 확인한 다음 두 식을 더합니다."},{"type":"misconception","title":"자주 하는 혼동","text":"한 식에만 대입해 맞는 점을 해로 정하지 않습니다. 반드시 두 원래 식을 각각 확인합니다."}]},
+      {"id":"ms15-linear-system-practice","template":"practice","title":"문장제를 식으로 나타내고 검산하기","kicker":"두 조건을 모두 확인","blocks":[{"type":"question","title":"문제","text":"어른 표 3천 원, 어린이 표 2천 원이다. 표 12장을 팔아 3만 원을 받았다면 각각 몇 장인가? 금액 단위는 천 원이다."},{"type":"thinking","title":"풀이 순서","text":"표 수 합과 금액 합을 각각 식으로 만들고, 한 미지수를 소거한 뒤 두 조건에 검산합니다."},{"type":"answer","title":"정답","text":"x+y=12, 3x+2y=30. 첫째 식의 두 배를 둘째 식에서 빼면 x=6, y=6입니다. 두 식에 각각 넣으면 12와 30이 됩니다."},{"type":"checklist","title":"마무리","items":["두 조건을 각각 방정식으로 나타냈다.","소거한 값을 원래 두 식에 대입해 검산했다.","그래프의 교점과 순서쌍의 뜻을 연결했다."]}]}
+    ]
+  }]
+}

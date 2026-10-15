@@ -1,0 +1,67 @@
+{
+  "title": "수학Ⅰ 개념서 · 지수와 로그",
+  "subtitle": "거듭제곱과 로그를 서로 되돌리는 관계로 탐구",
+  "category": "concept_textbook_prototype",
+  "tags": ["수학Ⅰ", "2015 개정", "지수함수", "로그함수", "교육과정 코드 대조 전", "시범"],
+  "chapters": [
+    {
+      "title": "로그는 지수에서 무엇을 되돌려 줄까?",
+      "intro": [
+        "a^x=y와 log_a(y)=x는 같은 관계를 서로 다른 방향에서 읽은 것이다. 밑은 a>0, a≠1이고 진수 y>0이어야 한다.",
+        "이 시범은 교육과정 판본·성취기준 교사 대조 전이며 승인·판매용이 아니다."
+      ],
+      "sections": [
+        {
+          "title": "지수식과 로그식은 같은 관계",
+          "paragraphs": [
+            "a^x=y에서 밑 a와 결과 y를 알 때 몇 제곱했는지 묻는 표현이 log_a(y)=x다. 예를 들어 2³=8이므로 log₂8=3이다.",
+            "실수 범위에서 밑은 양수이고 1이 아니어야 한다. 밑이 1이면 모든 x에 대해 1^x=1이라 입력을 하나로 되돌릴 수 없다. 진수는 거듭제곱 결과이므로 양수여야 한다.",
+            "밑이 2보다 크면 지수 x가 커질수록 a^x도 커진다. 0<a<1이면 x가 커질수록 a^x는 작아진다. 로그는 이 거듭제곱 관계에서 지수를 되찾는다."
+          ],
+          "graph": {
+            "items": [{"id":"exp-base-2","type":"function","label":"y=2^x","colorHex":"#2457C5","enabled":true,"expression":"2^x"}],
+            "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-3,"right":3,"top":10,"bottom":-1}}
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"algebra-exponent-log-opening",
+          "template":"opening",
+          "title":"2제곱하면 4, 4는 2의 몇 제곱일까?",
+          "kicker":"같은 관계를 두 방향으로 읽기",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"2²=4에서 밑과 결과를 알고 지수를 찾는 표현은 무엇일까?"},
+            {"type":"thinking","title":"먼저 예측","text":"지수를 찾는 새 기호를 만들면 log₂4의 값은 얼마일지 말해 보자."}
+          ]
+        },
+        {
+          "id":"algebra-exponent-log-experiment",
+          "template":"experiment",
+          "title":"밑과 지수를 바꾸어 관계 확인",
+          "kicker":"밑 a>0, a≠1",
+          "blocks":[
+            {"type":"lead","title":"조작 안내","text":"도구에서 a와 x를 바꿔 y=a^x를 확인하고, 같은 결과 y에서 log_a(y)가 원래 지수 x를 되찾는지 본다."},
+            {"type":"graph","title":"지수함수 그래프 예시","text":"y=2^x에서 점 (2,4)는 2²=4와 log₂4=2를 함께 나타낸다. 실제 조절 도구는 함께 제공하는 HTML 시범에서 밑과 지수를 조작한다.","graph":{"items":[{"id":"exp-base-2","type":"function","label":"y=2^x","colorHex":"#2457C5","enabled":true,"expression":"2^x"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-3,"right":3,"top":10,"bottom":-1}}}},
+            {"type":"question","title":"도구 퀴즈","text":"a=2, x=−2일 때 y는 얼마이고 log₂(y)는 무엇인가? 밑 a=1은 왜 허용하지 않을까?"},
+            {"type":"verification","title":"확인","text":"y=2⁻²=1/4이고 log₂(1/4)=−2다. 밑이 1이면 지수와 관계없이 결과가 1이라 지수를 하나로 되돌릴 수 없다."},
+            {"type":"misconception","title":"조건 확인","text":"log_a(y)는 y가 양수일 때만 실수 범위에서 정의된다. 밑 조건 a>0, a≠1도 확인한다."}
+          ]
+        },
+        {
+          "id":"algebra-exponent-log-practice",
+          "template":"practice",
+          "title":"서로 다른 표현으로 바꾸기",
+          "kicker":"밑·진수·지수의 자리를 확인",
+          "blocks":[
+            {"type":"question","title":"연습","text":"log₃(1/27)의 값을 구하고 지수식으로 검산하라."},
+            {"type":"thinking","title":"Socratic 질문","text":"3을 몇 제곱하면 1/27이 되는가? 지수가 음수라면 분수는 어떤 꼴이 될까?"},
+            {"type":"hint","title":"힌트","text":"1/27=1/3³=3⁻³으로 바꾼 뒤 지수와 로그의 관계를 읽어라."},
+            {"type":"answer","title":"정답 확인","text":"3⁻³=1/27이므로 log₃(1/27)=−3이다."},
+            {"type":"checklist","title":"마무리","items":["a^x=y를 log_a(y)=x로 바꾼다.","밑 a>0, a≠1과 진수 y>0을 확인한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

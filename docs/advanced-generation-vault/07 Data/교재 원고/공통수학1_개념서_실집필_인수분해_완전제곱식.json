@@ -1,0 +1,42 @@
+{
+  "title": "공통수학1 개념서 · 실집필 1장",
+  "subtitle": "완전제곱식 · 체험형 원고 · 교육과정 판본 및 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "다항식", "인수분해", "완전제곱식", "draft"],
+  "chapters": [
+    {
+      "title": "완전제곱식: 넓이 조각으로 가운데 항 찾기",
+      "intro": [
+        "학습 목표: x²+2ax+a²와 (x+a)²가 같은 이유를 넓이 분할과 전개로 설명하고, 완전제곱식인지 판별한다.",
+        "준비: 다항식의 곱셈과 제곱의 뜻. 체험 도구는 x>0, a>0인 넓이 모델이며, 음수 부호는 식의 전개로 따로 확인한다."
+      ],
+      "sections": [
+        {
+          "title": "네 조각의 넓이에서 공식 만들기",
+          "paragraphs": [
+            "한 변이 x+a인 정사각형을 가로와 세로에서 각각 x와 a만큼 나누면 네 조각이 생긴다. 넓이는 x², ax, ax, a²다.",
+            "전체 넓이와 조각 넓이의 합은 같으므로 (x+a)²=x²+ax+ax+a²=x²+2ax+a²다. 가운데 항 2ax는 같은 직사각형 두 개에서 나온다.",
+            "따라서 (x+a)²를 x²+a²로 바꾸면 두 직사각형을 빠뜨린 것이다. (x−a)²=x²−2ax+a²는 곱셈을 직접 전개해 부호를 확인한다."
+          ],
+          "visuals": [{"kind":"area-model","title":"전체와 네 조각","caption":"전체 넓이와 조각 넓이의 합은 같다.","formula":"(x+a)²=x²+ax+ax+a²=x²+2ax+a²","items":["x²","ax","ax","a²"],"rows":[]}]
+        },
+        {
+          "title": "완전제곱식인지 판별하기",
+          "paragraphs": [
+            "첫째 항과 마지막 항이 각각 제곱인지 확인하고, 그 제곱근을 곱한 값의 두 배가 가운데 항과 같은지 검사한다.",
+            "예: 9y²+12y+4에서 양 끝 항은 (3y)²과 2²이고, 2·3y·2=12y다. 그러므로 9y²+12y+4=(3y+2)²다.",
+            "검산은 인수를 다시 전개한다. (3y+2)²=9y²+6y+6y+4=9y²+12y+4."
+          ]
+        }
+      ],
+      "pages": [
+        {"id":"cm1-ps1-predict","template":"opening","title":"먼저 예측하기","kicker":"가운데 항은 어디서 생길까?","blocks":[{"type":"lead","title":"오늘의 질문","text":"(x+a)²를 전개하면 x²와 a² 사이에 어떤 항이 생길까?"},{"type":"thinking","title":"예측","text":"(x+a)(x+a)로 풀어 쓰고, 서로 다른 항의 곱이 몇 번 나오는지 세어 보자."}]},
+        {"id":"cm1-ps1-explain","template":"concept","title":"네 조각이 한 정사각형","kicker":"전체 넓이 = 조각 넓이의 합","blocks":[{"type":"definition","title":"넓이로 보는 전개","text":"한 변 x+a인 정사각형을 x와 a에서 나누면 x², ax, ax, a²가 된다."},{"type":"visual","title":"네 조각","text":"두 직사각형의 넓이 ax가 더해져 가운데 항 2ax가 된다.","formula":"(x+a)²=x²+ax+ax+a²=x²+2ax+a²"},{"type":"misconception","title":"빠뜨리기 쉬운 부분","text":"(x+a)²=x²+a²는 두 개의 ax 조각을 누락한다."}]},
+        {"id":"cm1-ps1-experiment","template":"experiment","title":"값을 바꾸고 넓이 비교","kicker":"예측 → 조작 → 설명","blocks":[{"type":"lead","title":"체험","text":"짝 HTML에서 x와 a를 움직여 네 조각의 넓이 합과 전체 넓이를 비교한다. 양수 넓이 모델이므로 x>0, a>0에서 조작한다."},{"type":"visual","title":"도구 파일","text":"공통수학1_인수분해_완전제곱식_체험형_시범.html","items":["분할 단계 보기","x·a 조절","넓이 합 퀴즈"]},{"type":"question","title":"Socratic 질문","text":"a=3일 때 ax 넓이 조각은 몇 개이고, 가운데 항은 무엇일까?"},{"type":"hint","title":"힌트","text":"ax인 직사각형을 그림에서 직접 세고, 각 넓이를 더해 보자."},{"type":"answer","title":"확인","text":"두 개이므로 ax+ax=2ax. a=3이면 가운데 항은 6x다."}]},
+        {"id":"cm1-ps1-example","template":"example","title":"세 항의 구조 검사","kicker":"양 끝과 가운데를 모두 확인","blocks":[{"type":"question","title":"대표 예제","text":"9y²+12y+4를 인수분해하라."},{"type":"solutionStep","title":"양 끝 항","text":"9y²=(3y)²이고 4=2²다."},{"type":"solutionStep","title":"가운데 항","text":"2·3y·2=12y이므로 가운데 항도 일치한다."},{"type":"answer","title":"답","text":"(3y+2)²"},{"type":"verification","title":"전개 검산","text":"(3y+2)²=9y²+12y+4."}]},
+        {"id":"cm1-ps1-practice","template":"practice","title":"직접 판별하고 풀기","kicker":"답을 보기 전에 풀어 보자","blocks":[{"type":"question","title":"1","text":"x²+14x+49를 인수분해하라."},{"type":"question","title":"2","text":"4t²−20t+25를 인수분해하고 괄호 안 부호를 설명하라."},{"type":"question","title":"3","text":"x²+8x+12가 완전제곱식인지 판별하고 근거를 쓰라."},{"type":"hint","title":"힌트","text":"양 끝 항의 제곱근을 구한 뒤, 그 곱의 두 배를 가운데 항과 비교한다."},{"type":"answer","title":"정답","text":"1. (x+7)². 2. (2t−5)². 3. 아니다. 양 끝의 제곱근은 x와 2√3이고, 가운데 항은 4√3x여야 한다."}]},
+        {"id":"cm1-ps1-recall","template":"summary","title":"도구 없이 설명하기","kicker":"한 문장 회상","blocks":[{"type":"summary","title":"핵심 관계","text":"x²±2ax+a²=(x±a)². 가운데 항은 같은 직사각형 두 개의 넓이 합이다."},{"type":"thinking","title":"전이 질문","text":"9x²+12x+4가 완전제곱식인지 양 끝 항과 가운데 항을 검사해 설명하라."},{"type":"checklist","title":"마무리","items":["넓이 분할로 2ax를 설명한다.","양 끝 항과 가운데 항을 함께 확인한다.","인수분해 결과를 전개해 검산한다."]}]}
+      ]
+    }
+  ]
+}

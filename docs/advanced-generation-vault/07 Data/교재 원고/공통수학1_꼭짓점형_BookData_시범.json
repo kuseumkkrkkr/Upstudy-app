@@ -1,0 +1,123 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-02-06의 꼭짓점·극값 기초만 다루는 검토 원고",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-02-06", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-02-06"],
+  "standard_coverage": "partial_vertex_form; restricted_range_extremum_and_real_world_context_missing",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [
+    {
+      "title": "꼭짓점형으로 포물선을 읽어 보자",
+      "intro": [
+        "식 y=a(x-h)^2+k에서 꼭짓점과 대칭축을 찾고, 계수와 이동이 그래프를 바꾸는 까닭을 설명한다.",
+        "교육부 2022 개정 별책 8의 10공수1-02-06과 연결한 부분 시범이다. 제한된 범위의 극값과 실생활 연결은 포함하지 않으며 승인·판매용이 아니다."
+      ],
+      "sections": [
+        {
+          "title": "꼭짓점형의 뜻",
+          "paragraphs": [
+            "꼭짓점형 y=a(x-h)^2+k는 기준 그래프 y=x^2를 세로로 늘이거나 줄이고 좌우·상하로 옮긴 식이다.",
+            "꼭짓점은 (h,k), 대칭축은 x=h이다. x=h에서 제곱 부분이 0이 되고, 같은 거리만큼 떨어진 양쪽에서 제곱값이 같기 때문이다.",
+            "a>0이면 위로 열리고 최솟값 k를 갖는다. a<0이면 아래로 열리고 최댓값 k를 갖는다. 정의역이 실수 전체일 때 치역은 각각 y≥k와 y≤k이다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"quadratic-up","type":"function","label":"위로 열림","colorHex":"#DD5F34","enabled":true,"expression":"m*(x-h)^2+k"},
+              {"id":"quadratic-down","type":"function","label":"아래로 열림","colorHex":"#315DA8","enabled":true,"expression":"-m*(x-h)^2+k"}
+            ],
+            "settings": {
+              "showAxes": true,
+              "showGrid": true,
+              "lockViewport": false,
+              "degreeMode": false,
+              "viewport": {"left":-8,"right":8,"top":8,"bottom":-8},
+              "parameters": [
+                {"id":"m","label":"폭 조절 (m>0)","value":1,"min":0.25,"max":3,"step":0.25},
+                {"id":"h","label":"꼭짓점 x좌표","value":0,"min":-5,"max":5,"step":0.5},
+                {"id":"k","label":"꼭짓점 y좌표","value":0,"min":-5,"max":5,"step":0.5}
+              ]
+            }
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"cm1-vertex-open",
+          "template":"opening",
+          "title":"먼저 예측하기",
+          "kicker":"조작 전 10초",
+          "blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"y=x²를 오른쪽으로 2, 아래로 1만큼 옮기면 어떤 식일까? 그래프를 열기 전에 적어 보자."},
+            {"type":"question","title":"예측","text":"x가 2일 때 제곱 부분이 0이 되도록 괄호를 만들어 보자."}
+          ]
+        },
+        {
+          "id":"cm1-vertex-experiment",
+          "template":"experiment",
+          "title":"그래프를 직접 움직이기",
+          "kicker":"m>0, h와 k를 조작",
+          "blocks":[
+            {"type":"thinking","title":"조작 전에 예측","text":"꼭짓점은 (2,−1)로 고정하고 x=3을 보겠습니다. m=0.5일 때와 m=2일 때 그래프의 y값은 꼭짓점보다 각각 얼마나 높을까요? 먼저 예상값을 적으세요."},
+            {"type":"graph","title":"두 포물선 비교","text":"m은 양수인 폭 조절값이다. h=2, k=-1로 바꾸고 두 꼭짓점과 대칭축을 찾아라.","graph":{"items":[{"id":"quadratic-up","type":"function","label":"위로 열림","colorHex":"#DD5F34","enabled":true,"expression":"m*(x-h)^2+k"},{"id":"quadratic-down","type":"function","label":"아래로 열림","colorHex":"#315DA8","enabled":true,"expression":"-m*(x-h)^2+k"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-8,"right":8,"top":8,"bottom":-8},"parameters":[{"id":"m","label":"폭 조절 (m>0)","value":1,"min":0.25,"max":3,"step":0.25},{"id":"h","label":"꼭짓점 x좌표","value":0,"min":-5,"max":5,"step":0.5},{"id":"k","label":"꼭짓점 y좌표","value":0,"min":-5,"max":5,"step":0.5}]}}},
+            {"type":"verification","title":"예측 검산","text":"x=3은 꼭짓점에서 오른쪽으로 1만큼 떨어져 있다. 따라서 꼭짓점보다 높이는 m만큼 차이 난다. m=0.5이면 y=−0.5, m=2이면 y=1이다. 두 꼭짓점은 (2,−1), 대칭축은 x=2이고, 위/아래 그래프의 최솟값/최댓값은 각각 −1이다."},
+            {"type":"misconception","title":"부호 주의","text":"x+3은 x-(-3)이므로 꼭짓점 x좌표는 -3이다. 괄호 안 부호를 그대로 읽지 말고 x-h=0을 풀어 확인한다."}
+          ]
+        },
+        {
+          "id":"cm1-vertex-practice",
+          "template":"practice",
+          "title":"직접 풀어 보기",
+          "kicker":"풀이를 가리고 시도한 뒤 확인",
+          "blocks":[
+            {"type":"solutionStep","title":"예시","items":["y=-(x-1)^2+4의 꼭짓점은 (1,4), 대칭축은 x=1이다.","아래로 열리므로 최댓값은 4, 치역은 y≤4이다."]},
+            {"type":"question","title":"독립 연습","text":"y=2(x+3)^2-5의 꼭짓점, 대칭축, 최솟값을 구하라."},
+            {"type":"hint","title":"힌트","text":"x+3=x-(-3)으로 고쳐 h를 확인한다."},
+            {"type":"answer","title":"정답","text":"꼭짓점 (-3,-5), 대칭축 x=-3, 최솟값 -5."}
+          ]
+        },
+        {
+          "id":"cm1-vertex-example",
+          "template":"example",
+          "title":"꼭짓점형에서 최댓값까지 읽기",
+          "kicker":"풀이 이유를 한 줄씩 확인",
+          "blocks":[
+            {"type":"question","title":"예제","text":"y=−2(x+3)^2+5의 꼭짓점, 대칭축, 최댓값, 치역을 구하라."},
+            {"type":"solutionStep","title":"풀이","items":["x+3=x−(−3)이므로 h=−3, k=5, a=−2이다.","꼭짓점은 (−3,5), 대칭축은 x=−3이다.","a<0이므로 아래로 열려 최댓값은 5이고 치역은 y≤5이다."]},
+            {"type":"thinking","title":"한 번 더 설명","text":"꼭짓점에서 좌우로 같은 거리만큼 이동하면 왜 y값이 같을까? 식의 제곱 부분을 이용해 말해 보자."},
+            {"type":"verification","title":"이유 확인","text":"x=−3+d와 x=−3−d는 제곱 부분이 각각 d²이므로 함수값이 같다. 따라서 x=−3이 대칭축이다."}
+          ]
+        },
+        {
+          "id":"cm1-vertex-error-check",
+          "template":"practice",
+          "title":"부호를 거꾸로 읽은 풀이 찾기",
+          "kicker":"오류 탐정",
+          "blocks":[
+            {"type":"misconception","title":"학생의 주장","text":"y=−(x+3)^2+1에서 괄호 안이 x+3이므로 꼭짓점은 (3,1)이다."},
+            {"type":"question","title":"어디서 틀렸을까?","text":"x+3을 x−h 꼴로 고쳐 h를 구하고, 학생 주장의 오류를 설명하라."},
+            {"type":"hint","title":"힌트","text":"x+3=x−(−3)으로 쓰거나, 제곱 부분이 0이 되는 x를 직접 풀어 보자."},
+            {"type":"answer","title":"확인","text":"x+3=x−(−3)이므로 h=−3이다. 꼭짓점은 (−3,1), 대칭축은 x=−3이다. 아래로 열리므로 최댓값은 1, 치역은 y≤1이다."},
+            {"type":"question","title":"새 조건으로 전이","text":"y=3(2−x)^2−4의 꼭짓점과 최솟값을 구하라."},
+            {"type":"hint","title":"힌트","text":"(2−x)^2=(x−2)^2이고 계수 3은 양수다."},
+            {"type":"answer","title":"정답","text":"꼭짓점은 (2,−4), 최솟값은 −4이다."}
+          ]
+        },
+        {
+          "id":"cm1-vertex-retrieval",
+          "template":"summary",
+          "title":"도구를 닫고 다시 떠올리기",
+          "kicker":"누적 회상 · 정답은 시도 후 확인",
+          "blocks":[
+            {"type":"thinking","title":"핵심 세 가지","text":"식 y=a(x−h)^2+k만 보고 꼭짓점·대칭축·열리는 방향을 먼저 말해 보자."},
+            {"type":"question","title":"회상 문제","text":"y=−0.5(x−4)^2+2의 꼭짓점, 대칭축, 최댓값, 치역은?"},
+            {"type":"hint","title":"힌트","text":"h=4, k=2를 읽고 a의 부호를 확인한다."},
+            {"type":"answer","title":"정답","text":"꼭짓점 (4,2), 대칭축 x=4, 최댓값 2, 치역 y≤2."},
+            {"type":"checklist","title":"스스로 점검","items":["괄호의 부호를 x−h와 비교했다.","a의 부호로 최대·최소를 구분했다.","치역을 부등식으로 나타냈다.","그래프를 보지 않고 새 식에 적용했다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

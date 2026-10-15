@@ -1,0 +1,36 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 순서쌍과 좌표",
+  "subtitle": "첫째 좌표와 둘째 좌표를 직접 움직여 위치로 이해하기 · 부분 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "함수와 그래프", "좌표", "순서쌍", "9수03-01", "부분 시범", "교사 검수 전"],
+  "chapters": [{
+    "title": "좌표의 순서가 점의 위치를 정한다",
+    "intro": [
+      "순서쌍 (x,y)의 첫째 수는 가로 위치, 둘째 수는 세로 위치를 정한다.",
+      "좌표평면에서 점을 직접 움직이고 원점에서의 이동을 관찰한다.",
+      "교육과정 기준 [9수03-01]의 일부를 보여 주는 시범이며 학년·학기는 미배정이다."
+    ],
+    "sections": [{
+      "title": "가로 먼저, 세로 다음",
+      "paragraphs": [
+        "점 (x,y)는 원점에서 가로로 x, 세로로 y만큼 이동한 위치이다.",
+        "양수는 오른쪽·위쪽, 음수는 왼쪽·아래쪽을 뜻한다. 두 수를 바꾸면 일반적으로 다른 위치가 된다.",
+        "점까지 가는 이동 경로는 달라도 도착한 순서쌍이 같으면 같은 위치이다."
+      ],
+      "graph": {
+        "items": [
+          {"id":"point-a","type":"scatter","label":"A=(x,y)","colorHex":"#D45A3A","enabled":true,"xValues":[-3],"yValues":[2]},
+          {"id":"point-swapped","type":"scatter","label":"B=(y,x)","colorHex":"#315CCB","enabled":true,"xValues":[2],"yValues":[-3]}
+        ],
+        "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-5,"right":5,"top":5,"bottom":-5}}
+      },
+      "visuals": [{"kind":"table","title":"순서쌍과 이동","caption":"첫째 좌표를 읽고 가로 이동, 둘째 좌표를 읽고 세로 이동한다.","rows":[["순서쌍","가로 이동","세로 이동"],["(-3,2)","왼쪽 3","위 2"],["(2,-3)","오른쪽 2","아래 3"]]}]
+    }],
+    "pages": [
+      {"id":"ms15-ordered-pair-opening","template":"opening","title":"좌표를 바꾸면 점도 바뀔까?","kicker":"첫째 수, 둘째 수","blocks":[{"type":"lead","title":"오늘의 질문","text":"(-3,2)와 (2,-3)은 같은 점일까요?"},{"type":"thinking","title":"먼저 예측하기","text":"첫째 수와 둘째 수는 각각 가로·세로 중 무엇을 정할까요?"},{"type":"answer","title":"핵심","text":"순서쌍의 첫째 수는 가로, 둘째 수는 세로 위치를 정합니다."}]},
+      {"id":"ms15-ordered-pair-concept","template":"concept","title":"가로 다음 세로","kicker":"(x,y)의 약속","blocks":[{"type":"definition","title":"순서쌍","text":"(x,y)는 원점에서 가로로 x, 세로로 y만큼 이동한 점의 좌표입니다."},{"type":"derivation","title":"부호 읽기","text":"x가 양수면 오른쪽, 음수면 왼쪽입니다. y가 양수면 위쪽, 음수면 아래쪽입니다."},{"type":"misconception","title":"순서를 지켜요","text":"(-3,2)와 (2,-3)은 각 좌표의 역할이 서로 바뀌므로 다른 위치를 나타냅니다."}]},
+      {"id":"ms15-ordered-pair-experiment","template":"experiment","title":"점의 이동을 조작하기","kicker":"예측하고 움직여 확인","blocks":[{"type":"lead","title":"사용 방법","text":"x와 y 값을 조절한 뒤 이동 애니메이션을 실행하세요. 점이 가로 이동 후 세로 이동하며 목표 좌표에 도착합니다."},{"type":"graph","title":"좌표평면 실험","text":"점 A=(x,y)를 드래그하거나 키보드 방향키로 움직이세요. 두 좌표를 바꾼 점도 비교할 수 있습니다."},{"type":"thinking","title":"Socratic 질문","text":"(-3,2)에서 첫째 좌표를 2로, 둘째 좌표를 -3으로 바꾸면 점은 어느 방향으로 이동할까요?"},{"type":"verification","title":"확인","text":"(-3,2)는 왼쪽·위쪽이고 (2,-3)은 오른쪽·아래쪽입니다. 좌표의 순서는 위치를 바꿉니다."}]},
+      {"id":"ms15-ordered-pair-practice","template":"practice","title":"좌표를 읽고 점을 찾기","kicker":"방향과 순서를 말하기","blocks":[{"type":"question","title":"1번","text":"A=(-4,1)은 원점에서 어떻게 이동한 점인가요?"},{"type":"question","title":"2번","text":"오른쪽 3칸, 아래 2칸에 있는 점을 순서쌍으로 쓰세요."},{"type":"hint","title":"힌트","text":"먼저 가로 방향을 첫째 수로, 세로 방향을 둘째 수로 기록합니다."},{"type":"answer","title":"정답","text":"1. 왼쪽 4칸, 위 1칸. 2. (3,-2)."}]},
+      {"id":"ms15-ordered-pair-summary","template":"summary","title":"위치 규칙을 설명하기","kicker":"한 문장 회상","blocks":[{"type":"summary","title":"오늘의 규칙","text":"순서쌍 (x,y)의 x는 가로, y는 세로 위치를 정합니다."},{"type":"thinking","title":"회상 질문","text":"좌표를 (y,x)로 바꾸면 왜 다른 점이 될 수 있는지 이동 방향으로 설명해 보세요."},{"type":"checklist","title":"마무리","items":["첫째 좌표와 둘째 좌표의 역할을 말한다.","양수·음수에 따른 이동 방향을 말한다.","좌표를 읽어 점의 위치를 예측한다."]}]}]
+  }]
+}

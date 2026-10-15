@@ -1,0 +1,21 @@
+{
+  "title": "중학수학 1-1 개념서 · 좌표로 위치 기록하기",
+  "subtitle": "기준점과 방향을 정하고 순서쌍으로 위치를 전달하기",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학수학 1-1", "2022 개정 후보", "좌표평면", "순서쌍", "실생활 맥락", "시범", "성취기준 후보 확인: 9수02-05"],
+  "chapters": [{
+    "title": "좌표로 위치를 기록하고 다시 찾기",
+    "intro": ["기준점과 방향을 먼저 정하면 순서쌍으로 위치를 간단히 공유할 수 있다.", "도서관 안내데스크를 (0,0), 오른쪽과 위쪽을 양의 방향으로 정한 격자 모형에서 좌표를 조작한다."],
+    "sections": [{
+      "title": "기준점·방향·순서가 함께 있어야 해요",
+      "paragraphs": ["(−2,3)은 기준점에서 왼쪽으로 2칸, 위로 3칸이다. 첫 번째 수가 가로, 두 번째 수가 세로 이동을 나타낸다.", "(3,−2)는 오른쪽으로 3칸, 아래로 2칸이므로 일반적으로 다른 위치다. 좌표는 기준점과 방향 약속을 함께 공유해야 사용할 수 있다."],
+      "visuals": [{"kind":"table","title":"좌표와 위치","caption":"원점은 안내데스크, x축은 좌우, y축은 상하로 약속한다.","rows":[["순서쌍","가로 이동","세로 이동"],["(−2,3)","왼쪽 2","위 3"],["(3,−2)","오른쪽 3","아래 2"]]}],
+      "graph": {"items":[{"id":"sample-seats","type":"scatter","label":"위치 예시","colorHex":"#2457C5","enabled":true,"xValues":[-2.0,3.0],"yValues":[3.0,-2.0]}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-5,"right":5,"top":5,"bottom":-5}}}
+    }],
+    "pages": [
+      {"id":"ms11-2022-coordinate-context-opening","template":"opening","title":"위치를 숫자 두 개로 전달하려면?","kicker":"기준점과 방향을 정하기","blocks":[{"type":"lead","title":"오늘의 질문","text":"안내데스크에서 왼쪽 2칸, 위 3칸인 자리를 어떻게 기록하면 다른 사람도 찾을 수 있을까?"},{"type":"thinking","title":"먼저 약속하기","text":"첫 번째 수와 두 번째 수가 각각 어떤 이동을 나타내는지 말해 보자."}]},
+      {"id":"ms11-2022-coordinate-context-experiment","template":"experiment","title":"두 좌표를 바꾸면 점은 어디로 갈까?","kicker":"기준점을 공유하고 직접 조작","blocks":[{"type":"lead","title":"모형 안내","text":"안내데스크를 (0,0), 오른쪽을 x 양의 방향, 위쪽을 y 양의 방향으로 정한다. 아래 기본 그래프는 정적 예시이며, 점을 실제로 조작하는 도구는 짝 HTML에서 확인한다."},{"type":"graph","title":"좌표 격자 예시","text":"기본 그래프의 점은 (−2,3)과 (3,−2)다. 독립 HTML 도구에서는 x, y 슬라이더로 (x,y)와 (y,x)를 직접 움직인다.","graph":{"items":[{"id":"sample-seats","type":"scatter","label":"(−2,3), (3,−2)","colorHex":"#2457C5","enabled":true,"xValues":[-2.0,3.0],"yValues":[3.0,-2.0]}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-5,"right":5,"top":5,"bottom":-5}}}},{"type":"question","title":"Socratic 질문","text":"(−2,3)과 (3,−2)가 서로 다른 이유를 가로·세로 이동 약속으로 설명할 수 있나요?"},{"type":"verification","title":"확인","text":"(−2,3)은 왼쪽 2칸·위 3칸, (3,−2)는 오른쪽 3칸·아래 2칸이므로 다른 위치다."}]},
+      {"id":"ms11-2022-coordinate-context-practice","template":"practice","title":"설명을 순서쌍으로 바꾸기","kicker":"도구 없이 전이","blocks":[{"type":"question","title":"연습","text":"기준점에서 오른쪽 4칸, 아래 1칸인 위치를 순서쌍으로 쓰세요."},{"type":"thinking","title":"Socratic 질문","text":"첫 번째 좌표는 가로 방향, 두 번째 좌표는 세로 방향이다. 오른쪽과 아래쪽의 부호는 각각 무엇인가?"},{"type":"hint","title":"힌트","text":"오른쪽은 x>0, 아래는 y<0이다."},{"type":"answer","title":"정답 확인","text":"(4,−1)이다. 기준점과 방향 약속을 함께 말하면 다른 사람도 같은 위치를 찾을 수 있다."},{"type":"checklist","title":"마무리","items":["기준점과 축 방향을 확인한다.","첫째 좌표는 가로, 둘째 좌표는 세로로 읽는다.","좌표의 부호와 위치 설명이 맞는지 확인한다."]}]}
+    ]
+  }]
+}

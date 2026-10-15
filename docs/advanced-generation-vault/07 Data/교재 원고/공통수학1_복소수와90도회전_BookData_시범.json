@@ -1,0 +1,89 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-02-01 중 i를 곱하는 사례만 다루는 부분 원고",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-02-01", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-02-01"],
+  "standard_coverage": "partial_multiplication_by_i_only",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [
+    {
+      "title": "복소수에 i를 곱하면",
+      "intro": [
+        "z=a+bi를 좌표 (a,b)에 대응시킨 뒤 iz=-b+ai가 되는 이유를 계산과 회전으로 연결한다.",
+        "교육부 2022 개정 별책 8의 10공수1-02-01과 연결한 부분 시범이다. i를 곱하는 한 경우만 다루며 사칙연산 전체와 교사 검수는 미완료다."
+      ],
+      "sections": [
+        {
+          "title": "복소수를 점과 벡터로 읽기",
+          "paragraphs": [
+            "복소수 z=a+bi를 복소평면의 점 (a,b)에 대응시킨다. 가로좌표는 실수 부분 a, 세로좌표는 허수 부분의 계수 b다.",
+            "iz=i(a+bi)=ai+b i²=−b+ai이다. 따라서 계수 좌표는 (a,b)에서 (−b,a)로 바뀐다.",
+            "좌표 변화 (a,b)→(−b,a)는 원점을 중심으로 반시계 90° 회전이다. 길이 √(a²+b²)는 그대로다. 이 해석은 i를 곱하는 경우에 한정한다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id":"cm1-complex-opening",
+          "template":"opening",
+          "title":"먼저 어디로 움직일지 예측",
+          "kicker":"오늘의 질문",
+          "blocks":[
+            {"type":"lead","title":"예측","text":"복소수 z=2+i를 좌표 (2,1)로 놓아 보세요. i를 곱하면 어느 사분면으로 이동할까요?"},
+            {"type":"question","title":"잠시 생각하기","text":"실수 부분과 허수 부분의 계수 가운데 무엇이 바뀌거나 자리를 바꿀지 먼저 예측하세요."}
+          ]
+        },
+        {
+          "id":"cm1-complex-experiment",
+          "template":"experiment",
+          "title":"복소평면에서 직접 회전시키기",
+          "kicker":"계수 조작 → 관찰 → 계산",
+          "blocks":[
+            {"type":"lead","title":"체험 도구","text":"a와 b를 조절해 z=a+bi의 점을 옮기세요. 먼저 iz의 위치를 예측하고 단계 버튼으로 새 벡터를 공개합니다. 독립 체험 HTML은 별도 파일이며 앱 BookData와 실시간 연결되지는 않습니다."},
+            {"type":"thinking","title":"규칙 찾기","text":"원래 좌표 (a,b)와 i를 곱한 뒤 좌표를 비교하세요. 새 좌표가 (−b,a)인지 확인하고, 원점에서 점까지의 길이도 비교하세요."},
+            {"type":"verification","title":"계산으로 확인","text":"i(a+bi)=ai+b i²=−b+ai이므로 (a,b)→(−b,a)입니다. 두 점까지 거리의 제곱은 각각 a²+b²로 같고, 방향은 반시계 90° 회전입니다."},
+            {"type":"misconception","title":"그림은 계산을 대신하지 않아요","text":"회전 그림은 i²=−1과 분배법칙에서 나온 계산을 설명하는 모델입니다. 다른 복소수의 곱셈이나 나눗셈까지 같은 단순 회전이라고 말하지 않습니다."}
+          ]
+        },
+        {
+          "id":"cm1-complex-example",
+          "template":"example",
+          "title":"복소수 곱셈을 계수로 확인",
+          "kicker":"표현을 바꾸어 검산",
+          "blocks":[
+            {"type":"question","title":"예제","text":"z=1+2i일 때 iz를 구하고, 복소평면에서의 이동을 설명하세요."},
+            {"type":"solutionStep","title":"풀이","items":["i(1+2i)=i+2i²이다.","i²=−1이므로 결과는 −2+i다.","좌표는 (1,2)에서 (−2,1)로 바뀌며, 원점 중심 반시계 90° 회전이다."]},
+            {"type":"thinking","title":"길이도 확인","text":"두 좌표의 길이는 각각 √(1²+2²), √((-2)²+1²)입니다. 값이 같은 까닭을 말해 보세요."},
+            {"type":"verification","title":"검산","text":"두 제곱합은 모두 5이므로 길이는 √5로 같습니다."}
+          ]
+        },
+        {
+          "id":"cm1-complex-practice",
+          "template":"practice",
+          "title":"새 복소수에 적용하기",
+          "kicker":"계산과 좌표 설명을 함께",
+          "blocks":[
+            {"type":"question","title":"도구 퀴즈","text":"z=1+2i를 i배 하면 무엇일까요? 실수부와 허수부 계수를 바꾸고 부호를 확인하세요."},
+            {"type":"hint","title":"힌트","text":"(a,b)→(−b,a) 또는 i(1+2i)=i+2i²를 사용하세요."},
+            {"type":"answer","title":"정답","text":"−2+i입니다. 좌표는 (−2,1)이고, 원래 점을 반시계 90° 돌린 위치입니다."},
+            {"type":"question","title":"독립 연습","text":"z=3−2i일 때 iz를 계산하고, 좌표와 벡터 길이를 적으세요."},
+            {"type":"hint","title":"한 단계 힌트","text":"a=3, b=−2이므로 새 좌표는 (−b,a)입니다."},
+            {"type":"answer","title":"풀이 확인","text":"iz=i(3−2i)=3i−2i²=2+3i입니다. 좌표는 (2,3), 길이는 √13으로 원래 z의 길이 √(3²+(−2)²)=√13과 같습니다."}
+          ]
+        },
+        {
+          "id":"cm1-complex-summary",
+          "template":"summary",
+          "title":"회전 규칙을 떠올리기",
+          "kicker":"핵심 연결 확인",
+          "blocks":[
+            {"type":"thinking","title":"말로 설명","text":"왜 i(a+bi)가 −b+ai가 되는지, 그 결과가 복소평면에서 어떤 움직임인지 계산과 그림을 이어 설명하세요."},
+            {"type":"checklist","title":"스스로 점검","items":["a는 실수부, b는 허수부의 계수로 좌표화했다.","i²=−1과 분배법칙으로 iz=−b+ai를 얻었다.","(a,b)→(−b,a)가 반시계 90° 회전임을 설명했다.","길이가 보존되는 것을 제곱합으로 확인했다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

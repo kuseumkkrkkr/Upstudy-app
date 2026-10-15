@@ -1,0 +1,1094 @@
+{
+  "title": "수학(하) 2015 개정 · 태그별 분권 통합 초안",
+  "subtitle": "단원별 챕터와 소단원 페이지를 묶은 부분 원고",
+  "category": "concept_textbook",
+  "tags": [
+    "2015 개정",
+    "경우의 수",
+    "곱의 법칙",
+    "공식 코드 대조 전",
+    "그래프의 이동",
+    "명제",
+    "무리함수",
+    "반비례 관계",
+    "수와 연산",
+    "수학(하)",
+    "순서가 없는 선택",
+    "순서가 있는 선택",
+    "순열",
+    "신규 시범",
+    "여집합",
+    "유리함수",
+    "정의역",
+    "조건",
+    "조합",
+    "집합",
+    "집합의 연산",
+    "차집합",
+    "치역",
+    "함수",
+    "함수의 뜻",
+    "합의 법칙",
+    "확률과 통계"
+  ],
+  "units": [
+    {
+      "title": "수와 연산",
+      "chapterTitles": [
+        "집합의 합집합과 교집합",
+        "여집합과 차집합",
+        "명제와 조건"
+      ]
+    },
+    {
+      "title": "함수",
+      "chapterTitles": [
+        "함수의 뜻과 대응",
+        "유리함수의 기본 꼴",
+        "무리함수의 정의역과 그래프"
+      ]
+    },
+    {
+      "title": "확률과 통계",
+      "chapterTitles": [
+        "합의 법칙과 곱의 법칙",
+        "순열",
+        "조합"
+      ]
+    }
+  ],
+  "chapters": [
+    {
+      "title": "집합의 합집합과 교집합",
+      "pages": [
+        {
+          "id": "math-lower-sets-opening",
+          "template": "opening",
+          "title": "두 모임에 공통인 원소는 무엇일까?",
+          "kicker": "집합의 연산",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A={1,2,3}, B={3,4}일 때 두 집합에 공통인 원소는 무엇일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 찾아보기",
+              "text": "A와 B의 원소를 나란히 놓고 두 집합에 모두 들어 있는 원소를 표시하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "두 집합에 모두 들어 있는 원소는 3이므로 A∩B={3}입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-sets-concept",
+          "template": "concept",
+          "title": "합집합은 한쪽이라도 속하는 원소, 교집합은 공통 원소",
+          "kicker": "원소를 기준으로 구분하기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "합집합과 교집합",
+              "text": "A∪B는 A 또는 B에 속하는 원소를 모은 집합이고, A∩B는 A와 B에 공통으로 속하는 원소를 모은 집합입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "원소로 확인",
+              "items": [
+                "A={1,2,3}, B={3,4}에서 한쪽이라도 속하는 원소는 1,2,3,4입니다.",
+                "두 집합에 모두 속하는 원소는 3입니다.",
+                "따라서 A∪B={1,2,3,4}, A∩B={3}입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "중복은 한 번만",
+              "text": "합집합에서 공통 원소를 두 번 적지 않습니다. 집합은 같은 원소를 반복해 쓰지 않습니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-sets-example",
+          "template": "example",
+          "title": "두 조건을 만족하는 항목 찾기",
+          "kicker": "원소 목록에서 교집합 읽기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "C={a,b}, D={b,c}일 때 C∪D와 C∩D를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "한쪽이라도 속하는 원소는 a,b,c입니다.",
+                "양쪽에 모두 속하는 원소는 b입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "C∪D={a,b,c}, C∩D={b}"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-sets-practice",
+          "template": "practice",
+          "title": "합집합과 교집합 연습",
+          "kicker": "원소를 빠짐없이 분류하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "X={1,3,5}, Y={2,3,4}일 때 X∪Y와 X∩Y를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "합집합에는 중복 없이 모두 모으고, 교집합에는 양쪽에 함께 있는 원소만 남기세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "X∪Y={1,2,3,4,5}, X∩Y={3}"
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "합집합에서 원소를 중복해 적지 않았나요?",
+                "교집합에는 두 집합에 공통인 원소만 남겼나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "수와 연산"
+    },
+    {
+      "title": "여집합과 차집합",
+      "pages": [
+        {
+          "id": "math-lower-set-complement-difference-opening",
+          "template": "opening",
+          "title": "기준이 달라지면 빠진 원소도 달라질까?",
+          "kicker": "여집합과 차집합",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "U={1,2,3,4,5}, A={1,2,4}일 때 A에 속하지 않는 U의 원소는 무엇일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 표시하기",
+              "text": "전체집합 U의 원소를 모두 적고, A에 속한 원소와 속하지 않은 원소를 다른 표시로 나눠 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "U에는 있지만 A에는 없는 원소는 3,5입니다. 이 집합은 U를 기준으로 한 A의 여집합입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-set-complement-difference-concept",
+          "template": "concept",
+          "title": "여집합은 전체집합을 기준으로, 차집합은 한 집합을 기준으로",
+          "kicker": "기준 집합을 먼저 확인하기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "여집합과 차집합",
+              "text": "A의 여집합 Aᶜ은 전체집합 U에 속하면서 A에는 속하지 않는 원소의 집합입니다. A∖B는 A에는 속하고 B에는 속하지 않는 원소의 집합입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "원소로 구분",
+              "items": [
+                "U={1,2,3,4,5}, A={1,2,4}, B={2,3}으로 둡니다.",
+                "U에서 A의 원소를 제외하면 Aᶜ={3,5}입니다.",
+                "A에서 B에도 속한 2를 제외하면 A∖B={1,4}입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "여집합에는 전체집합이 필요",
+              "text": "A의 여집합은 U가 정해져야 하나로 결정됩니다. 차집합 A∖B와 B∖A는 기준이 되는 첫 집합이 달라 일반적으로 서로 다릅니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-set-complement-difference-example",
+          "template": "example",
+          "title": "여집합과 차집합 계산하기",
+          "kicker": "원소가 속하는 조건 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "U={a,b,c,d,e}, X={a,c,e}, Y={c,d}일 때 Xᶜ, X∖Y, Y∖X를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "U에서 X의 원소 a,c,e를 빼면 Xᶜ={b,d}입니다.",
+                "X에는 있고 Y에는 없는 원소는 a,e입니다.",
+                "Y에는 있고 X에는 없는 원소는 d입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "Xᶜ={b,d}, X∖Y={a,e}, Y∖X={d}"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-set-complement-difference-practice",
+          "template": "practice",
+          "title": "여집합과 차집합 연습",
+          "kicker": "기준을 바꾸지 않고 끝까지 계산하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "U={1,2,3,4,5,6}, P={1,3,5}, Q={3,4,5}일 때 Pᶜ, P∖Q, Q∖P를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "여집합은 U에서 시작하고, 차집합은 기호 왼쪽 집합에서 시작해 오른쪽 집합의 원소를 제외하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "Pᶜ={2,4,6}, P∖Q={1}, Q∖P={4}"
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "여집합을 구할 때 전체집합 U를 기준으로 삼았나요?",
+                "차집합의 순서 P∖Q와 Q∖P를 구분했나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "수와 연산"
+    },
+    {
+      "title": "명제와 조건",
+      "pages": [
+        {
+          "id": "math-lower-propositions-opening",
+          "template": "opening",
+          "title": "참인지 거짓인지 판단할 수 있을까?",
+          "kicker": "명제와 조건",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "‘7은 소수이다’와 ‘x는 소수이다’는 같은 종류의 문장일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "판단해 보기",
+              "text": "첫 문장은 참·거짓을 정할 수 있습니다. 두 번째 문장은 x의 값에 따라 달라집니다."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "참·거짓을 분명히 판단할 수 있는 문장을 명제라고 합니다. x의 값이 정해지지 않은 문장은 조건입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-propositions-concept",
+          "template": "concept",
+          "title": "명제는 참·거짓이 분명한 문장",
+          "kicker": "조건에 값을 넣어 참인 경우 찾기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "명제와 조건",
+              "text": "명제는 참·거짓을 분명히 판단할 수 있는 문장입니다. 문자를 포함해 그 값에 따라 참·거짓이 달라지는 문장은 조건이라고 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "조건의 진리집합",
+              "items": [
+                "전체집합 U 안에서 조건 p(x)가 참이 되게 하는 원소를 모읍니다.",
+                "U={1,2,3,4}에서 p(x): x는 짝수이다를 생각합니다.",
+                "조건이 참인 원소는 2,4이므로 진리집합은 {2,4}입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "문장만 보고 단정하지 않기",
+              "text": "‘x는 짝수이다’는 x가 정해지기 전에는 참·거짓을 하나로 결정할 수 없습니다. 전체집합과 조건을 함께 확인하세요."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-propositions-example",
+          "template": "example",
+          "title": "조건의 진리집합 구하기",
+          "kicker": "전체집합 안에서 원소 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "U={−2,−1,0,1,2}일 때 조건 p(x): x²=1의 진리집합을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "U의 원소를 조건에 대입합니다.",
+                "(−1)²=1이고 1²=1이므로 −1과 1에서 조건이 참입니다.",
+                "나머지 원소에서는 x²=1이 성립하지 않습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "진리집합은 {−1,1}입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-propositions-practice",
+          "template": "practice",
+          "title": "명제와 조건 구별 연습",
+          "kicker": "참·거짓 판단이 가능한지 먼저 보기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "다음 문장을 명제 또는 조건으로 구분하고, 명제는 참·거짓을 판단하세요. (가) 9는 홀수이다. (나) x+1=4."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "문자 값이 정해지지 않아도 참·거짓이 결정되는 문장인지 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(가)는 명제이고 참입니다. (나)는 x의 값에 따라 달라지므로 조건입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "참·거짓 판단 가능성을 기준으로 구분했나요?",
+                "조건의 문자를 미리 특정 값으로 가정하지 않았나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "수와 연산"
+    },
+    {
+      "title": "함수의 뜻과 대응",
+      "pages": [
+        {
+          "id": "math-lower-function-opening",
+          "template": "opening",
+          "title": "입력 하나에 출력은 몇 개일까?",
+          "kicker": "함수의 뜻",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "학생 한 명을 그 학생의 사물함 번호에 대응시키면 함수라고 할 수 있을까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "대응을 살펴보기",
+              "text": "각 학생에게 연결되는 번호가 정확히 하나인지 확인해 보세요. 여러 학생이 같은 번호로 이어지는 것은 따로 점검할 문제입니다."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "집합 X의 각 원소에 집합 Y의 원소가 오직 하나씩 대응하면 X에서 Y로의 함수입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-function-concept",
+          "template": "concept",
+          "title": "함수는 정의역의 각 원소에 값을 하나씩 대응",
+          "kicker": "정의역·공역·치역",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "함수와 세 집합",
+              "text": "X의 각 원소에 Y의 원소가 하나씩 대응할 때 X에서 Y로의 함수라고 합니다. X는 정의역, Y는 공역이며 실제 대응된 Y의 원소 전체는 치역입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "대응을 확인하는 기준",
+              "items": [
+                "정의역의 모든 원소가 대응되어야 합니다.",
+                "정의역의 한 원소에서 화살표가 둘 이상 나가면 함수가 아닙니다.",
+                "서로 다른 정의역 원소가 같은 값에 대응해도 함수일 수 있습니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "공역과 치역은 다를 수 있다",
+              "text": "공역은 대응 대상으로 정한 집합 전체이고, 치역은 실제로 대응된 값만 모은 집합입니다. 치역은 공역의 부분집합입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-function-example",
+          "template": "example",
+          "title": "정의역과 치역 읽기",
+          "kicker": "대응 규칙으로 값 구하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "X={1,2,3}, Y={a,b,c}에서 1→a, 2→a, 3→b로 대응한다. 함수인지 판단하고 정의역과 치역을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "X의 각 원소 1,2,3이 각각 한 값에 대응합니다.",
+                "따라서 X에서 Y로의 함수입니다.",
+                "실제로 사용된 값은 a,b입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "함수이며, 정의역은 {1,2,3}, 공역은 {a,b,c}, 치역은 {a,b}입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-function-practice",
+          "template": "practice",
+          "title": "함수인지 판단하기",
+          "kicker": "정의역의 모든 원소가 하나씩 대응하는지 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "X={1,2,3}에서 1→p, 2→q, 2→r로 대응하고 3은 대응하지 않는다. X에서 어떤 집합으로 가는 함수인지 판단하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "정의역의 모든 원소가 대응하는지, 한 원소에서 두 값으로 나가지는 않는지 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "함수가 아닙니다. 2가 두 값에 대응하고 3은 대응하지 않습니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "정의역의 모든 원소를 확인했나요?",
+                "각 원소에서 값이 정확히 하나씩 대응하는지 살폈나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "함수"
+    },
+    {
+      "title": "유리함수의 기본 꼴",
+      "pages": [
+        {
+          "id": "math-lower-rational-function-opening",
+          "template": "opening",
+          "title": "입력이 커지면 출력은 어떻게 변할까?",
+          "kicker": "유리함수 y=k/x",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=6/x에서 x가 1, 2로 커지면 y의 값은 어떻게 달라질까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "값을 대입하기",
+              "text": "x=1과 x=2일 때 y를 계산해 보세요. x=0을 넣을 수 있는지도 살펴보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "y는 각각 6, 3입니다. x=0에서는 나눗셈을 할 수 없으므로 정의역에서 제외합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-rational-function-concept",
+          "template": "concept",
+          "title": "y=k/x에서 x와 y는 반비례 관계",
+          "kicker": "정의역과 치역 확인",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기본 꼴",
+              "text": "y=k/x (k≠0)는 x가 0이 아닌 실수일 때 정의되는 유리함수입니다. x와 y의 곱은 xy=k로 일정합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "그래프의 기본 성질",
+              "items": [
+                "k>0이면 x와 y의 부호가 같아 그래프는 제1·3사분면에 놓입니다.",
+                "k<0이면 x와 y의 부호가 달라 그래프는 제2·4사분면에 놓입니다.",
+                "정의역은 x≠0인 실수이고, 치역도 y≠0인 실수입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "0은 정의역과 치역에서 제외",
+              "text": "분모 x가 0일 수 없고, k≠0이므로 y도 0이 될 수 없습니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-rational-function-example",
+          "template": "example",
+          "title": "표로 그래프의 위치 살피기",
+          "kicker": "y=2/x의 대응값",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=2/x에서 x=−2, −1, 1, 2일 때 y를 구하고 그래프가 놓이는 사분면을 말하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x=−2,−1,1,2를 차례로 대입하면 y=−1,−2,2,1입니다.",
+                "x와 y의 부호가 같은 점과 반대인 점을 확인합니다.",
+                "k=2>0이므로 그래프는 제1·3사분면에 놓입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "대응값은 −1, −2, 2, 1이며 그래프는 제1·3사분면에 놓입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-rational-function-practice",
+          "template": "practice",
+          "title": "유리함수 기본 성질 연습",
+          "kicker": "계수의 부호와 사분면",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "y=−3/x의 그래프가 놓이는 사분면을 말하고, x=3일 때 y의 값을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "k의 부호를 보고 x와 y의 부호 관계를 확인한 뒤 x=3을 대입하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "k<0이므로 그래프는 제2·4사분면에 놓이며, x=3일 때 y=−1입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "k의 부호로 사분면을 판단했나요?",
+                "x=0은 정의역에서 제외되는 점을 기억했나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "함수"
+    },
+    {
+      "title": "무리함수의 정의역과 그래프",
+      "pages": [
+        {
+          "id": "math-lower-irrational-function-opening",
+          "template": "opening",
+          "title": "제곱근이 함수의 값이 될 수 있을까?",
+          "kicker": "무리함수",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=√x에서 x가 0, 1, 4일 때 y의 값은 무엇일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "제곱해서 확인",
+              "text": "각 x에 대해 제곱하면 x가 되는 음이 아닌 수를 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "y는 0, 1, 2입니다. 실수 범위에서 제곱근 기호 √x는 음이 아닌 값을 나타냅니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-irrational-function-concept",
+          "template": "concept",
+          "title": "근호 안이 음수가 되지 않도록 정의역을 정한다",
+          "kicker": "정의역 조건과 그래프 이동",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "무리함수의 기본 꼴",
+              "text": "무리함수는 변수에 대한 식이 근호 안에 포함된 함수입니다. 실수 범위에서 제곱근을 다룰 때는 근호 안의 식이 0 이상이어야 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "y=√(x−a)+b 살펴보기",
+              "items": [
+                "정의역은 x−a≥0을 풀어 구합니다.",
+                "y=√x의 그래프를 x축 방향으로 a만큼, y축 방향으로 b만큼 평행이동한 그래프입니다.",
+                "제곱근 값이 0 이상이므로 치역은 y≥b입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "정의역부터 구하기",
+              "text": "그래프를 그리기 전에 근호 안의 식이 0 이상인지 확인합니다. 근호 바깥의 이동은 정의역 조건을 바꾸지 않습니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-irrational-function-example",
+          "template": "example",
+          "title": "평행이동한 그래프의 정의역과 치역",
+          "kicker": "y=√(x−1)+2",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=√(x−1)+2의 정의역과 치역을 구하고 그래프의 시작점을 말하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x−1≥0이므로 x≥1입니다.",
+                "√(x−1)≥0이므로 y≥2입니다.",
+                "y=√x의 그래프를 오른쪽으로 1, 위로 2만큼 옮기므로 시작점은 (1,2)입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "정의역은 x≥1, 치역은 y≥2이며 시작점은 (1,2)입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-irrational-function-practice",
+          "template": "practice",
+          "title": "대칭과 정의역 연습",
+          "kicker": "근호 조건과 부호 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "y=−√(x+2)+1의 정의역과 치역을 구하고 그래프의 시작점을 말하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "x+2≥0으로 정의역을 구하세요. 앞의 음수는 그래프를 x축에 대하여 대칭시킵니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "정의역은 x≥−2, 치역은 y≤1이며 시작점은 (−2,1)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "근호 안을 0 이상으로 두었나요?",
+                "앞의 음수로 치역의 방향을 바꾸었나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "함수"
+    },
+    {
+      "title": "합의 법칙과 곱의 법칙",
+      "pages": [
+        {
+          "id": "math-lower-counting-opening",
+          "template": "opening",
+          "title": "가능한 선택은 모두 몇 가지일까?",
+          "kicker": "합의 법칙과 곱의 법칙",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "셔츠 3벌 중 하나와 바지 2벌 중 하나를 고르면 옷차림은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "선택을 나누어 세기",
+              "text": "셔츠를 하나 고를 때마다 바지 선택이 몇 가지씩 가능한지 표로 세어 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "셔츠 3가지 각각에 바지 2가지가 가능하므로 3×2=6가지입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-counting-concept",
+          "template": "concept",
+          "title": "이어 하는 선택은 곱하고, 겹치지 않는 갈래는 더한다",
+          "kicker": "선택 구조부터 확인",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "곱의 법칙",
+              "text": "첫 번째 선택이 m가지이고, 각 경우마다 이어지는 두 번째 선택이 n가지이면 두 선택을 함께 하는 방법은 m×n가지입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "합의 법칙",
+              "items": [
+                "서로 겹치지 않는 갈래 A를 고르는 방법이 m가지입니다.",
+                "갈래 B를 고르는 방법이 n가지라면, A 또는 B를 고르는 방법은 m+n가지입니다.",
+                "갈래가 겹치는 선택을 단순히 더하면 중복해서 세므로 갈래가 겹치지 않는지 확인합니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "곱인지 합인지 먼저 판단",
+              "text": "‘A를 하고 이어서 B’이면 곱의 법칙, ‘A 또는 B 중 하나’이고 두 갈래가 겹치지 않으면 합의 법칙을 사용합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-counting-example",
+          "template": "example",
+          "title": "두 단계 선택 세기",
+          "kicker": "각 단계의 선택 수를 곱한다",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "문자 A, B, C 중 하나와 숫자 1, 2 중 하나를 차례로 골라 두 글자 표지를 만든다. 표지는 몇 가지일까요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "첫 글자 선택은 3가지입니다.",
+                "각 첫 글자에 숫자 선택 2가지가 이어집니다.",
+                "따라서 3×2=6가지입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "6가지"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-counting-practice",
+          "template": "practice",
+          "title": "합의 법칙과 곱의 법칙 연습",
+          "kicker": "선택이 이어지는지 갈라지는지 보기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "간식 A 4종 중 하나 또는 음료 B 3종 중 하나를 고른다. 간식과 음료 종류는 서로 다르다. 고르는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "두 종류를 함께 고르는 것이 아니라 둘 중 하나를 고르며, 선택 갈래가 겹치는지 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "서로 겹치지 않는 갈래이므로 합의 법칙을 써서 4+3=7가지입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "선택 단계가 이어지는 상황인지 확인했나요?",
+                "더할 때 갈래가 서로 겹치지 않는지 확인했나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "확률과 통계"
+    },
+    {
+      "title": "순열",
+      "pages": [
+        {
+          "id": "math-lower-permutations-opening",
+          "template": "opening",
+          "title": "자리까지 정하면 순서가 중요할까?",
+          "kicker": "순열",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "학생 3명 중 회장과 부회장 한 명씩을 뽑는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "직책을 바꾸어 보기",
+              "text": "민수가 회장, 지수가 부회장인 경우와 지수가 회장, 민수가 부회장인 경우를 같은 방법으로 볼 수 있을까요?"
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "직책이 달라 서로 다른 선택이므로 순서를 구별합니다. 가능한 방법은 3×2=6가지입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-permutations-concept",
+          "template": "concept",
+          "title": "서로 다른 r개를 순서 있게 고르는 방법",
+          "kicker": "nPr로 나타내기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "순열",
+              "text": "서로 다른 n개에서 r개를 골라 순서 있게 나열하는 방법을 순열이라고 하며 nPr로 나타냅니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "계산 공식",
+              "items": [
+                "첫 자리는 n가지, 다음 자리는 n−1가지로 줄어듭니다.",
+                "따라서 nPr=n(n−1)…(n−r+1)입니다.",
+                "팩토리얼을 쓰면 nPr=n!/(n−r)!입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "순서를 구별하는지 확인",
+              "text": "회장과 부회장처럼 역할이 다르면 순서가 있는 선택입니다. 순서를 구별하지 않는 선택은 조합과 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-permutations-example",
+          "template": "example",
+          "title": "다섯 명 중 두 자리 정하기",
+          "kicker": "5P2 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "서로 다른 5명 중에서 회장과 부회장을 뽑는 방법의 수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "회장은 5명 중 한 명을 뽑습니다.",
+                "회장을 뽑고 나면 부회장은 나머지 4명 중 한 명입니다.",
+                "5P2=5×4=20입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "20가지"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-permutations-practice",
+          "template": "practice",
+          "title": "순열 계산 연습",
+          "kicker": "순서가 달라지면 다른 경우",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "달리기 선수 5명 중 금메달과 은메달을 받을 두 명을 정하는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "금메달 수상자를 먼저 정하고, 남은 선수 중 은메달 수상자를 정하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5P2=5×4=20가지"
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "금·은 순위를 구분했나요?",
+                "첫 번째 선택 뒤 남은 인원이 한 명 줄었나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "확률과 통계"
+    },
+    {
+      "title": "조합",
+      "pages": [
+        {
+          "id": "math-lower-combinations-opening",
+          "template": "opening",
+          "title": "뽑힌 사람의 순서를 따질까?",
+          "kicker": "조합",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "학생 3명 중에서 대표 2명을 뽑는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "순서를 바꾸어 보기",
+              "text": "민수와 지수를 뽑은 경우와 지수와 민수를 뽑은 경우를 서로 다른 방법으로 세어야 할까요?"
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "대표로 뽑힌 두 사람만 같으면 같은 선택입니다. 순서를 구별하지 않으므로 3가지입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-concept",
+          "template": "concept",
+          "title": "순서를 구별하지 않고 r개를 고르는 방법",
+          "kicker": "nCr로 나타내기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "조합",
+              "text": "서로 다른 n개에서 순서를 구별하지 않고 r개를 고르는 방법을 조합이라고 하며 nCr로 나타냅니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "순열과 연결",
+              "items": [
+                "먼저 순서를 구별해 r개를 뽑으면 nPr가지입니다.",
+                "같은 r개를 뽑는 순서는 r!가지씩 반복해 세었습니다.",
+                "따라서 nCr=nPr/r!=n!/{r!(n−r)!}입니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "역할이 다르면 순열",
+              "text": "대표 두 명을 뽑는 일은 순서를 구별하지 않지만, 회장과 부회장을 정하는 일은 역할이 달라 순서를 구별합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-example",
+          "template": "example",
+          "title": "다섯 명 중 대표 두 명 뽑기",
+          "kicker": "5C2 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "서로 다른 5명 중에서 대표 2명을 뽑는 방법의 수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "뽑힌 두 사람의 순서는 구별하지 않습니다.",
+                "5C2=5!/{2!·3!}=5·4/(2·1)=10입니다.",
+                "순열 5P2에서 두 사람의 순서 2!가 중복되므로 20÷2=10으로도 구할 수 있습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "10가지"
+            }
+          ]
+        },
+        {
+          "id": "math-lower-combinations-practice",
+          "template": "practice",
+          "title": "조합 계산 연습",
+          "kicker": "선택된 사람만 중요",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "서로 다른 6명 중에서 순서를 정하지 않고 3명을 뽑는 방법은 몇 가지일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "순서를 구별하지 않으므로 6C3을 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6C3=6!/{3!·3!}=20가지"
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "선택 순서를 구별하지 않았나요?",
+                "분모에 3!을 포함했나요?"
+              ]
+            }
+          ]
+        }
+      ],
+      "unitTitle": "확률과 통계"
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked",
+    "chapter_count": 9,
+    "page_count": 36
+  }
+}

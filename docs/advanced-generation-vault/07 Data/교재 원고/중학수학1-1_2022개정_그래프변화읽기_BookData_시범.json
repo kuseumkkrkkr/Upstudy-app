@@ -1,0 +1,21 @@
+{
+  "title": "중학수학 1-1 개념서 · 그래프의 변화 읽기",
+  "subtitle": "시간에 따른 양의 증가·유지·감소를 읽는 가상 물탱크 활동",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학수학 1-1", "2022 개정 후보", "그래프 해석", "변화와 관계", "시범", "성취기준 후보 확인: 9수02-06"],
+  "chapters": [{
+    "title": "상황을 그래프로 나타내고 읽기",
+    "intro": ["가로축과 세로축이 무엇을 나타내는지 먼저 확인한 뒤, 그래프의 오르내림을 상황의 변화로 해석한다.", "예시는 실제 측정값이 아닌 학습용 가상 자료이며, 변화율이나 유량은 다루지 않는다."],
+    "sections": [{
+      "title": "그래프의 모양을 상황의 말로 바꾸기",
+      "paragraphs": ["가로축은 시간(분), 세로축은 물의 양(L)이다. 그래프가 올라가면 물의 양이 증가하고, 수평이면 유지되며, 내려가면 감소한다.", "점 (0,0), (2,4), (4,4), (6,2), (8,2)를 차례로 직선으로 잇는다. 구간별 변화의 방향만 해석하며 기울기나 실제 원인은 추정하지 않는다."],
+      "visuals": [{"kind":"table","title":"가상 물탱크 자료","caption":"교실 활동용으로 설정한 가상 자료","rows":[["시간(분)","0","2","4","6","8"],["물의 양(L)","0","4","4","2","2"]]}],
+      "graph": {"items":[{"id":"tank-level-static","type":"scatter","label":"가상 물탱크 수위 변화","colorHex":"#2457C5","enabled":true,"xValues":[0.0,2.0,4.0,6.0,8.0],"yValues":[0.0,4.0,4.0,2.0,2.0]}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":0,"right":8,"top":5,"bottom":0}}}
+    }],
+    "pages": [
+      {"id":"ms11-2022-graph-change-opening","template":"opening","title":"그래프는 상황의 변화를 어떻게 보여 줄까?","kicker":"축의 뜻부터 읽기","blocks":[{"type":"lead","title":"오늘의 질문","text":"시간이 지날 때 물의 양이 늘었는지, 그대로인지, 줄었는지 그래프에서 어떻게 알아볼까?"},{"type":"thinking","title":"축 확인","text":"가로축과 세로축의 단위가 무엇인지 먼저 말해 보자."}]},
+      {"id":"ms11-2022-graph-change-experiment","template":"experiment","title":"가상 물탱크 그래프를 따라가기","kicker":"구간을 직접 선택","blocks":[{"type":"lead","title":"자료 안내","text":"시간(분): 0, 2, 4, 6, 8 / 물의 양(L): 0, 4, 4, 2, 2. 정적 BookData 그래프는 참고용이며, 구간을 실제로 강조하는 조작은 짝 HTML에서 제공한다."},{"type":"question","title":"Socratic 질문","text":"2분부터 4분까지 수평인 까닭을 이 가상 상황의 양 변화로 설명해 보세요."},{"type":"verification","title":"해석","text":"0~2분 증가, 2~4분 유지, 4~6분 감소, 6~8분 유지다. 수도꼭지나 유량 등 그래프에 주어지지 않은 원인은 단정할 수 없다."}]},
+      {"id":"ms11-2022-graph-change-practice","template":"practice","title":"다른 상황으로 옮겨 보기","kicker":"변화를 말로 설명","blocks":[{"type":"question","title":"연습","text":"자전거 주행 거리-시간 그래프가 5분부터 7분까지 수평이다. 이 구간에서 거리의 변화는?"},{"type":"hint","title":"힌트","text":"수평은 세로축의 값이 그대로임을 뜻한다."},{"type":"answer","title":"정답 확인","text":"거리가 변하지 않는다. 정지 이유 등은 그래프만으로 알 수 없다."},{"type":"checklist","title":"마무리","items":["두 축의 양과 단위를 확인한다.","관심 있는 구간을 정한다.","증가·유지·감소를 상황에 맞게 설명한다.","그래프에 없는 원인은 추측하지 않는다."]}]}
+    ]
+  }]
+}

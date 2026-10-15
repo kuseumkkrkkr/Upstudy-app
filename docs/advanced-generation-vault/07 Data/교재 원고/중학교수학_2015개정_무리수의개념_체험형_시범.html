@@ -1,0 +1,34 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>무리수의 개념 · 구간으로 √2 찾기</title>
+<style>
+:root{color-scheme:light dark;font:16px/1.55 system-ui,sans-serif}body{max-width:780px;margin:auto;padding:1rem;background:#101827;color:#f3f6fc}main{background:#1b2638;border:1px solid #35445d;border-radius:18px;padding:1.2rem}h1{font-size:1.45rem}button,input{font:inherit}button{padding:.55rem .8rem;border:0;border-radius:9px;background:#7dd3fc;color:#082f49;font-weight:700;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}.controls{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin:.8rem 0}svg{width:100%;height:120px;background:#111c2b;border-radius:12px}.tick{stroke:#aab8cc;stroke-width:2}.interval{stroke:#38bdf8;stroke-width:9;stroke-linecap:round}.mid{fill:#fbbf24}.point{fill:#fb7185}output,.card{display:block;margin:.7rem 0;padding:.8rem;background:#111c2b;border-radius:10px}.muted{color:#c4cede}.steps{min-height:2.4em}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수01-08] 무리수의 개념 · 시범 / 교사 검수 전</p>
+<h1>유리수 구간으로 √2에 다가가기</h1>
+<p>한 변이 1인 정사각형의 대각선 길이는 √2입니다. 가운데 유리수를 골라 제곱을 비교하고, √2를 포함하는 구간을 좁혀 보세요.</p>
+<section aria-label="구간 조절 도구">
+<svg viewBox="0 0 600 120" role="img" aria-labelledby="plotTitle plotDesc"><title id="plotTitle">1과 2 사이에서 제곱근 2를 끼우는 유리수 구간</title><desc id="plotDesc">구간의 왼쪽과 오른쪽 끝, 가운데 후보를 표시합니다.</desc><line class="tick" x1="50" y1="66" x2="550" y2="66"/><line id="segment" class="interval" x1="50" y1="66" x2="550" y2="66"/><circle id="midpoint" class="mid" cx="300" cy="66" r="9"/><circle id="sqrtPoint" class="point" cx="257" cy="66" r="7"/><text x="45" y="100" fill="currentColor">1</text><text x="540" y="100" fill="currentColor">2</text><text x="268" y="28" fill="#fda4af">√2 (근삿값 위치)</text></svg>
+<label for="level">구간 나누기 단계: <output id="levelLabel">0</output></label>
+<input id="level" type="range" min="0" max="16" value="0" aria-label="유리수 구간을 반으로 나누는 횟수">
+<div class="controls"><button id="step" type="button">한 단계 좁히기</button><button id="reset" type="button">처음으로</button></div>
+<output id="interval" aria-live="polite"></output>
+<p id="reason" class="steps" aria-live="polite"></p>
+</section>
+<section class="card" aria-labelledby="quizTitle"><h2 id="quizTitle">Socratic 퀴즈</h2><p>구간을 16번 좁혀 소수 근삿값을 얻었다면, 그 사실만으로 √2가 무리수임을 증명했을까요?</p><div class="controls"><button type="button" data-answer="yes">네, 근삿값이 정밀하니까요</button><button type="button" data-answer="no">아니요, 근삿값은 증명이 아니니까요</button></div><p id="feedback" aria-live="polite">먼저 선택해 보세요.</p></section>
+<details class="card"><summary>왜 √2는 유리수가 아닐까?</summary><p>√2=p/q라고 기약분수로 가정하면 p²=2q²이므로 p는 짝수입니다. p=2k를 넣으면 q²=2k²이므로 q도 짝수입니다. p와 q가 모두 짝수라는 결론은 기약분수 가정과 모순입니다.</p></details>
+<p class="muted">구간 도구는 위치를 근사하고, 기약분수 논증은 무리성을 증명합니다. 두 활동을 혼동하지 마세요.</p>
+</main>
+<script>
+(()=>{
+const level=document.querySelector('#level'),label=document.querySelector('#levelLabel'),interval=document.querySelector('#interval'),reason=document.querySelector('#reason'),segment=document.querySelector('#segment'),midpoint=document.querySelector('#midpoint'),scale=x=>50+(x-1)*500;
+function bounds(n){let lo=1,hi=2,den=1;for(let i=0;i<n;i++){const m=lo+hi, nextDen=den*2;if(m*m<2*nextDen*nextDen){lo=m;hi=hi*2}else{lo=lo*2;hi=m}den=nextDen;}return{lo,hi,den}}
+function render(){const n=Number(level.value),b=bounds(n),m=b.lo+b.hi,md=2*b.den;label.value=label.textContent=String(n);segment.setAttribute('x1',String(scale(b.lo/b.den)));segment.setAttribute('x2',String(scale(b.hi/b.den)));midpoint.setAttribute('cx',String(scale(m/md)));interval.textContent=`${b.lo}/${b.den} < √2 < ${b.hi}/${b.den}  ·  가운데 후보 ${m}/${md}`;const square=m*m,compare=2*md*md;reason.textContent=n===0?'시작 구간은 1 < √2 < 2입니다. 버튼을 눌러 가운데 후보의 제곱을 비교하세요.':`가운데 후보의 제곱은 ${square<compare?'2보다 작습니다':'2보다 큽니다'}. 정수 비교 ${square} ${square<compare?'<':'>'} ${compare}로 해당 절반을 버렸습니다.`}
+level.addEventListener('input',render);document.querySelector('#step').addEventListener('click',()=>{level.value=String(Math.min(16,Number(level.value)+1));render()});document.querySelector('#reset').addEventListener('click',()=>{level.value='0';render()});document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#feedback').textContent=button.dataset.answer==='no'?'맞아요. 유한한 근삿값은 위치를 알려줄 뿐 무리성 증명이 아닙니다. 기약분수 가정의 모순을 확인하세요.':'다시 생각해 보세요. 근삿값 자체는 유리수로 적을 수 있습니다.'}));render();
+})();
+</script>
+</body></html>

@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학수학 1-1 개념서 · 소인수분해 · 2022 개정</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:220px;flex:1}.controls input{width:100%}button,input{font:inherit}button{color:var(--ink);background:white;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.small{font-size:.94rem}.stage{background:#f7f9fd;border-radius:10px;padding:14px;min-height:3.5em}.factor-chips{display:flex;gap:8px;flex-wrap:wrap;min-height:2.3em;margin:12px 0}.chip{padding:5px 10px;border-radius:20px;background:#e8eef9}.chip.prime{background:#e2f3e9;color:#0b5b36}.prime-table{width:100%;border-collapse:collapse;margin-top:12px}.prime-table th,.prime-table td{text-align:center;border-bottom:1px solid var(--line);padding:8px}.feedback{min-height:1.5em}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}.prime-table th,.prime-table td{padding:6px 3px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2022 개정 · 중학교 1학년 1학기 · [9수01-01], [9수01-02] 시범</p>
+<h1>소인수분해: 소수 블록으로 나누기</h1>
+<p>숫자를 직접 바꾸고, 한 번에 한 단계씩 소수의 곱으로 나누어 보세요.</p>
+
+<section class="card" aria-labelledby="factorTitle">
+<h2 id="factorTitle">한 단계씩 소인수분해</h2>
+<label for="factorNumber">분해할 자연수 <output id="factorValue" for="factorNumber">84</output></label>
+<input id="factorNumber" type="range" min="2" max="120" step="1" value="84" aria-label="소인수분해할 자연수, 2부터 120">
+<p id="factorStep" class="stage" aria-live="polite"></p>
+<div id="foundFactors" class="factor-chips" aria-label="지금까지 찾은 소인수"></div>
+<div class="controls"><button id="factorBack" type="button">이전 단계</button><button id="factorNext" type="button">한 단계</button><button id="factorReset" type="button">처음부터</button><span id="factorCount" class="muted" aria-live="polite"></span></div>
+<p id="factorResult" class="status" aria-live="polite"></p>
+<div class="quiz"><p><strong>생각 질문.</strong> 84=2×42에서 소인수분해가 끝났을까요?</p><button id="factorHint" type="button">힌트 보기</button><p id="factorFeedback" class="feedback" role="status" aria-live="polite">42가 소수인지 먼저 확인하세요.</p></div>
+</section>
+
+<section class="card" aria-labelledby="gcdTitle">
+<h2 id="gcdTitle">최대공약수와 최소공배수</h2>
+<div class="controls">
+<label>자연수 A <output id="aOut" for="aValue">72</output><input id="aValue" type="range" min="2" max="120" step="1" value="72" aria-label="최대공약수와 최소공배수를 구할 첫 번째 자연수"></label>
+<label>자연수 B <output id="bOut" for="bValue">120</output><input id="bValue" type="range" min="2" max="120" step="1" value="120" aria-label="최대공약수와 최소공배수를 구할 두 번째 자연수"></label>
+</div>
+<p id="factorAB" class="stage" aria-live="polite"></p>
+<table class="prime-table"><caption class="sr">두 수의 소인수별 지수 비교표</caption><thead><tr><th scope="col">소인수</th><th scope="col">A의 지수</th><th scope="col">B의 지수</th><th scope="col">최대공약수</th><th scope="col">최소공배수</th></tr></thead><tbody id="exponentRows"></tbody></table>
+<p id="gcdResult" class="status" aria-live="polite"></p>
+<p id="lcmResult" class="status" aria-live="polite"></p>
+<p id="checkProduct" class="small"></p>
+<div class="quiz"><p><strong>질문.</strong> 왜 최대공약수에는 작은 지수를, 최소공배수에는 큰 지수를 쓸까요?</p><button id="gcdHint" type="button">한 단계 힌트</button><p id="gcdFeedback" class="feedback" role="status" aria-live="polite">두 수를 모두 나누는 데 필요한 조건을 떠올려 보세요.</p></div>
+</section>
+
+<section class="card" aria-labelledby="practiceTitle">
+<h2 id="practiceTitle">도구 퀴즈</h2>
+<div class="quiz"><p><strong>1은 소수일까요?</strong></p><div class="controls"><button type="button" data-prime="yes">소수</button><button type="button" data-prime="neither">소수도 합성수도 아님</button></div><p id="primeFeedback" class="feedback" role="status" aria-live="polite">정의를 떠올려 답하세요.</p></div>
+<div class="quiz"><p><strong>36과 60의 최대공약수</strong>는 얼마일까요?</p><div class="controls"><button type="button" data-gcd="6">6</button><button type="button" data-gcd="12">12</button><button type="button" data-gcd="180">180</button></div><p id="quizFeedback" class="feedback" role="status" aria-live="polite">공통 소인수의 지수를 비교해 보세요.</p></div>
+</section>
+
+<section class="card"><h2>도구 없이 확인하기</h2><p>90을 소인수분해하고, 36과 60의 최소공배수를 구해 보세요. 마지막에 두 수로 나누어떨어지는지 직접 검산하세요.</p><details><summary>정답 확인</summary><p>90=2×3²×5입니다. 최소공배수는 2²×3²×5=180이고, 180÷36=5, 180÷60=3입니다.</p></details></section>
+<p class="small muted">이 HTML은 독립 시범입니다. BookData 앱 페이지와 자동 연결되거나 학생 진도가 저장되지 않습니다.</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const numberInput=document.querySelector('#factorNumber'), factorValue=document.querySelector('#factorValue');
+  const factorStep=document.querySelector('#factorStep'), foundFactors=document.querySelector('#foundFactors');
+  const factorCount=document.querySelector('#factorCount'), factorResult=document.querySelector('#factorResult');
+  const factorBack=document.querySelector('#factorBack'), factorNext=document.querySelector('#factorNext');
+  const aValue=document.querySelector('#aValue'), bValue=document.querySelector('#bValue');
+  const aOut=document.querySelector('#aOut'), bOut=document.querySelector('#bOut');
+  const factorAB=document.querySelector('#factorAB'), exponentRows=document.querySelector('#exponentRows');
+  const gcdResult=document.querySelector('#gcdResult'), lcmResult=document.querySelector('#lcmResult'), checkProduct=document.querySelector('#checkProduct');
+
+  function factorization(value){
+    let n=Number(value);const factors=[];
+    for(let p=2;p*p<=n;p++)while(n%p===0){factors.push(p);n/=p}
+    if(n>1)factors.push(n);
+    return factors;
+  }
+  function factorText(factors){
+    if(!factors.length)return '1';
+    const counts=new Map();for(const p of factors)counts.set(p,(counts.get(p)||0)+1);
+    return [...counts].map(([p,e])=>e===1?String(p):`${p}^${e}`).join(' × ');
+  }
+  function factorSteps(value){
+    let remaining=Number(value);const factors=[],steps=[`시작: ${remaining}`];
+    while(remaining>1){
+      let divisor=2;while(divisor*divisor<=remaining&&remaining%divisor!==0)divisor++;
+      if(divisor*divisor>remaining)divisor=remaining;
+      remaining/=divisor;factors.push(divisor);
+      steps.push(`${divisor}로 나누기: ${factors.join(' × ')}${remaining>1?` × ${remaining}`:''}${remaining===1?' · 소수로 끝까지 나누었습니다.':''}`);
+    }
+    return {steps,factors};
+  }
+  let factorState=factorSteps(Number(numberInput.value)),stepIndex=0;
+  function showFactorStep(){
+    factorValue.value=numberInput.value;factorStep.textContent=factorState.steps[stepIndex];
+    factorCount.textContent=`${stepIndex+1}/${factorState.steps.length}`;
+    factorBack.disabled=stepIndex===0;factorNext.disabled=stepIndex===factorState.steps.length-1;
+    foundFactors.replaceChildren();
+    const shown=factorState.factors.slice(0,stepIndex);
+    for(const prime of shown){const chip=document.createElement('span');chip.className='chip prime';chip.textContent=String(prime);foundFactors.append(chip)}
+    factorResult.textContent=stepIndex===factorState.steps.length-1?`${numberInput.value} = ${factorText(factorState.factors)}`:'소인수분해를 완성하려면 남은 수가 소수인지 확인하세요.';
+  }
+  function resetFactor(){factorState=factorSteps(Number(numberInput.value));stepIndex=0;showFactorStep()}
+  numberInput.addEventListener('input',resetFactor);
+  factorBack.addEventListener('click',()=>{stepIndex=Math.max(0,stepIndex-1);showFactorStep()});
+  factorNext.addEventListener('click',()=>{stepIndex=Math.min(factorState.steps.length-1,stepIndex+1);showFactorStep()});
+  document.querySelector('#factorReset').addEventListener('click',resetFactor);
+  document.querySelector('#factorHint').addEventListener('click',()=>{document.querySelector('#factorFeedback').textContent='42=2×3×7로 더 나뉩니다. 모든 인수가 소수일 때 멈춥니다.'});
+  showFactorStep();
+
+  function exponentMap(factors){const map=new Map();for(const p of factors)map.set(p,(map.get(p)||0)+1);return map}
+  function renderGcdLcm(){
+    const a=Number(aValue.value),b=Number(bValue.value),fa=factorization(a),fb=factorization(b);
+    const ea=exponentMap(fa),eb=exponentMap(fb),primes=[...new Set([...ea.keys(),...eb.keys()])].sort((x,y)=>x-y);
+    let gcd=1,lcm=1;exponentRows.replaceChildren();
+    for(const p of primes){
+      const left=ea.get(p)||0,right=eb.get(p)||0,min=Math.min(left,right),max=Math.max(left,right);
+      gcd*=p**min;lcm*=p**max;
+      const row=document.createElement('tr');
+      for(const text of [String(p),String(left),String(right),min?`${p}^${min}`:'—',`${p}^${max}`]){const cell=document.createElement('td');cell.textContent=text;row.append(cell)}
+      exponentRows.append(row);
+    }
+    aOut.value=String(a);bOut.value=String(b);
+    factorAB.textContent=`A=${a}=${factorText(fa)}  ·  B=${b}=${factorText(fb)}`;
+    gcdResult.textContent=`최대공약수 = ${gcd}`;lcmResult.textContent=`최소공배수 = ${lcm}`;
+    checkProduct.textContent=`검산: ${gcd}×${lcm} = ${gcd*lcm} · ${a}×${b} = ${a*b} · ${gcd*lcm===a*b?'두 곱이 같습니다.':'두 곱을 다시 확인하세요.'}`;
+  }
+  aValue.addEventListener('input',renderGcdLcm);bValue.addEventListener('input',renderGcdLcm);renderGcdLcm();
+  document.querySelector('#gcdHint').addEventListener('click',()=>{document.querySelector('#gcdFeedback').textContent='최대공약수는 두 수를 모두 나눠야 하므로 공통 소인수의 작은 지수를 씁니다. 최소공배수는 두 수를 모두 포함하도록 큰 지수를 씁니다.'});
+  document.querySelectorAll('[data-prime]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#primeFeedback').textContent=button.dataset.prime==='neither'?'맞아요. 1은 소수도 합성수도 아닙니다.':'다시 확인해 보세요. 소수는 1보다 큰 자연수여야 합니다.'}));
+  document.querySelectorAll('[data-gcd]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#quizFeedback').textContent=button.dataset.gcd==='12'?'맞아요. 36과 60의 공통 소인수 중 작은 지수의 곱은 12입니다.':'다시 생각해 보세요. 두 수에 공통으로 들어 있는 소인수만 고르세요.'}));
+})();
+</script>
+</body></html>

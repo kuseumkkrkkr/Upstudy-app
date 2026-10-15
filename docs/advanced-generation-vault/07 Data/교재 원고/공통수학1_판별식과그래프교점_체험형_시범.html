@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공통수학1 개념서 | 판별식과 그래프의 만남</title>
+<style>
+:root{color-scheme:light;--ink:#162536;--muted:#526477;--line:#c8d3df;--paper:#f4f7fb;--blue:#315da8;--orange:#d86035;--focus:#b4481d}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:900px;margin:auto;padding:24px 16px 56px}header,.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin:0 0 16px}h1{font-size:clamp(1.5rem,4vw,2.2rem);line-height:1.2;margin:.25rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 8px}.eyebrow,.muted{color:var(--muted)}.eyebrow{font-size:.9rem;font-weight:700;letter-spacing:.04em}p{margin:.5rem 0}.prompt{font-size:1.08rem;font-weight:650}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}.control{padding:14px;border:1px solid var(--line);border-radius:12px}.control label{display:flex;justify-content:space-between;gap:12px;font-weight:700}.control output{font-variant-numeric:tabular-nums;color:var(--blue)}input[type=range]{display:block;width:100%;min-height:44px;accent-color:var(--blue)}button{min-height:44px;padding:9px 14px;border:1px solid #536d89;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-weight:650;cursor:pointer}button:hover{background:#edf3fb}button:focus-visible,input:focus-visible{outline:3px solid #f2a279;outline-offset:2px}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.graphbox{overflow-x:auto}svg{display:block;width:100%;min-width:420px;height:auto;background:#fbfdff;border:1px solid var(--line);border-radius:12px}.grid{stroke:#e0e7ef;stroke-width:1}.axis{stroke:#26394d;stroke-width:1.7}.curve{fill:none;stroke:var(--blue);stroke-width:3;stroke-linecap:round}.root{fill:var(--orange);stroke:#fff;stroke-width:2}.tick{fill:var(--muted);font-size:11px}.status{min-height:54px;margin-top:10px;padding:10px 12px;background:#edf3fb;border-left:4px solid var(--blue);border-radius:8px}.stage{padding:12px;background:#fff7e8;border:1px solid #f0d4a2;border-radius:10px;margin-top:10px}.quiz-options{display:flex;flex-wrap:wrap;gap:8px}.feedback{min-height:28px;font-weight:650}.small{font-size:.92rem}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important}}
+.root{opacity:0;transform:scale(.55);transform-box:fill-box;transform-origin:center;transition:opacity .3s ease,transform .3s ease}#roots.revealed .root{opacity:1;transform:scale(1)}.diagram-note{fill:var(--focus);font-size:14px;font-weight:700;opacity:0;transition:opacity .25s ease}#discriminantLabel.revealed{opacity:1}
+@media(prefers-reduced-motion:reduce){.root,.diagram-note{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div class="eyebrow">공통수학1 개념서 · 2022 개정 후보</div>
+  <h1>판별식과 그래프의 만남</h1>
+  <p class="prompt">이차방정식 x²+bx+c=0의 실근 개수를, 근을 직접 구하지 않고 알아낼 수 있을까요?</p>
+  <p class="muted small">이 체험은 a=1인 경우만 다룹니다. 먼저 교점 수를 예상한 뒤 b와 c를 움직여 관찰하세요.</p>
+</header>
+
+<section class="card" aria-labelledby="explore-title">
+  <h2 id="explore-title">1. 계수를 바꾸고 그래프 관찰하기</h2>
+  <div class="controls">
+    <div class="control"><label for="bValue">일차항 계수 b <output id="bOutput" for="bValue">0</output></label><input id="bValue" type="range" min="-4" max="4" step="1" value="0" aria-describedby="bHelp"><div id="bHelp" class="muted small">꼭짓점의 좌우 위치와 대칭축을 바꿉니다.</div></div>
+    <div class="control"><label for="cValue">상수항 c <output id="cOutput" for="cValue">1</output></label><input id="cValue" type="range" min="-4" max="4" step="1" value="1" aria-describedby="cHelp"><div id="cHelp" class="muted small">포물선의 높이와 x축 교점 수를 바꿉니다.</div></div>
+  </div>
+  <div class="actions"><button id="reset" type="button">처음 값으로</button></div>
+  <div class="graphbox"><svg id="plot" viewBox="0 0 520 360" role="img" aria-labelledby="plotTitle plotDesc"><title id="plotTitle">이차함수 그래프</title><desc id="plotDesc">b와 c 조절에 따라 포물선의 x축 교점을 관찰하는 좌표평면</desc><defs><clipPath id="plotClip"><rect x="40" y="30" width="460" height="300"/></clipPath></defs><g id="gridLines"></g><g id="ticks"></g><path id="curve" class="curve" clip-path="url(#plotClip)"/><g id="roots"></g><text id="discriminantLabel" class="diagram-note" x="52" y="52"></text></svg></div>
+  <div id="readout" class="status" role="status" aria-live="polite"></div>
+</section>
+
+<section class="card" aria-labelledby="reason-title">
+  <h2 id="reason-title">2. 관찰을 세 단계로 설명하기</h2>
+  <p>그래프가 한 번 움직일 때마다 생각을 한 단계씩 확인합니다. 자동 재생 없이 직접 넘길 수 있습니다.</p>
+  <div id="stageText" class="stage" aria-live="polite">시작: 먼저 현재 포물선과 x축이 만나는 횟수를 눈으로 세어 보세요.</div>
+  <div class="actions"><button id="previous" type="button">이전 단계</button><button id="next" type="button">다음 단계</button></div>
+</section>
+
+<section class="card" aria-labelledby="quiz-title">
+  <h2 id="quiz-title">3. 그래프 도구 퀴즈</h2>
+  <p>지금 조절한 b와 c를 기준으로 x축 교점은 몇 개인가요? 예측을 먼저 고르고 확인하세요.</p>
+  <div class="quiz-options" role="group" aria-label="x축 교점 개수 선택">
+    <button type="button" data-count="0">0개</button><button type="button" data-count="1">1개</button><button type="button" data-count="2">2개</button>
+  </div>
+  <p id="quizFeedback" class="feedback" role="status" aria-live="polite"></p>
+  <p class="muted small">힌트: D=b²−4c의 부호를 계산해 그래프에서 본 횟수와 비교하세요.</p>
+</section>
+
+<section class="card" aria-labelledby="transfer-title">
+  <h2 id="transfer-title">4. 도구를 닫고 새 식에 적용하기</h2>
+  <p><strong>문제.</strong> x²−4x+3=0의 실근 개수를 판별식으로 판단하고, 그래프와 x축의 관계를 말해 보세요.</p>
+  <details><summary>한 단계 힌트</summary><p>D=(−4)²−4×3을 계산하고 부호를 확인하세요.</p></details>
+  <details><summary>풀이 확인</summary><p>D=4&gt;0이므로 서로 다른 두 실근입니다. 그래프는 x축과 두 점에서 만나며, (x−1)(x−3)=0에서 근은 1과 3입니다.</p></details>
+</section>
+</main>
+<script>
+(()=>{
+  const bInput=document.getElementById('bValue'),cInput=document.getElementById('cValue');
+  const bOutput=document.getElementById('bOutput'),cOutput=document.getElementById('cOutput');
+  const curve=document.getElementById('curve'),roots=document.getElementById('roots'),discriminantLabel=document.getElementById('discriminantLabel');
+  const grid=document.getElementById('gridLines'),ticks=document.getElementById('ticks');
+  const readout=document.getElementById('readout'),desc=document.getElementById('plotDesc');
+  const stageText=document.getElementById('stageText');let stage=0;
+  function updateStages(b,c,D){
+    roots.classList.toggle('revealed',stage>=2);
+    discriminantLabel.textContent=`D = ${b}² − 4×(${c}) = ${D}`;
+    discriminantLabel.classList.toggle('revealed',stage>=3);
+    stageText.textContent=stage===0?'시작: 먼저 현재 포물선과 x축이 만나는 횟수를 눈으로 세어 보세요.':stage===1?`1단계 · y=0인 그래프 위의 점은 x축 위에 있습니다. x²+bx+c=0의 근은 포물선의 x절편입니다. 현재 D=${D}도 계산해 보세요.`:stage===2?`2단계 · 주황색 점이 x절편입니다. 표시된 점의 x좌표가 방정식의 실근과 같은지 확인하세요. 현재 판별식은 D=${D}입니다.`:`3단계 · D=${D}의 부호를 교점 수와 연결하세요. D>0이면 두 점, D=0이면 접점 한 개, D<0이면 교점이 없습니다.`;
+  }
+  const px=x=>40+(x+5)*46,py=y=>270-y*30;
+  function drawGrid(){
+    const lines=[],labels=[];
+    for(let x=-5;x<=5;x++){const X=px(x);lines.push(`<line class="grid" x1="${X}" y1="30" x2="${X}" y2="330"/>`);if(x!==0)labels.push(`<text class="tick" x="${X}" y="286" text-anchor="middle">${x}</text>`)}
+    for(let y=-2;y<=8;y++){const Y=py(y);lines.push(`<line class="grid" x1="40" y1="${Y}" x2="500" y2="${Y}"/>`);if(y!==0)labels.push(`<text class="tick" x="${px(0)-8}" y="${Y+4}" text-anchor="end">${y}</text>`)}
+    lines.push(`<line class="axis" x1="40" y1="${py(0)}" x2="500" y2="${py(0)}"/><line class="axis" x1="${px(0)}" y1="30" x2="${px(0)}" y2="330"/>`);
+    grid.innerHTML=lines.join('');ticks.innerHTML=labels.join('');
+  }
+  function update(){
+    const b=Number(bInput.value),c=Number(cInput.value),D=b*b-4*c;
+    bOutput.value=String(b);cOutput.value=String(c);
+    let path='',started=false;
+    for(let i=0;i<=400;i++){const x=-5+i*.025,y=x*x+b*x+c;if(y>=-2&&y<=8){path+=`${started?'L':'M'}${px(x).toFixed(2)},${py(y).toFixed(2)} `;started=true}else{started=false}}
+    curve.setAttribute('d',path.trim());
+    const solutions=D<0?[]:D===0?[-b/2]:[(-b-Math.sqrt(D))/2,(-b+Math.sqrt(D))/2];
+    roots.innerHTML=solutions.filter(x=>x>=-5&&x<=5).map(x=>`<circle class="root" cx="${px(x)}" cy="${py(0)}" r="7"><title>x절편 ${x.toFixed(2)}</title></circle>`).join('');
+    const count=D<0?0:D===0?1:2;
+    const phrase=count===0?'실근이 없고 x축과 만나지 않습니다.':count===1?'중근인 실근 하나를 가지며 x축에 접합니다.':'서로 다른 두 실근을 가지며 x축과 두 점에서 만납니다.';
+    readout.textContent=`D=b²−4c=${b}²−4×(${c})=${D}. ${phrase}${solutions.some(x=>x < -5||x > 5)?' 교점 일부는 현재 그래프 창 바깥에 있습니다.':''}`;
+    updateStages(b,c,D);
+    desc.textContent=`y=x²+${b}x+(${c}) 그래프. 판별식 D=${D}; ${phrase}`;
+    document.getElementById('quizFeedback').textContent='';
+  }
+  drawGrid();update();
+  bInput.addEventListener('input',update);cInput.addEventListener('input',update);
+  document.getElementById('reset').addEventListener('click',()=>{bInput.value='0';cInput.value='1';stage=0;update();stageText.textContent='시작: 먼저 현재 포물선과 x축이 만나는 횟수를 눈으로 세어 보세요.'});
+  document.getElementById('next').addEventListener('click',()=>{stage=Math.min(stage+1,3);update()});
+  document.getElementById('previous').addEventListener('click',()=>{stage=Math.max(stage-1,0);update()});
+  document.querySelectorAll('[data-count]').forEach(button=>button.addEventListener('click',()=>{const b=Number(bInput.value),c=Number(cInput.value),D=b*b-4*c,actual=D<0?0:D===0?1:2,feedback=document.getElementById('quizFeedback');feedback.textContent=Number(button.dataset.count)===actual?`맞아요. D=${D}의 부호와 그래프의 ${actual}개 교점이 일치합니다.`:`다시 살펴보세요. D=${D}이므로 ${actual}개 교점입니다. 실근의 개수와 x절편의 개수를 연결해 보세요.`}));
+})();
+</script>
+</body>
+</html>

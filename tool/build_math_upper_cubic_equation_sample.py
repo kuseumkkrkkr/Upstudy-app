@@ -1,0 +1,55 @@
+"""Create a focused 2015 Math (Upper) cubic equation subunit draft."""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
+OUTPUT = MANUSCRIPTS / "수학상_2015개정_초안"
+TAGS = ["수학(상)", "2015 개정", "방정식과 부등식", "여러 가지 방정식", "삼차방정식", "인수분해", "신규 시범", "공식 코드 대조 전"]
+
+
+def main() -> None:
+    pages = [
+        {"id": "math-upper-cubic-equation-opening", "template": "opening", "title": "삼차방정식도 인수분해해 풀 수 있을까?", "kicker": "여러 가지 방정식", "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "x³−3x²−4x+12=0의 해를 어떻게 찾을까요?"},
+            {"type": "thinking", "title": "항을 두 묶음으로", "text": "앞의 두 항과 뒤의 두 항을 각각 묶어 공통인수가 생기는지 살펴보세요."},
+            {"type": "answer", "title": "확인", "text": "x²(x−3)−4(x−3)=(x−3)(x²−4)로 묶을 수 있습니다."},
+        ]},
+        {"id": "math-upper-cubic-equation-concept", "template": "concept", "title": "공통인수를 만든 뒤 곱을 0으로 둔다", "kicker": "묶어내기와 제곱의 차", "blocks": [
+            {"type": "definition", "title": "곱이 0인 경우", "text": "두 식 A와 B에 대해 AB=0이면 A=0 또는 B=0입니다. 인수분해한 다항방정식의 각 인수를 0으로 놓아 해를 구합니다."},
+            {"type": "solutionStep", "title": "삼차식 묶기", "items": ["네 항을 두 묶음으로 나눕니다.", "각 묶음에서 공통인수를 묶어 같은 인수를 만듭니다.", "남은 이차식이 제곱의 차이면 다시 인수분해합니다."]},
+            {"type": "misconception", "title": "모든 인수를 빠짐없이 확인", "text": "곱이 0이 되려면 인수 중 하나 이상이 0이면 됩니다. 인수분해한 각 식을 모두 0으로 놓고 해를 모으세요."},
+        ]},
+        {"id": "math-upper-cubic-equation-example", "template": "example", "title": "삼차방정식 인수분해해 풀기", "kicker": "x³−3x²−4x+12=0", "blocks": [
+            {"type": "question", "title": "예제", "text": "x³−3x²−4x+12=0을 풀어 보세요."},
+            {"type": "solutionStep", "title": "풀이", "items": ["x²(x−3)−4(x−3)=0으로 묶습니다.", "(x−3)(x²−4)=0, 즉 (x−3)(x−2)(x+2)=0입니다.", "각 인수를 0으로 놓으면 x=3, 2, −2입니다."]},
+            {"type": "answer", "title": "답", "text": "x=−2, 2, 3"},
+        ]},
+        {"id": "math-upper-cubic-equation-practice", "template": "practice", "title": "인수분해로 삼차방정식 풀기", "kicker": "공통인수와 제곱의 차", "blocks": [
+            {"type": "question", "title": "문제", "text": "x³−x²−4x+4=0을 풀어 보세요."},
+            {"type": "thinking", "title": "생각 순서", "text": "앞의 두 항, 뒤의 두 항을 묶은 뒤 공통인수를 찾으세요."},
+            {"type": "answer", "title": "정답", "text": "x²(x−1)−4(x−1)=(x−1)(x−2)(x+2)=0이므로 x=−2, 1, 2입니다."},
+            {"type": "checklist", "title": "마무리", "items": ["같은 인수를 만들도록 묶었나요?", "제곱의 차를 인수분해했나요?", "모든 인수를 0으로 놓았나요?"]},
+        ]},
+    ]
+    book = {"title": "수학(상) 2015 개정 · 삼차방정식 시범", "subtitle": "태그 기반 신규 소단원 초안", "category": "concept_textbook", "tags": TAGS, "chapters": [{"title": "인수분해를 이용한 삼차방정식", "pages": pages}], "metadata": {"status": "authored_partial_draft", "edition_status": "editorial_split_candidate", "standard_code_status": "not_crosschecked"}}
+    OUTPUT.mkdir(parents=True, exist_ok=True)
+    filename = "수학상_2015개정_삼차방정식_BookData_초안.json"
+    target = OUTPUT / filename
+    target.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    verified = json.loads(target.read_text(encoding="utf-8"))
+    if len(verified["chapters"][0]["pages"]) != 4 or len({page["id"] for page in pages}) != len(pages):
+        raise RuntimeError("Generated draft structure or page IDs are invalid")
+    readme_path = OUTPUT / "README.md"
+    readme = readme_path.read_text(encoding="utf-8")
+    if filename not in readme:
+        readme += f"\n## 삼차방정식\n\n- [{filename}]({filename}): 도입·개념·예제·연습 4쪽\n- 태그: {' · '.join(TAGS)}\n- 성취기준 코드 대조·교사 검수·학생 파일럿은 미완료입니다.\n"
+    readme_path.write_text(readme.rstrip() + "\n", encoding="utf-8")
+    print(f"Created one tagged subunit with {len(pages)} pages.")
+
+
+if __name__ == "__main__":
+    main()

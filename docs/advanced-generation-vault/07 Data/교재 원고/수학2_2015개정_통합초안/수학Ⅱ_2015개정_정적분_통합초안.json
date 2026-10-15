@@ -1,0 +1,164 @@
+{
+  "title": "수학Ⅱ 2015 개정 · 정적분 단원 초안",
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정 후보",
+    "정적분",
+    "태그 기반 초안"
+  ],
+  "chapters": [
+    {
+      "title": "직사각형 합으로 넓이 어림하기",
+      "pages": [
+        {
+          "title": "직사각형 합으로 넓이 어림하기 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "수학Ⅱ · 2015 개정 · 정적분 · 정적분의 활용 · 부분 시범 · 세부 성취기준 코드 대조 전 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 수학Ⅱ 시범 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "math2-2015-01-01-001"
+        },
+        {
+          "id": "math2-2015-01-01-002",
+          "template": "opening",
+          "title": "그래프 아래 넓이는 어떻게 잴까?",
+          "kicker": "먼저 어림하고 확인하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=x와 x축, x=0, x=4로 둘러싸인 넓이를 찾아봅니다."
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "높이 4인 직사각형 하나의 넓이와 실제 삼각형 영역의 넓이는 어떻게 다를까요?"
+            }
+          ]
+        },
+        {
+          "id": "math2-2015-01-01-003",
+          "template": "experiment",
+          "title": "직사각형 수를 직접 바꾸기",
+          "kicker": "아래끝·위끝 어림 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "끝점 b와 분할 수 n을 바꾸고 왼쪽 끝·오른쪽 끝 어림을 전환하세요. 독립 HTML은 그래프와 넓이 수치를 함께 갱신합니다."
+            },
+            {
+              "type": "graph",
+              "title": "y=x와 구간 [0,b]",
+              "text": "앱 그래프 블록은 기준 함수 y=x를 표시합니다. 직사각형 합과 단계 애니메이션은 독립 HTML 시범에서만 조작되며 앱 그래프와 동기화되지 않습니다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "linear-area-function",
+                    "type": "function",
+                    "label": "y=x, 0≤x≤b",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": 0,
+                    "right": 6,
+                    "top": 6,
+                    "bottom": 0
+                  },
+                  "parameters": [
+                    {
+                      "id": "b",
+                      "label": "구간 끝점 b",
+                      "value": 4,
+                      "min": 1,
+                      "max": 6,
+                      "step": 0.5
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "y=x가 증가할 때 왼쪽 끝 높이로 만든 직사각형이 왜 그래프 아래에 놓이나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "작은 구간 안에서 x가 커질수록 y값도 커집니다. 각 구간의 가장 작은 함수값을 생각해 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "증가함수는 구간의 왼쪽 끝에서 가장 작으므로 왼쪽 높이의 직사각형은 아래끝 어림이 됩니다."
+            }
+          ]
+        },
+        {
+          "id": "math2-2015-01-01-004",
+          "template": "practice",
+          "title": "새 구간에 적용하기",
+          "kicker": "도구 없이 전이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x, 0≤x≤6을 3개 구간으로 나눈 왼쪽 끝 직사각형 합과 실제 삼각형 넓이를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "풀이 계획",
+              "text": "먼저 폭을 구하고 각 왼쪽 끝의 높이 0, 2, 4를 더합니다. 실제 넓이는 삼각형으로 따로 계산합니다."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "직사각형 합은 2(0+2+4)=12, 실제 넓이는 6×6÷2=18입니다. 아래끝 어림은 실제보다 작습니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "함수의 증가·감소 방향을 확인한다.",
+                "구간 폭과 각 직사각형의 높이를 구분한다.",
+                "어림값과 정확한 넓이를 구별한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json",
+      "source_tags": [
+        "수학Ⅱ",
+        "2015 개정",
+        "정적분",
+        "정적분의 활용",
+        "부분 시범",
+        "세부 성취기준 코드 대조 전",
+        "교사 검수 전"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json"
+    ]
+  }
+}

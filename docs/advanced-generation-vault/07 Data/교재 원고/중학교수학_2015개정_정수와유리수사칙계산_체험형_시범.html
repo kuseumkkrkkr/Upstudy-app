@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 정수와 유리수 사칙계산</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--orange:#ad4c18;--green:#147047;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:170px;flex:1}.controls input{width:100%}button,select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.equation{font-size:1.2rem;font-weight:700;overflow-wrap:anywhere}.line-wrap{position:relative;padding:36px 4px 28px;margin:18px 0 8px}.axis{height:4px;background:#65758c;position:relative}.axis:before,.axis:after{content:"";position:absolute;top:-5px;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent}.axis:before{left:-2px;border-right:10px solid #65758c}.axis:after{right:-2px;border-left:10px solid #65758c}.ticks{position:absolute;inset:0 4px;display:flex;justify-content:space-between}.tick{position:relative;width:1px;height:15px;background:#65758c}.tick span{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.82rem}.tick.zero{height:22px;background:var(--ink);width:2px}.dot{position:absolute;top:17px;width:15px;height:15px;border-radius:50%;transform:translateX(-50%);transition:left .3s ease}.dot.a{background:var(--blue)}.dot.result{top:0;background:var(--green)}.dot-label{position:absolute;white-space:nowrap;transform:translateX(-50%);font-size:.82rem;font-weight:700}.dot-label.a{top:34px;color:var(--blue)}.dot-label.result{top:-22px;color:var(--green)}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}[hidden]{display:none!important}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-05] 원문 문구 대조 · 학년·학기 미지정</p>
+<h1>부호와 수의 크기를 나누어 계산하기</h1>
+<p>두 유리수와 연산을 직접 바꾸어 보세요. 결과를 보기 전에 부호를 예측하고, 계산 원리를 한 단계씩 확인합니다.</p>
+
+<section class="card" aria-labelledby="inputsTitle">
+<h2 id="inputsTitle">계산식 직접 만들기</h2>
+<div class="controls">
+<label>A의 분자 <output id="aNumOut" for="aNum">−2</output><input id="aNum" type="range" min="-6" max="6" step="1" value="-2" aria-label="A의 분자"></label>
+<label>A의 분모 <output id="aDenOut" for="aDen">3</output><input id="aDen" type="range" min="1" max="6" step="1" value="3" aria-label="A의 분모"></label>
+<label>연산<select id="operation" aria-label="연산 선택"><option value="add">덧셈 (+)</option><option value="subtract">뺄셈 (−)</option><option value="multiply">곱셈 (×)</option><option value="divide">나눗셈 (÷)</option></select></label>
+<label>B의 분자 <output id="bNumOut" for="bNum">1</output><input id="bNum" type="range" min="-6" max="6" step="1" value="1" aria-label="B의 분자"></label>
+<label>B의 분모 <output id="bDenOut" for="bDen">2</output><input id="bDen" type="range" min="1" max="6" step="1" value="2" aria-label="B의 분모"></label>
+</div>
+<p id="equation" class="equation" aria-live="polite">(−2/3) + (1/2) = −1/6</p>
+<p id="resultNote" class="status" role="status" aria-live="polite">결과의 부호와 약분된 값을 확인하세요.</p>
+<div id="numberLineArea">
+<p id="movementNote" class="muted">A에서 시작해 B만큼 움직이면 결과 위치에 도착합니다.</p>
+<div class="line-wrap" role="img" aria-label="−12부터 12까지의 수직선에 A와 결과의 위치를 표시">
+<span id="resultLabel" class="dot-label result">−1/6</span><span id="resultDot" class="dot result" aria-hidden="true"></span><span id="aLabel" class="dot-label a">−2/3</span><span id="aDot" class="dot a" aria-hidden="true"></span><div class="axis"></div>
+<div class="ticks" aria-hidden="true"><i class="tick"><span>−12</span></i><i class="tick"><span>−6</span></i><i class="tick zero"><span>0</span></i><i class="tick"><span>6</span></i><i class="tick"><span>12</span></i></div>
+</div>
+</div>
+</section>
+
+<section class="card" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">계산 원리 한 단계씩 확인</h2>
+<div class="controls"><button id="stepBack" type="button">이전</button><button id="stepNext" type="button">다음</button><button id="stepReset" type="button">처음부터</button><span id="stepReadout" class="status" aria-live="polite">1 / 4 · 연산 먼저 보기</span></div>
+<p id="stepText" role="status" aria-live="polite">연산 기호에 따라 계산 원리가 달라집니다.</p>
+</section>
+
+<section class="card quiz" aria-labelledby="quizTitle">
+<h2 id="quizTitle">부호 예측 퀴즈</h2><p id="quizPrompt">결과는 양수, 음수, 0 중 무엇일까요?</p>
+<div class="controls"><button type="button" data-sign="positive">양수</button><button type="button" data-sign="negative">음수</button><button type="button" data-sign="zero">0</button><button type="button" data-sign="undefined">계산 불가</button></div>
+<button id="hint" type="button">힌트 보기</button><p id="hintText" class="muted" role="status" aria-live="polite">덧셈·뺄셈은 수직선 이동을, 곱셈·나눗셈은 부호 규칙을 먼저 생각하세요.</p>
+<p id="quizFeedback" class="feedback" role="status" aria-live="polite">계산 전 결과 부호를 먼저 예상해 보세요.</p>
+</section>
+
+<section class="card"><h2>도구 없이 새 식으로</h2><ol><li>−3/4 + 1/2</li><li>−2/5 × 3/4</li><li>2/3 ÷ (−4/5)</li><li>5/6 ÷ 0은 가능한가요?</li></ol><p class="muted">확인: −1/4, −3/10, −5/6입니다. 마지막 식은 0으로 나누므로 계산할 수 없습니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData·구매·학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const aNum=document.querySelector('#aNum'),aDen=document.querySelector('#aDen'),bNum=document.querySelector('#bNum'),bDen=document.querySelector('#bDen'),operation=document.querySelector('#operation');let stage=0;
+const gcdInt=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a||1};
+const reduced=(n,d)=>{if(d<0){n=-n;d=-d}if(n===0)return[0,1];const g=gcdInt(n,d);return[n/g,d/g]};
+const fmt=(n,d)=>{const[rN,rD]=reduced(n,d);return rD===1?String(rN):`${rN}/${rD}`};
+function calculate(an,ad,bn,bd,op){
+ if(op==='divide'&&bn===0)return null;
+ if(op==='add')return[an*bd+bn*ad,ad*bd];
+ if(op==='subtract')return[an*bd-bn*ad,ad*bd];
+ if(op==='multiply')return[an*bn,ad*bd];
+ return[an*bd,ad*bn];
+}
+function operationSymbol(op){return{add:'+',subtract:'−',multiply:'×',divide:'÷'}[op]}
+function render(){
+ const an=Number(aNum.value),ad=Number(aDen.value),bn=Number(bNum.value),bd=Number(bDen.value),op=operation.value,rawResult=calculate(an,ad,bn,bd,op),result=rawResult===null?null:reduced(rawResult[0],rawResult[1]);
+ for(const [selector,value]of[['#aNumOut',an],['#aDenOut',ad],['#bNumOut',bn],['#bDenOut',bd]])document.querySelector(selector).value=value;
+ const aText=fmt(an,ad),bText=fmt(bn,bd);document.querySelector('#aLabel').textContent=aText;document.querySelector('#equation').textContent=`(${aText}) ${operationSymbol(op)} (${bText}) = ${result?fmt(result[0],result[1]):'정의되지 않음'}`;
+ const invalid=result===null,sign=invalid?'undefined':result[0]<0?'negative':result[0]>0?'positive':'zero',aValue=an/ad;
+ document.querySelector('#resultNote').textContent=invalid?'나누는 수 B가 0입니다. 0으로 나누는 계산은 정의되지 않습니다.':`결과 ${fmt(result[0],result[1])} · ${sign==='negative'?'음수':sign==='positive'?'양수':'0'} · 약분 확인`;
+ document.querySelector('#numberLineArea').hidden=!['add','subtract'].includes(op)||invalid;
+ if(!invalid&&['add','subtract'].includes(op)){
+  const value=result[0]/result[1],extent=12,position=x=>50+x/(extent*2)*100;
+  document.querySelector('#aDot').style.left=`${position(aValue)}%`;document.querySelector('#aLabel').style.left=`${position(aValue)}%`;
+  document.querySelector('#resultDot').style.left=`${position(value)}%`;document.querySelector('#resultLabel').style.left=`${position(value)}%`;
+  const movement=op==='subtract'?-bn/bd:bn/bd;document.querySelector('#movementNote').textContent=`A=${aText}에서 ${op==='subtract'?'빼는 수의 반대인 ':''}${fmt(op==='subtract'?-bn:bn,bd)}만큼 ${movement<0?'왼쪽':'오른쪽'}으로 움직여 결과 위치에 도착합니다.`;
+ }
+ const aCross=an*bd,bCross=bn*ad,raw=op==='add'?`${aCross}+${bCross}`:op==='subtract'?`${aCross}−${bCross}`:op==='multiply'?`${an}×${bn} / ${ad}×${bd}`:`${an}×${bd} / ${ad}×${bn}`;
+ const steps=invalid?['나누는 수 확인','B=0이므로 나눗셈은 정의되지 않습니다.','0으로 나누는 몫은 없습니다.','다른 연산을 선택하거나 B를 0이 아닌 값으로 바꾸세요.']:
+  op==='add'?[`A=${aText}, B=${bText}입니다.`,`분모를 맞춥니다: ${aCross}/${ad*bd} + ${bCross}/${ad*bd}.`,`같은 크기의 조각끼리 계산합니다: ${raw}.`,`약분한 결과는 ${fmt(result[0],result[1])}입니다.`]:
+  op==='subtract'?[`A=${aText}, B=${bText}입니다.`,`빼는 수의 반대 수를 더합니다: A−B=A+(−B).`,`분모를 맞춰 계산합니다: ${raw}.`,`약분한 결과는 ${fmt(result[0],result[1])}입니다.`]:
+  op==='multiply'?[`두 인수의 부호를 먼저 확인합니다: ${aText}, ${bText}.`,`분자끼리, 분모끼리 곱합니다: ${raw}.`,`부호는 ${sign==='negative'?'음수':sign==='positive'?'양수':'0'}입니다.`,`약분한 결과는 ${fmt(result[0],result[1])}입니다.`]:
+  [`나누는 수 B=${bText}가 0이 아닌지 확인합니다.`,`나눗셈을 역수의 곱으로 바꿉니다: A×(${bd}/${bn}).`,`분자와 분모를 곱하고 부호를 정리합니다: ${raw}.`,`약분한 결과는 ${fmt(result[0],result[1])}입니다.`];
+ document.querySelector('#stepReadout').textContent=`${stage+1} / 4 · ${['연산 먼저 보기','계산식 변환','값 계산','결과 검산'][stage]}`;document.querySelector('#stepText').textContent=steps[stage];document.querySelector('#stepBack').disabled=stage===0;document.querySelector('#stepNext').disabled=stage===3;document.querySelector('#quizPrompt').textContent=`${aText} ${operationSymbol(op)} ${bText}의 결과는 양수, 음수, 0 중 무엇일까요?`;
+ document.querySelector('#quizFeedback').textContent='계산 전 결과 부호를 먼저 예상해 보세요.';document.querySelector('#hintText').textContent=op==='add'||op==='subtract'?'덧셈·뺄셈은 수직선 이동을 생각하세요. 뺄셈은 빼는 수의 반대 수를 더합니다.':op==='multiply'?'곱셈은 부호를 먼저 정하고 절댓값을 곱합니다.':'나누는 수 B가 0인지 먼저 확인한 뒤, 0이 아니면 그 수의 역수를 곱합니다.';
+ return sign;
+}
+for(const input of[aNum,aDen,bNum,bDen])input.addEventListener('input',()=>{stage=0;render()});operation.addEventListener('change',()=>{stage=0;render()});
+document.querySelector('#stepBack').addEventListener('click',()=>{stage=Math.max(0,stage-1);render()});document.querySelector('#stepNext').addEventListener('click',()=>{stage=Math.min(3,stage+1);render()});document.querySelector('#stepReset').addEventListener('click',()=>{stage=0;render()});
+document.querySelectorAll('[data-sign]').forEach(button=>button.addEventListener('click',()=>{const[an,ad,bn,bd]=[aNum,aDen,bNum,bDen].map(input=>Number(input.value)),answer=calculate(an,ad,bn,bd,operation.value),correct=answer===null?'undefined':answer[0]<0?'negative':answer[0]>0?'positive':'zero';document.querySelector('#quizFeedback').textContent=button.dataset.sign===correct?`맞아요. 결과는 ${correct==='undefined'?'정의되지 않습니다':correct==='zero'?'0':correct==='negative'?'음수':'양수'}입니다.`:'다시 살펴보세요. 연산 원리와 부호를 순서대로 확인하세요.'}));
+document.querySelector('#hint').addEventListener('click',()=>{document.querySelector('#hintText').textContent=operation.value==='divide'?'나누는 수 B가 0이면 계산할 수 없습니다. 0이 아니라면 B의 역수를 곱하세요.':operation.value==='subtract'?'빼는 수의 부호를 바꿔 더한 뒤, 분모가 다르면 공통 분모를 사용하세요.':operation.value==='add'?'분모가 다르면 같은 크기의 조각이 되도록 공통 분모로 바꾸세요.':'부호와 절댓값 계산을 분리하고, 분수의 분자끼리·분모끼리 계산하세요.'});
+render();
+})();
+</script>
+</body></html>

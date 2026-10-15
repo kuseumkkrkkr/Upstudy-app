@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공통수학1 개념서 | 복소수에 i를 곱하면</title>
+<style>
+:root{color-scheme:light;--ink:#162536;--muted:#526477;--line:#c8d3df;--paper:#f4f7fb;--blue:#315da8;--orange:#d86035;--focus:#b4481d}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.65 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:850px;margin:auto;padding:24px 16px 56px}header,.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;margin:0 0 16px}h1{font-size:clamp(1.5rem,4vw,2.2rem);line-height:1.2;margin:.3rem 0 .75rem}h2{font-size:1.2rem;margin:0 0 8px}.muted{color:var(--muted)}.eyebrow{color:var(--muted);font-size:.9rem;font-weight:700}.prompt{font-size:1.08rem;font-weight:650}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}.control{border:1px solid var(--line);border-radius:12px;padding:14px}.control label{display:flex;justify-content:space-between;font-weight:700}.control output{color:var(--blue);font-variant-numeric:tabular-nums}input[type=range]{width:100%;min-height:44px;accent-color:var(--blue)}button{min-height:44px;padding:9px 14px;border:1px solid #536d89;border-radius:10px;background:#fff;color:var(--ink);font:inherit;font-weight:650;cursor:pointer}button:hover{background:#edf3fb}button:focus-visible,input:focus-visible{outline:3px solid #f2a279;outline-offset:2px}.actions,.answers{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}.graphbox{overflow-x:auto}svg{display:block;width:100%;min-width:360px;height:auto;border:1px solid var(--line);border-radius:12px;background:#fbfdff}.grid{stroke:#e0e7ef;stroke-width:1}.axis{stroke:#26394d;stroke-width:1.7}.vector{stroke-width:4;stroke-linecap:round;opacity:1;transition:opacity .3s ease,stroke-width .3s ease}.vector-z{stroke:var(--blue)}.vector-iz{stroke:var(--orange);opacity:0;stroke-dasharray:8 5}.revealed .vector-iz{opacity:1;stroke-dasharray:0}.point{stroke:#fff;stroke-width:2}.point-z{fill:var(--blue)}.point-iz{fill:var(--orange);opacity:0;transition:opacity .25s ease}.revealed .point-iz{opacity:1}.tick{fill:var(--muted);font-size:11px}.label{font-size:14px;font-weight:700}.status,.stage,.feedback{min-height:48px;padding:10px 12px;border-radius:9px}.status{background:#edf3fb;border-left:4px solid var(--blue)}.stage{background:#fff7e8;border:1px solid #f0d4a2}.feedback{font-weight:650}.small{font-size:.92rem}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;animation-iteration-count:1!important;transition:none!important}}
+</style>
+<style>
+#izGroup{opacity:0;transform:rotate(0deg);transform-box:view-box;transform-origin:50% 50%;transition:transform .6s ease,opacity .25s ease}
+#plane.revealed #izGroup{opacity:1;transform:rotate(-90deg)}
+#izLabel{opacity:0;transition:opacity .25s ease}#plane.revealed #izLabel{opacity:1}
+@media(prefers-reduced-motion:reduce){#izGroup,#izLabel{transition:none!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header>
+  <div class="eyebrow">공통수학1 개념서 · 2022 개정 후보 · [10공수1-02-01]</div>
+  <h1>복소수에 i를 곱하면</h1>
+  <p class="prompt">z=a+bi를 복소평면에 놓았을 때, iz는 어디로 움직일까요?</p>
+  <p class="muted small">먼저 예측하고 계수를 조절하세요. 이 도구는 곱셈 iz만 시각화합니다.</p>
+</header>
+
+<section class="card" aria-labelledby="explore">
+  <h2 id="explore">1. 복소수를 점으로 옮기기</h2>
+  <div class="controls">
+    <div class="control"><label for="real">실수부 a <output id="realOut" for="real">2</output></label><input id="real" type="range" min="-4" max="4" step="0.5" value="2" aria-describedby="realHelp"><div id="realHelp" class="muted small">가로좌표를 조절합니다.</div></div>
+    <div class="control"><label for="imag">허수부 계수 b <output id="imagOut" for="imag">1</output></label><input id="imag" type="range" min="-4" max="4" step="0.5" value="1" aria-describedby="imagHelp"><div id="imagHelp" class="muted small">세로좌표를 조절합니다.</div></div>
+  </div>
+  <div class="actions"><button id="reset" type="button">처음 값으로</button></div>
+  <div class="graphbox"><svg id="plane" viewBox="0 0 440 360" role="img" aria-labelledby="planeTitle planeDesc"><title id="planeTitle">복소평면의 z와 iz 벡터</title><desc id="planeDesc">a와 b를 조절해 z와 i를 곱한 복소수의 위치를 비교합니다.</desc><defs><marker id="arrowZ" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#315da8"/></marker><marker id="arrowIz" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#d86035"/></marker></defs><g id="grid"></g><g id="ticks"></g><line id="zVector" class="vector vector-z" x1="220" y1="180" x2="284" y2="148" marker-end="url(#arrowZ)"/><circle id="zPoint" class="point point-z" cx="284" cy="148" r="6"/><text id="zLabel" class="label" x="292" y="143" fill="#315da8">z</text><g id="izGroup"><line id="izVector" class="vector vector-iz" x1="220" y1="180" x2="284" y2="148" marker-end="url(#arrowIz)"/><circle id="izPoint" class="point point-iz" cx="284" cy="148" r="6"/></g><text id="izLabel" class="label" x="260" y="111" fill="#b4481d">iz</text></svg></div>
+  <div id="readout" class="status" role="status" aria-live="polite"></div>
+</section>
+
+<section class="card" aria-labelledby="steps">
+  <h2 id="steps">2. 회전을 단계별로 확인</h2>
+  <div id="stageText" class="stage" aria-live="polite">시작: 파란 벡터 z의 끝점을 보고, i를 곱한 점이 어디에 올지 먼저 말해 보세요.</div>
+  <div class="actions"><button id="previous" type="button">이전 단계</button><button id="next" type="button">다음 단계</button></div>
+</section>
+
+<section class="card" aria-labelledby="quiz">
+  <h2 id="quiz">3. Socratic 퀴즈</h2>
+  <p>z=1+2i일 때 iz는 무엇일까요? i²=−1을 이용해 부호를 확인하세요.</p>
+  <div class="answers" role="group" aria-label="iz 계산 결과 선택"><button type="button" data-answer="2+i">2+i</button><button type="button" data-answer="-2-i">−2−i</button><button type="button" data-answer="-2+i">−2+i</button></div>
+  <p id="quizFeedback" class="feedback" role="status" aria-live="polite"></p>
+</section>
+
+<section class="card" aria-labelledby="practice">
+  <h2 id="practice">4. 도구를 덮고 새 복소수에 적용</h2>
+  <p><strong>연습.</strong> z=3−2i일 때 iz를 계산하고 복소평면의 좌표를 쓰세요.</p>
+  <details><summary>힌트</summary><p>i(3−2i)=3i−2i²에서 i²=−1을 대입하세요.</p></details>
+  <details><summary>풀이</summary><p>iz=2+3i이고 좌표는 (2,3)입니다. 길이는 √13으로 원래 복소수의 길이와 같습니다.</p></details>
+</section>
+</main>
+<script>
+(()=>{
+  const real=document.getElementById('real'),imag=document.getElementById('imag');
+  const grid=document.getElementById('grid'),ticks=document.getElementById('ticks');
+  const plane=document.getElementById('plane'),zVector=document.getElementById('zVector'),izVector=document.getElementById('izVector');
+  const zPoint=document.getElementById('zPoint'),izPoint=document.getElementById('izPoint');
+  const zLabel=document.getElementById('zLabel'),izLabel=document.getElementById('izLabel');
+  const stageText=document.getElementById('stageText'),readout=document.getElementById('readout');let stage=0;
+  const origin={x:220,y:180},scale=32;
+  const point=(a,b)=>({x:origin.x+a*scale,y:origin.y-b*scale});
+  function drawGrid(){
+    const lines=[],labels=[];
+    for(let n=-5;n<=5;n++){const x=origin.x+n*scale,y=origin.y-n*scale;lines.push(`<line class="grid" x1="${x}" y1="20" x2="${x}" y2="340"/><line class="grid" x1="60" y1="${y}" x2="380" y2="${y}"/>`);if(n!==0){labels.push(`<text class="tick" x="${x}" y="198" text-anchor="middle">${n}</text>`);labels.push(`<text class="tick" x="210" y="${y+4}" text-anchor="end">${n}</text>`)}}
+    lines.push(`<line class="axis" x1="60" y1="${origin.y}" x2="380" y2="${origin.y}"/><line class="axis" x1="${origin.x}" y1="20" x2="${origin.x}" y2="340"/>`);
+    labels.push('<text class="label" x="370" y="198">실수부</text>','<text class="label" x="226" y="30">허수부</text>');grid.innerHTML=lines.join('');ticks.innerHTML=labels.join('');
+  }
+  function updateStage(a,b){
+    plane.classList.toggle('revealed',stage>=2);
+    stageText.textContent=stage===0?'시작: 파란 벡터 z의 끝점을 보고, i를 곱한 점이 어디에 올지 먼저 말해 보세요.':stage===1?`1단계 · 좌표 (a,b)=(${a},${b})를 기록했습니다. iz의 새 좌표와 길이를 예측해 보세요.`:stage===2?`2단계 · 주황색 벡터 iz가 공개됐습니다. 새 좌표 (−b,a)=(${-b},${a})와 파란 벡터를 비교하세요.`:`3단계 · i(a+bi)=−b+ai이므로 (a,b)→(−b,a)입니다. 원점 중심 반시계 90° 회전이며 길이는 보존됩니다.`;
+  }
+  function update(){
+    const a=Number(real.value),b=Number(imag.value),z=point(a,b),iz=point(-b,a);
+    document.getElementById('realOut').value=String(a);document.getElementById('imagOut').value=String(b);
+    zVector.setAttribute('x2',z.x);zVector.setAttribute('y2',z.y);zPoint.setAttribute('cx',z.x);zPoint.setAttribute('cy',z.y);zLabel.setAttribute('x',z.x+8);zLabel.setAttribute('y',z.y-8);
+    izVector.setAttribute('x2',z.x);izVector.setAttribute('y2',z.y);izPoint.setAttribute('cx',z.x);izPoint.setAttribute('cy',z.y);izLabel.setAttribute('x',iz.x+8);izLabel.setAttribute('y',iz.y-8);
+    const norm=Math.sqrt(a*a+b*b),newNorm=Math.sqrt((-b)*(-b)+a*a);
+    readout.textContent=`z=${a}${b<0?'':'+'}${b}i는 (${a}, ${b})입니다. iz=${-b}${a<0?'':'+'}${a}i는 (${-b}, ${a})입니다. 두 길이는 ${norm.toFixed(2)}와 ${newNorm.toFixed(2)}입니다.`;
+    document.getElementById('planeDesc').textContent=`복소수 z의 좌표는 (${a}, ${b}), iz의 좌표는 (${-b}, ${a})입니다.`;updateStage(a,b);
+  }
+  drawGrid();update();real.addEventListener('input',update);imag.addEventListener('input',update);
+  document.getElementById('reset').addEventListener('click',()=>{real.value='2';imag.value='1';stage=0;update()});
+  document.getElementById('next').addEventListener('click',()=>{stage=Math.min(stage+1,3);update()});
+  document.getElementById('previous').addEventListener('click',()=>{stage=Math.max(stage-1,0);update()});
+  document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{document.getElementById('quizFeedback').textContent=button.dataset.answer==='-2+i'?'맞아요. i(1+2i)=i+2i²=−2+i입니다.':'다시 확인해 보세요. 2i²은 −2이므로 실수부는 음수입니다.'}));
+})();
+</script>
+</body>
+</html>

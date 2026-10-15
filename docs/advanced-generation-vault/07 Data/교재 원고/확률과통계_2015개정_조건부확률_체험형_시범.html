@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="2015 개정 확률과 통계 조건부확률을 공의 개수와 표본공간 조작으로 익히는 체험수학 시범">
+  <title>2015 개정 확률과 통계 개념서 | 조건부확률</title>
+  <style>
+    :root{color-scheme:light;--ink:#18253b;--muted:#596b80;--line:#d8e1ec;--red:#b64040;--blue:#315da8;--teal:#168b83;--paper:#fff;--bg:#f3f6fa;font-family:system-ui,"Noto Sans KR",sans-serif;color:var(--ink);background:var(--bg)}
+    *{box-sizing:border-box}body{margin:0;padding:16px;line-height:1.55}main{max-width:980px;margin:auto}header,section{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:clamp(16px,3vw,24px);margin-bottom:14px}h1,h2{line-height:1.3;margin:0 0 10px}h1{font-size:clamp(1.4rem,4vw,2rem)}h2{font-size:1.16rem}p{margin:8px 0}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.4fr) minmax(250px,.8fr);gap:14px;align-items:start}svg{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px;background:#fff}.controls{display:grid;gap:10px}label{display:grid;gap:5px;font-weight:650}input[type=range]{width:100%;min-height:32px;accent-color:var(--blue)}button{min-height:44px;border:1px solid #cbd5e1;border-radius:9px;padding:8px 12px;background:white;color:var(--ink);font:inherit;font-weight:650;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #e5a53b;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap}.conditions{display:flex;gap:8px;flex-wrap:wrap}.conditions button[aria-pressed=true]{border-color:var(--blue);background:#eef4ff;box-shadow:inset 0 0 0 1px var(--blue)}.stepbox{min-height:76px;padding:12px;border-radius:10px;background:#f1f5f9}.metrics{display:grid;gap:8px}.metric{padding:10px 12px;background:#f1f5f9;border-radius:10px}.metric strong{display:block;font-size:1.15rem;font-variant-numeric:tabular-nums}.feedback{min-height:2em;font-weight:650}.feedback[data-state=correct]{color:#176b4a}.feedback[data-state=wrong]{color:#a33926}input[type=number]{min-height:44px;max-width:160px;padding:6px 8px;border:1px solid var(--line);border-radius:8px;font:inherit}details summary{min-height:44px;display:flex;align-items:center;cursor:pointer;font-weight:700}#removed-token,#remaining-tokens{transition:opacity .2s ease,transform .2s ease}@media(max-width:720px){.layout{grid-template-columns:1fr}body{padding:10px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}#removed-token,#remaining-tokens{transition:none}}
+  </style>
+  <script>
+    document.addEventListener('DOMContentLoaded',()=>{
+      const red=document.querySelector('#red-count'),blue=document.querySelector('#blue-count');
+      const redCondition=document.querySelector('#first-red');
+      function syncConditionalValues(){
+        const R=Number(red.value),B=Number(blue.value),N=R+B;
+        const isFirstRed=redCondition.getAttribute('aria-pressed')==='true';
+        const remainingRed=R-(isFirstRed?1:0),remainingTotal=N-1;
+        const firstCount=isFirstRed?R:B;
+        const conditional=remainingRed/remainingTotal;
+        const joint=(firstCount/N)*conditional;
+        document.querySelector('#conditional').textContent=
+          `${remainingRed}/${remainingTotal} = ${conditional.toFixed(3)}`;
+        document.querySelector('#joint').textContent=joint.toFixed(3);
+        document.querySelector('#formula').textContent=
+          `P(두 번째 빨강)=${R}/${N}; P(두 번째 빨강 | 첫 ${isFirstRed?'빨강':'파랑'})=${remainingRed}/${remainingTotal}; P(첫 조건 ∩ 두 번째 빨강)=${firstCount}/${N}×${remainingRed}/${remainingTotal}=${joint.toFixed(3)}.`;
+      }
+      red.addEventListener('input',syncConditionalValues);
+      blue.addEventListener('input',syncConditionalValues);
+      document.querySelector('#first-red').addEventListener('click',()=>requestAnimationFrame(syncConditionalValues));
+      document.querySelector('#first-blue').addEventListener('click',()=>requestAnimationFrame(syncConditionalValues));
+      document.querySelectorAll('#previous,#next,#reset').forEach(button=>
+        button.addEventListener('click',()=>requestAnimationFrame(syncConditionalValues)));
+      syncConditionalValues();
+    });
+  </script>
+</head>
+<body><main>
+  <header><p class="muted">2015 개정 확률과 통계 개념서 · 조건부확률 부분 시범</p><h1>첫 결과를 알면 다음 확률은 어떻게 바뀔까?</h1><p>공을 돌려놓지 않을 때, 첫 번째 결과를 조건으로 알려 주면 남은 표본공간부터 다시 세어 보세요.</p></header>
+  <section class="layout" aria-label="조건부확률 조작 도구와 결과">
+    <div>
+      <svg viewBox="0 0 760 330" role="img" aria-labelledby="bag-title bag-desc">
+        <title id="bag-title">조건에 따른 주머니의 남은 공</title>
+        <desc id="bag-desc">빨간 공과 파란 공의 개수 및 첫 공 조건에 따라 남은 공을 글자 R과 B가 적힌 원으로 표시합니다.</desc>
+        <text x="28" y="34" fill="#315da8" font-weight="700">비복원 추출 · 공의 글자와 색을 함께 확인</text>
+        <text id="svg-stage" x="28" y="70" fill="#18253b" font-weight="700"></text>
+        <text id="red-row-label" x="28" y="138" fill="#b64040" font-weight="700">빨간 공 R</text>
+        <text id="blue-row-label" x="28" y="235" fill="#315da8" font-weight="700">파란 공 B</text>
+        <g id="removed-token"></g><g id="remaining-tokens"></g>
+      </svg>
+    </div>
+    <div class="controls">
+      <label for="red-count">빨간 공 개수 R: <output id="red-value">4</output><input id="red-count" type="range" min="1" max="8" step="1" value="4"></label>
+      <label for="blue-count">파란 공 개수 B: <output id="blue-value">3</output><input id="blue-count" type="range" min="1" max="8" step="1" value="3"></label>
+      <div><p><strong>첫 번째 결과 조건</strong></p><div class="conditions"><button id="first-red" type="button" aria-pressed="true">첫 공 빨강</button><button id="first-blue" type="button" aria-pressed="false">첫 공 파랑</button></div></div>
+      <div class="actions"><button id="previous" type="button">이전 단계</button><button id="next" type="button">다음 단계</button><button id="reset" type="button">처음으로</button></div>
+      <p class="stepbox" id="step-description" aria-live="polite"></p>
+    </div>
+  </section>
+  <section><h2>조건을 적용한 확률</h2><div class="metrics"><div class="metric">조건 없이 두 번째가 빨강<strong id="unconditional"></strong></div><div class="metric">선택 조건에서 두 번째가 빨강<strong id="conditional"></strong></div><div class="metric">첫 조건과 두 번째 빨강이 함께 발생<strong id="joint"></strong></div></div><p class="muted" id="formula" aria-live="polite"></p></section>
+  <section><h2>Socratic 확인과 퀴즈</h2><p>첫 결과가 확정되면 분모가 줄어드는 이유를 말해 보세요. 두 번째 빨강의 조건부확률은?</p><button id="hint" type="button">힌트 보기</button><p id="hint-text" class="muted" aria-live="polite">첫 공은 주머니에서 빠져 있어요. 남은 빨간 개수와 전체 개수를 세어 보세요.</p><label for="answer">확률을 소수로 입력<input id="answer" type="number" min="0" max="1" step="0.01" inputmode="decimal"></label><button id="check" type="button">정답 확인</button><p id="feedback" class="feedback" aria-live="polite"></p></section>
+  <section><h2>도구 없이 연습</h2><p>빨간 공 5개·파란 공 2개에서 첫 공이 빨강이고 돌려놓지 않습니다. 두 번째 빨강일 확률은?</p><details><summary>풀이 보기</summary><p>첫 빨간 공이 빠져 빨간 공 4개, 전체 6개가 남습니다. 따라서 조건부확률은 4/6=2/3입니다.</p></details></section>
+  <section class="muted"><strong>범위와 검수</strong><p>2015 개정 확률과 통계 중 조건부확률의 비복원 추출 예 하나를 다룹니다. 수치는 브라우저 안에서만 계산하며 저장·전송되지 않습니다. 세부 성취기준 코드, 앱 진도 연동, 교사 검수, 모바일·보조기기 실측, 학생 파일럿은 미완료입니다.</p></section>
+</main>
+<script>
+(()=>{'use strict';const red=document.querySelector('#red-count'),blue=document.querySelector('#blue-count'),removed=document.querySelector('#removed-token'),remaining=document.querySelector('#remaining-tokens'),steps=[0,1,2];let condition='red',stage=0;const NS='http://www.w3.org/2000/svg';function textNode(parent,x,y,value,color,size=15,weight='600'){const t=document.createElementNS(NS,'text');t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('fill',color);t.setAttribute('font-size',size);t.setAttribute('font-weight',weight);t.textContent=value;parent.append(t)}function ball(parent,x,y,color,label){const g=document.createElementNS(NS,'g'),c=document.createElementNS(NS,'circle'),t=document.createElementNS(NS,'text');c.setAttribute('cx',x);c.setAttribute('cy',y);c.setAttribute('r','16');c.setAttribute('fill',color);c.setAttribute('stroke','#fff');c.setAttribute('stroke-width','2');t.setAttribute('x',x);t.setAttribute('y',y+5);t.setAttribute('text-anchor','middle');t.setAttribute('fill','#fff');t.setAttribute('font-size','13');t.setAttribute('font-weight','800');t.textContent=label;g.append(c,t);parent.append(g)}function fmt(a,b){return `${a}/${b} = ${(a/b).toFixed(3)}`}function render(){const R=Number(red.value),B=Number(blue.value),N=R+B,redRemain=R-(stage>0&&condition==='red'?1:0),blueRemain=B-(stage>0&&condition==='blue'?1:0),den=redRemain+blueRemain,cond=redRemain/den,uncond=R/N,firstCount=condition==='red'?R:B,firstProb=firstCount/N,joint=firstProb*cond;document.querySelector('#red-value').value=R;document.querySelector('#blue-value').value=B;document.querySelector('#first-red').setAttribute('aria-pressed',String(condition==='red'));document.querySelector('#first-blue').setAttribute('aria-pressed',String(condition==='blue'));document.querySelector('#svg-stage').textContent=stage===0?'전체 주머니: 아직 첫 결과를 조건으로 적용하지 않음':stage===1?'첫 공이 '+(condition==='red'?'빨강':'파랑')+'으로 확인됨':'조건에 맞는 남은 주머니에서 두 번째 공 세기';removed.replaceChildren();remaining.replaceChildren();if(stage===0){for(let i=0;i<R;i++)ball(remaining,170+(i%8)*50,112,'#b64040','R');for(let i=0;i<B;i++)ball(remaining,170+(i%8)*50,210,'#315da8','B');}else{const c=condition==='red'?'#b64040':'#315da8',letter=condition==='red'?'R':'B';ball(removed,100,176,c,letter);textNode(removed,64,220,'첫 공','#596b80',13);for(let i=0;i<redRemain;i++)ball(remaining,260+(i%8)*48,112,'#b64040','R');for(let i=0;i<blueRemain;i++)ball(remaining,260+(i%8)*48,210,'#315da8','B');}document.querySelector('#red-row-label').textContent=`남은 빨간 공 ${redRemain}`;document.querySelector('#blue-row-label').textContent=`남은 파란 공 ${blueRemain}`;document.querySelector('#unconditional').textContent=fmt(R,N);document.querySelector('#conditional').textContent=fmt(redRemain,den);document.querySelector('#joint').textContent=`${(firstProb*cond).toFixed(3)}`;document.querySelector('#formula').textContent=`P(두 번째 빨강)=${R}/${N}; P(두 번째 빨강 | 첫 ${condition==='red'?'빨강':'파랑'})=${redRemain}/${den}; P(첫 조건 ∩ 두 번째 빨강)=${firstCount}/${N}×${redRemain}/${den}=${joint.toFixed(3)}.`;document.querySelector('#step-description').textContent=stage===0?`전체 ${N}개 중 빨간 공 ${R}개입니다. 첫 결과 조건을 선택한 뒤 다음 단계로 가세요.`:stage===1?`첫 공 ${condition==='red'?'빨강':'파랑'}을 따로 두었습니다. 주머니에는 빨강 ${redRemain}개와 파랑 ${blueRemain}개, 합계 ${den}개가 남습니다.`:`조건 표본공간 ${den}개 중 두 번째 빨강은 ${redRemain}개입니다. 조건부확률은 ${fmt(redRemain,den)}입니다.`;document.querySelector('#previous').disabled=stage===0;document.querySelector('#next').disabled=stage===2;document.querySelector('#answer').value='';document.querySelector('#feedback').textContent='';}red.addEventListener('input',render);blue.addEventListener('input',render);document.querySelector('#first-red').addEventListener('click',()=>{condition='red';render()});document.querySelector('#first-blue').addEventListener('click',()=>{condition='blue';render()});document.querySelector('#previous').addEventListener('click',()=>{stage=Math.max(0,stage-1);render()});document.querySelector('#next').addEventListener('click',()=>{stage=Math.min(2,stage+1);render()});document.querySelector('#reset').addEventListener('click',()=>{red.value='4';blue.value='3';condition='red';stage=0;render()});document.querySelector('#hint').addEventListener('click',()=>{const R=Number(red.value),B=Number(blue.value),r=R-(condition==='red'?1:0),d=R+B-1;document.querySelector('#hint-text').textContent=`첫 ${condition==='red'?'빨강':'파랑'} 공 하나는 빠져 있어요. 남은 전체는 ${d}개, 그중 빨강은 ${r}개입니다.`});document.querySelector('#check').addEventListener('click',()=>{const a=document.querySelector('#answer'),f=document.querySelector('#feedback'),R=Number(red.value),B=Number(blue.value),r=R-(condition==='red'?1:0),correct=r/(R+B-1),guess=Number(a.value);if(a.value!==''&&Number.isFinite(guess)&&Math.abs(guess-correct)<.005){f.textContent='맞았어요. 조건을 반영한 남은 표본공간에서 셌습니다.';f.dataset.state='correct'}else{f.textContent='다시 확인해 보세요. 조건으로 빠진 첫 공을 제외해 분모를 정합니다.';f.dataset.state='wrong'}});render()})();
+</script></body></html>

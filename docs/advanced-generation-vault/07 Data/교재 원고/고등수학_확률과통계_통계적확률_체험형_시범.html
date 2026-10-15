@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>개념서 | 통계적 확률 실험실</title>
+<style>
+:root{color-scheme:light;--ink:#18253b;--muted:#52627a;--line:#d9e1ec;--blue:#2563eb;--teal:#0f766e;--bg:#f5f8fc;--card:#fff}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:900px;margin:auto;padding:20px}.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:18px;margin:0 0 14px}h1{font-size:1.45rem;margin:.1em 0}.muted{color:var(--muted)}.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}.controls label{display:flex;gap:8px;align-items:center}.controls input{width:min(300px,55vw);accent-color:var(--blue)}button{border:1px solid #aebbd0;border-radius:10px;background:white;color:var(--ink);padding:9px 13px;font:inherit;cursor:pointer}button:hover,button:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}button:disabled,input:disabled{opacity:.58;cursor:not-allowed}.primary{background:var(--blue);color:white;border-color:var(--blue)}.chart{width:100%;height:auto;background:#fbfdff;border:1px solid var(--line);border-radius:12px}.chart text{font:12px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.metric{padding:12px;border-radius:12px;background:#f3f7fc}.metric strong{display:block;font-size:1.25rem;font-variant-numeric:tabular-nums}.step{display:none}.step.active{display:block}.feedback{min-height:2em;font-weight:600}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}details summary{cursor:pointer;font-weight:700}@media(max-width:650px){.wrap{padding:12px}.card{padding:14px}.metrics{grid-template-columns:1fr}.chart text{font-size:10px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<header class="card"><p class="muted">고등 확률과 통계 개념서 · 확률</p><h1>실험 결과는 이론값과 늘 같을까?</h1><p>공정한 주사위를 가정해 보세요. 6이 나올 수학적 확률은 <strong>1/6</strong>입니다. 직접 여러 번 굴려 관찰 비율을 비교해 봅시다.</p></header>
+<section class="card"><h2>시행 횟수를 정하고 주사위 굴리기</h2><div class="controls"><label for="trials">한 번에 더할 시행 수 <input id="trials" type="range" min="10" max="1000" step="10" value="100"><output id="trial-value">100</output></label><button id="start" class="primary" type="button">초기화하고 실행</button><button id="more" type="button">같은 실험에 추가 실행</button><button id="stop" type="button" disabled>현재까지 남기고 정지</button></div><p id="status" aria-live="polite" class="muted">아직 시행하지 않았습니다.</p><div class="metrics"><div class="metric">전체 시행<strong id="total">0</strong></div><div class="metric">6이 나온 횟수<strong id="hits">0</strong></div><div class="metric">관찰 비율<strong id="frequency">—</strong></div></div>
+<svg class="chart" viewBox="0 0 720 300" role="img" aria-labelledby="ct cd"><title id="ct">누적 상대도수와 이론 확률 비교</title><desc id="cd">가로축은 이번 실험에서 진행된 누적 시행의 비율, 세로축은 지금까지 6이 나온 상대도수입니다. 수평 기준선은 이론 확률 1/6입니다.</desc><g id="grid"></g><g id="x-labels"></g><text x="46" y="254">0%</text><line x1="58" y1="201.7" x2="690" y2="201.7" stroke="#0f766e" stroke-width="2" stroke-dasharray="7 5"/><text x="500" y="192">이론값 1/6</text><path id="curve" d="" fill="none" stroke="#2563eb" stroke-width="3" stroke-linejoin="round"/><text x="52" y="44" text-anchor="end">1.0</text><text x="52" y="83" text-anchor="end">0.8</text><text x="52" y="122" text-anchor="end">0.6</text><text x="52" y="161" text-anchor="end">0.4</text><text x="52" y="200" text-anchor="end">0.2</text><text x="52" y="239" text-anchor="end">0.0</text><text x="280" y="286">선택한 전체 시행 수 중 누적 시행 비율</text><text transform="translate(14 175) rotate(-90)">6의 상대도수</text></svg><p class="muted">세로축은 0~1 전체 범위라 작은 시행에서 상대도수가 높게 나와도 그래프 안에 표시됩니다. 이론값 1/6은 기준선이며, 매 지점에서 정확히 일치해야 하는 목표선이 아닙니다.</p></section>
+<section class="card"><h2>한 단계씩 이해하기</h2><div class="step active"><strong>1 / 3 · 이론값</strong><p>공정한 주사위에서 6은 가능한 여섯 눈 중 하나이므로 수학적 확률은 1/6입니다.</p></div><div class="step"><strong>2 / 3 · 관찰값</strong><p>실제 시행에서는 나온 횟수를 셉니다. 관찰한 횟수를 전체 횟수로 나누면 통계적 확률입니다.</p></div><div class="step"><strong>3 / 3 · 비교하기</strong><p>관찰 비율이 이론값과 다를 수 있습니다. 횟수를 바꾸고 다시 실행해 자료를 비교하세요.</p></div><div class="controls"><button id="prev" type="button">이전</button><button id="next" type="button">다음</button><span id="step-status" class="sr" aria-live="polite">1단계</span></div></section>
+<section class="card"><h2>도구 퀴즈</h2><p>주사위 12회 중 6이 세 번 나왔습니다. 통계적 확률은?</p><label><input type="radio" name="q" value="1/6"> 1/6</label><label><input type="radio" name="q" value="1/4"> 1/4</label><label><input type="radio" name="q" value="3/6"> 3/6</label><p><button id="check" class="primary" type="button">답 확인</button></p><p id="answer" class="feedback" aria-live="polite"></p></section>
+<section class="card"><h2>Socratic 질문</h2><p>실험에서 6이 적게 나왔다면 다음 번에는 더 잘 나올 차례일까요? 이론 확률과 관찰 결과를 나누어 설명해 보세요.</p><button id="hint" type="button">힌트 보기</button><p id="hint-text" class="feedback" aria-live="polite">생각을 정리한 다음 힌트를 확인하세요.</p></section>
+<details class="card"><summary>실험 기록과 연습 답 보기</summary><p>10회·100회·500회 결과의 총 횟수, 6의 횟수, 관찰 비율을 기록해 서로 비교하세요. 다른 실행 결과도 비교하고 한 번의 시행으로 공정성을 확정하지 마세요.</p><ol><li>동전을 40회 던져 앞면이 23번이면 통계적 확률은?</li><li>공정한 동전의 앞면 수학적 확률은?</li><li>두 값이 다를 수 있는 이유는?</li></ol><p>정답: 23/40, 1/2, 유한한 시행의 관찰 비율은 이론값과 다를 수 있기 때문.</p></details>
+</main>
+<script>
+(() => {
+  'use strict';
+  const range = document.getElementById('trials');
+  const out = document.getElementById('trial-value');
+  const path = document.getElementById('curve');
+  const totalEl = document.getElementById('total');
+  const hitsEl = document.getElementById('hits');
+  const freqEl = document.getElementById('frequency');
+  const status = document.getElementById('status');
+  let n = 0;
+  let hits = 0;
+  let history = [];
+  let chartTotal = 0;
+  let animationTimer = 0;
+  const startButton = document.getElementById('start');
+  const moreButton = document.getElementById('more');
+  const stopButton = document.getElementById('stop');
+  const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)');
+  const grid = document.getElementById('grid');
+  const xLabels = document.getElementById('x-labels');
+
+  for (let j = 0; j <= 5; j++) {
+    const y = 40 + j * 38.8;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', '58');
+    line.setAttribute('x2', '690');
+    line.setAttribute('y1', y);
+    line.setAttribute('y2', y);
+    line.setAttribute('stroke', '#e5ebf3');
+    grid.appendChild(line);
+  }
+  for (let i = 0; i <= 4; i++) {
+    const x = 58 + i * 158;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+    line.setAttribute('x1', x);
+    line.setAttribute('x2', x);
+    line.setAttribute('y1', '40');
+    line.setAttribute('y2', '234');
+    line.setAttribute('stroke', '#eef2f7');
+    grid.appendChild(line);
+    if (i > 0) {
+      const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      label.setAttribute('x', x - 12);
+      label.setAttribute('y', '254');
+      label.textContent = `${i * 25}%`;
+      xLabels.appendChild(label);
+    }
+  }
+
+  function render() {
+    const total = Math.max(chartTotal, n, 1);
+    const points = history.map((value, index) => {
+      const x = 58 + ((index + 1) / total) * 632;
+      const y = 234 - value * 194;
+      return `${index ? 'L' : 'M'}${x.toFixed(1)} ${y.toFixed(1)}`;
+    });
+    path.setAttribute('d', points.join(' '));
+    totalEl.textContent = n;
+    hitsEl.textContent = hits;
+    freqEl.textContent = n ? `${hits}/${n} = ${(hits / n).toFixed(4)}` : '—';
+    document.getElementById('cd').textContent = n
+      ? `총 ${n}회 중 6이 ${hits}회 나왔습니다. 누적 상대도수와 이론값 1/6 기준선을 비교합니다.`
+      : '아직 시행 결과가 없습니다. 수평 기준선은 이론 확률 1/6입니다.';
+  }
+
+  function sample(count) {
+    for (let i = 0; i < count; i++) {
+      n++;
+      if (Math.floor(Math.random() * 6) + 1 === 6) hits++;
+      history.push(hits / n);
+    }
+  }
+
+  function rollImmediately(count) {
+    sample(count);
+    chartTotal = n;
+    render();
+    status.textContent = `주사위를 ${n}회 던졌습니다. 결과는 무작위이며 다시 실행하면 달라집니다.${n === 5000 ? ' 시행 상한에 도달했습니다.' : ''}`;
+  }
+
+  function finishAnimation(message) {
+    if (animationTimer) clearInterval(animationTimer);
+    animationTimer = 0;
+    range.disabled = false;
+    startButton.disabled = false;
+    moreButton.disabled = false;
+    stopButton.disabled = true;
+    chartTotal = n;
+    render();
+    status.textContent = message;
+  }
+
+  function runGradually(requested) {
+    if (!Number.isFinite(requested) || requested < 1) return;
+    const count = Math.min(requested, 5000 - n);
+    if (count === 0) {
+      status.textContent = '시행 상한 5,000회에 도달했습니다. 초기화하면 다시 실험할 수 있습니다.';
+      return;
+    }
+    chartTotal = n + count;
+    if (reduceMotion.matches) {
+      rollImmediately(count);
+      status.textContent = `움직임 감소 설정을 존중해 즉시 실행했습니다. 현재 누적 ${n}회입니다. 결과는 무작위입니다.`;
+      return;
+    }
+    const batchSize = Math.max(1, Math.ceil(count / 50));
+    let completed = 0;
+    let lastAnnouncement = Date.now();
+    range.disabled = true;
+    startButton.disabled = true;
+    moreButton.disabled = true;
+    stopButton.disabled = false;
+    status.textContent = `주사위를 굴리는 중입니다. 0/${count}회 진행했습니다.`;
+    animationTimer = setInterval(() => {
+      const batch = Math.min(batchSize, count - completed);
+      sample(batch);
+      completed += batch;
+      render();
+      if (Date.now() - lastAnnouncement >= 700 || completed >= count) {
+        status.textContent = `주사위를 굴리는 중입니다. ${completed}/${count}회 진행했습니다. 결과는 무작위입니다.`;
+        lastAnnouncement = Date.now();
+      }
+      if (completed >= count) {
+        finishAnimation(`완료: 이번에 ${count}회 더해 총 ${n}회입니다. 다시 실행하면 다른 결과가 나옵니다.${n === 5000 ? ' 시행 상한에 도달했습니다.' : ''}`);
+      }
+    }, 30);
+  }
+
+  range.addEventListener('input', () => { out.value = range.value; });
+  startButton.addEventListener('click', () => {
+    n = 0;
+    hits = 0;
+    history = [];
+    chartTotal = +range.value;
+    render();
+    runGradually(+range.value);
+  });
+  moreButton.addEventListener('click', () => {
+    if (!n) {
+      status.textContent = '먼저 초기화하고 실험을 시작하세요.';
+      return;
+    }
+    runGradually(+range.value);
+  });
+  stopButton.addEventListener('click', () => {
+    if (animationTimer) finishAnimation(`중지했습니다. ${n}회 결과를 보존했습니다. ‘같은 실험에 추가 실행’으로 이어서 더 관찰할 수 있습니다.`);
+  });
+  reduceMotion.addEventListener('change', (event) => {
+    if (event.matches && animationTimer) {
+      finishAnimation(`움직임 감소 설정이 감지되어 ${n}회 결과를 남기고 멈췄습니다.`);
+    }
+  });
+  out.value = range.value;
+  render();
+
+  let step = 0;
+  const steps = [...document.querySelectorAll('.step')];
+  function show(index) {
+    step = Math.max(0, Math.min(2, index));
+    steps.forEach((element, position) => element.classList.toggle('active', position === step));
+    document.getElementById('step-status').textContent = `${step + 1}단계`;
+  }
+  document.getElementById('prev').addEventListener('click', () => show(step - 1));
+  document.getElementById('next').addEventListener('click', () => show(step + 1));
+  document.getElementById('check').addEventListener('click', () => {
+    const answer = document.querySelector('input[name="q"]:checked');
+    const result = document.getElementById('answer');
+    result.textContent = !answer
+      ? '답을 하나 선택해 주세요.'
+      : answer.value === '1/4'
+        ? '맞아요. 3÷12=1/4입니다.'
+        : '다시 계산해 보세요. 나온 횟수를 전체 시행 횟수로 나눕니다.';
+  });
+  const hintText = [
+    '통계적 확률은 관찰한 사건 횟수를 전체 시행 횟수로 나눈 값입니다.',
+    '다음 결과가 이전 결과 때문에 정해진다고 볼 근거가 있나요?',
+    '아니요. 이전 결과가 다음 결과를 보장하지 않습니다. 수학적 확률과 한 번의 관찰값을 구분하세요.',
+  ];
+  let hint = 0;
+  document.getElementById('hint').addEventListener('click', () => {
+    document.getElementById('hint-text').textContent = hintText[Math.min(hint, 2)];
+    hint = Math.min(hint + 1, 2);
+  });
+})();
+</script>
+</body>
+</html>

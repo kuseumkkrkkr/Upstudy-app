@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>다항식 동류항 실험실</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color-scheme:light dark}*{box-sizing:border-box}body{max-width:860px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1rem}h1{font-size:1.5rem}.muted{color:#c4cede}.experiment{margin:1rem 0;padding:1rem;background:#152237;border-radius:14px}.polynomial-controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,350px),1fr));gap:1rem}fieldset{min-width:0;border:1px solid #40516d;border-radius:10px}legend{padding:0 .4rem;font-weight:700}.coefficients{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.6rem}.coeff-label{display:grid;gap:.2rem}.coeff-label input{width:100%;min-height:44px;padding:.45rem;font:inherit}.controls{display:flex;flex-wrap:wrap;align-items:end;gap:.7rem;margin-top:.8rem}.controls label{display:grid;gap:.25rem;min-width:170px}.controls select{min-height:44px;padding:.4rem;font:inherit}button{min-height:44px;padding:.5rem .9rem;font:inherit;font-weight:650;cursor:pointer}.equation{font-size:1.15rem;overflow-wrap:anywhere}.term-groups{display:grid;gap:.8rem}.term-line{display:flex;flex-wrap:wrap;align-items:center;gap:.35rem}.line-label{font-weight:700;min-width:3.5rem}.tiles{display:flex;flex-wrap:wrap;gap:.35rem}.tile{display:inline-flex;align-items:center;justify-content:center;min-width:3rem;min-height:2.7rem;padding:.35rem .55rem;border-radius:7px;background:#263854;border:1px solid #617693;animation:appear .25s ease-out both}.tile.negative{background:#3b2930;border-color:#a86c78}.kind{font-size:.85rem;color:#c4cede;margin-right:.15rem}.steps{margin-top:.8rem;padding:.7rem;background:#1e304a;border-left:4px solid #60a5fa;border-radius:6px;overflow-wrap:anywhere}.steps[hidden]{display:none!important}.steps p{margin:.3rem 0}.practice{padding:.8rem 0;border-bottom:1px solid #43516a}.feedback{min-height:2rem}.quiz button{margin:.25rem}.scope{font-size:.95rem}@keyframes appear{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}@media(max-width:360px){body{padding:.65rem}.experiment{padding:.7rem}.coefficients{gap:.4rem}.tile{min-width:2.6rem}}
+</style>
+</head>
+<body>
+<main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-07] · 다항식의 덧셈과 뺄셈 시범 · 학년·학기 미지정 · 교사 검수 전</p>
+<h1>같은 모양의 항을 모아 계산해요</h1>
+<p>x²와 xy처럼 문자나 지수가 다른 항은 서로 다른 종류예요. 계수를 바꾸고 타일을 펼쳐 동류항만 계산해 보세요.</p>
+<section class="experiment" aria-labelledby="lab-heading">
+<h2 id="lab-heading">다항식 타일 실험실</h2>
+<div class="polynomial-controls">
+<fieldset><legend>첫 번째 식 P</legend><div class="coefficients" id="p-controls"></div></fieldset>
+<fieldset><legend>두 번째 식 Q</legend><div class="coefficients" id="q-controls"></div></fieldset>
+</div>
+<div class="controls"><label for="operation">연산<select id="operation"><option value="add">P + Q 더하기</option><option value="subtract">P − Q 빼기</option></select></label><button type="button" id="reveal">타일 펼치기</button><button type="button" id="combine" disabled>동류항 모으기</button></div>
+<p id="expressions" class="equation" aria-live="polite"></p>
+<div id="tiles" class="term-groups" aria-label="항 종류와 부호별 타일 모형"></div>
+<div id="steps" class="steps" aria-live="polite" hidden></div>
+<p class="muted">타일은 항의 종류와 계수를 표시하는 기호 모형입니다. 실제 길이·넓이를 뜻하지 않습니다. 각 계수는 −3부터 3까지 조절할 수 있습니다.</p>
+</section>
+<section class="experiment quiz"><h2>Socratic 질문</h2><p><strong>3x² + 2xy − x² + 5xy</strong>를 동류항끼리 모으면?</p><button type="button" data-answer="wrong">2x² + 3xy</button><button type="button" data-answer="right">2x² + 7xy</button><button type="button" data-answer="wrong">4x² + 7xy</button><p id="feedback" class="feedback" aria-live="polite">먼저 문자와 지수를 보고 항을 분류해 보세요.</p></section>
+<section class="practice"><h2>혼자 연습</h2><p>(2x² − xy + 3y²) + (x² + 4xy − y²), (3x² + 2xy − y²) − (x² − 3xy + 2y²)를 각각 간단히 하세요.</p><details><summary>정답과 풀이 확인</summary><p>각각 3x² + 3xy + 2y², 2x² + 5xy − 3y²입니다. 뒤 식을 뺄 때는 모든 항의 부호를 바꾸어 더합니다.</p></details></section>
+<p class="muted scope">범위: 동류항의 덧셈·뺄셈. 다항식의 곱셈·나눗셈, 인수분해, 방정식은 다루지 않습니다. [9수02-03] 일차식 예와 구별하여 이차항과 두 문자 항까지 포함한 시범입니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const terms=[{id:'x2',label:'x²'},{id:'xy',label:'xy'},{id:'y2',label:'y²'},{id:'x',label:'x'},{id:'y',label:'y'},{id:'one',label:'1'}];
+const $=id=>document.getElementById(id), stepBox=$('steps');
+function controlMarkup(side){return terms.map(t=>`<label class="coeff-label" for="${side}-${t.id}">${t.label} 계수<input id="${side}-${t.id}" type="number" min="-3" max="3" step="1" value="${side==='p'?({x2:2,xy:3,y2:-1,x:2,y:-3,one:1}[t.id]):({x2:1,xy:-1,y2:2,x:-2,y:1,one:3}[t.id])}"></label>`).join('')}
+$('p-controls').innerHTML=controlMarkup('p');$('q-controls').innerHTML=controlMarkup('q');
+function read(side){return Object.fromEntries(terms.map(t=>[t.id,Number($(`${side}-${t.id}`).value)]))}
+function expression(c){let out='';for(const t of terms){const n=c[t.id];if(!n)continue;const abs=Math.abs(n),body=t.id==='one'?String(abs):`${abs===1?'':abs}${t.label}`;if(!out)out=n<0?'−'+body:body;else out+=n<0?' − '+body:' + '+body;}return out||'0'}
+function valid(){const inputs=[...document.querySelectorAll('.coeff-label input')];return inputs.every(i=>i.value!==''&&Number.isInteger(Number(i.value))&&Number(i.value)>=-3&&Number(i.value)<=3)}
+function refresh(){const p=read('p'),q=read('q');$('expressions').textContent=`P = ${expression(p)}　　Q = ${expression(q)}　　${$('operation').value==='add'?'P + Q':'P − Q'}`;$('reveal').disabled=!valid();$('combine').disabled=true;$('tiles').replaceChildren();stepBox.hidden=true;}
+function tileRow(label,c){const row=document.createElement('div');row.className='term-line';const name=document.createElement('span');name.className='line-label';name.textContent=label;row.append(name);const tray=document.createElement('div');tray.className='tiles';for(const t of terms){const coeff=c[t.id];for(let i=0;i<Math.abs(coeff);i++){const chip=document.createElement('span');chip.className='tile '+(coeff<0?'negative':'');chip.textContent=`${coeff<0?'−':'+'}${t.label}`;chip.setAttribute('aria-label',`${coeff<0?'음수':'양수'} ${t.label} 항`);tray.append(chip)}}if(!tray.childElementCount){tray.textContent='0';}row.append(tray);return row;}
+function reveal(){if(!valid()){stepBox.hidden=false;stepBox.textContent='계수를 −3부터 3 사이의 정수로 입력해 주세요.';return;}const p=read('p'),q=read('q'),sign=$('operation').value==='add'?1:-1,adjusted=Object.fromEntries(terms.map(t=>[t.id,sign*q[t.id]]));$('tiles').replaceChildren(tileRow('P',p),tileRow(sign===1?'＋Q':'−Q',adjusted));$('combine').disabled=false;stepBox.hidden=false;stepBox.replaceChildren();const msg=document.createElement('p');msg.textContent=sign===1?'1단계: 두 식의 항을 펼쳤어요. 문자와 지수가 같은 항끼리만 모아 보세요.':'1단계: P−Q를 P+(−Q)로 바꾸었어요. 아래 −Q에서 모든 부호가 바뀌었는지 확인하세요.';stepBox.append(msg);}
+function combine(){const p=read('p'),q=read('q'),sign=$('operation').value==='add'?1:-1;stepBox.replaceChildren();for(const t of terms){const a=p[t.id],b=sign*q[t.id],sum=a+b;const line=document.createElement('p');line.textContent=`${t.label}: ${a} ${b<0?'−':'+'} ${Math.abs(b)} = ${sum}${sum===0?' (서로 지워짐)':''}`;stepBox.append(line)}const result=Object.fromEntries(terms.map(t=>[t.id,p[t.id]+sign*q[t.id]]));const answer=document.createElement('p');answer.className='equation';answer.textContent=`결과: ${expression(result)}`;stepBox.append(answer);}
+document.querySelectorAll('.coeff-label input').forEach(i=>i.addEventListener('input',refresh));$('operation').addEventListener('change',refresh);$('reveal').addEventListener('click',reveal);$('combine').addEventListener('click',combine);document.querySelectorAll('[data-answer]').forEach(b=>b.addEventListener('click',()=>{$('feedback').textContent=b.dataset.answer==='right'?'맞아요. x² 항은 3−1=2, xy 항은 2+5=7이어서 2x²+7xy입니다.':'문자와 지수가 같은 항끼리만 모아 보세요. 부호도 함께 계산해야 합니다.'}));refresh();
+})();
+</script>
+</body>
+</html>

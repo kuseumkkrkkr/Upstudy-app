@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학수학 1-1 개념서 · 정비례와 반비례</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f4f7fb;color:#182338;font:16px/1.55 system-ui,sans-serif}.wrap{max-width:980px;margin:auto;padding:18px}header,section{background:#fff;border:1px solid #dce4ef;border-radius:14px;padding:18px;margin:14px 0}h1{line-height:1.3}.grid{display:grid;grid-template-columns:minmax(0,1fr) 260px;gap:16px;align-items:center}svg{width:100%;height:auto;background:#fbfcff;border-radius:10px}.axis{stroke:#52637a;stroke-width:2}.gridline{stroke:#e7ebf2}.curve{fill:none;stroke-width:4}.direct{stroke:#2563a6}.inverse{stroke:#d97706}.point{stroke:#fff;stroke-width:2;fill:#13385c;transition:cx .25s ease,cy .25s ease}.focus-target{outline:3px solid #e7a43b;outline-offset:5px;border-radius:10px;box-shadow:0 0 0 7px #fff4e3}#context,#formula,table,svg{transition:outline-color .2s ease,box-shadow .2s ease}.controls{display:flex;gap:9px;flex-wrap:wrap;align-items:center}button{font:inherit;padding:9px 12px;border:0;border-radius:8px;background:#e7edf6;cursor:pointer}button[aria-pressed=true]{background:#153a5b;color:#fff}button:focus-visible,input:focus-visible{outline:3px solid #d97706;outline-offset:2px}input{accent-color:#2563a6}.readout{font-weight:650}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;margin:10px 0}td,th{border:1px solid #ccd6e4;padding:7px;text-align:center}.feedback{min-height:1.5em;font-weight:650}@media(max-width:700px){.wrap{padding:9px}.grid{grid-template-columns:1fr}header,section{padding:14px}}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;transition:none!important;animation:none!important}#point{transition:none!important}}
+</style>
+</head>
+<body><main class="wrap">
+<header><small>중학수학 1-1 · 2022 개정 기준 후보 · [9수02-07]</small><h1>정비례와 반비례</h1><p>식만 외우지 말고 입력을 바꿔 표와 그래프가 어떻게 변하는지 확인해요.</p></header>
+<section><h2>직접 조작하기</h2><div class="controls" role="group" aria-label="관계 선택"><button id="directMode" type="button" aria-pressed="true">정비례 y=ax</button><button id="inverseMode" type="button" aria-pressed="false">반비례 y=a/x</button></div><p id="context">모형: 한 개 가격이 일정한 물건의 개수 x와 총액 y</p><div class="grid"><div><svg viewBox="0 0 640 370" role="img" aria-labelledby="title desc"><title id="title">정비례 또는 반비례 관계 그래프</title><desc id="desc">선택한 관계의 그래프와 현재 입력값 위치를 나타냅니다.</desc><g id="gridLayer"></g><line class="axis" x1="70" y1="300" x2="590" y2="300"/><line class="axis" x1="70" y1="300" x2="70" y2="40"/><polyline id="curve" class="curve direct"/><circle id="point" class="point" r="9"/><text x="590" y="330">x</text><text x="48" y="42">y</text></svg></div><div><label for="a">상수 a = <output id="aOut">2</output></label><input id="a" type="range" min="1" max="12" step="1" value="2" aria-label="비례 상수 a"><label for="x">입력 x = <output id="xOut">3</output></label><input id="x" type="range" min="0" max="8" step="1" value="3" aria-label="입력값 x"><p id="formula" class="readout" aria-live="polite"></p><p id="meaning" aria-live="polite"></p></div></div><h3>값 표</h3><div class="table-wrap"><table><caption id="tableCaption">관계의 일부 값을 표시합니다</caption><tbody><tr id="xRow"><th scope="row">x</th></tr><tr id="yRow"><th scope="row">y</th></tr></tbody></table></div><div class="controls"><button id="prev" type="button">이전 설명</button><button id="next" type="button">다음 설명</button></div><p id="step" aria-live="polite">1단계: 상황에서 두 양과 단위를 확인합니다.</p></section>
+<section><h2>Socratic 툴 퀴즈</h2><p>표 (1,12), (2,6), (3,4), (6,2)에서 일정한 것은 무엇인가요?</p><div class="controls"><button type="button" data-answer="ratio">y÷x</button><button type="button" data-answer="product">x×y</button><button type="button" data-answer="neither">둘 다 아님</button></div><p id="feedback" class="feedback" aria-live="polite"></p><p>왜 한 쌍이 아니라 여러 쌍을 확인해야 할까요?</p></section>
+<section><h2>혼자 풀기</h2><p>같은 물건이 한 개 500원입니다. x개를 살 때 총액 y의 식을 쓰고 정비례인지 설명하세요.</p><details><summary>힌트와 정답 보기</summary><p>총액은 단가×개수입니다. y=500x, 정비례입니다.</p></details></section>
+<footer><small>검토용 시범이며 교육부 원문 대조·교사 검수 전입니다. 시중 교재 문항을 복제하지 않은 자체 활동입니다.</small></footer>
+</main><script>
+(()=>{'use strict';const a=document.querySelector('#a'),x=document.querySelector('#x'),aOut=document.querySelector('#aOut'),xOut=document.querySelector('#xOut'),curve=document.querySelector('#curve'),point=document.querySelector('#point');let mode='direct';const px=v=>70+v*65,py=(v,max)=>300-v/max*240,gcd=(m,n)=>n?gcd(n,m%n):m;function fmt(n){return Number.isInteger(n)?String(n):n.toFixed(2).replace(/0+$/,'').replace(/\.$/,'')}function fmtInverse(k,v){const d=gcd(k,v),num=k/d,den=v/d;return den===1?String(num):`${num}/${den} (${fmt(k/v)})`}function value(k,v){return mode==='direct'?k*v:k/v}function render(){const k=Number(a.value),v=Number(x.value),max=mode==='direct'?Math.max(k*8,1):k; aOut.value=k;xOut.value=v;const points=[];for(let i=(mode==='direct'?0:10);i<=80;i++){const input=i/10;points.push(`${px(input)},${py(value(k,input),max)}`)}curve.setAttribute('points',points.join(' '));curve.setAttribute('class',`curve ${mode}`);point.setAttribute('cx',px(v));point.setAttribute('cy',py(value(k,v),max));const yVal=value(k,v),shown=mode==='direct'?fmt(yVal):fmtInverse(k,v);document.querySelector('#formula').textContent=mode==='direct'?`식: y=${k}x · 현재 값: (${v}, ${shown})`:`식: y=${k}/x (x≠0) · 현재 값: (${v}, ${shown})`;document.querySelector('#meaning').textContent=mode==='direct'?`현재 y/x=${v?fmt(yVal/v):'정의되지 않음'} · 단위 가격이 같은 모형입니다.`:`현재 x×y=${fmt(k)} · 넓이가 일정한 직사각형 모형입니다.`;document.querySelector('#context').textContent=mode==='direct'?'모형: 한 개 가격이 일정한 물건의 개수 x와 총액 y':'모형: 넓이 a가 고정된 직사각형의 가로 x와 세로 y';const xs=mode==='direct'?[0,1,2,4,8]:[1,2,3,4,6];document.querySelector('#xRow').innerHTML='<th scope="row">x</th>'+xs.map(n=>`<td>${n}</td>`).join('');document.querySelector('#yRow').innerHTML='<th scope="row">y</th>'+xs.map(n=>`<td>${mode==='direct'?fmt(k*n):fmtInverse(k,n)}</td>`).join('');document.querySelector('#desc').textContent=mode==='direct'?`정비례 y=${k}x 그래프와 현재 점 (${v},${shown})입니다.`:`반비례 y=${k}/x 그래프와 현재 점 (${v},${shown})입니다.`;document.querySelector('#feedback').textContent=''}function setMode(next){mode=next;document.querySelector('#directMode').setAttribute('aria-pressed',String(mode==='direct'));document.querySelector('#inverseMode').setAttribute('aria-pressed',String(mode==='inverse'));x.min=mode==='direct'?'0':'1';if(Number(x.value)<Number(x.min))x.value=x.min;render()}a.addEventListener('input',render);x.addEventListener('input',render);document.querySelector('#directMode').addEventListener('click',()=>setMode('direct'));document.querySelector('#inverseMode').addEventListener('click',()=>setMode('inverse'));let stage=0;const steps=['상황에서 두 양과 단위를 확인합니다.','표의 여러 쌍에서 비율 또는 곱을 비교합니다.','식으로 일정한 양을 표현합니다.','그래프에서 모양을 확인하고 변수 범위를 살핍니다.'];const focusTargets=[document.querySelector('#context'),document.querySelector('table'),document.querySelector('#formula'),document.querySelector('svg')];function show(n){stage=Math.max(0,Math.min(3,n));focusTargets.forEach((target,index)=>target.classList.toggle('focus-target',index===stage));document.querySelector('#step').textContent=`${stage+1}단계: ${steps[stage]}`}document.querySelector('#prev').addEventListener('click',()=>show(stage-1));document.querySelector('#next').addEventListener('click',()=>show(stage+1));document.querySelectorAll('[data-answer]').forEach(b=>b.addEventListener('click',()=>{const good=b.dataset.answer==='product';document.querySelector('#feedback').textContent=good?'맞아요. 네 쌍에서 x×y=12입니다. 한 쌍만으로는 일정성을 확인할 수 없어요.':'다시 확인해 보세요. 각 쌍의 나눗셈과 곱셈을 비교해 봅시다.'}));render();show(stage)})();
+</script>
+<script>
+(()=>{
+  'use strict';
+  const x=document.querySelector('#x');
+  const directButton=document.querySelector('#directMode');
+  const inverseButton=document.querySelector('#inverseMode');
+  const aLabel=document.querySelector('label[for="a"]');
+  const xLabel=document.querySelector('label[for="x"]');
+  const axisX=document.querySelector('svg text[x="590"]');
+  const axisY=document.querySelector('svg text[x="48"]');
+  const previousButton=document.querySelector('#prev');
+  const nextButton=document.querySelector('#next');
+  const stepReadout=document.querySelector('#step');
+  const guidedPoints=[1,2,3,4];
+  let guidedStage=0;
+  function updateUnits(){
+    const direct=directButton.getAttribute('aria-pressed')==='true';
+    document.querySelector('#context').textContent=direct
+      ?'모형: 과일 무게 x(kg)와 총액 y(천원), kg당 단가 a(천원/kg)가 일정합니다.'
+      :'모형: 넓이 a(cm²)가 고정된 직사각형의 가로 x(cm)와 세로 y(cm)입니다.';
+    aLabel.firstChild.textContent=direct?'단가 a (천원/kg) = ':'넓이 a (cm²) = ';
+    xLabel.firstChild.textContent=direct?'무게 x (kg) = ':'가로 x (cm) = ';
+    x.setAttribute('aria-label',direct?'과일 무게 x (kg)':'직사각형 가로 x (cm)');
+    document.querySelector('#a').setAttribute('aria-label',direct?'kg당 단가 a (천원/kg)':'직사각형 넓이 a (cm²)');
+    axisX.textContent=direct?'x (kg)':'x (cm)';
+    axisY.textContent=direct?'y (천원)':'y (cm)';
+    x.step=direct?'0.5':'1';
+  }
+  directButton.addEventListener('click',updateUnits);
+  inverseButton.addEventListener('click',updateUnits);
+  function moveGuidedPoint(){
+    x.value=String(guidedPoints[guidedStage]);
+    x.dispatchEvent(new Event('input',{bubbles:true}));
+    stepReadout.textContent+=` 예시 점을 x=${x.value}로 옮겼습니다.`;
+  }
+  previousButton.textContent='이전 단계';
+  nextButton.textContent='다음 단계 · 점 이동';
+  nextButton.setAttribute('aria-label','다음 학습 단계와 예시 점으로 이동');
+  previousButton.addEventListener('click',()=>{
+    guidedStage=Math.max(0,guidedStage-1);
+    moveGuidedPoint();
+  });
+  nextButton.addEventListener('click',()=>{
+    guidedStage=Math.min(guidedPoints.length-1,guidedStage+1);
+    moveGuidedPoint();
+  });
+  updateUnits();
+  moveGuidedPoint();
+})();
+</script>
+</body>
+</html>

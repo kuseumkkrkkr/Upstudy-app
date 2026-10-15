@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="y=x²에서 꼭짓점형 이차함수까지 한 단계씩 움직여 이해하는 수학 활동">
+  <title>포물선, 한 번에 한 변화씩</title>
+  <style>
+    :root{color-scheme:light;--ink:#17231f;--muted:#53635c;--line:#d8e0dc;--paper:#fbfcfa;--green:#176b4a;--orange:#b94c2b}
+    *{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,-apple-system,"Segoe UI",sans-serif}
+    main{max-width:960px;margin:auto;padding:clamp(18px,4vw,42px)}header{max-width:680px}h1{font-size:clamp(1.7rem,4vw,2.5rem);line-height:1.15;letter-spacing:-.04em;margin:.35em 0}p{margin:.5em 0}.eyebrow{font-size:.78rem;letter-spacing:.12em;text-transform:uppercase;color:var(--green);font-weight:750}.lede{color:var(--muted);font-size:1.05rem}
+    .stage{display:grid;grid-template-columns:minmax(0,1.5fr) minmax(230px,.8fr);gap:20px;align-items:stretch;margin-top:24px}.graph,.lesson,.quiz{border:1px solid var(--line);border-radius:20px;background:white;overflow:hidden}.graph{padding:12px}.graph svg{display:block;width:100%;height:auto;min-height:260px}.lesson{padding:clamp(18px,3vw,28px);display:flex;flex-direction:column;justify-content:center}.step{color:var(--green);font-size:.82rem;font-weight:750}.formula{font:700 clamp(1.2rem,3vw,1.7rem)/1.3 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:-.04em;overflow-wrap:anywhere}.meaning{color:var(--muted);min-height:3.2em}.vertex{font-weight:700}.controls{display:flex;flex-wrap:wrap;gap:10px;margin-top:18px}.controls button{border:1px solid var(--line);border-radius:999px;background:#fff;padding:10px 16px;color:var(--ink);font:inherit;font-weight:700;cursor:pointer}.controls button:hover{border-color:var(--green);background:#f0f7f3}.controls button:focus-visible{outline:3px solid #67b895;outline-offset:2px}.controls button.primary{background:var(--green);border-color:var(--green);color:white}.controls button:disabled{opacity:.45;cursor:not-allowed}.prompt{border-left:4px solid var(--orange);padding:10px 14px;margin:22px 0 0;background:#fff8f4}.hint{color:var(--muted);font-size:.9rem}.quiz{padding:clamp(18px,3vw,26px);margin-top:18px}.quiz h2{font-size:1.15rem;margin:.1em 0 .5em}.quiz-group{padding:0;border:0;margin:18px 0}.quiz-group legend{font-weight:750;margin-bottom:8px}.quiz .controls{margin-top:8px}.feedback{min-height:1.6em;font-weight:650}.feedback[data-state="wrong"]{color:#a33926}.feedback[data-state="right"]{color:#176b4a}.quiz .hint{display:inline-block;margin-top:6px}.socratic{padding:clamp(18px,3vw,26px);margin-top:18px;border:1px solid var(--line);border-radius:20px;background:white}.socratic h2{font-size:1.15rem;margin:.1em 0 .5em}.socratic-prompt{font-weight:700}.socratic-feedback{min-height:3em;color:var(--muted)}.socratic-feedback[data-state="wrong"]{color:#a33926}.socratic-feedback[data-state="right"]{color:#176b4a}.socratic .controls{margin-top:10px}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}.grid{stroke:#e9eeeb;stroke-width:1}.axis{stroke:#52615a;stroke-width:1.5}.curve{fill:none;stroke:#176b4a;stroke-width:4;stroke-linecap:round;stroke-linejoin:round}.symmetry{stroke:#b94c2b;stroke-width:1.6;stroke-dasharray:5 5;opacity:.75}.vertex-dot{fill:#b94c2b;stroke:white;stroke-width:2}.tick{fill:#65736d;font-size:12px}
+    @media(max-width:700px){.stage{grid-template-columns:1fr}.graph svg{min-height:220px}.meaning{min-height:0}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+  </style>
+</head>
+<body>
+<main>
+  <header>
+    <div class="eyebrow">공통수학 1 · 이차함수</div>
+    <h1>포물선, 한 번에 한 변화씩</h1>
+    <p class="lede">식을 외우기 전에 먼저 예측해 보세요. 버튼을 눌러 그래프가 어떻게 달라지는지 확인합니다.</p>
+  </header>
+  <section class="stage" aria-label="이차함수 단계별 체험">
+    <div class="graph">
+      <svg id="plot" viewBox="0 0 720 420" role="img" aria-labelledby="graph-title graph-desc">
+        <title id="graph-title">단계별 이차함수 그래프</title><desc id="graph-desc">대칭축은 주황색 점선, 꼭짓점은 주황색 점, 함수 그래프는 초록색 곡선으로 표시됩니다.</desc>
+        <defs><clipPath id="plot-area"><rect x="58" y="26" width="640" height="348"/></clipPath></defs>
+        <g id="grid"></g><line id="xaxis" class="axis"/><line id="yaxis" class="axis"/><g id="ticks"></g>
+        <line id="symmetry" class="symmetry"/><path id="curve" class="curve" clip-path="url(#plot-area)"/><circle id="vertex" class="vertex-dot" r="7"/>
+      </svg>
+    </div>
+    <article class="lesson" aria-live="polite" aria-atomic="true">
+      <div id="step" class="step"></div>
+      <h2 id="title"></h2>
+      <p id="formula" class="formula"></p>
+      <p id="meaning" class="meaning"></p>
+      <p id="vertex-text" class="vertex"></p>
+      <div class="controls" aria-label="애니메이션 단계 조작">
+        <button id="prev" type="button">이전</button>
+        <button id="next" class="primary" type="button">다음</button>
+        <button id="reset" type="button">처음부터</button>
+      </div>
+    </article>
+  </section>
+  <aside class="prompt"><strong>잠깐 생각하기</strong><p id="question">아직 그래프가 이동하기 전입니다. 오른쪽으로 2, 아래로 1 옮기면 꼭짓점은 어디로 갈까요?</p><p class="hint">힌트: 꼭짓점형 y=a(x−h)²+k에서 꼭짓점은 (h,k)입니다. 움직임이 불편하면 ‘다음’을 눌러 정지 화면으로 확인해도 됩니다.</p></aside>
+  <section class="socratic" aria-labelledby="socratic-title">
+    <h2 id="socratic-title">질문을 따라 식 만들기</h2>
+    <p id="socratic-step" class="step">질문 1 / 2</p>
+    <p id="socratic-question" class="socratic-prompt">꼭짓점의 x좌표가 2라면, 제곱 부분이 0이 되는 괄호는 무엇일까요?</p>
+    <div id="socratic-choices" class="controls" role="group" aria-label="질문 답 선택">
+      <button type="button" data-socratic-choice="x-2">x − 2</button>
+      <button type="button" data-socratic-choice="x+2">x + 2</button>
+      <button type="button" data-socratic-choice="2-x">2 − x</button>
+    </div>
+    <p id="socratic-feedback" class="socratic-feedback" aria-live="polite">먼저 x=2를 괄호에 넣어 값이 0이 되는지 확인해 보세요.</p>
+    <div class="controls"><button id="socratic-restart" type="button">질문 처음부터</button></div>
+  </section>
+  <section class="quiz" aria-labelledby="quiz-title">
+    <h2 id="quiz-title">그래프를 보고 풀기</h2>
+    <fieldset class="quiz-group" data-answer="b">
+      <legend>마지막 단계의 꼭짓점은 어디인가요?</legend>
+      <div class="controls" role="group" aria-label="꼭짓점 답 선택">
+        <button type="button" data-choice="a">(−2, 1)</button>
+        <button type="button" data-choice="b">(2, −1)</button>
+        <button type="button" data-choice="c">(2, 1)</button>
+      </div>
+      <p class="feedback" aria-live="polite"></p>
+    </fieldset>
+    <fieldset class="quiz-group" data-answer="a">
+      <legend>왜 a를 바꾸어도 꼭짓점은 그대로일까요?</legend>
+      <div class="controls" role="group" aria-label="이유 답 선택">
+        <button type="button" data-choice="a">x=h일 때 제곱 부분이 0이 되기 때문</button>
+        <button type="button" data-choice="b">a가 h와 k를 바꾸기 때문</button>
+      </div>
+      <p class="feedback" aria-live="polite"></p>
+      <p class="hint">막혔나요? (x−h)²이 가장 작아지는 x를 먼저 찾아보세요.</p>
+    </fieldset>
+  </section>
+  <p id="status" class="sr-only" role="status"></p>
+</main>
+<script>
+(()=>{
+  const NS='http://www.w3.org/2000/svg', left=58,right=698,top=26,bottom=374,xMin=-4,xMax=8,yMin=-3,yMax=8;
+  const X=x=>left+(x-xMin)*(right-left)/(xMax-xMin),Y=y=>bottom-(y-yMin)*(bottom-top)/(yMax-yMin);
+  const grid=document.querySelector('#grid'),ticks=document.querySelector('#ticks');
+  for(let x=xMin;x<=xMax;x++){const l=document.createElementNS(NS,'line');l.setAttribute('x1',X(x));l.setAttribute('x2',X(x));l.setAttribute('y1',top);l.setAttribute('y2',bottom);l.setAttribute('class','grid');grid.append(l);if(x%2===0){const t=document.createElementNS(NS,'text');t.setAttribute('x',X(x));t.setAttribute('y',Y(0)+20);t.setAttribute('text-anchor','middle');t.setAttribute('class','tick');t.textContent=x;ticks.append(t)}}
+  for(let y=yMin;y<=yMax;y++){const l=document.createElementNS(NS,'line');l.setAttribute('x1',left);l.setAttribute('x2',right);l.setAttribute('y1',Y(y));l.setAttribute('y2',Y(y));l.setAttribute('class','grid');grid.append(l);if(y!==0&&y%2===0){const t=document.createElementNS(NS,'text');t.setAttribute('x',X(0)-12);t.setAttribute('y',Y(y)+4);t.setAttribute('text-anchor','end');t.setAttribute('class','tick');t.textContent=y;ticks.append(t)}}
+  const xa=document.querySelector('#xaxis'),ya=document.querySelector('#yaxis');xa.setAttribute('x1',left);xa.setAttribute('x2',right);xa.setAttribute('y1',Y(0));xa.setAttribute('y2',Y(0));ya.setAttribute('x1',X(0));ya.setAttribute('x2',X(0));ya.setAttribute('y1',top);ya.setAttribute('y2',bottom);
+  const steps=[
+    {a:1,h:0,k:0,title:'기준 그래프',meaning:'y=x²입니다. 꼭짓점은 원점이고, x=0을 기준으로 좌우가 대칭입니다.',question:'오른쪽으로 2, 아래로 1 옮기면 꼭짓점은 어디로 갈까요?'},
+    {a:2,h:0,k:0,title:'세로로 늘이기',meaning:'y값을 2배로 만들었습니다. 꼭짓점은 그대로지만 포물선이 더 좁아집니다.',question:'a를 1에서 2로 바꾸면 꼭짓점의 위치도 바뀌나요?'},
+    {a:2,h:2,k:0,title:'오른쪽으로 2 이동',meaning:'x 대신 x−2가 들어갔습니다. 꼭짓점과 대칭축이 오른쪽으로 2만큼 이동합니다.',question:'식의 x−2와 그래프의 이동 방향이 왜 반대처럼 보일까요?'},
+    {a:2,h:2,k:-1,title:'아래로 1 이동',meaning:'마지막으로 그래프 전체를 아래로 1 옮겼습니다. 꼭짓점은 (2,−1)입니다.',question:'이제 대칭축, 꼭짓점, 최솟값을 각각 말해 볼까요?'}
+  ];
+  const curve=document.querySelector('#curve'),vertex=document.querySelector('#vertex'),sym=document.querySelector('#symmetry');let index=0,current={a:1,h:0,k:0},anim=0;
+  const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+  function draw(p){let d='';for(let x=xMin;x<=xMax;x+=.06){const y=p.a*(x-p.h)**2+p.k;d+=(d?' L':'M')+X(x).toFixed(1)+' '+Y(y).toFixed(1)}curve.setAttribute('d',d);vertex.setAttribute('cx',X(p.h));vertex.setAttribute('cy',Y(p.k));sym.setAttribute('x1',X(p.h));sym.setAttribute('x2',X(p.h));sym.setAttribute('y1',top);sym.setAttribute('y2',bottom)}
+  function renderText(){const s=steps[index],a=s.a===1?'':s.a===-1?'−':String(s.a),x=s.h===0?'x²':`(${s.h>0?`x − ${s.h}`:`x + ${Math.abs(s.h)}`})²`,k=s.k===0?'':s.k>0?` + ${s.k}`:` − ${Math.abs(s.k)}`;document.querySelector('#step').textContent=`단계 ${index+1} / ${steps.length}`;document.querySelector('#title').textContent=s.title;document.querySelector('#formula').textContent=`y = ${a}${x}${k}`;document.querySelector('#meaning').textContent=s.meaning;document.querySelector('#vertex-text').textContent=`꼭짓점 (${s.h}, ${s.k}) · 대칭축 x=${s.h}`;document.querySelector('#question').textContent=s.question;document.querySelector('#prev').disabled=index===0;document.querySelector('#next').disabled=index===steps.length-1;document.querySelector('#status').textContent=`${s.title}. 꼭짓점 ${s.h}, ${s.k}. ${s.meaning}`}
+  function go(to){if(to<0||to>=steps.length||to===index)return;cancelAnimationFrame(anim);const start={...current},target=steps[to],t0=performance.now(),duration=reduced.matches?0:550;index=to;renderText();function frame(now){const t=duration?Math.min(1,(now-t0)/duration):1,e=t*t*(3-2*t);current={a:start.a+(target.a-start.a)*e,h:start.h+(target.h-start.h)*e,k:start.k+(target.k-start.k)*e};draw(current);if(t<1)anim=requestAnimationFrame(frame)}anim=requestAnimationFrame(frame)}
+  document.querySelector('#prev').addEventListener('click',()=>go(index-1));document.querySelector('#next').addEventListener('click',()=>go(index+1));document.querySelector('#reset').addEventListener('click',()=>{cancelAnimationFrame(anim);index=0;current={a:1,h:0,k:0};draw(current);renderText()});draw(current);renderText();
+  document.querySelectorAll('.quiz-group').forEach(group=>group.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>{const correct=button.dataset.choice===group.dataset.answer,feedback=group.querySelector('.feedback');feedback.dataset.state=correct?'right':'wrong';feedback.textContent=correct?'맞았어요. 그래프에서 찾은 성질을 식으로도 설명해 보세요.':'아직 아니에요. 그래프의 꼭짓점 또는 제곱 부분을 다시 살펴보세요.';group.querySelectorAll('[data-choice]').forEach(option=>option.setAttribute('aria-pressed',String(option===button)))})));
+  const socraticQuestion=document.querySelector('#socratic-question'),socraticStep=document.querySelector('#socratic-step'),socraticFeedback=document.querySelector('#socratic-feedback'),socraticChoices=document.querySelector('#socratic-choices');let socraticIndex=0,wrongAttempts=0,socraticTimer=0;
+  const socraticPrompts=[
+    {question:'x=2에서 값이 0이 되는 식은 무엇일까요? 제곱하면 같은 식이 되는 표현도 생각해 보세요.',choices:[['x-2','x − 2'],['x+2','x + 2'],['2-x','2 − x']],answers:['x-2','2-x'],hint:'x=2를 넣었을 때 0이 되는 식을 골라 보세요.',incorrect:{'x+2':'x=2를 넣으면 x+2=4예요. 꼭짓점에서 제곱 부분이 0이 되어야 하니 다시 골라 보세요.'},feedback:{'x-2':'맞아요. 표준 꼭짓점형은 (x−h)이고 h=2이므로 (x−2)입니다.','2-x':'맞아요. 2−x=−(x−2)이므로 제곱하면 (2−x)²=(x−2)²입니다. 표준 꼭짓점형 표기로는 (x−2)라고 씁니다.'}},
+    {question:'꼭짓점이 (2,−1)이 되려면 k에는 어떤 값을 넣어야 할까요?',choices:[['-1','−1'],['1','1'],['2','2']],answers:['-1'],hint:'꼭짓점형에서 k는 꼭짓점의 y좌표예요.',incorrect:{'1':'k=1이면 꼭짓점의 y좌표가 1이 됩니다. 문제에서 준 −1과 비교해 보세요.','2':'k는 x좌표가 아니라 y좌표를 정해요. 꼭짓점의 두 번째 좌표를 확인해 보세요.'},feedback:{'-1':'맞아요. k=−1입니다. 따라서 이 단계의 식은 y=2(x−2)²−1이고 꼭짓점은 (2,−1)이에요.'}}
+  ];
+  function renderSocratic(){const prompt=socraticPrompts[socraticIndex];socraticStep.textContent=socraticIndex<socraticPrompts.length?`질문 ${socraticIndex+1} / ${socraticPrompts.length}`:'질문 마침';socraticQuestion.textContent=prompt?prompt.question:'이제 식 y=2(x−2)²−1에서 꼭짓점과 대칭축을 그래프에서 확인해 보세요.';socraticChoices.replaceChildren();if(prompt){prompt.choices.forEach(([value,label])=>{const button=document.createElement('button');button.type='button';button.dataset.socraticChoice=value;button.textContent=label;socraticChoices.append(button)});socraticFeedback.textContent=wrongAttempts>=2?prompt.hint:'답을 고르면 다음 질문으로 이어집니다.';socraticFeedback.dataset.state=''}else{socraticFeedback.textContent='두 질문을 마쳤습니다. 이제 a=2가 그래프의 폭을 어떻게 바꾸는지 설명해 보세요.';socraticFeedback.dataset.state='right'}}
+  socraticChoices.addEventListener('click',event=>{const button=event.target.closest('[data-socratic-choice]');if(!button)return;const prompt=socraticPrompts[socraticIndex];if(!prompt)return;const choice=button.dataset.socraticChoice;if(prompt.answers.includes(choice)){socraticFeedback.textContent=prompt.feedback[choice];socraticFeedback.dataset.state='right';wrongAttempts=0;for(const option of socraticChoices.querySelectorAll('button'))option.disabled=true;window.clearTimeout(socraticTimer);socraticTimer=window.setTimeout(()=>{socraticIndex+=1;renderSocratic()},650)}else{wrongAttempts+=1;socraticFeedback.textContent=wrongAttempts>=2?prompt.hint:(prompt.incorrect[choice]||'아직 조건과 맞지 않아요. 꼭짓점 좌표를 대입해 확인해 볼까요?');socraticFeedback.dataset.state='wrong'}});
+  document.querySelector('#socratic-restart').addEventListener('click',()=>{window.clearTimeout(socraticTimer);socraticIndex=0;wrongAttempts=0;renderSocratic()});renderSocratic();
+})();
+</script>
+</body>
+</html>

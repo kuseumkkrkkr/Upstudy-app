@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 제곱근의 뜻과 성질</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--orange:#ad4c18;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:850px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:220px;flex:1}.controls input{width:100%}button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.model{display:grid;grid-template-columns:minmax(180px,1fr) minmax(300px,2fr);gap:20px;align-items:center}.square-stage{min-height:160px;display:grid;place-items:center;background:#f7f9fd;border-radius:12px;padding:16px}.square{width:12px;height:12px;max-width:120px;max-height:120px;background:linear-gradient(135deg,#dce8ff,#91b4fa);border:2px solid var(--blue);transition:width .45s ease,height .45s ease,opacity .3s ease;display:grid;place-items:center;font-weight:700;color:#122d61}.line-wrap{position:relative;padding:40px 4px 30px;margin:20px 0 8px}.axis{height:4px;background:#65758c;position:relative}.axis:before,.axis:after{content:"";position:absolute;top:-5px;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent}.axis:before{left:-2px;border-right:10px solid #65758c}.axis:after{right:-2px;border-left:10px solid #65758c}.ticks{position:absolute;inset:0 4px;display:flex;justify-content:space-between}.tick{position:relative;width:1px;height:15px;background:#65758c}.tick span{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.82rem}.tick.zero{height:22px;background:var(--ink);width:2px}.root-point{position:absolute;top:16px;width:15px;height:15px;border-radius:50%;background:var(--blue);transform:translateX(-50%);transition:left .35s ease}.root-point.negative{background:var(--orange);top:0}.root-label{position:absolute;transform:translateX(-50%);white-space:nowrap;font-weight:700;font-size:.82rem}.root-label.negative{top:-22px;color:var(--orange)}.root-label.positive{top:32px;color:var(--blue)}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}[hidden]{display:none!important}@media(max-width:600px){.card{padding:14px}.controls label{min-width:100%}.model{grid-template-columns:1fr}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-07] 원문 문구 대조 · 학년·학기 미지정</p>
+<h1>넓이에서 변의 길이 찾기</h1>
+<p>정사각형의 넓이를 조절해 한 변을 예상하고, `√a`와 방정식 `x²=a`의 해를 구분하세요.</p>
+
+<section class="card" aria-labelledby="experimentTitle">
+<h2 id="experimentTitle">정사각형 넓이와 제곱근</h2>
+<div class="controls"><label>넓이 a <output id="areaOut" for="area">9</output><input id="area" type="range" min="0" max="100" step="1" value="9" aria-label="정사각형의 넓이"></label></div>
+<p id="equation" class="status" aria-live="polite">한 변 × 한 변 = 9 · √9 = 3</p>
+<div class="model">
+<div class="square-stage" aria-label="넓이에 따라 크기가 달라지는 정사각형"><div id="square" class="square" aria-hidden="true"><span id="areaInside">넓이 9</span></div></div>
+<div><p id="sideReadout" class="status" aria-live="polite">한 변의 길이 √9 = 3</p><p id="rootReadout">x²=9의 해: x=−3, 3</p><div class="line-wrap" role="img" aria-label="−10부터 10까지의 수직선에서 x²=a의 해 위치를 표시">
+<span id="negativeLabel" class="root-label negative">−3</span><span id="negativePoint" class="root-point negative" aria-hidden="true"></span><span id="positiveLabel" class="root-label positive">3</span><span id="positivePoint" class="root-point" aria-hidden="true"></span><div class="axis"></div>
+<div class="ticks" aria-hidden="true"><i class="tick"><span>−10</span></i><i class="tick"><span>−5</span></i><i class="tick zero"><span>0</span></i><i class="tick"><span>5</span></i><i class="tick"><span>10</span></i></div>
+</div><p class="muted">수직선의 두 점은 방정식 x²=a의 해입니다. √a 기호는 0 이상인 점 하나를 나타냅니다.</p></div>
+</div>
+</section>
+
+<section class="card" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">넓이에서 기호까지 한 단계씩</h2>
+<div class="controls"><button id="stepBack" type="button">이전</button><button id="stepNext" type="button">다음</button><button id="stepReset" type="button">처음부터</button><span id="stepReadout" class="status" aria-live="polite">1 / 3 · 넓이 확인</span></div>
+<p id="stepText" role="status" aria-live="polite">정사각형의 넓이는 a입니다.</p>
+</section>
+
+<section class="card quiz" aria-labelledby="quizTitle">
+<h2 id="quizTitle">짧은 확인 퀴즈</h2><p id="quizPrompt">x²=9의 해는 몇 개일까요?</p>
+<div class="controls"><button type="button" data-count="0">0개</button><button type="button" data-count="1">1개</button><button type="button" data-count="2">2개</button></div>
+<button id="hint" type="button">힌트 보기</button><p id="hintText" class="muted" role="status" aria-live="polite">0보다 큰 a라면 서로 부호가 반대인 두 수를 제곱해 보세요.</p>
+<p id="quizFeedback" class="feedback" role="status" aria-live="polite">답을 고른 뒤 √a의 뜻도 구분해 보세요.</p>
+</section>
+
+<section class="card"><h2>도구를 닫고 구분하기</h2><p>16의 제곱근, √16, x²=16의 해를 각각 적으세요.</p><p class="muted">확인: 16의 제곱근은 −4와 4, √16=4, x²=16의 해는 −4와 4입니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData·구매·학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const area=document.querySelector('#area');let stage=0;
+const cleanRoot=value=>Number.isInteger(value)?String(value):value.toFixed(3);
+function render(){
+ const a=Number(area.value),root=Math.sqrt(a),rootText=cleanRoot(root),count=a===0?1:2,hasTwo=count===2;
+ document.querySelector('#areaOut').value=a;document.querySelector('#areaInside').textContent=`넓이 ${a}`;
+ const square=document.querySelector('#square'),sidePixels=root*9;square.style.width=`${sidePixels}px`;square.style.height=`${sidePixels}px`;square.style.opacity=stage>=1?'1':'0.45';square.style.transform=stage>=1?'scale(1)':'scale(.82)';
+ document.querySelector('#equation').textContent=`한 변 × 한 변 = ${a} · √${a} = ${rootText}${Number.isInteger(root)?'':' (근삿값)'}`;
+ document.querySelector('#sideReadout').textContent=`한 변의 길이 √${a} = ${rootText}${Number.isInteger(root)?'':' (근삿값)'}`;
+ document.querySelector('#rootReadout').textContent=a===0?'x²=0의 해: x=0':'x²='+a+'의 해: x=−'+rootText+', '+rootText;
+ const negPos=50-root/20*100,posPos=50+root/20*100;document.querySelector('#negativePoint').style.left=`${negPos}%`;document.querySelector('#negativeLabel').style.left=`${negPos}%`;document.querySelector('#positivePoint').style.left=`${posPos}%`;document.querySelector('#positiveLabel').style.left=`${posPos}%`;
+ document.querySelector('#negativePoint').hidden=!hasTwo||stage<2;document.querySelector('#negativeLabel').hidden=!hasTwo||stage<2;document.querySelector('#positivePoint').hidden=stage<2;document.querySelector('#positiveLabel').hidden=stage<2;document.querySelector('#positiveLabel').textContent=a===0?'0':rootText;
+ const texts=[`정사각형의 넓이는 ${a}입니다.`,`한 변의 길이는 음수가 아니므로 √${a}=${rootText}입니다.`,`x²=${a}의 해는 ${a===0?'0 하나':`−${rootText}와 ${rootText}`}입니다. √${a}는 그중 0 이상인 값 ${rootText}만을 뜻합니다.`];
+ document.querySelector('#stepReadout').textContent=`${stage+1} / 3 · ${['넓이 확인','길이 해석','두 해와 √ 기호'][stage]}`;document.querySelector('#stepText').textContent=texts[stage];document.querySelector('#stepBack').disabled=stage===0;document.querySelector('#stepNext').disabled=stage===2;
+ document.querySelector('#quizPrompt').textContent=`x²=${a}의 해는 몇 개일까요?`;document.querySelector('#quizFeedback').textContent='답을 고른 뒤 √a의 뜻도 구분해 보세요.';
+ return count;
+}
+area.addEventListener('input',()=>{stage=0;render()});document.querySelector('#stepBack').addEventListener('click',()=>{stage=Math.max(0,stage-1);render()});document.querySelector('#stepNext').addEventListener('click',()=>{stage=Math.min(2,stage+1);render()});document.querySelector('#stepReset').addEventListener('click',()=>{stage=0;render()});
+document.querySelectorAll('[data-count]').forEach(button=>button.addEventListener('click',()=>{const a=Number(area.value),answer=a===0?1:2,correct=Number(button.dataset.count)===answer;document.querySelector('#quizFeedback').textContent=correct?`맞아요. x²=${a}의 해는 ${answer}개입니다. √${a}는 0 이상인 해만 나타냅니다.`:'다시 생각해 보세요. 양수의 제곱근은 서로 반대인 두 수이고, 0의 제곱근은 하나입니다.'}));
+document.querySelector('#hint').addEventListener('click',()=>{const a=Number(area.value);document.querySelector('#hintText').textContent=a===0?'0을 제곱해서 0이 되는 수는 몇 개인가요?':`√${a}와 −√${a}를 각각 제곱해 보세요. 둘은 서로 다른 수입니다.`});render();
+})();
+</script>
+</body></html>

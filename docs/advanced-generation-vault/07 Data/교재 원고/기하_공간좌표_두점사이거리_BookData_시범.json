@@ -1,0 +1,100 @@
+{
+  "title": "기하 개념서 · 공간좌표에서 거리와 내분점",
+  "subtitle": "좌표 성분과 내분 비율을 움직여 공간 관계를 이해",
+  "category": "concept_textbook_prototype",
+  "tags": ["기하", "공간도형과 공간좌표", "거리와 내분점", "2022 개정", "12기하02-04", "시범", "교사 검수 전"],
+  "curriculum_version": "2022",
+  "standard_code": "12기하02-04",
+  "standard_coverage": "point_coordinate_construction_distance_internal_division",
+  "chapters": [
+    {
+      "title": "공간좌표와 거리·내분점",
+      "intro": [
+        "2022 개정 기하 [12기하02-04]의 좌표공간 점 좌표 구성, 두 점 사이 거리, 선분 내분점 원리를 연결하는 자체 제작 시범이다.",
+        "점 좌표 구성은 조작 경로를 통해 도입하는 초안이다. 교사 검수 전이며 판매 콘텐츠가 아니다."
+      ],
+      "sections": [
+        {
+          "title": "좌표 차와 공간 거리",
+          "paragraphs": [
+            "좌표공간의 점 P=(x,y,z)는 원점 O에서 x축 방향으로 x만큼, y축 방향으로 y만큼, z축 방향으로 z만큼 이동해 구성한다. 음수는 해당 축의 음의 방향을 뜻한다.",
+            "P의 좌표를 축 방향 성분으로 나누어 O→(x,0,0)→(x,y,0)→(x,y,z) 경로로 확인한다. 이 경로는 점의 위치를 좌표 성분으로 구성하는 한 가지 방법이다.",
+            "P=(x₁,y₁,z₁), Q=(x₂,y₂,z₂)에서 세 좌표 차는 서로 직각인 방향의 변화량이다.",
+            "피타고라스 정리를 반복 적용하면 PQ=√((x₂−x₁)²+(y₂−y₁)²+(z₂−z₁)²)이다.",
+            "선분 AB를 AR:RB=m:n으로 내분하는 R의 좌표는 (nA+mB)/(m+n)이다. 각 좌표에 같은 가중 평균 공식을 적용한다.",
+            "등각 투영 그림은 입체를 평면에 나타낸 것이므로 화면상의 길이를 실제 길이로 재지 않는다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "geometry-space-coordinate-construction",
+          "template": "experiment",
+          "title": "좌표 성분으로 공간의 점을 구성하기",
+          "kicker": "원점에서 x, y, z 방향 이동을 조합",
+          "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "P=(x,y,z)는 원점에서 어떤 순서의 축 방향 이동으로 만들 수 있을까요?"},
+            {"type": "visual", "title": "점 P를 구성하는 경로", "text": "같은 좌표 조절 도구에서 O→(x,0,0)→(x,y,0)→(x,y,z)=P 경로를 확인합니다. x,y,z가 음수이면 해당 축의 음의 방향으로 이동합니다."},
+            {"type": "thinking", "title": "직접 조작", "text": "x만 바꾸고 P의 이동을 관찰한 뒤 y, z를 차례로 바꾸세요. 각 단계에서 어떤 좌표 성분이 고정되는지 설명해 보세요."},
+            {"type": "question", "title": "Socratic 확인", "text": "P=(-2,3,-1)을 만들 때 음의 방향으로 움직이는 축은 무엇인가요?"},
+            {"type": "hint", "title": "요청형 힌트", "text": "각 좌표의 부호를 따로 읽고, 음수인 좌표 성분에 대응하는 축을 찾으세요."},
+            {"type": "answer", "title": "확인", "text": "x축과 z축의 음의 방향으로 각각 2, 1만큼 이동하고 y축의 양의 방향으로 3만큼 이동합니다."},
+            {"type": "misconception", "title": "오개념 점검", "text": "평면에 그린 등각 투영에서는 화면상의 좌우·위아래가 축의 양·음 방향과 일치하지 않을 수 있습니다. 축 화살표와 좌표 부호를 기준으로 판단하세요."}
+          ]
+        },
+        {
+          "id": "geometry-space-distance-opening",
+          "template": "opening",
+          "title": "좌표 하나를 바꾸면 공간 거리는 어떻게 될까?",
+          "kicker": "세 방향의 변화량을 먼저 예측",
+          "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "두 점의 x, y, z 좌표 차는 공간 거리 계산에서 각각 어떤 역할을 할까요?"},
+            {"type": "thinking", "title": "먼저 예상하기", "text": "한 좌표 차만 바꾸고 나머지 둘을 고정하면 거리식의 어떤 항이 달라질지 말해 보세요."}
+          ]
+        },
+        {
+          "id": "geometry-space-distance-experiment",
+          "template": "experiment",
+          "title": "P의 좌표를 움직여 세 변화량 관찰",
+          "kicker": "등각 투영 그림·좌표 차·거리식 연결",
+          "blocks": [
+            {"type": "lead", "title": "조작 안내", "text": "Q=(4,5,3)은 고정되어 있습니다. P=(x,y,z)의 한 좌표씩 바꾸고 Δx, Δy, Δz와 거리가 어떻게 달라지는지 비교하세요."},
+            {"type": "visual", "title": "좌표공간의 두 점", "text": "그림은 3차원 점을 평면에 투영한 안내 그림입니다. 실제 거리와 화면상 선분 길이를 혼동하지 마세요."},
+            {"type": "question", "title": "Socratic 확인", "text": "P의 y좌표만 바꾸면 거리 제곱의 어느 항이 직접 바뀌나요?"},
+            {"type": "hint", "title": "요청형 힌트", "text": "먼저 y₂−y₁을 찾고, 그것이 거리 식에서 어떤 꼴로 들어가는지 보세요."},
+            {"type": "answer", "title": "확인", "text": "y좌표 차만 바뀌면 (y₂−y₁)² 항이 바뀝니다. 다른 두 좌표 차가 고정되어도 전체 거리는 변할 수 있습니다."},
+            {"type": "misconception", "title": "오개념 점검", "text": "좌표 차를 단순히 더하지 않습니다. 세 직각 방향 변화량의 제곱을 더한 뒤 제곱근을 취합니다."}
+          ]
+        },
+        {
+          "id": "geometry-space-division-experiment",
+          "template": "experiment",
+          "title": "m:n을 움직여 내분점의 위치 관찰",
+          "kicker": "비율·좌표·거리 비교",
+          "blocks": [
+            {"type": "lead", "title": "조작 안내", "text": "A=(0,0,0), B=(6,6,3)을 고정하고 AR:RB=m:n의 양의 정수 비율을 바꾸세요."},
+            {"type": "visual", "title": "선분 위 내분점 R", "text": "R=(nA+mB)/(m+n)으로 좌표를 계산합니다. 독립 HTML에서 비율과 함께 R이 이동하고 AR·RB 길이가 갱신됩니다."},
+            {"type": "question", "title": "Socratic 확인", "text": "m:n=2:1이면 R은 A와 B 중 어디에 더 가까울까요? 식에서 B에 곱해지는 비율을 찾아보세요."},
+            {"type": "hint", "title": "요청형 힌트", "text": "m:n은 AR:RB입니다. m이 커지면 A에서 R까지 구간이 B 쪽으로 더 길어집니다."},
+            {"type": "answer", "title": "확인", "text": "R=(4,4,2), AR=6, RB=3이므로 R은 B에 더 가깝고 AR:RB=2:1입니다."},
+            {"type": "misconception", "title": "오개념 점검", "text": "좌표에 곱하는 비율은 반대편 끝점에 붙습니다. A 좌표에는 n, B 좌표에는 m을 곱합니다."}
+          ]
+        },
+        {
+          "id": "geometry-space-distance-practice",
+          "template": "practice",
+          "title": "새 좌표에서 거리식 세우기",
+          "kicker": "도구 없이 전이 연습",
+          "blocks": [
+            {"type": "question", "title": "거리 연습", "text": "A=(−1,2,1), B=(2,6,3)의 거리를 구하고 y좌표 차를 1만큼 바꾸면 어떤 항이 바뀌는지 설명하세요."},
+            {"type": "thinking", "title": "생각 순서", "text": "각 좌표 차를 순서대로 구한 뒤 제곱합에 제곱근을 취하세요."},
+            {"type": "answer", "title": "풀이", "text": "좌표 차는 (3,4,2)이므로 AB=√(9+16+4)=√29입니다. y좌표 차가 4에서 5로 바뀌면 해당 제곱항이 16에서 25로 바뀝니다."},
+            {"type": "question", "title": "내분점 연습", "text": "C=(1,−1,2), D=(7,5,5)를 CR:RD=2:1로 내분하는 점 R의 좌표를 구하세요."},
+            {"type": "answer", "title": "내분점 풀이", "text": "R=(C+2D)/3=(5,3,4)입니다. C에는 반대 비율 1, D에는 2를 곱합니다."},
+            {"type": "checklist", "title": "마무리", "items": ["x,y,z 좌표 차를 각각 구하고 제곱합에 제곱근을 취한다.", "AR:RB=m:n이면 R=(nA+mB)/(m+n)로 계산한다.", "등각 투영 그림의 화면상 길이를 실제 공간 길이와 혼동하지 않는다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

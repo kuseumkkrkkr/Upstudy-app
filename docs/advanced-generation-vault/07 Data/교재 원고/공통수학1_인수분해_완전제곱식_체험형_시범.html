@@ -1,0 +1,126 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="정사각형 넓이를 나누어 완전제곱식의 가운데 항을 발견하는 체험수학 시범">
+<title>공통수학1 개념서 | 완전제곱식 넓이 실험</title>
+<style>
+:root{color-scheme:light;--ink:#17283d;--muted:#52657b;--line:#d7e0e9;--blue:#2458a6;--teal:#0d756d;--orange:#c2682a;--purple:#7355a6;--paper:#f3f6f8;--white:#fff}*{box-sizing:border-box}body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:940px;margin:auto;padding:22px}.hero,.card{background:var(--white);border:1px solid var(--line);border-radius:16px;padding:20px;margin-bottom:14px}.eyebrow{color:var(--teal);font-size:.85rem;font-weight:750;letter-spacing:.04em}.hero h1{margin:.2rem 0;font-size:1.55rem}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(230px,.75fr);gap:16px;align-items:start}.stage{font-weight:700;color:var(--blue);min-height:1.6em}.diagram{display:block;width:100%;height:auto;background:#fbfdff;border:1px solid var(--line);border-radius:12px}.controls{display:grid;gap:14px}.control{display:grid;grid-template-columns:36px 1fr 38px;gap:8px;align-items:center}.control input{width:100%;accent-color:var(--blue)}output{text-align:right;font-variant-numeric:tabular-nums;font-weight:700}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}button{border:1px solid #aebdcd;border-radius:10px;padding:9px 13px;background:#fff;color:var(--ink);font:inherit;font-weight:650;cursor:pointer}button:hover,button:focus-visible,input:focus-visible{outline:3px solid #99c7f5;outline-offset:2px}.primary{background:var(--blue);border-color:var(--blue);color:#fff}.formula{font-size:1.25rem;font-weight:750;color:var(--blue);overflow-wrap:anywhere}.parts{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;margin:12px 0}.part{border-radius:10px;padding:10px;background:#f4f7fa}.part:nth-child(1){border-left:5px solid var(--blue)}.part:nth-child(2),.part:nth-child(3){border-left:5px solid var(--teal)}.part:nth-child(4){border-left:5px solid var(--orange)}.quiz label{display:flex;gap:9px;padding:9px;border:1px solid var(--line);border-radius:9px;margin:7px 0;cursor:pointer}.quiz input{accent-color:var(--blue)}.feedback{min-height:1.6em;font-weight:700}details{border-top:1px solid var(--line);padding-top:10px}summary{cursor:pointer;font-weight:700}.notice{border-left:4px solid var(--orange);padding:8px 12px;background:#fff8f0}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}svg text{font-family:system-ui,"Malgun Gothic",sans-serif;fill:var(--ink);font-size:16px;font-weight:700}.outline{fill:none;stroke:#344c64;stroke-width:2}.cut{stroke:#64798e;stroke-width:2;stroke-dasharray:6 5}.piece{stroke:#fff;stroke-width:2}.cell-label{font-size:15px;text-anchor:middle;dominant-baseline:middle}@media(max-width:700px){.wrap{padding:12px}.hero,.card{padding:15px}.layout{grid-template-columns:1fr}.hero h1{font-size:1.35rem}.parts{font-size:.93rem}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <header class="hero">
+    <div class="eyebrow">공통수학1 개념서 · 시범 활동</div>
+    <h1>정사각형 넓이로 완전제곱식 이해하기</h1>
+    <p class="muted">먼저 가운데 항을 예상하고, x와 a를 바꾸어 네 조각의 넓이가 어떻게 합쳐지는지 확인하세요. 자동 재생은 없습니다.</p>
+  </header>
+
+  <section class="card layout" aria-labelledby="experiment-title">
+    <div>
+      <h2 id="experiment-title">정사각형을 나누어 보기</h2>
+      <p id="stageText" class="stage" aria-live="polite">1단계 · 전체 한 변의 길이는 x+a입니다.</p>
+      <svg class="diagram" viewBox="0 0 420 330" role="img" aria-labelledby="svgTitle svgDesc">
+        <title id="svgTitle">x와 a 길이로 나눈 정사각형 넓이</title>
+        <desc id="svgDesc">전체 정사각형 한 변은 x+a이고, 완성된 단계에서 넓이가 x제곱, ax, ax, a제곱인 네 부분으로 나뉩니다.</desc>
+        <g id="cells"></g><g id="cuts"></g><rect id="outer" class="outline" x="78" y="38" width="240" height="240" rx="2"/>
+        <text id="topLabel" x="198" y="25" text-anchor="middle">x+a</text><text id="sideLabel" x="58" y="164" text-anchor="middle" transform="rotate(-90 58 164)">x+a</text>
+      </svg>
+      <div class="actions">
+        <button id="prev" type="button" aria-label="이전 단계">이전</button>
+        <button id="next" type="button" class="primary" aria-label="다음 단계">다음</button>
+        <button id="reset" type="button">처음으로</button>
+      </div>
+    </div>
+    <div class="controls">
+      <h3>길이를 바꿔 보세요</h3>
+      <label class="control" for="xRange"><span>x</span><input id="xRange" type="range" min="1" max="5" step="1" value="3" aria-label="x 길이"><output id="xOut" for="xRange">3</output></label>
+      <label class="control" for="aRange"><span>a</span><input id="aRange" type="range" min="1" max="5" step="1" value="2" aria-label="a 길이"><output id="aOut" for="aRange">2</output></label>
+      <div class="formula" id="formula" aria-live="polite">(x+a)² = x²+2ax+a²</div>
+      <div class="parts" aria-label="네 조각의 넓이">
+        <div class="part"><strong>x²</strong><br><span id="areaXX">9</span></div>
+        <div class="part"><strong>ax</strong><br><span id="areaAX1">6</span></div>
+        <div class="part"><strong>ax</strong><br><span id="areaAX2">6</span></div>
+        <div class="part"><strong>a²</strong><br><span id="areaAA">4</span></div>
+      </div>
+      <p id="areaCheck" class="muted" aria-live="polite">전체 넓이 25 = 조각 넓이의 합 25</p>
+      <p class="notice">도형은 양수 길이 x&gt;0, a&gt;0만 보여 줍니다. 음수 부호는 식의 전개로 확인하세요.</p>
+    </div>
+  </section>
+
+  <section class="card quiz" aria-labelledby="quiz-title">
+    <h2 id="quiz-title">두 단계로 생각하기</h2>
+    <form id="piecesForm">
+      <fieldset><legend>1. 그림에서 넓이가 ax인 직사각형은 몇 개인가요?</legend>
+        <label><input type="radio" name="pieces" value="one"> 1개</label>
+        <label><input type="radio" name="pieces" value="two"> 2개</label>
+        <label><input type="radio" name="pieces" value="three"> 3개</label>
+      </fieldset>
+      <button class="primary" type="submit">개수 확인</button>
+    </form>
+    <p id="piecesFeedback" class="feedback" role="status" aria-live="polite"></p>
+    <button id="hintButton" type="button">단계 힌트</button>
+    <p id="hintText" class="muted" role="status" aria-live="polite"></p>
+    <section id="coefficientQuestion" hidden aria-labelledby="coefficientTitle">
+      <form id="coefficientForm">
+        <fieldset><legend id="coefficientTitle">2. a=3일 때, 2ax로 생기는 가운데 항은?</legend>
+          <label><input type="radio" name="coefficient" value="3x"> 3x</label>
+          <label><input type="radio" name="coefficient" value="6x"> 6x</label>
+          <label><input type="radio" name="coefficient" value="9x"> 9x</label>
+        </fieldset>
+        <button class="primary" type="submit">식 확인</button>
+      </form>
+      <p id="coefficientFeedback" class="feedback" role="status" aria-live="polite"></p>
+    </section>
+  </section>
+
+  <section class="card">
+    <h2>한 줄로 정리</h2>
+    <p><strong>(x+a)²=x²+2ax+a²</strong>. 가운데 항 2ax는 넓이 ax인 두 직사각형을 더한 값입니다.</p>
+    <p class="muted">이 파일은 독립형 콘텐츠 시범이며 앱 저장·학생 응답 기록은 하지 않습니다. 교육과정 연결과 교사 검수 전 원고입니다.</p>
+  </section>
+</main>
+<script>
+(()=>{
+  const xRange=document.getElementById('xRange'),aRange=document.getElementById('aRange');
+  const cells=document.getElementById('cells'),cuts=document.getElementById('cuts');
+  const colors=['#dbeafe','#ccfbf1','#ccfbf1','#ffedd5'];
+  let stage=0;
+  const svgNS='http://www.w3.org/2000/svg';
+  function el(name,attrs,text){const node=document.createElementNS(svgNS,name);for(const [key,value] of Object.entries(attrs))node.setAttribute(key,String(value));if(text)node.textContent=text;return node;}
+  function render(){
+    const x=Number(xRange.value),a=Number(aRange.value),side=240,unit=side/(x+a),xSize=x*unit,aSize=a*unit,left=78,top=38,splitX=left+xSize,splitY=top+xSize;
+    document.getElementById('xOut').value=x;document.getElementById('aOut').value=a;
+    document.getElementById('topLabel').textContent=`x+a = ${x+a}`;document.getElementById('sideLabel').textContent=`x+a = ${x+a}`;
+    document.getElementById('areaXX').textContent=x*x;document.getElementById('areaAX1').textContent=a*x;document.getElementById('areaAX2').textContent=a*x;document.getElementById('areaAA').textContent=a*a;
+    document.getElementById('areaCheck').textContent=`전체 넓이 ${(x+a)**2} = 조각 넓이의 합 ${x*x+2*a*x+a*a}`;
+    document.getElementById('formula').textContent=`(x+${a})² = x²+${2*a}x+${a*a}`;
+    cells.replaceChildren();cuts.replaceChildren();
+    if(stage>=3){
+      const rects=[[left,top,xSize,xSize,'x²'],[splitX,top,aSize,xSize,'ax'],[left,splitY,xSize,aSize,'ax'],[splitX,splitY,aSize,aSize,'a²']];
+      rects.forEach((r,i)=>{cells.append(el('rect',{x:r[0],y:r[1],width:r[2],height:r[3],fill:colors[i],class:'piece'}));cells.append(el('text',{x:r[0]+r[2]/2,y:r[1]+r[3]/2,class:'cell-label'},r[4]));});
+    } else if(stage>=1){
+      cells.append(el('rect',{x:left,y:top,width:side,height:side,fill:'#eef3f8',class:'piece'}));
+      cuts.append(el('line',{x1:splitX,y1:top,x2:splitX,y2:top+side,class:'cut'}));
+      if(stage>=2)cuts.append(el('line',{x1:left,y1:splitY,x2:left+side,y2:splitY,class:'cut'}));
+    } else {cells.append(el('rect',{x:left,y:top,width:side,height:side,fill:'#eef3f8',class:'piece'}));}
+    const descriptions=['1단계 · 전체 한 변의 길이는 x+a입니다.','2단계 · 세로로 나누면 x 폭과 a 폭이 생깁니다.','3단계 · 가로로 한 번 더 나누어 네 조각을 만듭니다.','4단계 · x², ax, ax, a²를 더하면 x²+2ax+a²입니다.'];
+    document.getElementById('stageText').textContent=descriptions[stage];
+    document.getElementById('prev').disabled=stage===0;document.getElementById('next').disabled=stage===3;
+  }
+  xRange.addEventListener('input',render);aRange.addEventListener('input',render);
+  document.getElementById('prev').addEventListener('click',()=>{stage=Math.max(0,stage-1);render();});
+  document.getElementById('next').addEventListener('click',()=>{stage=Math.min(3,stage+1);render();});
+  let hintLevel=0;
+  const coefficientQuestion=document.getElementById('coefficientQuestion');
+  const hintText=document.getElementById('hintText');
+  document.getElementById('reset').addEventListener('click',()=>{stage=0;xRange.value=3;aRange.value=2;hintLevel=0;document.getElementById('piecesForm').reset();document.getElementById('coefficientForm').reset();coefficientQuestion.hidden=true;document.getElementById('piecesFeedback').textContent='';document.getElementById('coefficientFeedback').textContent='';hintText.textContent='';render();});
+  document.getElementById('piecesForm').addEventListener('submit',event=>{event.preventDefault();const answer=new FormData(event.currentTarget).get('pieces');const out=document.getElementById('piecesFeedback');if(answer==='two'){out.textContent='맞아요. 세로 경계와 가로 경계에서 ax 조각이 하나씩 생깁니다.';coefficientQuestion.hidden=false;}else{out.textContent=answer?'두 분할선이 만드는 네 부분을 다시 세어 보세요.':'먼저 그림에서 조각을 세어 보세요.';}});
+  document.getElementById('hintButton').addEventListener('click',()=>{hintLevel=Math.min(2,hintLevel+1);hintText.textContent=hintLevel===1?'x 폭과 a 폭이 만나는 부분을 세로·가로 방향에서 각각 찾아보세요.':'세로 경계에 ax 하나, 가로 경계에 ax 하나가 있습니다. 두 넓이를 더하면 가운데 항입니다.';});
+  document.getElementById('coefficientForm').addEventListener('submit',event=>{event.preventDefault();const answer=new FormData(event.currentTarget).get('coefficient');const out=document.getElementById('coefficientFeedback');out.textContent=answer==='6x'?'맞아요. 2a=6이므로 가운데 항은 6x입니다.':answer?'다시 보세요. ax인 두 조각을 더하고 a=3을 넣어 보세요.':'선택지를 먼저 골라 보세요.';});
+  render();
+})();
+</script>
+</body>
+</html>

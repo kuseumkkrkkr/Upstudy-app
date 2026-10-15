@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>공통수학1 개념서 | 근과 계수 실험실</title>
+<style>
+:root{color-scheme:light;--ink:#17243b;--blue:#315da8;--soft:#edf3fb;--line:#d8e1ef}*{box-sizing:border-box}body{margin:0;background:#f3f6fb;color:var(--ink);font:16px/1.6 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:920px;margin:auto;padding:24px 16px 56px}.eyebrow{color:#536783;font-size:.9rem}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:22px;margin:16px 0;box-shadow:0 5px 20px #20334a0b}h1,h2{line-height:1.25}h1{font-size:clamp(1.6rem,5vw,2.2rem)}h2{font-size:1.3rem;margin-top:0}.controls{display:grid;grid-template-columns:1fr 1fr;gap:16px}.control label{display:flex;justify-content:space-between;font-weight:650}.control input{width:100%;accent-color:var(--blue)}.equation{font-size:1.15rem;font-weight:700;margin:.7rem 0}.graph{width:100%;height:auto;display:block;background:#fbfcff;border:1px solid var(--line);border-radius:12px}.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem}.result{padding:12px 14px;background:var(--soft);border-radius:12px}.steps{min-height:64px;padding:14px;background:#f6f8fc;border-radius:12px}.step-enter{animation:step-reveal .24s ease-out}@keyframes step-reveal{from{opacity:.25;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}.actions{display:flex;gap:8px;flex-wrap:wrap}button,.choice{font:inherit}button{border:1px solid #b9c8dc;border-radius:10px;padding:9px 14px;background:#fff;color:var(--ink);cursor:pointer}button:hover{background:var(--soft)}button:focus-visible,input:focus-visible{outline:3px solid #e19b31;outline-offset:2px}.choice{display:inline-flex;gap:6px;align-items:center;padding:8px 12px;border:1px solid var(--line);border-radius:10px;margin:6px 8px 6px 0}.feedback{min-height:44px;margin-top:8px;padding:10px 12px;background:var(--soft);border-radius:10px}small{color:#52637b}@media(max-width:600px){.wrap{padding:16px 12px 36px}.card{padding:17px}.controls{grid-template-columns:1fr}.legend{gap:8px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation-duration:.01ms!important;transition-duration:.01ms!important}}
+</style>
+</head>
+<body>
+<main class="wrap">
+<p class="eyebrow">공통수학1 개념서 · 2022 개정 · [10공수1-02-03] 부분 시범</p>
+<h1>두 근의 합과 곱은 계수에 어떻게 담길까?</h1>
+<p>근을 직접 움직여 보고, 인수형의 전개가 계수 관계를 만드는 이유를 설명해 보세요.</p>
+<section class="card" aria-labelledby="lab-title">
+<h2 id="lab-title">근-계수 실험실</h2>
+<p>먼저 두 근의 합과 곱을 예상하세요. 슬라이더를 바꾸면 그래프와 방정식이 함께 갱신됩니다.</p>
+<div class="controls">
+<div class="control"><label for="root-r">첫째 근 r <output id="value-r">−1</output></label><input id="root-r" type="range" min="-3" max="3" step="1" value="-1"></div>
+<div class="control"><label for="root-s">둘째 근 s <output id="value-s">3</output></label><input id="root-s" type="range" min="-3" max="3" step="1" value="3"></div>
+</div>
+<p class="equation" id="factored" aria-live="polite">(x+1)(x−3)=0</p>
+<p class="result" id="expanded">x²−2x−3=0 · r+s=2=−b · rs=−3=c</p>
+<svg id="graph" class="graph" viewBox="0 0 640 340" role="img" aria-label="두 근과 포물선의 x절편 그래프"></svg>
+<div class="legend"><span>파란 곡선: y=(x−r)(x−s)</span><span>주황 점: 근과 x절편</span></div>
+<p id="graph-note" class="result" aria-live="polite">x절편은 −1, 3입니다.</p>
+</section>
+<section class="card" aria-labelledby="steps-title"><h2 id="steps-title">한 단계씩 전개하기</h2><p id="step" class="steps" aria-live="polite">조작 전에 다음 버튼을 눌러 전개 과정을 한 단계씩 살펴보세요.</p><div class="actions"><button id="prev" type="button" disabled>이전 단계</button><button id="next" type="button">다음 단계</button><button id="reset" type="button">처음부터</button></div></section>
+<section class="card" aria-labelledby="quiz-title"><h2 id="quiz-title">Socratic 퀴즈</h2><p id="prompt">현재 두 근의 합은 얼마일까요?</p><div id="choices" role="radiogroup" aria-label="두 근의 합 선택지"></div><button id="check" type="button">선택 확인</button><p id="feedback" class="feedback" aria-live="polite">합을 구한 다음 −b와 같은지 확인해 보세요.</p><button id="hint" type="button">힌트 보기</button><p id="hint-text" class="result" hidden>인수형을 전개할 때 x항은 −rx−sx입니다. 계수 b와 비교해 보세요.</p></section>
+<section class="card"><h2>도구 없이 연습</h2><p>두 근의 합이 1, 곱이 −6인 최고차항 계수 1인 이차방정식을 만드세요.</p><details><summary>풀이와 답 보기</summary><p>x²−x−6=0=(x−3)(x+2)이므로 두 근은 3과 −2입니다. 합은 1, 곱은 −6입니다.</p></details></section>
+<section class="card"><h2>이번 시범의 범위</h2><p>[10공수1-02-03] 중 최고차항 계수 1인 이차방정식의 실근 합·곱만 다룹니다. 일반 이차방정식, 복소근 관계, 기준 전체 충족, 교사 검수와 학생 파일럿은 포함되지 않았습니다.</p></section>
+</main>
+<script>
+const $=id=>document.getElementById(id),rInput=$('root-r'),sInput=$('root-s');let stepIndex=0,hintShown=false;
+const fmt=n=>n<0?`−${Math.abs(n)}`:`${n}`;
+const signedTerm=(n,suffix)=>n===0?'':n>0?`+${n}${suffix}`:`−${Math.abs(n)}${suffix}`;
+function values(){return{r:Number(rInput.value),s:Number(sInput.value)}}
+function equation(){const{r,s}=values(),b=-(r+s),c=r*s;return{r,s,b,c,sum:r+s}}
+function draw(){const{r,s,b,c,sum}=equation();$('value-r').textContent=fmt(r);$('value-s').textContent=fmt(s);$('factored').textContent=`(x${r<0?`+${Math.abs(r)}`:`−${r}`})(x${s<0?`+${Math.abs(s)}`:`−${s}`})=0`;$('expanded').textContent=`x²${signedTerm(b,'x')}${signedTerm(c,'')}=0 · r+s=${fmt(sum)}=−b · rs=${fmt(c)}=c`;$('graph-note').textContent=r===s?`x절편은 ${fmt(r)} 한 곳이며 중근으로 두 번 셉니다.`:`x절편은 ${fmt(Math.min(r,s))}, ${fmt(Math.max(r,s))}입니다.`;drawGraph();renderQuiz();renderStep()}
+function drawGraph(){const{r,s}=values(),svg=$('graph'),left=54,right=616,top=24,bottom=296,xMin=-4,xMax=4;const f=x=>(x-r)*(x-s),samples=80,ys=Array.from({length:samples+1},(_,i)=>f(xMin+(xMax-xMin)*i/samples)),yMin=Math.min(-5,...ys)-1,yMax=Math.max(7,...ys)+1,X=x=>left+(x-xMin)/(xMax-xMin)*(right-left),Y=y=>bottom-(y-yMin)/(yMax-yMin)*(bottom-top);let out='';for(let x=-4;x<=4;x++){const px=X(x);out+=`<line x1="${px}" y1="${top}" x2="${px}" y2="${bottom}" stroke="#e8edf5"/><text x="${px}" y="${bottom+22}" text-anchor="middle" font-size="12" fill="#536783">${x}</text>`}for(let y=Math.ceil(yMin/5)*5;y<=yMax;y+=5){const py=Y(y);out+=`<line x1="${left}" y1="${py}" x2="${right}" y2="${py}" stroke="#e8edf5"/><text x="${left-10}" y="${py+4}" text-anchor="end" font-size="12" fill="#536783">${y}</text>`}out+=`<line x1="${left}" y1="${Y(0)}" x2="${right}" y2="${Y(0)}" stroke="#536783" stroke-width="2"/><line x1="${X(0)}" y1="${top}" x2="${X(0)}" y2="${bottom}" stroke="#536783" stroke-width="2"/>`;let d='';for(let i=0;i<=samples;i++){const x=xMin+(xMax-xMin)*i/samples;d+=`${i?'L':'M'}${X(x).toFixed(1)},${Y(f(x)).toFixed(1)} `}out+=`<path d="${d}" fill="none" stroke="#315da8" stroke-width="3"/>`;for(const[xx,label]of[[r,'r'],[s,'s']])out+=`<circle cx="${X(xx)}" cy="${Y(0)}" r="7" fill="#dc7b28" stroke="white" stroke-width="2"><title>${label}=${xx}, x절편</title></circle>`;out+=`<text x="${right-2}" y="${Y(0)-8}" text-anchor="end" font-size="13" fill="#34445e">x축</text>`;svg.innerHTML=out;svg.setAttribute('aria-label',`y=(x−${r})(x−${s}) 그래프. x절편 ${r}${r===s?' 중근':`과 ${s}`}이며 r+s=${r+s}, rs=${r*s}입니다.`)}
+const stepTexts=()=>{const{r,s,b,c,sum}=equation();return[`근이 r=${fmt(r)}, s=${fmt(s)}이므로 인수형은 (x−r)(x−s)=0입니다.`,`전개하면 x²−(${fmt(r)}+(${fmt(s)}))x+(${fmt(r)})(${fmt(s)})=0, 즉 x²${signedTerm(b,'x')}${signedTerm(c,'')}=0입니다.`,`x²+bx+c와 비교하면 b=${fmt(b)}=−(r+s), c=${fmt(c)}=rs입니다. 근의 합은 ${fmt(sum)}, 곱은 ${fmt(c)}입니다. 그래프의 x절편도 확인하세요.`]};function renderStep(){const texts=stepTexts(),el=$('step');el.classList.remove('step-enter');void el.offsetWidth;el.classList.add('step-enter');el.textContent=stepIndex===0?'조작 전에 다음 버튼을 눌러 전개 과정을 한 단계씩 살펴보세요.':texts[stepIndex-1];$('prev').disabled=stepIndex===0;$('next').disabled=stepIndex===texts.length}
+function renderQuiz(){const{r,s,sum}=equation(),wrong=[sum+1,sum-1,-sum].filter((v,i,a)=>v!==sum&&a.indexOf(v)===i).slice(0,2),position=(Math.abs(r*3+s*5+sum)%3),choices=[...wrong];choices.splice(position,0,sum);$('prompt').textContent=`현재 두 근 ${fmt(r)}, ${fmt(s)}의 합은 얼마일까요?`;const box=$('choices');box.replaceChildren();choices.forEach((v,i)=>{const label=document.createElement('label');label.className='choice';const input=document.createElement('input');input.type='radio';input.name='sum-choice';input.value=String(v);input.id=`choice-${i}`;label.htmlFor=input.id;label.append(input,document.createTextNode(fmt(v)));box.append(label)});$('feedback').textContent='합을 구한 다음 −b와 같은지 확인해 보세요.'}
+rInput.addEventListener('input',draw);sInput.addEventListener('input',draw);$('next').addEventListener('click',()=>{stepIndex=Math.min(3,stepIndex+1);renderStep()});$('prev').addEventListener('click',()=>{stepIndex=Math.max(0,stepIndex-1);renderStep()});$('reset').addEventListener('click',()=>{rInput.value='-1';sInput.value='3';stepIndex=0;draw()});$('check').addEventListener('click',()=>{const selected=document.querySelector('input[name="sum-choice"]:checked');if(!selected){$('feedback').textContent='보기에서 답을 먼저 선택하세요.';return}const{sum}=equation();$('feedback').textContent=Number(selected.value)===sum?`맞아요. 두 근의 합은 ${fmt(sum)}이고 −b=${fmt(sum)}입니다.`:'다시 생각해 보세요. 합을 구하고, 방정식의 x항 계수 b와 부호를 비교하세요.'});$('hint').addEventListener('click',()=>{$('hint-text').hidden=false});draw();
+</script>
+</body>
+</html>

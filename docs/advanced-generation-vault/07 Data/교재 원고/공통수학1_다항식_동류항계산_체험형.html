@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="description" content="차수별 계수 정렬, 다항식 덧셈·뺄셈, 단계형 설명과 퀴즈를 조작하는 공통수학1 개념서 시범">
+<title>공통수학1 개념서 | 동류항 계산 실험실</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color:#172033;background:#f3f6fb}*{box-sizing:border-box}body{margin:0}main{max-width:900px;margin:auto;padding:24px 18px 48px}header,.panel{background:#fff;border:1px solid #d9e2ef;border-radius:16px;padding:20px;margin-bottom:16px;box-shadow:0 5px 18px #243a5810}header{border-top:5px solid #2563a8}.eyebrow,.muted{color:#53647b}.eyebrow{font-size:.9rem;font-weight:700}.scope{background:#fff7e8;border-color:#f0d7a8}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:14px}.coeffs{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}.coeffs label{display:grid;gap:4px;font-weight:650}.coeffs input{width:100%;accent-color:#2563a8}.controls{display:flex;gap:10px;align-items:end;flex-wrap:wrap;margin-top:14px}.controls label{display:grid;gap:4px;font-weight:650}select,button{font:inherit;min-height:44px;border:1px solid #aab8cb;border-radius:9px;padding:8px 12px;background:#fff;color:inherit}button{cursor:pointer;font-weight:700}.primary{background:#205d9b;color:white;border-color:#205d9b}.equations{display:grid;gap:8px;margin:16px 0}.equation{font-size:1.2rem;font-weight:750;overflow-wrap:anywhere}.tileboard{display:grid;gap:10px}.tile-row{display:grid;grid-template-columns:74px 1fr;gap:8px;align-items:start}.tile-label{font-weight:750;padding-top:4px}.tiles{display:flex;gap:6px;flex-wrap:wrap}.tile{display:inline-grid;place-items:center;min-width:54px;min-height:42px;padding:5px 8px;border:1px solid #94a9c4;border-radius:8px;background:#edf4fb;font-weight:700;animation:show .18s ease-out both}.tile.neg{background:#fff0ef;border-color:#d58d8b}.kind{color:#53647b;font-size:.86rem}.stepbox,.feedback,.hintbox{min-height:3rem;padding:10px;border-radius:9px;background:#edf4fb}.stepbox{border-left:4px solid #3181bd}.quiz-options{display:flex;gap:8px;flex-wrap:wrap}.quiz-options label{display:inline-flex;gap:6px;align-items:center;border:1px solid #c4d1e1;border-radius:9px;padding:8px 12px}.practice details{padding:12px;background:#f6f8fc;border-radius:10px}.note{font-size:.93rem}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@keyframes show{from{opacity:.3;transform:translateY(4px)}to{opacity:1;transform:none}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}@media(max-width:420px){main{padding:14px 10px 32px}.panel,header{padding:15px}.tile-row{grid-template-columns:62px 1fr}.coeffs{gap:6px}}
+</style>
+</head>
+<body>
+<main>
+<header>
+<p class="eyebrow">공통수학1 개념서 · 2022 개정 · [10공수1-01-01] 부분 시범</p>
+<h1>동류항을 정렬해 다항식 더하고 빼기</h1>
+<p>짧은 설명을 읽고, 계수를 직접 바꾸어 보세요. 문자가 같고 차수가 같은 항끼리만 계산합니다.</p>
+</header>
+<section class="panel" aria-labelledby="tool-title">
+<h2 id="tool-title">계수 타일 실험실</h2>
+<p class="muted">각 계수는 −4부터 4까지 조절합니다. 타일 한 장은 해당 항 하나를 나타내며, +/− 기호도 함께 표시합니다.</p>
+<div class="grid">
+<fieldset><legend>첫째 다항식 P</legend><div class="coeffs">
+<label for="p-x2">x² 계수 <output id="p-x2-value">2</output><input class="coefficient" id="p-x2" data-poly="p" data-index="0" type="range" min="-4" max="4" step="1" value="2"></label>
+<label for="p-x">x 계수 <output id="p-x-value">3</output><input class="coefficient" id="p-x" data-poly="p" data-index="1" type="range" min="-4" max="4" step="1" value="3"></label>
+<label for="p-c">상수항 <output id="p-c-value">−1</output><input class="coefficient" id="p-c" data-poly="p" data-index="2" type="range" min="-4" max="4" step="1" value="-1"></label>
+</div></fieldset>
+<fieldset><legend>둘째 다항식 Q</legend><div class="coeffs">
+<label for="q-x2">x² 계수 <output id="q-x2-value">1</output><input class="coefficient" id="q-x2" data-poly="q" data-index="0" type="range" min="-4" max="4" step="1" value="1"></label>
+<label for="q-x">x 계수 <output id="q-x-value">−2</output><input class="coefficient" id="q-x" data-poly="q" data-index="1" type="range" min="-4" max="4" step="1" value="-2"></label>
+<label for="q-c">상수항 <output id="q-c-value">4</output><input class="coefficient" id="q-c" data-poly="q" data-index="2" type="range" min="-4" max="4" step="1" value="4"></label>
+</div></fieldset>
+</div>
+<div class="controls"><label for="operation">연산<select id="operation"><option value="add">더하기 P+Q</option><option value="subtract" selected>빼기 P−Q</option></select></label><button class="primary" id="reveal-tiles" type="button">항 타일 펼치기</button><button id="reset" type="button">처음 값으로</button></div>
+<div class="equations" aria-live="polite"><p class="equation" id="equation-p"></p><p class="equation" id="equation-q"></p><p class="equation" id="equation-result"></p></div>
+<div class="tileboard" id="tileboard" aria-label="다항식 항 타일" hidden></div>
+<div class="controls"><button id="previous-step" type="button" disabled>이전 단계</button><button class="primary" id="next-step" type="button" disabled>다음 단계</button></div>
+<div id="step-output" class="stepbox" aria-live="polite">계수를 조절하고 결과를 먼저 예측해 보세요.</div>
+</section>
+<section class="panel" aria-labelledby="socratic-title">
+<h2 id="socratic-title">생각을 여는 질문</h2>
+<p>빼기에서 `−(−2x)`가 `+2x`가 되는 이유는 무엇일까요?</p>
+<button id="hint-button" type="button">힌트 하나 보기</button>
+<p id="hint-output" class="hintbox" aria-live="polite">먼저 괄호 앞의 빼기를 곱셈으로 바꾸어 생각해 보세요.</p>
+</section>
+<section class="panel" aria-labelledby="quiz-title">
+<h2 id="quiz-title">도구 퀴즈</h2>
+<p id="quiz-prompt"></p>
+<div id="quiz-options" class="quiz-options"></div>
+<button class="primary" id="check-answer" type="button">선택 확인</button>
+<p id="quiz-feedback" class="feedback" aria-live="polite">현재 계수를 보고 결과를 예측해 보세요.</p>
+</section>
+<section class="panel practice">
+<h2>도구 없이 연습</h2>
+<p>(3x²−2x+5)+(−x²+4x−7), (x²−5x+2)−(−2x²+x−6)을 각각 간단히 해 보세요.</p>
+<details><summary>풀이와 정답 확인</summary><p>첫째: (3−1)x²+(−2+4)x+(5−7)=2x²+2x−2.</p><p>둘째: (1+2)x²+(−5−1)x+(2+6)=3x²−6x+8.</p></details>
+</section>
+<section class="panel scope"><h2>이번 시범의 범위</h2><p class="note">[10공수1-01-01] 중 한 변수 다항식의 동류항 덧셈·뺄셈만 다룹니다. 곱셈·나눗셈과 기준 전체 충족은 이 시범에 포함되지 않습니다. 교육부 별책 8의 기준을 연결한 초안이며 교사 검수·학년/학기 배정·학생 파일럿은 대기 중입니다.</p></section>
+</main>
+<script>
+(()=>{'use strict';
+const terms=[{label:'x²',name:'x제곱 항'},{label:'x',name:'x 항'},{label:'1',name:'상수항'}];
+const initial={p:[2,3,-1],q:[1,-2,4]};
+const $=id=>document.getElementById(id);
+let revealed=false,step=0,hint=0;
+const inputs=[...document.querySelectorAll('.coefficient')];
+function values(poly){return [0,1,2].map(i=>Number(document.querySelector(`[data-poly="${poly}"][data-index="${i}"]`).value))}
+function fmt(c){let out='';terms.forEach((t,i)=>{const n=c[i];if(!n)return;const body=i===2?String(Math.abs(n)):`${Math.abs(n)===1?'':Math.abs(n)}${t.label}`;if(!out)out=n<0?`−${body}`:body;else out+=n<0?`−${body}`:`+${body}`});return out||'0'}
+function signed(n,first=false){if(n===0)return '';return first?(n<0?'−':'+'):(n<0?'−':'+')}
+function renderEquation(){const p=values('p'),q=values('q'),subtract=$('operation').value==='subtract',result=p.map((n,i)=>n+(subtract?-q[i]:q[i]));$('equation-p').textContent=`P = ${fmt(p)}`;$('equation-q').textContent=`Q = ${fmt(q)}`;$('equation-result').textContent=`P ${subtract?'−':'+'} Q = ${fmt(result)}`;inputs.forEach(input=>{$(`${input.dataset.poly}-${['x2','x','c'][Number(input.dataset.index)]}-value`).textContent=Number(input.value).toLocaleString('ko-KR')});renderQuiz()}
+function renderTiles(){const p=values('p'),q=values('q'),subtract=$('operation').value==='subtract',board=$('tileboard');board.replaceChildren();[['P',p,1],['Q',q,subtract?-1:1]].forEach(([label,coeffs,multiplier])=>{const row=document.createElement('div');row.className='tile-row';const name=document.createElement('span');name.className='tile-label';name.textContent=label;row.append(name);const group=document.createElement('div');group.className='tiles';coeffs.forEach((coefficient,index)=>{const count=Math.abs(coefficient);for(let n=0;n<count;n++){const tile=document.createElement('span'),rawSign=Math.sign(coefficient)*multiplier;tile.className=`tile${rawSign<0?' neg':''}`;tile.textContent=`${rawSign<0?'−':'+'} ${terms[index].label}`;tile.setAttribute('aria-label',`${label} ${rawSign<0?'빼기':'더하기'} ${terms[index].name} 타일`);group.append(tile)}});if(!group.childElementCount){const zero=document.createElement('span');zero.className='kind';zero.textContent='0 (이 항 없음)';group.append(zero)}row.append(group);board.append(row)});board.hidden=false}
+const steps=[()=> 'P와 Q의 항을 x²항, x항, 상수항 순서로 나란히 놓습니다.',()=> $('operation').value==='subtract'?'P−Q에서는 Q의 모든 항에 −1을 곱합니다. 타일의 +/− 표시가 모두 바뀌는지 확인하세요.':'P+Q에서는 같은 차수의 항을 그대로 짝지어 계수를 더합니다.',()=>{const p=values('p'),q=values('q'),s=$('operation').value==='subtract'?-1:1;return `계수끼리 계산합니다: x²은 ${p[0]}${s<0?'−':'+'}(${q[0]})=${p[0]+s*q[0]}, x는 ${p[1]}${s<0?'−':'+'}(${q[1]})=${p[1]+s*q[1]}, 상수는 ${p[2]}${s<0?'−':'+'}(${q[2]})=${p[2]+s*q[2]}. 결과는 ${fmt(p.map((n,i)=>n+s*q[i]))}입니다.`}];
+function showStep(){const box=$('step-output');box.textContent=step===0?'계수를 조절하고 결과를 먼저 예측해 보세요.':`단계 ${step}/3 · ${steps[step-1]()}`;$('previous-step').disabled=step===0;$('next-step').disabled=step===3}
+function renderQuiz(){const p=values('p'),q=values('q'),s=$('operation').value==='subtract'?-1:1,answer=p[1]+s*q[1],wrong1=p[1]-s*q[1];const wrongChoices=[...new Set([wrong1,answer+2,answer-2,answer+3])].filter(value=>value!==answer).slice(0,2),correctIndex=(Math.abs(answer)+2+(s<0?1:0))%3,choices=[...wrongChoices];choices.splice(correctIndex,0,answer);$('quiz-prompt').textContent=`현재 식에서 결과의 x 계수는 얼마일까요? (${p[1]} ${s<0?'−':'+'} (${q[1]}))`;$('quiz-options').replaceChildren();choices.forEach(value=>{const label=document.createElement('label'),radio=document.createElement('input');radio.type='radio';radio.name='quiz-answer';radio.value=String(value);label.append(radio,document.createTextNode(String(value)));$('quiz-options').append(label)});$('quiz-feedback').textContent='현재 계수를 보고 결과를 예측해 보세요.'}
+inputs.forEach(input=>input.addEventListener('input',()=>{revealed=false;step=0;$('tileboard').hidden=true;showStep();renderEquation()}));$('operation').addEventListener('change',()=>{revealed=false;step=0;$('tileboard').hidden=true;showStep();renderEquation()});$('reveal-tiles').addEventListener('click',()=>{revealed=true;step=0;renderTiles();showStep()});$('previous-step').addEventListener('click',()=>{if(step>0)step--;showStep()});$('next-step').addEventListener('click',()=>{if(revealed&&step<3)step++;showStep()});$('reset').addEventListener('click',()=>{inputs.forEach(input=>{input.value=initial[input.dataset.poly][Number(input.dataset.index)]});$('operation').value='subtract';revealed=false;step=0;hint=0;$('tileboard').hidden=true;$('hint-output').textContent='먼저 괄호 앞의 빼기를 곱셈으로 바꾸어 생각해 보세요.';showStep();renderEquation()});$('hint-button').addEventListener('click',()=>{const hints=['괄호 앞의 −는 −1을 곱하는 것과 같습니다.','−1×(−2x)의 부호를 먼저 계산해 보세요.','−(−2x)=+2x입니다. 다른 항에도 −1을 곱해 보세요.'];$('hint-output').textContent=hints[Math.min(hint,2)];hint=Math.min(hint+1,2)});$('check-answer').addEventListener('click',()=>{const answer=document.querySelector('input[name="quiz-answer"]:checked');if(!answer){$('quiz-feedback').textContent='먼저 답을 선택하세요.';return}const p=values('p'),q=values('q'),s=$('operation').value==='subtract'?-1:1,correct=p[1]+s*q[1];$('quiz-feedback').textContent=Number(answer.value)===correct?`맞아요. x의 계수는 ${p[1]}${s<0?'−':'+'}(${q[1]})=${correct}입니다.`:`다시 차수를 맞춰 보세요. ${$('operation').value==='subtract'?'Q를 뺄 때 x항의 부호도 바뀝니다.':'P와 Q의 x 계수를 더합니다.'}`});showStep();renderEquation();
+})();
+</script>
+</body>
+</html>

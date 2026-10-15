@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="description" content="정비례와 반비례의 표, 식, 그래프를 직접 조작하며 확인하는 중학교 수학 체험 활동">
+<title>개념서 · 정비례와 반비례</title>
+<style>
+:root{color-scheme:light;--ink:#17243a;--muted:#53627a;--line:#d8e0eb;--paper:#fff;--bg:#f3f6fb;--blue:#315ccb;--coral:#d45a3a;--focus:#b45309}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:980px;margin:auto;padding:18px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:18px;padding:20px;margin-bottom:16px}h1{font-size:clamp(1.45rem,4vw,2.1rem);line-height:1.25;margin:.2em 0}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(250px,.8fr);gap:18px;align-items:center}.plane{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:14px}.control{display:grid;grid-template-columns:minmax(135px,auto) 1fr 42px;gap:10px;align-items:center;margin:16px 0}.control input{width:100%;accent-color:var(--blue)}output{font-weight:700;text-align:right}button{font:inherit;border:1px solid #9aabc1;border-radius:10px;background:#fff;color:var(--ink);padding:9px 13px;cursor:pointer}button[aria-pressed=true]{background:#173b61;color:#fff;border-color:#173b61}button:focus-visible,input:focus-visible,summary:focus-visible{outline:3px solid var(--focus);outline-offset:3px}.actions{display:flex;gap:8px;flex-wrap:wrap}.badge{display:inline-block;border-radius:999px;background:#eaf0ff;color:#244899;padding:3px 10px;font-weight:700}.stage,.feedback{min-height:3em;background:#f6f8fc;border-radius:10px;padding:10px;margin-top:12px}.feedback{font-weight:650}.table-wrap{overflow-x:auto}table{border-collapse:collapse;width:100%;margin:10px 0}caption{text-align:left;color:var(--muted)}td,th{border:1px solid var(--line);padding:8px;text-align:center}svg text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}.curve{fill:none;stroke-width:4;stroke-dasharray:var(--length);stroke-dashoffset:var(--offset);transition:stroke-dashoffset .55s ease}.direct{stroke:var(--blue)}.inverse{stroke:var(--coral)}.dot{stroke:#fff;stroke-width:3;fill:#17243a;transition:cx .25s ease,cy .25s ease}.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap}.challenge{border-left:4px solid #e1a32b;padding-left:12px}@media(max-width:680px){.wrap{padding:10px}.card,header{padding:15px}.layout{grid-template-columns:1fr}.control{grid-template-columns:120px 1fr 38px;gap:7px}.plane{max-height:400px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+.curve-preview{fill:none;stroke:#cbd5e1;stroke-width:4;stroke-dasharray:5 5}.plane>text[x="560"],.plane>text[x="42"][y="44"]{display:none}
+</style>
+</head>
+<body><main class="wrap">
+<header><p class="muted">중학교 수학 · 2015 개정 · [9수03-03] · 학기 미배정 시범</p><h1>무엇이 일정할까?</h1><p>값을 먼저 예상하고 움직여 보세요. 표·식·그래프를 함께 보며 정비례와 반비례를 구별합니다.</p></header>
+<section class="card"><h2>관계를 직접 조작하기</h2><div class="actions" role="group" aria-label="관계 선택"><button id="directMode" type="button" aria-pressed="true">정비례 · y=ax</button><button id="inverseMode" type="button" aria-pressed="false">반비례 · y=a/x</button></div>
+<p id="context">모형: 단가가 일정할 때 물건 수 x와 총액 y</p><div class="layout">
+<svg id="plane" class="plane" viewBox="0 0 640 330" role="img" aria-labelledby="plotTitle plotDesc"><title id="plotTitle">정비례와 반비례 그래프</title><desc id="plotDesc">현재 선택한 관계의 그래프와 값을 나타냅니다.</desc><g id="grid"></g><line x1="70" y1="275" x2="575" y2="275" stroke="#53627a" stroke-width="2"/><line x1="70" y1="35" x2="70" y2="275" stroke="#53627a" stroke-width="2"/><path id="curvePreview" class="curve-preview" d=""/><path id="curve" class="curve direct" d=""/><circle id="point" class="dot" r="8"/><text x="600" y="300">x</text><text x="48" y="38">y</text><text x="62" y="294">0</text><text x="560" y="294">6</text></svg>
+<div><label class="control" for="a"><span id="aLabel">단가 a (천원/kg)</span><input id="a" type="range" min="1" max="3" step="1" value="2" aria-label="단가 a"><output id="aOut" for="a">2</output></label><label class="control" for="x"><span id="xLabel">물건 수 x</span><input id="x" type="range" min="0" max="6" step="1" value="3" aria-label="물건 수 x"><output id="xOut" for="x">3</output></label><p id="formula" class="badge" aria-live="polite"></p><p id="meaning" aria-live="polite"></p></div></div>
+<h3>같은 관계를 표로 보기</h3><div class="table-wrap"><table><caption id="tableCaption">현재 선택한 관계의 값</caption><tbody><tr id="xRow"><th scope="row">x</th></tr><tr id="yRow"><th scope="row">y</th></tr></tbody></table></div>
+<div class="actions"><button id="prev" type="button">이전 단계</button><button id="next" type="button">다음 단계</button><button id="reset" type="button">처음 값으로</button></div><p id="stage" class="stage" aria-live="polite">1단계: 어떤 두 양을 비교하는지 확인해요.</p></section>
+<section class="card"><h2>짧은 생각 퀴즈</h2><p id="quizPrompt">정비례 표에서 일정한 값은 무엇인가요?</p><div class="actions" role="group" aria-label="일정한 값 선택"><button type="button" data-answer="ratio">y÷x</button><button type="button" data-answer="product">x×y</button><button type="button" data-answer="neither">둘 다 일정하지 않음</button></div><p id="feedback" class="feedback" aria-live="polite"></p><details><summary>힌트 보기</summary><p>표에서 한 쌍이 아니라 여러 쌍의 비율과 곱을 각각 비교해 보세요.</p></details></section>
+<section class="card"><h2>반례도 확인하기</h2><p class="challenge">물건 수가 1, 2, 3개일 때 총액이 5, 7, 9천원이라면, 매번 2천원씩 늘지만 정비례는 아닙니다. 각 쌍에서 y÷x를 계산해 일정한지 확인하세요. 고정 준비비가 포함되면 단가만으로 총액을 나타낼 수 없어요.</p><details><summary>설명 확인</summary><p>비례 관계인지 판별할 때는 값이 일정한 차이로 늘어나는지만 보지 않고, 여러 쌍에서 y÷x가 같은지 확인합니다. 이 예에서는 5, 3.5, 3으로 서로 다릅니다.</p></details></section>
+<section class="card"><h2>혼자 풀기</h2><p>넓이가 24㎠인 직사각형의 가로가 3cm에서 6cm로 두 배가 됩니다. 세로는 어떻게 바뀌며, 어떤 값이 일정한가요?</p><details><summary>힌트와 정답 보기</summary><p>가로와 세로의 곱은 넓이입니다. 세로는 8cm에서 4cm로 절반이 되고 x×y=24가 일정합니다.</p></details></section>
+<footer class="muted"><small>검토용 시범 · 교육과정 학기 배정 및 교사 검수 전 · 교육효과 미검증 · 외부 라이브러리와 이미지 없음</small></footer>
+</main><script>
+(()=>{'use strict';
+const a=document.querySelector('#a'),x=document.querySelector('#x'),curve=document.querySelector('#curve'),curvePreview=document.querySelector('#curvePreview'),point=document.querySelector('#point');
+const directButton=document.querySelector('#directMode'),inverseButton=document.querySelector('#inverseMode');
+const mapX=v=>70+v*(500/6),mapY=v=>275-v*(240/18),gcd=(u,v)=>v?gcd(v,u%v):u;
+let mode='direct',stageIndex=0;
+const steps=['두 양과 단위를 확인해요.','표에서 여러 쌍의 비율 또는 곱을 비교해요.','일정한 값을 a로 두고 식을 읽어요.','표의 순서쌍이 그래프의 점이 되는지 확인해요.'];
+function inverseText(k,v){const d=gcd(k,v),n=k/d,q=v/d;return q===1?String(n):`${n}/${q}`}
+function update(){const k=Number(a.value),v=Number(x.value),inverse=mode==='inverse',y=inverse?k/v:k*v;
+ document.querySelector('#aOut').textContent=k;document.querySelector('#xOut').textContent=v;
+ document.querySelector('#context').textContent=inverse?'모형: 넓이 a(cm²)가 고정된 직사각형의 가로 x와 세로 y':'모형: 단가 a(천원)가 일정한 물건 수 x와 총액 y';
+ document.querySelector('#aLabel').textContent=inverse?'넓이 a (cm²)':'단가 a (천원)';document.querySelector('#xLabel').textContent=inverse?'가로 x (cm)':'물건 수 x';
+ document.querySelector('#a').setAttribute('aria-label',inverse?'직사각형 넓이 a':'단가 a');document.querySelector('#x').setAttribute('aria-label',inverse?'직사각형 가로 x':'물건 수 x');
+ document.querySelector('#formula').textContent=`현재 점 (${v}, ${inverse?inverseText(k,v):String(y)}) · 식 ${inverse?`y=${k}/x (x≠0)`:`y=${k}x`}`;
+ document.querySelector('#meaning').textContent=inverse?`현재 x×y=${k} · 가로가 커지면 세로가 작아져요.`:v===0?'x=0이면 y=0입니다. y÷x는 x>0인 값에서 확인해요.':`현재 y÷x=${k} · 단가가 같은 모형이에요.`;
+ const xs=inverse?[1,2,3,4,6]:[0,1,2,3,4,6];
+ document.querySelector('#xRow').innerHTML='<th scope="row">x</th>'+xs.map(n=>`<td>${n}</td>`).join('');
+ document.querySelector('#yRow').innerHTML=`<th scope="row">y</th>`+xs.map(n=>`<td>${inverse?inverseText(k,n):k*n}</td>`).join('');
+ document.querySelector('#tableCaption').textContent=inverse?'반비례 표 · x×y를 비교하세요':'정비례 표 · x>0에서 y÷x를 비교하세요';
+ const points=[];for(let i=0;i<=120;i++){const xx=inverse?1+i*5/120:i*6/120,yy=inverse?k/xx:k*xx;points.push(`${i?'L':'M'}${mapX(xx).toFixed(2)} ${mapY(yy).toFixed(2)}`)}
+ const path=points.join(' ');curvePreview.setAttribute('d',path);curve.setAttribute('d',path);curve.setAttribute('class',`curve ${mode}`);const length=curve.getTotalLength();curve.style.setProperty('--length',`${length}px`);curve.style.setProperty('--offset',`${stageIndex>=3?0:length}px`);
+ point.setAttribute('cx',mapX(v));point.setAttribute('cy',mapY(y));document.querySelector('#plotDesc').textContent=`${inverse?'반비례':'정비례'} 그래프 ${inverse?`y=${k}/x`:`y=${k}x`}와 현재 점 (${v}, ${inverse?inverseText(k,v):String(y)})입니다.`;
+ document.querySelector('#quizPrompt').textContent=inverse?'반비례 표에서 일정한 값은 무엇인가요?':'정비례 표에서 일정한 값은 무엇인가요?';document.querySelector('#feedback').textContent='';
+}
+function setMode(next){mode=next;directButton.setAttribute('aria-pressed',String(mode==='direct'));inverseButton.setAttribute('aria-pressed',String(mode==='inverse'));a.max=mode==='inverse'?'18':'3';if(mode==='inverse')a.value='12';else if(Number(a.value)>3)a.value='3';x.min=mode==='inverse'?'1':'0';if(Number(x.value)<Number(x.min))x.value=x.min;stageIndex=0;showStage();update()}
+function showStage(){document.querySelector('#stage').textContent=`${stageIndex+1}단계: ${steps[stageIndex]}`}
+function step(delta){stageIndex=Math.max(0,Math.min(steps.length-1,stageIndex+delta));showStage();update()}
+a.addEventListener('input',update);x.addEventListener('input',update);directButton.addEventListener('click',()=>setMode('direct'));inverseButton.addEventListener('click',()=>setMode('inverse'));
+document.querySelector('#prev').addEventListener('click',()=>step(-1));document.querySelector('#next').addEventListener('click',()=>step(1));document.querySelector('#reset').addEventListener('click',()=>{a.value='2';x.value='3';stageIndex=0;showStage();update()});
+document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{const expected=mode==='direct'?'ratio':'product';document.querySelector('#feedback').textContent=button.dataset.answer===expected?(mode==='direct'?'맞아요. x>0인 여러 쌍에서 y÷x=a입니다.':'맞아요. 여러 쌍에서 x×y=a입니다.'):'다시 비교해 봐요. 현재 표의 여러 쌍에서 비율과 곱 중 무엇이 일정한가요?'}));
+const grid=document.querySelector('#grid');for(let i=1;i<=6;i++){const xx=mapX(i);grid.insertAdjacentHTML('beforeend',`<line x1="${xx}" y1="35" x2="${xx}" y2="275" stroke="#e7ebf2"/><text x="${xx-4}" y="294">${i}</text>`)}for(let i=1;i<=6;i++){const yy=mapY(i*3);grid.insertAdjacentHTML('beforeend',`<line x1="70" y1="${yy}" x2="575" y2="${yy}" stroke="#e7ebf2"/><text x="42" y="${yy+4}">${i*3}</text>`)}
+update();showStage();
+})();
+</script></body></html>

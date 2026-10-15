@@ -1,0 +1,361 @@
+{
+  "title": "미적분Ⅱ 2022 개정 · 단원 코드 02 부분 통합 초안",
+  "tags": [
+    "미적분Ⅱ",
+    "2022 개정",
+    "12미적Ⅱ-02",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "사인곡선의 한 점에서 기울기는 어떻게 찾을까?",
+      "pages": [
+        {
+          "title": "사인곡선의 한 점에서 기울기는 어떻게 찾을까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅱ · 2022 개정 · 성취기준 후보: 12미적Ⅱ-02-03 · 삼각함수 · 사인함수 · 미분계수 · 한 차시 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅱ-02-03. 공식 교육과정 대조 전 후보입니다."
+            }
+          ],
+          "id": "calc2-02-01-001"
+        },
+        {
+          "id": "calc2-02-01-002",
+          "template": "opening",
+          "title": "곡선 위 두 점의 기울기",
+          "kicker": "결과를 보기 전에 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "사인곡선 위 두 점을 잇는 직선의 기울기를 한 점의 순간 기울기로 연결할 수 있을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예상하기",
+              "text": "두 점 사이 간격 h를 작게 하면 할선과 접선의 방향은 어떻게 달라질까? 각도 단위가 라디안인지도 확인하자."
+            }
+          ]
+        },
+        {
+          "id": "calc2-02-01-003",
+          "template": "experiment",
+          "title": "할선과 접선의 기울기 비교",
+          "kicker": "a와 h를 직접 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 안내",
+              "text": "a는 기준 각, h는 0이 아닌 간격이다. 사인곡선·할선·접선을 함께 보고 평균변화율이 cos(a)에 가까워지는지 확인한다. 모든 각은 라디안이다."
+            },
+            {
+              "type": "graph",
+              "title": "움직이는 두 번째 점",
+              "text": "그래프의 a와 h 슬라이더를 움직여 할선 기울기와 접선 기울기 cos(a)를 비교한다. h=0은 직접 대입하지 않는다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "sine-curve",
+                    "type": "function",
+                    "label": "y=sin(x)",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "sin(x)"
+                  },
+                  {
+                    "id": "sine-tangent",
+                    "type": "function",
+                    "label": "x=a 접선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "sin(a)+cos(a)*(x-a)"
+                  },
+                  {
+                    "id": "sine-secant",
+                    "type": "function",
+                    "label": "할선",
+                    "colorHex": "#15803D",
+                    "enabled": true,
+                    "expression": "sin(a)+((sin(a+h)-sin(a))/h)*(x-a)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -1,
+                    "right": 7,
+                    "top": 2,
+                    "bottom": -2
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "기준 각 a (라디안)",
+                      "value": 1.0471975512,
+                      "min": 0.2,
+                      "max": 5.8,
+                      "step": 0.1
+                    },
+                    {
+                      "id": "h",
+                      "label": "간격 h (0 제외)",
+                      "value": 0.4,
+                      "min": 0.05,
+                      "max": 0.8,
+                      "step": 0.05
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "할선의 기울기를 구하는 분자는 무엇의 차이고, h가 0이면 왜 식이 정의되지 않을까?"
+            },
+            {
+              "type": "hint",
+              "title": "단계 힌트",
+              "text": "두 함수값의 차를 먼저 적고 x좌표 차 h로 나누자. 그런 다음 h=0 직접 대입과 h→0 극한을 구분하자."
+            },
+            {
+              "type": "verification",
+              "title": "관찰 확인",
+              "text": "사인 덧셈정리로 차분몫을 두 기본 극한의 합으로 바꾼다. sin(h)/h→1, (cos(h)-1)/h→0이므로 결과는 cos(a)다. 유한한 h에서의 평균변화율은 cos(a)와 일반적으로 같지 않다."
+            }
+          ]
+        },
+        {
+          "id": "calc2-02-01-004",
+          "template": "practice",
+          "title": "한 점에서 변화율 설명하기",
+          "kicker": "수치와 극한을 구분",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=π/3, h=0.1일 때 평균변화율을 구하고 cos(π/3)과 비교하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "계산값이 1/2와 다르면 사인함수의 도함수가 cos(x)라는 사실이 틀린 것일까? h의 크기를 확인해 보자."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "sin(π/3)≈0.8660, sin(π/3+0.1)≈0.9116이다. 함수값의 차를 0.1로 나누자."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "평균변화율은 약 0.455902(소수 셋째 자리 반올림 0.456)다. cos(π/3)=0.5와는 다르지만 h가 유한한 값이기 때문이다. h→0일 때 평균변화율의 극한이 순간변화율 0.5다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "각 입력은 라디안이다.",
+                "평균변화율과 순간변화율을 구별한다.",
+                "h=0 대입이 아니라 h→0 극한을 해석한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅱ_사인함수미분_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅱ-02-03"
+      ]
+    },
+    {
+      "title": "코사인 곡선의 한 점에서 기울기",
+      "pages": [
+        {
+          "title": "코사인 곡선의 한 점에서 기울기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅱ · 2022 개정 후보 · 성취기준 후보: 12미적Ⅱ-02-03 · 삼각함수 · 코사인함수 · 미분계수 · 한 차시 부분 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅱ-02-03. 공식 교육과정 대조 전 후보입니다."
+            }
+          ],
+          "id": "calc2-02-02-001"
+        },
+        {
+          "id": "calc2-02-02-002",
+          "template": "opening",
+          "title": "코사인 곡선의 접선은 어느 쪽을 향할까?",
+          "kicker": "조작 전 기울기 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "코사인 곡선 위 두 점의 평균변화율을 접선의 순간변화율과 연결합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "a=π/2 주변에서 코사인함수는 오른쪽으로 갈수록 증가할까요, 감소할까요? 각은 라디안으로 읽습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc2-02-02-003",
+          "template": "experiment",
+          "title": "할선과 접선을 함께 조절하기",
+          "kicker": "기준점·접근 방향·간격",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 안내",
+              "text": "a와 접근 방향, 0이 아닌 |h|를 바꿔 코사인 곡선·할선·접선을 비교합니다. 순간변화율 −sin(a)와 유한 간격의 평균변화율은 일반적으로 다릅니다."
+            },
+            {
+              "type": "graph",
+              "title": "y=cos(x)의 할선과 접선",
+              "text": "앱 그래프 블록은 코사인 곡선, 기준점 접선, 선택한 접근 간격의 할선을 표시합니다. 단계 애니메이션과 퀴즈는 독립 HTML에서만 동작하며 앱과 동기화되지 않습니다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "cosine-curve",
+                    "type": "function",
+                    "label": "y=cos(x)",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "cos(x)"
+                  },
+                  {
+                    "id": "cosine-tangent",
+                    "type": "function",
+                    "label": "x=a 접선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "cos(a)-sin(a)*(x-a)"
+                  },
+                  {
+                    "id": "cosine-secant",
+                    "type": "function",
+                    "label": "할선",
+                    "colorHex": "#15803D",
+                    "enabled": true,
+                    "expression": "cos(a)+((cos(a+side*distance)-cos(a))/(side*distance))*(x-a)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -1,
+                    "right": 7,
+                    "top": 1.5,
+                    "bottom": -1.5
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "기준 각 a (라디안)",
+                      "value": 1.5707963268,
+                      "min": 0.2,
+                      "max": 5.8,
+                      "step": 0.1
+                    },
+                    {
+                      "id": "side",
+                      "label": "접근 방향",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "distance",
+                      "label": "간격 |h| (0 제외)",
+                      "value": 0.4,
+                      "min": 0.05,
+                      "max": 0.8,
+                      "step": 0.05
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "a=π/2에서 코사인함수의 순간변화율은 1, 0, −1 중 무엇일까요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "기준점 오른쪽에서 코사인 곡선이 내려가는 방향인지 그래프를 보고 말해 보세요."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "cos'(a)=−sin(a)이며 −sin(π/2)=−1이다. 차분몫에 h=0을 대입하지 않고 h≠0에서 극한을 본다."
+            }
+          ]
+        },
+        {
+          "id": "calc2-02-02-004",
+          "template": "practice",
+          "title": "특별한 각에서 기울기 설명하기",
+          "kicker": "도구를 닫고 전이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=0, π/2, π에서 코사인함수의 순간변화율을 구하고 그래프의 방향과 연결하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "풀이 계획",
+              "text": "도함수 −sin(a)에 각을 대입하고, 각 점에서 곡선이 증가·감소·수평인지 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "a=0에서는 0, a=π/2에서는 −1, a=π에서는 0이다. π/2에서 코사인 곡선이 감소하므로 기울기는 음수다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "각을 라디안으로 읽는다.",
+                "할선의 평균변화율과 접선의 순간변화율을 구별한다.",
+                "h=0 직접 대입 대신 h→0 극한을 설명한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅱ_코사인함수미분_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅱ-02-03"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "미적분Ⅱ_사인함수미분_BookData_시범.json",
+      "미적분Ⅱ_코사인함수미분_BookData_시범.json"
+    ]
+  }
+}

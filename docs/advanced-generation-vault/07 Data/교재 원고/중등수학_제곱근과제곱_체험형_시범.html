@@ -1,0 +1,53 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>중3 수학 개념서 | 제곱근과 제곱</title>
+  <style>
+    :root{color-scheme:light;--ink:#17243a;--muted:#52627a;--line:#d6deea;--paper:#fff;--bg:#f3f6fb;--blue:#2457c5;--orange:#c2410c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:900px;margin:auto;padding:18px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}h1{font-size:1.5rem;margin:.15rem 0}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:16px}.plot{display:block;width:100%;height:auto;border:1px solid var(--line);border-radius:12px;background:#fff}.control{display:grid;grid-template-columns:72px 1fr 58px;gap:10px;align-items:center;margin:14px 0}.control input{width:100%;accent-color:var(--blue)}output{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}button{font:inherit;color:var(--ink);background:#fff;border:1px solid #9aa9bd;border-radius:10px;padding:9px 13px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.actions{display:flex;flex-wrap:wrap;gap:8px}.feedback{min-height:2em;font-weight:650}.pill{display:inline-block;border-radius:999px;padding:3px 10px;background:#eaf0ff;color:#173d90;font-weight:700}.quiz label{display:block;margin:8px 0}svg text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}@media(max-width:650px){.wrap{padding:10px}.card,header{padding:14px}.layout{grid-template-columns:1fr}}
+    @media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+  </style>
+</head>
+<body><main class="wrap">
+  <header><p class="muted">중3 수학 개념서 · 제곱근과 제곱</p><h1>제곱근 기호와 방정식은 같은 답일까?</h1><p>0 이상인 x를 제곱해 보고, √a와 x²=a가 묻는 값을 구분해 보세요.</p></header>
+  <section class="card"><h2>제곱 관계를 직접 움직이기</h2><div class="layout">
+    <svg viewBox="0 0 500 370" role="img" aria-labelledby="plotTitle plotDesc">
+      <title id="plotTitle">x가 0 이상인 제곱 그래프</title><desc id="plotDesc">y=x²에서 입력 x와 제곱 결과 y를 점으로 표시합니다.</desc>
+      <g stroke="#e8edf4" stroke-width="1"><path d="M40 40H460M40 96H460M40 152H460M40 208H460M40 264H460M40 320H460"/><path d="M40 40V320M124 40V320M208 40V320M292 40V320M376 40V320M460 40V320"/></g>
+      <path d="M40 320H460M40 40V320" stroke="#58677d" stroke-width="2"/>
+      <text x="450" y="313">x</text><text x="48" y="48">y</text>
+      <text x="35" y="340">0</text><text x="118" y="340">1</text><text x="202" y="340">2</text><text x="286" y="340">3</text><text x="370" y="340">4</text><text x="454" y="340">5</text>
+      <text x="14" y="324">0</text><text x="14" y="212">10</text><text x="14" y="100">20</text>
+      <path id="curve" fill="none" stroke="#2457c5" stroke-width="3"/>
+      <circle id="point" r="8" fill="#c2410c" stroke="white" stroke-width="2"/><text id="pointLabel"/>
+    </svg>
+    <div><p>현재 관계 <span id="relation" class="pill">3²=9</span></p>
+      <label class="control" for="inputX"><span>입력 x≥0</span><input id="inputX" type="range" min="0" max="5" step="0.1" value="3" aria-label="0 이상인 제곱 입력 x"><output id="inputOut">3.0</output></label>
+      <p id="explain" aria-live="polite">x=3을 제곱하면 9입니다. √9=3입니다.</p>
+      <div class="actions"><button id="play" type="button">점 움직임 재생</button><button id="reset" type="button">처음 값으로</button></div>
+      <p id="status" class="feedback" aria-live="polite">슬라이더를 움직여 x와 x²의 관계를 살펴보세요.</p>
+    </div>
+  </div></section>
+  <section class="card quiz"><h2>확인 퀴즈</h2><p>√16과 방정식 x²=16의 해를 차례로 고르세요.</p>
+    <label><input type="radio" name="q" value="a"> 4, x=4</label><label><input type="radio" name="q" value="b"> 4, x=±4</label><label><input type="radio" name="q" value="c"> ±4, x=4</label>
+    <button id="check" type="button">확인</button><p id="feedback" class="feedback" aria-live="polite"></p>
+  </section>
+  <section class="card"><h2>한 단계씩 생각하기</h2><p>√9는 왜 3 하나를 뜻하지만 x²=9에는 −3도 들어갈까요?</p><button id="hint" type="button">힌트 보기</button><p id="hintText" aria-live="polite">제곱근 기호는 0 이상인 값 하나를 가리킵니다. 방정식에서는 −3도 제곱해 보세요.</p></section>
+  <details class="card"><summary>독립 연습과 정답</summary><p>√25와 x²=25의 해를 각각 쓰세요.</p><p>정답: √25=5, x²=25의 해는 x=±5입니다.</p></details>
+</main>
+<script>
+(()=>{'use strict';
+  const slider=document.getElementById('inputX'),point=document.getElementById('point'),label=document.getElementById('pointLabel'),status=document.getElementById('status'),play=document.getElementById('play');
+  const X=x=>40+84*x,Y=y=>320-11.2*y;let frame=0,startAt=0,startX=0;
+  let path='';for(let i=0;i<=100;i++){const x=5*i/100;path+=(i?'L':'M')+X(x)+' '+Y(x*x)+' '}document.getElementById('curve').setAttribute('d',path);
+  function draw(announce=true){const x=Number(slider.value),y=x*x;point.setAttribute('cx',X(x));point.setAttribute('cy',Y(y));label.setAttribute('x',Math.min(X(x)+10,420));label.setAttribute('y',Math.max(Y(y)-10,22));label.textContent=`(${x.toFixed(1)}, ${y.toFixed(2)})`;document.getElementById('inputOut').value=x.toFixed(1);document.getElementById('relation').textContent=`${x.toFixed(1)}²=${y.toFixed(2)}`;document.getElementById('explain').textContent=`x=${x.toFixed(1)}을 제곱하면 ${y.toFixed(2)}입니다. 이 그래프는 x≥0이므로 √${y.toFixed(2)}=${x.toFixed(1)}입니다.`;document.getElementById('plotDesc').textContent=`입력 x=${x.toFixed(1)}, 제곱 결과 y=${y.toFixed(2)}인 점을 y=x² 그래프에서 보여줍니다.`;if(announce)status.textContent=`점 (${x.toFixed(1)}, ${y.toFixed(2)})입니다. 제곱근 기호는 이 그래프의 0 이상 입력을 되돌립니다.`}
+  function stop(message){cancelAnimationFrame(frame);frame=0;play.textContent='점 움직임 재생';if(message)status.textContent=message}
+  function animate(now){if(!startAt)startAt=now;const t=Math.min((now-startAt)/3000,1);slider.value=(startX+(5-startX)*t).toFixed(1);draw(false);if(t<1)frame=requestAnimationFrame(animate);else stop('재생이 끝났습니다. x≥0에서 y=25까지 이동했습니다. 슬라이더로 직접 확인하세요.')}
+  slider.addEventListener('input',()=>{stop();draw()});
+  play.addEventListener('click',()=>{if(frame)return stop('점 이동을 멈췄습니다. 슬라이더로 이어서 조작할 수 있습니다.');if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){slider.value='5';draw(false);return stop('동작 줄이기 설정을 존중해 자동 이동은 건너뛰었습니다. 슬라이더를 사용해 보세요.')}startX=Number(slider.value);if(startX>=5){startX=0;slider.value='0';draw(false)}startAt=0;play.textContent='멈추기';status.textContent='점이 y=x² 그래프를 따라 움직입니다. 입력과 제곱 결과를 관찰하세요.';frame=requestAnimationFrame(animate)});
+  document.getElementById('reset').addEventListener('click',()=>{stop('처음 값으로 돌아왔습니다. 제곱 결과를 먼저 예측해 보세요.');slider.value='3';draw(false)});
+  document.getElementById('check').addEventListener('click',()=>{const q=document.querySelector('input[name="q"]:checked');document.getElementById('feedback').textContent=!q?'하나를 골라 보세요.':q.value==='b'?'맞아요. √16은 4이고 x²=16의 해는 −4와 4입니다.':'다시 생각해 보세요. √16은 음이 아닌 값 하나이고, 방정식은 모든 실수 해를 찾습니다.'});
+  document.getElementById('hint').addEventListener('click',()=>document.getElementById('hintText').textContent='제곱근 기호는 0 이상인 제곱근을 나타냅니다. 반면 방정식 x²=9는 3과 −3을 모두 대입해 보세요.');draw(false)
+})();
+</script></body></html>

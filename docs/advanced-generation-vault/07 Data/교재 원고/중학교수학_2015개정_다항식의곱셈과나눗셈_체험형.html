@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>분배 직사각형 실험실</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color-scheme:light dark}*{box-sizing:border-box}body{max-width:900px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1rem}h1{font-size:1.55rem}.muted{color:#c4cede}.panel{margin:1rem 0;padding:1rem;background:#152237;border-radius:14px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.8rem}.controls label{display:grid;gap:.3rem}.controls input,.controls select,button{min-height:44px;padding:.45rem;font:inherit}.controls input{width:100%}button{cursor:pointer;font-weight:650}.actions{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:.8rem}.equation{font-size:1.2rem;overflow-wrap:anywhere}.viz{overflow-x:auto}.viz svg{display:block;max-width:100%;height:auto;margin:auto}.part{stroke:#eff6ff;stroke-width:2}.square{fill:#276e9e}.strip{fill:#9a6b20}.dimension{font-size:15px;fill:currentColor}.result{padding:.8rem;background:#1e304a;border-left:4px solid #60a5fa;border-radius:6px;min-height:3rem}.quiz button{margin:.25rem}.feedback{min-height:2.2rem}details{padding:.5rem 0}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}@media(max-width:420px){body{padding:.5rem}main,.panel{padding:.75rem}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-08] · 단항식과 다항식의 곱셈·나눗셈 부분 시범 · 학기 미지정 · 교사 검수 전</p>
+<h1>직사각형을 나누어 분배법칙을 찾아요</h1>
+<p>가로와 세로를 직접 조절하고, 전체 넓이와 나누어 센 부분의 합이 같은지 확인해 보세요.</p>
+<section class="panel" aria-labelledby="tool-title">
+<h2 id="tool-title">분배 직사각형 실험실</h2>
+<div class="controls">
+<label for="m">x 항의 계수 m: <output id="m-out">2</output><input id="m" type="range" min="1" max="5" value="2"></label>
+<label for="n">상수항 n: <output id="n-out">3</output><input id="n" type="range" min="1" max="5" value="3"></label>
+<label for="x">길이 x: <output id="x-out">2</output><input id="x" type="range" min="1" max="5" value="2"></label>
+<label for="mode">읽는 방법<select id="mode"><option value="multiply">곱셈: x(mx+n)</option><option value="divide">나눗셈: (mx²+nx)÷x</option></select></label>
+</div>
+<p class="equation" id="expression" aria-live="polite"></p>
+<div class="viz"><svg id="diagram" role="img" aria-label="x 곱하기 (2x 더하기 3) 직사각형 분할" viewBox="0 0 500 240"></svg></div>
+<div class="actions"><button id="reveal" type="button">부분 넓이 펼치기</button><button id="reset" type="button">처음 값으로</button></div>
+<p class="result" id="result" aria-live="polite">먼저 식의 결과를 예상한 다음 펼쳐 보세요.</p>
+<p class="muted">파란 정사각형은 각각 x², 황금색 띠는 각각 x를 나타냅니다. 그림은 양의 길이에서 구조를 보여주는 모형이며, 음수 길이나 0 길이를 뜻하지 않습니다.</p>
+</section>
+<section class="panel quiz"><h2>Socratic 퀴즈</h2><p><strong>2x(2x+3)</strong>을 바르게 전개하면?</p><button type="button" data-choice="wrong">4x²+3</button><button type="button" data-choice="right">4x²+6x</button><button type="button" data-choice="wrong">4x²+6</button><p class="feedback" id="feedback" aria-live="polite">괄호 안의 두 부분 넓이를 각각 생각해 보세요.</p></section>
+<section class="panel"><h2>도구를 닫고 풀어보기</h2><p>(15x²+10x)÷5x를 계산하고, 곱셈으로 원래 식이 되는지 확인하세요.</p><details><summary>힌트와 정답</summary><p>각 항을 5x로 나누면 3x+2입니다. 5x(3x+2)=15x²+10x이므로 맞습니다.</p></details></section>
+<p class="muted">범위: 단항식×다항식, 다항식÷단항식의 부분적 시범. 다항식끼리의 곱셈과 인수분해는 다루지 않습니다. 그래프·수치가 없는 직사각형 모형이며 교사 검수 전입니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id), m=$('m'), n=$('n'), x=$('x'), mode=$('mode');
+const svgNS='http://www.w3.org/2000/svg'; let expanded=false;
+function node(tag,attrs={},text=''){const e=document.createElementNS(svgNS,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(text)e.textContent=text;return e;}
+function render(){const a=Number(m.value),b=Number(n.value),v=Number(x.value),divide=mode.value==='divide';$('m-out').value=a;$('n-out').value=b;$('x-out').value=v;
+ $('expression').textContent=divide?`(${a}x² + ${b}x) ÷ x = ${a}x + ${b}　|　x=${v}일 때 값 ${a*v+b}`:`x(${a}x + ${b}) = ${a}x² + ${b}x　|　x=${v}일 때 넓이 ${a*v*v+b*v}`;
+ const unit=Math.min(26,360/(a*v+b),120/v),w=(a*v+b)*unit,h=v*unit,pad=30,viewW=Math.max(280,w+pad*2),viewH=h+pad*2+30,diagram=$('diagram');diagram.setAttribute('viewBox',`0 0 ${viewW} ${viewH}`);diagram.setAttribute('aria-label',`세로 ${v}x, 가로 ${a}x 더하기 ${b}인 직사각형${expanded?'의 부분 넓이 펼침':''}`);diagram.replaceChildren();
+ let px=pad;
+ for(let i=0;i<a;i++){diagram.append(node('rect',{x:px,y:pad,width:v*unit,height:h,class:'part square'}));if(expanded)diagram.append(node('text',{x:px+v*unit/2,y:pad+h/2,class:'dimension','text-anchor':'middle'},'x²'));px+=v*unit;}
+ for(let i=0;i<b;i++){diagram.append(node('rect',{x:px,y:pad,width:unit,height:h,class:'part strip'}));if(expanded)diagram.append(node('text',{x:px+unit/2,y:pad+h/2,class:'dimension','text-anchor':'middle'},'x'));px+=unit;}
+ diagram.append(node('text',{x:pad+w/2,y:pad+h+24,class:'dimension','text-anchor':'middle'},`가로 ${a}x + ${b}`));diagram.append(node('text',{x:pad-8,y:pad+h/2,class:'dimension','text-anchor':'end'},`${v}x`));
+ $('reveal').textContent=expanded?'부분 넓이 다시 숨기기':'부분 넓이 펼치기';
+ if(expanded)$('result').textContent=divide?`일반식은 (${a}x² + ${b}x) ÷ x = ${a}x + ${b}입니다. x=${v}를 대입하면 (${a*v*v}+${b*v})÷${v}=${a*v+b}이고, 다시 곱하면 ${a*v*v+b*v}가 됩니다.`:`일반식은 x(${a}x + ${b}) = ${a}x² + ${b}x입니다. x=${v}에서 부분 넓이는 정사각형 ${a}개 합 ${a*v*v}, 띠 ${b}개 합 ${b*v}; 전체는 ${a*v*v+b*v}입니다.`;
+ else $('result').textContent='먼저 식의 결과를 예상한 다음 펼쳐 보세요.';
+}
+[m,n,x,mode].forEach(el=>el.addEventListener('input',render));$('reveal').addEventListener('click',()=>{expanded=!expanded;render()});$('reset').addEventListener('click',()=>{m.value=2;n.value=3;x.value=2;mode.value='multiply';expanded=false;render()});
+document.querySelectorAll('[data-choice]').forEach(btn=>btn.addEventListener('click',()=>{$('feedback').textContent=btn.dataset.choice==='right'?'맞아요. 2x×2x=4x², 2x×3=6x이므로 4x²+6x입니다.':'각 항에 2x를 곱해야 해요. 어느 항이 빠졌는지 다시 살펴보세요.'}));render();
+})();
+</script>
+</body></html>

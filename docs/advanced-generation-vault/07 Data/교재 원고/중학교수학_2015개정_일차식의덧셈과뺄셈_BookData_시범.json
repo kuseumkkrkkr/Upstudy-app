@@ -1,0 +1,43 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 일차식의 덧셈과 뺄셈",
+  "subtitle": "[9수02-03] 원문 대조표 문구 · 항 타일 조작과 부호 분배 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "문자와 식", "일차식의 덧셈과 뺄셈", "9수02-03", "부분 시범", "학기 미지정", "교사 검수 전"],
+  "chapters": [{
+    "title": "동류항을 모아 일차식 계산하기",
+    "intro": [
+      "x가 같은 항끼리, 상수항끼리 모아 계산한다. 종류가 다른 항은 하나로 합치지 않는다.",
+      "괄호 앞에 빼기가 있으면 괄호 안 모든 항의 부호가 바뀐다.",
+      "2015 개정 중학교 수학 [9수02-03] 원문 대조표 기반 시범이다. 학년·학기 미지정, 교사 검수 전이다."
+    ],
+    "sections": [{
+      "title": "더하기와 빼기의 항 모형",
+      "paragraphs": [
+        "(2x+5)+(3x-1)은 x항 2개와 3개, 상수 5와 -1을 각각 모아 5x+4가 된다.",
+        "(4x+3)-(x+5)는 4x+3-x-5가 된다. 괄호 안 두 항 모두 부호가 바뀌므로 3x-2이다.",
+        "x항과 상수항은 종류가 달라 서로 합칠 수 없다."
+      ]
+    }],
+    "pages": [
+      {"id":"ms15-like-terms-opening","template":"opening","title":"어떤 항끼리 더할 수 있을까?","kicker":"같은 종류의 항 찾기","blocks":[
+        {"type":"lead","title":"오늘의 질문","text":"3x+2x와 3x+2는 왜 다르게 정리할까요?"},
+        {"type":"thinking","title":"먼저 예상하기","text":"x 타일과 숫자 타일을 종류별로 나누어 보세요."},
+        {"type":"answer","title":"확인","text":"3x+2x=5x지만 3x+2는 서로 다른 항이라 그대로 둡니다."}
+      ]},
+      {"id":"ms15-like-terms-experiment","template":"experiment","title":"항 타일을 모아 계산하기","kicker":"계수·상수·연산 조작","blocks":[
+        {"type":"lead","title":"체험 도구","text":"두 일차식의 x항과 상수항을 조절하고 더하기 또는 빼기를 선택해 보세요."},
+        {"type":"thinking","title":"관찰","text":"빼기를 선택하면 두 번째 식의 x항과 상수항 부호가 각각 어떻게 바뀌나요?"},
+        {"type":"question","title":"Socratic 질문","text":"-(2x-3)은 왜 -2x+3일까요?"},
+        {"type":"hint","title":"힌트","text":"괄호 안 각 항에 -1을 곱해 보세요."},
+        {"type":"answer","title":"확인","text":"(-1)×2x+(-1)×(-3)=-2x+3입니다."},
+        {"type":"misconception","title":"자주 하는 실수","text":"-(x+5)는 -x+5가 아니라 -x-5입니다. 빼기는 괄호 안 모든 항에 적용됩니다."}
+      ]},
+      {"id":"ms15-like-terms-practice","template":"practice","title":"두 식을 더하고 빼기","kicker":"새 식에 적용","blocks":[
+        {"type":"question","title":"문제","text":"(2x+3)+(5x-4), (6x-2)-(3x+5)를 각각 간단히 하세요."},
+        {"type":"thinking","title":"생각 순서","text":"괄호를 풀고 x항과 상수항을 따로 모읍니다. 빼기에서는 뒤 식의 모든 부호를 확인합니다."},
+        {"type":"answer","title":"정답","text":"첫째 식은 7x-1, 둘째 식은 3x-7입니다."},
+        {"type":"checklist","title":"마무리","items":["같은 종류의 항끼리 모았다.","괄호 앞 빼기를 모든 항에 적용했다.","x항과 상수항을 구분했다."]}
+      ]}
+    ]
+  }]
+}

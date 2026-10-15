@@ -1,0 +1,133 @@
+{
+  "title": "수학(상) 2015 개정 · 나머지정리와 인수정리 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "다항식",
+    "나머지정리",
+    "인수정리",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "나머지정리와 인수정리",
+      "pages": [
+        {
+          "id": "math-upper-remainder-opening",
+          "template": "opening",
+          "title": "나누지 않고 나머지를 알 수 있을까?",
+          "kicker": "나머지정리와 인수정리",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x³−2x+1을 x−2로 나눌 때 나머지는 얼마일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 대입해 보기",
+              "text": "나누는 식 x−2가 0이 되게 하는 x의 값은 무엇인가요? 그 값을 f(x)에 넣어 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "x=2를 대입하면 f(2)=8−4+1=5입니다. 나머지정리에 따라 나머지는 5입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-remainder-concept",
+          "template": "concept",
+          "title": "일차식으로 나눌 때는 근의 함숫값이 나머지",
+          "kicker": "f(x)를 x−a로 나누면 나머지는 f(a)",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "나머지정리",
+              "text": "다항식 f(x)를 x−a로 나눌 때의 나머지는 f(a)입니다. 나머지는 상수이므로 x=a를 대입해 바로 구할 수 있습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "나누는 식의 모양 확인",
+              "items": [
+                "x−a이면 a를 대입합니다.",
+                "x+a는 x−(−a)이므로 −a를 대입합니다.",
+                "예를 들어 x+2로 나눌 때는 f(−2)를 계산합니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "부호를 확인하세요",
+              "text": "나누는 식이 0이 되는 값을 대입합니다. x+2에서는 2가 아니라 −2를 대입합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-remainder-example",
+          "template": "example",
+          "title": "나머지정리로 나머지 구하기",
+          "kicker": "나누는 식이 0이 되는 값을 대입한다",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=2x³+x²−3x+4를 x+2로 나눌 때의 나머지를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x+2=0에서 x=−2입니다.",
+                "f(−2)=2(−8)+4+6+4=−2입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "나머지는 −2입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-factor-theorem-practice",
+          "template": "practice",
+          "title": "인수인지 확인하기",
+          "kicker": "f(a)=0이면 x−a는 인수",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "f(x)=x³−4x에서 x−2가 인수인지 판단하고, f(x)를 인수분해하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "먼저 f(2)를 계산하세요. 값이 0이면 x−2는 인수입니다. 이어 공통인수도 찾아 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "f(2)=8−8=0이므로 x−2는 인수입니다. x³−4x=x(x−2)(x+2)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "나누는 식 x−a에서 대입값 a를 찾았나요?",
+                "인수정리에서 f(a)=0인지 확인했나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

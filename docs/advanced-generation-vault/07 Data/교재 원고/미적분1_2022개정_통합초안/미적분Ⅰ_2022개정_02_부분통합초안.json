@@ -1,0 +1,1018 @@
+{
+  "title": "미적분Ⅰ 2022 개정 · 단원 코드 02 부분 통합 초안",
+  "tags": [
+    "미적분Ⅰ",
+    "2022 개정",
+    "12미적Ⅰ-02",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "xⁿ을 미분하면 왜 n xⁿ⁻¹일까?",
+      "pages": [
+        {
+          "title": "xⁿ을 미분하면 왜 n xⁿ⁻¹일까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 도함수 · 거듭제곱함수 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-03. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-01-001"
+        },
+        {
+          "id": "calc1-02-01-002",
+          "template": "opening",
+          "title": "기울기 공식부터 외우지 말고 확인하기",
+          "kicker": "x³, a=2에서 예상",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x³의 x=1에서 기울기를 3이라고 예상했다면, 차분몫을 전개해 3이 어디서 남는지 확인해 보자."
+            },
+            {
+              "type": "thinking",
+              "title": "두 표현을 연결",
+              "text": "그래프의 할선 기울기와 식 [(a+h)^n−a^n]/h는 어떻게 같은 값을 나타낼까? h=0을 먼저 넣어도 될까?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-01-003",
+          "template": "experiment",
+          "title": "지수와 기준점을 바꾸어 관찰하기",
+          "kicker": "|h|를 줄이고 좌우를 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험",
+              "text": "n을 1부터 5까지, a를 −1부터 1까지 조절한다. h의 방향과 양수 크기를 따로 선택한다. x^n 곡선의 두 점을 잇는 선분과 현재 기울기 값을 살핀다."
+            },
+            {
+              "type": "graph",
+              "title": "xⁿ 곡선과 할선",
+              "text": "앱 그래프 지면의 매개변수 n, a, side, d는 f(x)=x^n과 기준점 a, h=side×d를 정한다. 독립 HTML 도구는 같은 입력에서 수치 할선 기울기와 n a^(n−1)을 나란히 비교하고 전개 단계를 수동으로 연다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "power-function",
+                    "type": "function",
+                    "label": "f(x)=x^n",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^n"
+                  },
+                  {
+                    "id": "power-secant",
+                    "type": "function",
+                    "label": "할선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "((a+side*d)^n-a^n)/(side*d)*(x-a)+a^n"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -1.5,
+                    "right": 1.5,
+                    "top": 9,
+                    "bottom": -9
+                  },
+                  "parameters": [
+                    {
+                      "id": "n",
+                      "label": "양의 정수 지수 n",
+                      "value": 3,
+                      "min": 1,
+                      "max": 5,
+                      "step": 1
+                    },
+                    {
+                      "id": "a",
+                      "label": "기준점 a",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "side",
+                      "label": "h 접근 방향",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "d",
+                      "label": "간격 |h|",
+                      "value": 0.5,
+                      "min": 0.1,
+                      "max": 0.5,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "전개 후 h로 나누면 어떤 항이 h→0에서도 남을까? n=3, a=2를 넣어 숫자로 확인하자."
+            },
+            {
+              "type": "verification",
+              "title": "관찰 확인",
+              "text": "n=3이면 차분몫은 3a²+3ah+h²이다. h→0에서 3a²가 남고, a=2에서는 12다."
+            },
+            {
+              "type": "misconception",
+              "title": "유한한 h와 미분계수 구분",
+              "text": "슬라이더의 h는 항상 0이 아닌 유한한 간격이다. 현재 할선 기울기와 미분계수는 다를 수 있으며, 간격을 줄여 극한으로 연결한다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-01-004",
+          "template": "practice",
+          "title": "전개하고 새 조건으로 확인하기",
+          "kicker": "공식을 정의와 연결",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x³, a=2에서 차분몫을 전개해 미분계수를 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "도움 질문",
+              "text": "(2+h)³−8을 전개한 각 항에서 h를 묶고, h로 나눈 뒤 h→0에서 사라지는 항과 남는 항을 구분하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "(2+h)³=8+12h+6h²+h³. h≠0에서 나눈 뒤 h의 차수를 살펴본다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "차분몫은 12+6h+h²이고 극한은 12다. 따라서 f'(2)=12다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "왜 a^n 항이 상쇄되는지 말한다.",
+                "h가 포함된 항이 극한에서 사라지는 이유를 말한다.",
+                "n=4, a=−1에서 도함수 값을 구한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_x의n제곱_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-03"
+      ]
+    },
+    {
+      "title": "도함수 부호로 극대·극소와 그래프 개형 읽기",
+      "pages": [
+        {
+          "title": "도함수 부호로 극대·극소와 그래프 개형 읽기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 2022 개정 후보 · 도함수 활용 · 극대와 극소 · 그래프 개형 · 시범 · 성취기준 후보: 12미적Ⅰ-02-07, 12미적Ⅰ-02-08"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-07, 12미적Ⅰ-02-08. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-02-001"
+        },
+        {
+          "id": "calc1-02-02-002",
+          "template": "opening",
+          "title": "기울기가 0이면 꼭 극값일까?",
+          "kicker": "양쪽의 부호를 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x³−3x에서 도함수 부호가 바뀌는 곳은 어디일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "도함수가 0인 점에서 왼쪽과 오른쪽 부호가 바뀌는지 먼저 예상하자."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-02-003",
+          "template": "experiment",
+          "title": "함수 그래프와 도함수 부호 연결",
+          "kicker": "점과 단계를 직접 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험 안내",
+              "text": "x를 움직여 함수값과 도함수 부호를 확인한다. 단계 버튼으로 임계점과 부호표를 차례로 공개한다."
+            },
+            {
+              "type": "graph",
+              "title": "함수 그래프",
+              "text": "f(x)=x³−3x의 그래프 위 점과 접선을 움직인다. 도함수 부호 그래프를 같은 축에 겹치지 않고, 별도의 부호표에서 증가·감소를 읽는다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "function",
+                    "type": "function",
+                    "label": "f(x)=x³−3x",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^3-3*x"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -2.2,
+                    "right": 2.2,
+                    "top": 2.8,
+                    "bottom": -2.8
+                  },
+                  "parameters": [
+                    {
+                      "id": "x",
+                      "label": "관찰 위치 x",
+                      "value": -1,
+                      "min": -2,
+                      "max": 2,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "현재 x에서 도함수는 양수, 0, 음수 중 무엇인가? 그래프는 오른쪽으로 갈 때 증가하는가 감소하는가?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "도함수 부호가 +에서 −로 바뀌면 극대, −에서 +로 바뀌면 극소다. f(−1)=2, f(1)=−2다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-02-004",
+          "template": "practice",
+          "title": "도구를 닫고 반례 찾기",
+          "kicker": "도함수 0만으로는 부족",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=x³에서 x=0은 극대·극소 중 무엇인가?"
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "g′(0)=0이다. 그런데 0의 왼쪽과 오른쪽에서 g′(x)의 부호는 각각 어떤가?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "g′(x)=3x²이므로 0을 제외한 양쪽에서 모두 양수다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "극값이 아니다. 양쪽에서 계속 증가하므로 도함수 부호가 바뀌지 않는다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "도함수 부호의 좌우 변화를 확인한다.",
+                "극값 위치의 함수값을 원래 함수에 대입한다.",
+                "도함수 0과 극값을 같은 뜻으로 쓰지 않는다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_극대극소와그래프개형_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-07",
+        "12미적Ⅰ-02-08"
+      ]
+    },
+    {
+      "title": "연속이면 언제나 미분가능할까?",
+      "pages": [
+        {
+          "title": "연속이면 언제나 미분가능할까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 미분가능성 · 연속성 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-02"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-02. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-03-001"
+        },
+        {
+          "id": "calc1-02-03-002",
+          "template": "opening",
+          "title": "이어지는 그래프에 모서리가 있을까?",
+          "kicker": "먼저 예상하고 이유를 남기기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=|x|는 x=0에서 연속이다. 그렇다면 그 점의 접선 기울기도 하나로 정해질까? 도구를 열기 전에 예상과 이유를 한 문장으로 적어 보자."
+            },
+            {
+              "type": "thinking",
+              "title": "두 질문을 분리",
+              "text": "함수값이 주변에서 이어지는가? 왼쪽과 오른쪽의 기울기는 같은 값에 가까워지는가? 각각 따로 답해 보자."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-03-003",
+          "template": "experiment",
+          "title": "왼쪽·오른쪽 할선 기울기 비교",
+          "kicker": "같은 기준점에서 두 함수를 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험",
+              "text": "함수 x² 또는 |x|를 고르고 a와 h를 조절한다. h는 0이 아닌 값만 사용한다. h>0과 h<0에서 할선 기울기가 같은 값으로 가까워지는지 비교한다."
+            },
+            {
+              "type": "graph",
+              "title": "움직이는 점과 기울기",
+              "text": "HTML 시범 도구는 y=f(x), 기준점 (a,f(a)), 이동점 (a+h,f(a+h))와 할선을 표시한다. |x|, a=0에서는 오른쪽 기울기 1, 왼쪽 기울기 −1이다. x², a=0에서는 양쪽 기울기가 0에 가까워진다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "parabola",
+                    "type": "function",
+                    "label": "x²",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^2"
+                  },
+                  {
+                    "id": "absolute",
+                    "type": "function",
+                    "label": "|x|",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "abs(x)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -3,
+                    "right": 3,
+                    "top": 5,
+                    "bottom": -1
+                  }
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "|x|의 그래프가 이어진다는 사실만으로 좌우 기울기가 같다고 결론 내릴 수 있을까? a=0, h=±0.1을 비교해 근거를 말해 보자."
+            },
+            {
+              "type": "verification",
+              "title": "관찰 확인",
+              "text": "|x|는 0에서 연속이지만 좌우 차분몫이 1과 −1로 달라 미분가능하지 않다. x²는 0에서 좌우 차분몫이 모두 0으로 모인다."
+            },
+            {
+              "type": "misconception",
+              "title": "역은 자동으로 따라오지 않음",
+              "text": "미분가능하면 연속이다. 그러나 연속이면 미분가능하다는 역은 |x|의 0에서 성립하지 않는다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-03-004",
+          "template": "practice",
+          "title": "도구 없이 판정하기",
+          "kicker": "좌우 계산과 논리 방향 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=|x−2|는 x=2에서 연속인가, 미분가능한가? 두 판단을 각각 설명하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 발판",
+              "text": "h>0과 h<0에서 [g(2+h)−g(2)]/h를 따로 계산하면 어떤 값이 나오는가? 함수값 자체는 2 근처에서 어디로 가는가?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "g(2)=0이다. h>0이면 |h|=h, h<0이면 |h|=−h임을 사용한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "연속이다. 함수값 |x−2|는 x→2일 때 0에 가까워진다. 하지만 오른쪽 차분몫은 1, 왼쪽은 −1이므로 미분가능하지 않다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "미분가능이면 연속이라는 방향을 설명한다.",
+                "연속이지만 미분가능하지 않은 반례를 좌우 기울기로 설명한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_미분가능성과연속성_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-02"
+      ]
+    },
+    {
+      "title": "할선의 기울기는 어떻게 접선의 기울기로 이어질까?",
+      "pages": [
+        {
+          "title": "할선의 기울기는 어떻게 접선의 기울기로 이어질까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 미분계수 · 평균변화율 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-01"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-01. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-04-001"
+        },
+        {
+          "id": "calc1-02-04-002",
+          "template": "opening",
+          "title": "두 점을 한 점에 가까이 가져가기",
+          "kicker": "먼저 기울기를 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=x² 위의 x=1인 점과 x=1+h인 점을 잇는 직선의 기울기는 h가 작아질 때 어떻게 변할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "양쪽에서 예측",
+              "text": "h가 양수일 때와 음수일 때를 나누어 생각하자. h=0을 바로 넣어도 될까?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-04-003",
+          "template": "experiment",
+          "title": "할선과 접선의 기울기 비교",
+          "kicker": "h는 0이 아니며 양쪽에서 접근",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험 안내",
+              "text": "방향 s를 −1 또는 1로, 크기 d를 0.1부터 움직여 보자. h=s×d이므로 0이 되지 않는다. 파란 곡선 y=x², 고정된 접선 y=2x−1, 움직이는 할선을 비교한다."
+            },
+            {
+              "type": "graph",
+              "title": "움직이는 할선",
+              "text": "할선 식은 y=(2+h)x−(1+h), h=s×d다. 고정점 (1,1)을 지나고 다른 교점은 (1+h,(1+h)²)다. 양쪽 방향에서 접선 기울기 2로 가까워지는지 관찰한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "square-curve",
+                    "type": "function",
+                    "label": "y=x²",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^2"
+                  },
+                  {
+                    "id": "tangent-line",
+                    "type": "function",
+                    "label": "접선 y=2x−1",
+                    "colorHex": "#364152",
+                    "enabled": true,
+                    "expression": "2*x-1"
+                  },
+                  {
+                    "id": "secant-line",
+                    "type": "function",
+                    "label": "할선 (h=s×d)",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "(2+side*distance)*x-(1+side*distance)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -1,
+                    "right": 3,
+                    "top": 9,
+                    "bottom": -1
+                  },
+                  "parameters": [
+                    {
+                      "id": "side",
+                      "label": "h 방향 (−1 / +1)",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "distance",
+                      "label": "|h| (0 제외)",
+                      "value": 0.5,
+                      "min": 0.1,
+                      "max": 1,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "h=−0.2일 때 할선 기울기는 얼마인가? h=0일 때 차분몫을 계산할 수 없는 이유는?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "기울기는 2+h=1.8이다. h=0이면 분모가 0이므로 차분몫은 정의되지 않는다. 극한값은 h가 0에 접근할 때의 값으로 구한다."
+            },
+            {
+              "type": "misconception",
+              "title": "0을 대입하지 않기",
+              "text": "미분계수는 h=0인 차분몫의 값이 아니다. h≠0에서 계산한 뒤 h→0의 극한을 본다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-04-004",
+          "template": "practice",
+          "title": "식으로 확인하고 설명하기",
+          "kicker": "전개와 약분의 이유를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x²일 때 x=−1에서 미분계수를 차분몫으로 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "먼저 f(−1+h)와 f(−1)을 각각 계산해 보자. 분자에서 h를 묶을 수 있는가?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "((−1+h)²−1)/h=(1−2h+h²−1)/h=(−2h+h²)/h. h≠0에서 약분한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "h≠0에서 차분몫은 −2+h이고, h→0일 때 −2에 가까워진다. 따라서 x=−1에서 미분계수는 −2다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "평균변화율을 두 함수값의 차와 x변화량의 비로 설명한다.",
+                "h=0을 대입하지 않고 극한을 취하는 이유를 설명한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_미분계수_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-01"
+      ]
+    },
+    {
+      "title": "한 점의 기울기로 접선 만들기",
+      "pages": [
+        {
+          "title": "한 점의 기울기로 접선 만들기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 미분계수 · 접선의 방정식 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-05. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-05-001"
+        },
+        {
+          "id": "calc1-02-05-002",
+          "template": "opening",
+          "title": "접점과 기울기로 접선을 결정할 수 있을까?",
+          "kicker": "f(x)=x², a=1",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "먼저 예측",
+              "text": "접점 P=(1,1)과 기울기 2를 아는 경우, 이 두 정보로 직선 하나를 만들 수 있을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "두 조건을 따로 보기",
+              "text": "접선 방정식이 맞으려면 그 점을 지나고, 그 점에서의 기울기도 맞아야 한다. 각각 어떻게 확인할까?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-05-003",
+          "template": "experiment",
+          "title": "할선을 움직이고 접선과 비교하기",
+          "kicker": "접점 a와 0이 아닌 h 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "독립 HTML에서 접점 a, 접근 방향, 양수 간격 |h|를 바꾸고 원함수·할선·접선을 비교한다. 단계는 버튼으로 직접 진행한다."
+            },
+            {
+              "type": "graph",
+              "title": "곡선과 두 직선",
+              "text": "f(x)=x², 할선 기울기 2a+h, 접선 기울기 2a다. 접선 y=2ax−a²은 (a,a²)를 지나고 기울기가 f'(a)=2a다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "tangent-parabola",
+                    "type": "function",
+                    "label": "f(x)=x²",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^2"
+                  },
+                  {
+                    "id": "tangent-secant",
+                    "type": "function",
+                    "label": "할선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "((a+side*d)^2-a^2)/(side*d)*(x-a)+a^2"
+                  },
+                  {
+                    "id": "tangent-line",
+                    "type": "function",
+                    "label": "접선",
+                    "colorHex": "#16805D",
+                    "enabled": true,
+                    "expression": "2*a*(x-a)+a^2"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -2,
+                    "right": 2,
+                    "top": 8,
+                    "bottom": -1
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "접점 x좌표 a",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "side",
+                      "label": "할선 접근 방향",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "d",
+                      "label": "간격 |h|",
+                      "value": 0.5,
+                      "min": 0.1,
+                      "max": 0.5,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "a=1, h=0.2일 때 할선 기울기와 접선 기울기는 각각 얼마인가? 차이는 h와 어떤 관계인가?"
+            },
+            {
+              "type": "verification",
+              "title": "두 조건 검산",
+              "text": "접선 y=2ax−a²에서 x=a를 대입하면 y=a²이므로 접점을 지난다. x의 계수는 2a=f'(a)여서 기울기도 맞다."
+            },
+            {
+              "type": "misconception",
+              "title": "함숫값과 기울기 구분",
+              "text": "a²은 접점의 y좌표이고, 접선 기울기는 2a다. 두 수를 혼동하지 않도록 점 조건과 기울기 조건을 별도로 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-05-004",
+          "template": "practice",
+          "title": "새 접점에서 접선 세우기",
+          "kicker": "도구를 닫고 두 조건 검산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x²의 x=−1에서 접선 방정식을 구하세요. 접점 통과와 기울기를 각각 검산하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "도움 질문",
+              "text": "먼저 점은 (−1,1)이다. f'(x)=2x에 −1을 넣으면 기울기는 얼마인가?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "y−y₁=m(x−x₁)에 x₁=−1, y₁=1, m=−2를 넣는다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "y−1=−2(x+1), 즉 y=−2x−1이다. x=−1이면 y=1이고 기울기는 −2다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "접점을 원함수에 대입해 좌표를 구한다.",
+                "미분계수로 접선 기울기를 구한다.",
+                "직선이 접점을 지나며 기울기가 맞는지 각각 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_접선방정식_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-05"
+      ]
+    },
+    {
+      "title": "합·차·상수배와 곱의 미분",
+      "pages": [
+        {
+          "title": "합·차·상수배와 곱의 미분 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 다항함수의 미분 · 곱의 미분법 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-04"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-02-04. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-02-06-001"
+        },
+        {
+          "id": "calc1-02-06-002",
+          "template": "opening",
+          "title": "곱의 도함수는 도함수끼리 곱하면 될까?",
+          "kicker": "x=1에서 두 값을 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "먼저 예상",
+              "text": "G(x)=x(x+1)이다. x=1에서 G의 기울기를 u'v'=1이라고 예상한다면, 그래프와 차분몫에서 실제 값도 1인지 확인하자."
+            },
+            {
+              "type": "thinking",
+              "title": "합과 곱을 구분",
+              "text": "항별 변화율을 더하는 규칙과 두 함수가 곱해진 변화율은 같은 방식일까?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-06-003",
+          "template": "experiment",
+          "title": "합 모드와 곱 모드 비교",
+          "kicker": "기준점·방향·간격을 직접 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "독립 HTML에서 합·차·상수배 또는 곱을 고르고 기준점 a, h 방향, |h|를 움직인다. 현재 할선 기울기와 h→0에서 예상하는 미분계수를 비교한다."
+            },
+            {
+              "type": "graph",
+              "title": "두 함수와 할선",
+              "text": "F(x)=3x²−2x+4의 할선은 6a+3h−2, 도함수는 6a−2다. G(x)=x(x+1)의 할선은 2a+h+1, 도함수는 2a+1이다. 그래프는 두 함수와 해당 할선을 표시한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "sum-function",
+                    "type": "function",
+                    "label": "F(x)=3x²−2x+4",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "3*x^2-2*x+4"
+                  },
+                  {
+                    "id": "sum-secant",
+                    "type": "function",
+                    "label": "F의 할선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "((3*(a+side*d)^2-2*(a+side*d)+4)-(3*a^2-2*a+4))/(side*d)*(x-a)+(3*a^2-2*a+4)"
+                  },
+                  {
+                    "id": "product-function",
+                    "type": "function",
+                    "label": "G(x)=x(x+1)",
+                    "colorHex": "#16805D",
+                    "enabled": true,
+                    "expression": "x*(x+1)"
+                  },
+                  {
+                    "id": "product-secant",
+                    "type": "function",
+                    "label": "G의 할선",
+                    "colorHex": "#A33B8F",
+                    "enabled": true,
+                    "expression": "((a+side*d)*(a+side*d+1)-a*(a+1))/(side*d)*(x-a)+a*(a+1)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -2,
+                    "right": 2,
+                    "top": 14,
+                    "bottom": -2
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "기준점 a",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "side",
+                      "label": "h 방향",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "d",
+                      "label": "간격 |h|",
+                      "value": 0.2,
+                      "min": 0.1,
+                      "max": 0.5,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "a=1에서 G의 할선 기울기는 h가 작아지면 어디로 가는가? u'v'와 u'v+uv'는 각각 얼마인가?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "G(x)=x(x+1)=x²+x이므로 G'(x)=2x+1, G'(1)=3이다. u'v'=1은 실제 기울기 3과 다르다."
+            },
+            {
+              "type": "misconception",
+              "title": "곱의 미분 오개념",
+              "text": "곱의 도함수는 u'v'가 아니다. 한 인수의 변화가 다른 인수의 현재 크기와 곱해지는 두 경로 u'v와 uv'를 모두 더한다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-02-06-004",
+          "template": "practice",
+          "title": "새 식에서 두 규칙 적용",
+          "kicker": "계산하고 정의로 연결",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "F(x)=3x²−2x+4의 x=1 도함수와 H(x)=(2x−1)(x²+1)의 도함수를 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 발판",
+              "text": "첫 식은 항별로 미분하고, 둘째 식은 첫 인수의 변화와 둘째 인수의 변화를 각각 한 항씩 만든다."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "(uv)'=u'v+uv'. H에서는 u=2x−1, v=x²+1로 둔다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "F'(1)=6−2=4. H'=2(x²+1)+(2x−1)·2x=6x²−2x+2."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "합·차·상수배를 항별 미분으로 설명한다.",
+                "곱의 두 변화 경로 u'v와 uv'를 구분한다.",
+                "u'v'가 틀리는 반례를 말한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_합과곱의미분법_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-02-04"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "미적분Ⅰ_x의n제곱_BookData_시범.json",
+      "미적분Ⅰ_극대극소와그래프개형_BookData_시범.json",
+      "미적분Ⅰ_미분가능성과연속성_BookData_시범.json",
+      "미적분Ⅰ_미분계수_BookData_시범.json",
+      "미적분Ⅰ_접선방정식_BookData_시범.json",
+      "미적분Ⅰ_합과곱의미분법_BookData_시범.json"
+    ]
+  }
+}

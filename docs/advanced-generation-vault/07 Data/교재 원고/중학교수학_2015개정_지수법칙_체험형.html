@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>지수법칙 · 체험수학</title>
+<style>
+:root{font:16px/1.6 system-ui,sans-serif;color-scheme:light dark}body{max-width:780px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1.2rem;background:#1b2638;border:1px solid #35445d;border-radius:18px}h1{font-size:1.5rem}.muted{color:#c4cede}.card{padding:1rem;background:#111c2b;border-radius:12px;margin:.8rem 0}.controls{display:flex;gap:.8rem;flex-wrap:wrap;align-items:center}label{display:grid;gap:.25rem;min-width:150px;flex:1}[hidden]{display:none!important}input,button,select{font:inherit}button,select{padding:.55rem .8rem;border:0;border-radius:9px}button{background:#7dd3fc;color:#082f49;font-weight:700;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}.factors{display:flex;gap:.35rem;flex-wrap:wrap;min-height:2.6rem;padding:.5rem;background:#18263a;border-radius:8px}.factor{padding:.2rem .45rem;border:1px solid #38bdf8;border-radius:6px;background:#20344c}.group{padding:.35rem;border:1px dashed #fbbf24;border-radius:8px}.stage{padding:.7rem;border-left:4px solid #38bdf8;background:#18263a;border-radius:8px;min-height:2.5rem}.answer{font-size:1.15rem;font-weight:700}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style></head><body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-06] 지수법칙 · 양의 정수 지수 시범 · 학년·학기 미지정 · 교사 검수 전</p><h1>지수는 반복해서 곱한 횟수예요</h1><p>규칙을 고른 뒤 곱셈을 직접 펼쳐 보세요. 지수 계산이 반복 인수의 개수와 일치하는지 확인합니다.</p>
+<section class="card"><h2>반복 곱셈 실험실</h2><div class="controls"><label for="law">살펴볼 규칙<select id="law"><option value="product">같은 밑의 곱</option><option value="power">거듭제곱의 거듭제곱</option><option value="distribution">곱의 거듭제곱</option></select></label><label for="a">밑 a: <output id="aOut">2</output><input id="a" type="range" min="2" max="5" value="2"></label><label id="bLabel" for="b" hidden>밑 b: <output id="bOut">3</output><input id="b" type="range" min="2" max="5" value="3"></label><label for="m">지수 m: <output id="mOut">3</output><input id="m" type="range" min="1" max="4" value="3"></label><label for="n">지수 n: <output id="nOut">2</output><input id="n" type="range" min="1" max="4" value="2"></label></div>
+<p id="question" class="answer" aria-live="polite"></p><p id="predict">먼저 지수 결과를 예상해 보세요.</p><button id="expand" type="button">반복 곱셈 펼치기</button> <button id="count" type="button" disabled>인수 수 세기</button><div id="factors" class="factors" aria-label="반복 곱셈 전개"></div><p id="stage1" class="stage" aria-live="polite">1단계: 각 지수가 뜻하는 반복 곱셈을 펼쳐 보세요.</p><p id="stage2" class="stage" aria-live="polite">2단계: 같은 밑의 인수 수를 세고 결과를 확인하세요.</p></section>
+<section class="card"><h2>Socratic 퀴즈</h2><p>2^3×2^2를 하나의 거듭제곱으로 나타내면?</p><div class="controls"><button type="button" data-choice="5">2^5</button><button type="button" data-choice="6">2^6</button><button type="button" data-choice="9">2^9</button></div><p id="feedback" aria-live="polite">밑 2가 모두 몇 번 곱해지는지 세어 보세요.</p></section>
+<section class="card"><h2>혼자 연습</h2><p>5^2×5^3, (2^3)^2, (2×3)^2를 각각 간단히 하세요.</p><details><summary>정답과 풀이</summary><p>5^5, 2^6=64, 2^2×3^2=36입니다.</p></details></section><p class="muted">이 실험은 밑 2~5, 양의 정수 지수 1~4만 다룹니다. 지수 0·음수·분수 지수는 이 시범 범위에 포함하지 않습니다.</p></main>
+<script>
+(()=>{
+  'use strict';
+  const $=selector=>document.querySelector(selector), ids=['a','b','m','n'];
+  let stage=0;
+  const value=id=>Number($('#'+id).value), power=(base,exponent)=>base**exponent;
+  function update(){
+    ids.forEach(id=>$('#'+id+'Out').textContent=$('#'+id).value);
+    const law=$('#law').value,a=value('a'),b=value('b'),m=value('m'),n=value('n');
+    $('#bLabel').hidden=law!=='distribution';
+    $('#question').textContent=law==='product'?`${a}^${m} × ${a}^${n} = ?`:law==='power'?`(${a}^${m})^${n} = ?`:`(${a}×${b})^${n} = ?`;
+    $('#factors').replaceChildren();
+    $('#stage1').textContent='1단계: 각 지수가 뜻하는 반복 곱셈을 펼쳐 보세요.';
+    $('#stage2').textContent='2단계: 같은 밑의 인수 수를 세고 결과를 확인하세요.';
+    $('#expand').disabled=false;$('#count').disabled=true;stage=0;
+  }
+  function addFactor(group,base){const chip=document.createElement('span');chip.className='factor';chip.textContent=String(base);group.append(chip)}
+  function expand(){
+    const law=$('#law').value,a=value('a'),b=value('b'),m=value('m'),n=value('n'),area=$('#factors');area.replaceChildren();
+    if(law==='product'){
+      const first=document.createElement('span'),second=document.createElement('span');first.className='group';second.className='group';
+      for(let i=0;i<m;i++)addFactor(first,a);for(let i=0;i<n;i++)addFactor(second,a);area.append(first,document.createTextNode(' × '),second);
+      $('#stage1').textContent=`첫 묶음에는 ${a}가 ${m}개, 둘째 묶음에는 ${a}가 ${n}개 있습니다.`;
+    }else if(law==='power'){
+      for(let g=0;g<n;g++){const group=document.createElement('span');group.className='group';for(let i=0;i<m;i++)addFactor(group,a);area.append(group);if(g<n-1)area.append(document.createTextNode(' × '));}
+      $('#stage1').textContent=`(${a}^${m}) 묶음이 ${n}개입니다. 각 묶음의 ${a}를 모두 세어 보세요.`;
+    }else{
+      for(let g=0;g<n;g++){const group=document.createElement('span');group.className='group';addFactor(group,a);addFactor(group,b);area.append(group);if(g<n-1)area.append(document.createTextNode(' × '));}
+      $('#stage1').textContent=`(${a}×${b}) 묶음이 ${n}개입니다. 각 밑이 몇 번씩 나타나는지 세어 보세요.`;
+    }
+    $('#expand').disabled=true;$('#count').disabled=false;stage=1;
+  }
+  function simplify(){
+    if(stage!==1)return;const law=$('#law').value,a=value('a'),b=value('b'),m=value('m'),n=value('n');let formula,numeric;
+    if(law==='product'){formula=`${a}^${m+n}`;numeric=power(a,m+n);}
+    else if(law==='power'){formula=`${a}^${m*n}`;numeric=power(a,m*n);}
+    else{formula=`${a}^${n} × ${b}^${n}`;numeric=power(a,n)*power(b,n);}
+    $('#stage2').textContent=`정리하면 ${formula} = ${numeric}입니다. 전개한 인수의 개수와 지수를 비교해 보세요.`;stage=2;$('#count').disabled=true;
+  }
+  ids.forEach(id=>$('#'+id).addEventListener('input',update));$('#law').addEventListener('change',update);$('#expand').addEventListener('click',expand);$('#count').addEventListener('click',simplify);
+  document.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>{$('#feedback').textContent=button.dataset.choice==='5'?'맞아요. 2가 3개와 2개, 모두 5번 곱해져 2^5입니다.':'다시 펼쳐 세어 보세요. 2^3은 2가 3개, 2^2는 2가 2개입니다.'}));
+  update();
+})();
+</script></body></html>

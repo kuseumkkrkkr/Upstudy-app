@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중1 수학 개념서 — 정수의 덧셈과 뺄셈</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:960px;margin:auto;padding:24px 18px 48px}h1{font-size:clamp(1.45rem,4vw,2.15rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin:16px 0}.controls{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:4px;min-width:140px}.controls input{width:100%}button,select{font:inherit;background:#fff;color:var(--ink);border:1px solid var(--line);border-radius:10px;padding:9px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #f0b642;outline-offset:2px}.status{font-weight:700}.numberline{width:100%;height:auto;display:block}.num{font:14px system-ui;fill:var(--muted)}.tick{stroke:#9aa8bd;stroke-width:1}.axis{stroke:#50617b;stroke-width:3}.move{stroke:var(--blue);stroke-width:5;fill:none;marker-end:url(#arrow)}.dot{fill:var(--green);stroke:white;stroke-width:3}.dot.moving{fill:var(--blue)}.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:.9rem}.legend span::before{content:"";display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--green);margin-right:6px}.legend span+span::before{background:var(--blue)}.quiz{background:#f7f9fd;border-radius:10px;padding:14px}#feedback{min-height:1.5em}.small{font-size:.9rem}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.controls label{min-width:calc(50% - 12px);flex:1}.card{padding:15px}}
+#startDot{fill:white;stroke:var(--green);stroke-width:3}#currentDot{r:7px}
+</style>
+</head>
+<body><main>
+<p class="muted">중1 수학 개념서 시범 · 교육과정/교사 검수 전</p><h1>정수의 덧셈과 뺄셈</h1>
+<p>도구를 조절하고, 움직이기 전에 도착점을 예측하세요. 오른쪽 이동은 양수, 왼쪽 이동은 음수를 뜻합니다.</p>
+<section class="card" aria-labelledby="tool-title"><h2 id="tool-title">수직선에서 움직여 보기</h2>
+<div class="controls">
+<label>시작값 <output id="startOut" for="start">−2</output><input id="start" type="range" min="-5" max="5" step="1" value="-2"></label>
+<label>연산 <select id="operation"><option value="add">더하기 (+)</option><option value="subtract">빼기 (−)</option></select></label>
+<label>계산할 수 <output id="amountOut" for="amount">3</output><input id="amount" type="range" min="-5" max="5" step="1" value="3"></label>
+</div>
+<p id="expression" class="status" aria-live="polite"></p>
+<svg class="numberline" viewBox="0 0 1120 210" role="img" aria-labelledby="svgTitle svgDesc"><title id="svgTitle">정수 수직선 이동</title><desc id="svgDesc">시작 위치와 현재 위치를 점으로 표시하고, 이동 방향을 화살표로 표시합니다.</desc><defs><marker id="arrow" markerWidth="9" markerHeight="9" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 Z" fill="#2459c4"/></marker></defs><line class="axis" x1="100" y1="115" x2="1020" y2="115"/><g id="ticks"></g><path id="path" class="move" d=""/><circle id="startDot" class="dot" cy="115" r="10"/><circle id="currentDot" class="dot moving" cy="115" r="10"/></svg>
+<div class="legend"><span>시작 위치</span><span>현재 위치</span></div>
+<div class="controls"><button type="button" id="step">한 칸 진행</button><button type="button" id="play">재생</button><button type="button" id="reset">처음으로</button></div>
+<p id="status" class="status" aria-live="polite"></p><p id="prediction" class="small muted"></p>
+</section>
+<section class="card"><h2>도구 퀴즈</h2><div class="quiz"><p><strong>2−(−3)</strong>은 수직선에서 어느 방향으로 몇 칸 움직일까요?</p><div class="controls"><button type="button" data-answer="left">왼쪽 3칸</button><button type="button" data-answer="right">오른쪽 3칸</button></div><p id="feedback" class="small" aria-live="polite">빼는 수의 반대 수를 더하는 식으로 생각해 보세요.</p></div></section>
+<section class="card"><h2>부호가 다른 정수의 합</h2><div class="quiz"><p><strong>−4+6</strong>은 얼마일까요?</p><div class="controls"><button type="button" data-mixed-answer="-10">−10</button><button type="button" data-mixed-answer="2">2</button><button type="button" data-mixed-answer="10">10</button></div><p id="mixed-feedback" class="small" aria-live="polite">반대 방향으로 움직이는 4칸과 6칸 중 먼저 상쇄할 수 있는 만큼을 짝지어 보세요.</p></div></section>
+<section class="card"><h2>부호가 같은 정수의 합</h2><div class="quiz"><p><strong>−4+(−6)</strong>은 얼마일까요?</p><div class="controls"><button type="button" data-same-answer="-10">−10</button><button type="button" data-same-answer="2">2</button><button type="button" data-same-answer="10">10</button></div><p id="same-feedback" class="small" aria-live="polite">두 수직선 이동은 같은 방향인가요? 절댓값과 부호를 각각 확인하세요.</p></div></section>
+<p class="small muted">화살표는 계산 과정을 보여주는 모형입니다. 조작 후에는 도구를 가리고 같은 원리를 새 식에 적용해 보세요.</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const start=document.querySelector('#start'), amount=document.querySelector('#amount'), operation=document.querySelector('#operation'), ticks=document.querySelector('#ticks');
+  const startOut=document.querySelector('#startOut'), amountOut=document.querySelector('#amountOut'), expression=document.querySelector('#expression'), status=document.querySelector('#status'), prediction=document.querySelector('#prediction');
+  const startDot=document.querySelector('#startDot'), currentDot=document.querySelector('#currentDot'), path=document.querySelector('#path'), stepButton=document.querySelector('#step'), playButton=document.querySelector('#play');
+  let current=0, timer=null;
+  const xOf=n=>100+(n+10)*46, fmt=n=>String(n).replace('-','−');
+  for(let n=-10;n<=10;n++){
+    const x=xOf(n), line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x); line.setAttribute('x2',x); line.setAttribute('y1','108'); line.setAttribute('y2','122'); line.setAttribute('class','tick'); ticks.append(line);
+    const label=document.createElementNS('http://www.w3.org/2000/svg','text');
+    label.setAttribute('x',x); label.setAttribute('y','148'); label.setAttribute('text-anchor','middle'); label.setAttribute('class','num'); label.textContent=fmt(n); ticks.append(label);
+  }
+  function stop(){if(timer){clearInterval(timer);timer=null}playButton.textContent='재생'}
+  function values(){const a=Number(start.value),b=Number(amount.value),sign=operation.value==='subtract'?-1:1;return {a,b,sign,target:a+sign*b}}
+  function render(){
+    const {a,b,sign,target}=values(), moved=current!==a;
+    startOut.value=fmt(a); amountOut.value=fmt(b);
+    expression.textContent=`${fmt(a)} ${operation.value==='subtract'?'−':'+'} (${fmt(b)}) = ${!moved&&target!==a?'?':fmt(target)}`;
+    startDot.setAttribute('cx',xOf(a)); current=Math.max(-10,Math.min(10,current)); currentDot.setAttribute('cx',xOf(current));
+    const cx=xOf(current); path.setAttribute('d',moved?`M ${xOf(a)} 91 Q ${(xOf(a)+cx)/2} 42 ${cx} 91`:'');
+    status.textContent=current===target?`도착: ${fmt(target)}`:`현재 위치: ${fmt(current)} · 도착값은 이동 후 확인하세요.`;
+    prediction.textContent=`이동 방향: ${sign*b>0?'오른쪽':sign*b<0?'왼쪽':'이동 없음'} · 총 이동 칸 수: ${Math.abs(b)}`;
+    stepButton.disabled=current===target;
+  }
+  function advance(){const {a,target}=values();if(current===target){stop();return}current+=Math.sign(target-a);render();if(current===target)stop()}
+  [start,amount,operation].forEach(el=>el.addEventListener('input',()=>{stop();current=Number(start.value);render()}));
+  stepButton.addEventListener('click',advance);
+  playButton.addEventListener('click',()=>{if(timer){stop();status.textContent=`이동을 멈췄어요. 현재 위치: ${fmt(current)}`;return}if(window.matchMedia('(prefers-reduced-motion: reduce)').matches){status.textContent='기기의 동작 줄이기 설정을 존중해 자동 재생을 건너뜁니다. “한 칸 진행”으로 직접 이동해 보세요.';return}if(current===values().target)current=Number(start.value);timer=setInterval(advance,450);playButton.textContent='정지'});
+  document.querySelector('#reset').addEventListener('click',()=>{stop();current=Number(start.value);render()});
+  document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{const correct=button.dataset.answer==='right';document.querySelector('#feedback').textContent=correct?'맞아요. 2−(−3)=2+3이므로 오른쪽으로 3칸, 5에 도착합니다.':'다시 확인해 보세요. 빼는 수 −3의 반대 수 +3을 더하는 움직임입니다.'}));
+  document.querySelectorAll('[data-mixed-answer]').forEach(button=>button.addEventListener('click',()=>{const correct=button.dataset.mixedAnswer==='2';document.querySelector('#mixed-feedback').textContent=correct?'맞아요. 왼쪽 4칸과 오른쪽 4칸이 상쇄되어 오른쪽 2칸, 즉 2가 남습니다.':'다시 생각해 보세요. 반대 방향 이동을 짝지어 없애고 남는 방향과 칸 수를 확인하세요.'}));
+  document.querySelectorAll('[data-same-answer]').forEach(button=>button.addEventListener('click',()=>{const correct=button.dataset.sameAnswer==='-10';document.querySelector('#same-feedback').textContent=correct?'맞아요. 두 수 모두 음수이므로 절댓값을 더하고 음수 부호를 붙여 −10입니다.':'두 수의 부호가 같은지 확인하세요. 같은 방향 이동은 상쇄되지 않고 길이가 더해집니다.'}));
+  current=Number(start.value);render();
+})();
+</script>
+</body></html>

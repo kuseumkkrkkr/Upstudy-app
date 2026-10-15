@@ -1,0 +1,37 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 정비례와 반비례",
+  "subtitle": "비율·곱이 일정한 관계를 표와 그래프로 연결하기 · 부분 시범 · 학기 미배정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "함수와 그래프", "정비례", "반비례", "9수03-03", "부분 시범", "교사 검수 전"],
+  "chapters": [{
+    "title": "무엇이 일정할까?",
+    "intro": [
+      "정비례에서는 x가 2배가 되면 y도 2배가 되고, 반비례에서는 x가 2배가 되면 y는 절반이 된다.",
+      "여러 값의 쌍에서 비율 또는 곱이 일정한지 확인하고 표·식·그래프를 연결한다.",
+      "교육과정 기준 [9수03-03]의 일부를 보여 주는 시범이며 학년·학기는 미배정이다."
+    ],
+    "sections": [{
+      "title": "일정한 비율과 일정한 곱",
+      "paragraphs": [
+        "정비례 y=ax에서는 x>0일 때 y/x=a가 일정하다. x=0이면 y=0이다.",
+        "반비례 y=a/x에서는 x≠0이고 x×y=a가 일정하다. 직사각형의 가로·세로 길이 모형에서는 x와 y가 양수이다.",
+        "표의 여러 순서쌍은 그래프의 점과 같은 자료다. 상수 a와 입력 x를 조절해 네 표현이 함께 바뀌는 것을 살펴본다."
+      ],
+      "graph": {
+        "items": [
+          {"id":"direct-example","type":"scatter","label":"정비례 y=2x","colorHex":"#315CCB","enabled":true,"xValues":[0,1,2,3,4,5,6],"yValues":[0,2,4,6,8,10,12]},
+          {"id":"inverse-example","type":"scatter","label":"반비례 y=12/x","colorHex":"#D45A3A","enabled":true,"xValues":[1,2,3,4,6],"yValues":[12,6,4,3,2]}
+        ],
+        "settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":0,"right":6,"top":18,"bottom":0}}
+      },
+      "visuals":[{"kind":"table","title":"두 관계의 값 비교","caption":"정비례는 y/x=2, 반비례는 x×y=12가 일정하다.","rows":[["x","1","2","3","6"],["정비례 y=2x","2","4","6","12"],["반비례 y=12/x","12","6","4","2"]]}]
+    }],
+    "pages":[
+      {"id":"ms15-proportional-opening","template":"opening","title":"무엇이 일정할까?","kicker":"비율일까, 곱일까","blocks":[{"type":"lead","title":"오늘의 질문","text":"x가 두 배가 되면 y는 어떻게 바뀔까요?"},{"type":"thinking","title":"먼저 예상하기","text":"정비례와 반비례에서 각각 예상해 보세요."},{"type":"answer","title":"핵심","text":"정비례 y=ax에서는 y도 두 배, 반비례 y=a/x에서는 y가 절반이 됩니다."}]},
+      {"id":"ms15-proportional-concept","template":"concept","title":"두 관계의 기준","kicker":"여러 쌍을 비교해요","blocks":[{"type":"definition","title":"정비례","text":"y=ax에서 x>0일 때 y/x=a가 일정합니다. x가 일정한 배수로 변하면 y도 같은 배수로 변합니다."},{"type":"definition","title":"반비례","text":"y=a/x (x≠0)에서 x×y=a가 일정합니다. x가 일정한 배수로 변하면 y는 그 역수 배수로 변합니다."},{"type":"misconception","title":"한 쌍만 보면 부족해요","text":"한 값의 쌍은 비율·곱이 다른 값에서도 유지되는지 보여 주지 않습니다. 표의 여러 행을 비교하세요."}]},
+      {"id":"ms15-proportional-experiment","template":"experiment","title":"표·식·그래프를 조절하기","kicker":"예측하고 한 번씩 바꿔요","blocks":[{"type":"lead","title":"사용 방법","text":"정비례·반비례를 선택하고 a와 x를 바꾸세요. 현재 값, 표, 식, 그래프가 함께 갱신됩니다."},{"type":"graph","title":"관계 실험","text":"도구에서 정비례 y=ax와 반비례 y=a/x의 값 변화를 비교하세요. x=0에서는 반비례를 계산하지 않습니다."},{"type":"thinking","title":"Socratic 질문","text":"반비례에서 x가 두 배가 될 때 y가 절반이 되는 것은 표의 여러 쌍에서 어떤 값이 일정하기 때문인가요?"},{"type":"verification","title":"확인","text":"정비례는 y/x, 반비례는 x×y를 비교합니다. 표의 여러 쌍에서 일정한 값이 식의 a와 같은지 확인하세요."}]},
+      {"id":"ms15-proportional-practice","template":"practice","title":"관계를 판별하고 설명하기","kicker":"표에서 근거 찾기","blocks":[{"type":"question","title":"1번","text":"x=1,2,4일 때 y=3,6,12입니다. 일정한 값과 관계식을 쓰세요."},{"type":"question","title":"2번","text":"넓이가 24㎠인 직사각형의 가로가 2,3,6cm입니다. 세로와 관계식을 구하세요."},{"type":"hint","title":"힌트","text":"정비례는 y/x, 반비례는 x×y를 여러 쌍에서 확인하세요."},{"type":"answer","title":"정답","text":"1. y/x=3, y=3x. 2. 세로 12,8,4cm이며 xy=24, y=24/x."}]},
+      {"id":"ms15-proportional-summary","template":"summary","title":"두 관계를 구별해요","kicker":"표현 사이를 옮기기","blocks":[{"type":"summary","title":"오늘의 규칙","text":"정비례 y=ax는 y/x가 일정하고, 반비례 y=a/x는 x×y가 일정합니다."},{"type":"thinking","title":"회상 질문","text":"정비례와 반비례를 그래프 모양만 보지 않고 표와 식으로 확인하려면 무엇을 계산해야 하나요?"},{"type":"checklist","title":"마무리","items":["비교할 두 양과 단위를 확인한다.","여러 쌍에서 비율 또는 곱이 일정한지 확인한다.","표·식·그래프가 같은 관계를 나타내는지 설명한다."]}]}
+    ]
+  }]
+}

@@ -1,0 +1,610 @@
+{
+  "title": "공통수학1 단원 코드 01 · 후보 묶음",
+  "tags": [
+    "공통수학1",
+    "2022 개정",
+    "10공수1-01",
+    "자동 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "나머지는 f(k)",
+      "pages": [
+        {
+          "id": "cm1-01-01-001",
+          "title": "나머지는 f(k) · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-01-02 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-002",
+          "template": "opening",
+          "title": "긴 나눗셈 없이 나머지를 찾을 수 있을까?",
+          "kicker": "나누는 식부터 0으로 만들기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x²+x−2를 x−2로 나눌 때 나머지를 바로 구할 수 있을까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측",
+              "text": "x−2를 0으로 만드는 x값을 찾고 f에 넣어 나머지를 예상하세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-003",
+          "template": "concept",
+          "title": "나눗셈 항등식에 대입하기",
+          "kicker": "몫 항을 0으로 만들기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "나눗셈 항등식",
+              "text": "f(x)=(x−k)Q(x)+R에서 R은 상수 나머지다. x=k를 대입하면 f(k)=R이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "이차식의 몫과 나머지",
+              "items": [
+                "f(x)=x²+px+q로 둔다.",
+                "전개해 f(x)=(x−k)(x+p+k)+(k²+pk+q)를 확인한다.",
+                "따라서 몫은 x+p+k, 나머지는 f(k)=k²+pk+q다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "그래프만 보면 증명일까?",
+              "text": "그래프는 f(k)와 나머지가 같은 높이라는 것을 보여 준다. 일반 관계의 근거는 항등식에 x=k를 대입하는 것이다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-004",
+          "template": "experiment",
+          "title": "나누는 값과 나머지 높이 연결하기",
+          "kicker": "계수 조작 → 점 읽기 → 항등식 검산",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 순서",
+              "text": "p,q,k를 바꾸어 보세요. f(k), 나머지 수평선, 그래프의 점 (k,f(k))가 같은 y값인지 비교하세요."
+            },
+            {
+              "type": "graph",
+              "title": "함숫값과 나머지",
+              "text": "그래프는 f(x)=x²+px+q와 y=f(k)를 표시합니다. 독립 체험 HTML에서는 x=k 세로선과 교점을 움직여 읽을 수 있습니다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "polynomial-f",
+                    "type": "function",
+                    "label": "f(x)=x²+px+q",
+                    "colorHex": "#315DA8",
+                    "enabled": true,
+                    "expression": "x^2+p*x+q"
+                  },
+                  {
+                    "id": "remainder-line",
+                    "type": "function",
+                    "label": "y=R=f(k)",
+                    "colorHex": "#D97925",
+                    "enabled": true,
+                    "expression": "k^2+p*k+q"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -4,
+                    "right": 4,
+                    "top": 30,
+                    "bottom": -14
+                  },
+                  "parameters": [
+                    {
+                      "id": "p",
+                      "label": "x 계수 p",
+                      "value": 1,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    },
+                    {
+                      "id": "q",
+                      "label": "상수항 q",
+                      "value": -2,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    },
+                    {
+                      "id": "k",
+                      "label": "나누는 값 k",
+                      "value": 2,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "왜 몫 Q(k)를 계산하지 않고도 나머지를 알 수 있을까요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x=k일 때 나누는 식 x−k는 0입니다."
+            },
+            {
+              "type": "verification",
+              "title": "전개로 다시 확인",
+              "text": "현재 도구의 이차식은 (x−k)(x+p+k)+(k²+pk+q)로 다시 쓸 수 있습니다. 전개하면 x²+px+q가 됩니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-005",
+          "template": "example",
+          "title": "x²+x−2를 x−2로 나누기",
+          "kicker": "대입과 항등식 두 번 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x²+x−2를 x−2로 나눌 때 나머지를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x−2=0에서 x=2다.",
+                "f(2)=4+2−2=4이므로 나머지는 4다.",
+                "x²+x−2=(x−2)(x+3)+4로 전개 검산한다."
+              ]
+            },
+            {
+              "type": "thinking",
+              "title": "이 방법이 짧은 이유",
+              "text": "나누는 식을 0으로 만드는 값을 선택해 몫 항 전체를 없앴습니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-006",
+          "template": "practice",
+          "title": "다른 나누는 값에 적용하기",
+          "kicker": "대입값을 먼저 적고 검산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=x²+2x−3을 x+1로 나눌 때 나머지를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x+1=0을 만족하는 x값을 g에 대입합니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "x=−1이고 g(−1)=1−2−3=−4이므로 나머지는 −4입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "items": [
+                "나누는 식을 0으로 만드는 값을 찾았다.",
+                "f(k)=R로 나머지를 계산했다.",
+                "나눗셈 항등식이나 전개로 결과를 검산했다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_나머지정리_BookData_시범.json"
+    },
+    {
+      "title": "동류항을 정렬해 다항식 더하고 빼기",
+      "pages": [
+        {
+          "id": "cm1-01-02-001",
+          "title": "동류항을 정렬해 다항식 더하고 빼기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-01-01 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-002",
+          "template": "opening",
+          "title": "어떤 항끼리 계산할까?",
+          "kicker": "문자와 차수부터 확인",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 목표",
+              "text": "x²항·x항·상수항을 구분해 계수를 계산하고, 괄호 앞 빼기가 모든 항에 미치는 영향을 설명한다."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측",
+              "text": "(2x²+3x−1)−(x²−2x+4)에서 x의 계수는 얼마일까?"
+            },
+            {
+              "type": "answer",
+              "title": "예측 확인",
+              "text": "두 번째 괄호의 −2x는 빼기 때문에 +2x가 된다. x의 계수는 3+2=5다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-003",
+          "template": "concept",
+          "title": "동류항은 계수만 계산",
+          "kicker": "같은 차수끼리 한 줄에",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "동류항",
+              "text": "문자와 차수 부분이 같은 항이다. x²항은 x²항끼리, x항은 x항끼리, 상수항은 상수항끼리 계산한다."
+            },
+            {
+              "type": "visual",
+              "title": "차수별 정렬",
+              "text": "(2x²+3x−1)−(x²−2x+4)=(2−1)x²+(3+2)x+(−1−4)."
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "x²와 x는 동류항이 아니므로 계수만 더해 하나로 만들 수 없다. 빼는 괄호는 항 하나가 아니라 모든 항의 부호를 바꾼다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-004",
+          "template": "experiment",
+          "title": "계수를 움직여 계산하기",
+          "kicker": "조작 → 정렬 → 한 단계씩 확인",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 실험실",
+              "text": "공통수학1_다항식_동류항계산_체험형.html에서 두 다항식의 계수와 더하기·빼기를 조작한다. 타일을 펼쳐 차수별로 정렬하고 계산 과정을 공개한다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰",
+              "text": "덧셈에서 빼기로 바꾸면 두 번째 식의 x², x, 상수 계수는 각각 어떻게 달라질까?"
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "−(−2x)가 +2x가 되는 이유를 ‘각 항에 곱하는 수’로 설명해 보자."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "괄호 앞의 −를 −1을 곱하는 것으로 바꾸고, −1×(−2x)를 계산한다."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "두 번째 다항식 전체에 −1을 곱하므로 −(−2x)=+2x다. 나머지 항에도 똑같이 적용한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-005",
+          "template": "practice",
+          "title": "새 계수로 독립 연습",
+          "kicker": "도구를 닫고 계산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습 1",
+              "text": "(3x²−2x+5)+(−x²+4x−7)을 간단히 하라."
+            },
+            {
+              "type": "question",
+              "title": "연습 2",
+              "text": "(x²−5x+2)−(−2x²+x−6)을 간단히 하라."
+            },
+            {
+              "type": "thinking",
+              "title": "풀이 순서",
+              "text": "차수별로 계수를 맞추고, 빼기일 때 뒤 식의 모든 부호를 바꾼 다음 각 줄을 계산한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1. 2x²+2x−2. 2. 3x²−6x+8."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "x²항·x항·상수항을 구분했다.",
+                "빼는 식의 모든 부호를 바꿨다.",
+                "문자와 차수 부분은 그대로 두었다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-006",
+          "template": "summary",
+          "title": "한 문장으로 정리",
+          "kicker": "차수별 계수 계산",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "동류항은 차수별로 모아 계수만 계산한다. 다항식의 뺄셈은 뒤 다항식 전체에 −1을 곱해 더한다."
+            },
+            {
+              "type": "verification",
+              "title": "대입 검산",
+              "text": "예제 결과 x²+5x−5에 x=2를 대입하면 9이고, 원래 식에 대입해도 9다."
+            },
+            {
+              "type": "checklist",
+              "title": "범위 확인",
+              "items": [
+                "이 장은 10공수1-01-01의 동류항 덧셈·뺄셈 일부만 다룬다.",
+                "곱셈·나눗셈은 다른 학습 자료에서 다룬다.",
+                "교사 검수와 학년·학기 배정은 대기 중이다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_다항식_동류항계산_BookData_시범.json"
+    },
+    {
+      "title": "정사각형 넓이로 완전제곱식 이해하기",
+      "pages": [
+        {
+          "id": "cm1-01-03-001",
+          "title": "정사각형 넓이로 완전제곱식 이해하기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-01-03 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-002",
+          "template": "opening",
+          "title": "먼저 예측하기",
+          "kicker": "가운데 항을 예상해 보자",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "(x+a)²를 전개할 때 x²와 a² 외에 어떤 항이 더 생길까?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "곱셈 기호를 풀어 (x+a)(x+a)로 쓴 뒤, 서로 다른 항의 곱이 몇 번 나오는지 세어 보자."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-003",
+          "template": "concept",
+          "title": "네 조각의 넓이가 식이 된다",
+          "kicker": "전체와 부분은 같은 넓이",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "완전제곱식",
+              "text": "x²+2ax+a²는 (x+a)²로 인수분해되는 식이다. x²-2ax+a²는 (x-a)²다."
+            },
+            {
+              "type": "visual",
+              "title": "넓이 분할",
+              "text": "한 변 x+a인 정사각형을 x와 a에서 나눈다.",
+              "formula": "x² | ax\nax | a²"
+            },
+            {
+              "type": "derivation",
+              "title": "왜 2ax인가",
+              "text": "두 직사각형의 넓이가 각각 ax다. 그래서 가운데 항은 ax+ax=2ax다."
+            },
+            {
+              "type": "misconception",
+              "title": "자주 빠뜨리는 항",
+              "text": "(x+a)²를 x²+a²로 쓰면 두 직사각형의 넓이 ax를 빠뜨린 것이다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-004",
+          "template": "experiment",
+          "title": "넓이 조각을 직접 움직이기",
+          "kicker": "예측 → 조작 → 설명",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "사용 방법",
+              "text": "x와 a를 움직여 전체 정사각형과 네 조각의 넓이를 비교한다. 그림은 x>0, a>0에서만 유효하다."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "독립 HTML 시범 파일: 공통수학1_인수분해_완전제곱식_체험형_시범.html",
+              "items": [
+                "단계별 분할 보기",
+                "x·a 슬라이더 조작",
+                "넓이 합 퀴즈"
+              ]
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "a=3일 때 x²의 계수와 상수항은 그대로다. 가운데 항의 계수는 얼마인가?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "2a=6이므로 (x+3)²=x²+6x+9다."
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "넓이 ax인 직사각형이 몇 개 겹쳐 있지? a=3을 가운데 항 2ax에 넣어 보자."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-005",
+          "template": "example",
+          "title": "세 항이 같은 구조인지 확인",
+          "kicker": "제곱근과 가운데 항을 함께 검사",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "대표 예제",
+              "text": "9y²+12y+4를 인수분해하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "첫째·마지막 항",
+              "text": "9y²=(3y)²이고 4=2²다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "가운데 항 검산",
+              "text": "2·3y·2=12y이므로 가운데 항도 맞는다."
+            },
+            {
+              "type": "answer",
+              "title": "인수분해",
+              "text": "9y²+12y+4=(3y+2)²."
+            },
+            {
+              "type": "verification",
+              "title": "전개 검산",
+              "text": "(3y+2)(3y+2)=9y²+6y+6y+4=9y²+12y+4."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-006",
+          "template": "practice",
+          "title": "부호와 구조 연습",
+          "kicker": "답을 보기 전에 직접 풀기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "1번",
+              "text": "x²+14x+49를 인수분해하라."
+            },
+            {
+              "type": "question",
+              "title": "2번",
+              "text": "4t²-20t+25를 인수분해하고 가운데 항의 부호를 설명하라."
+            },
+            {
+              "type": "question",
+              "title": "3번",
+              "text": "x²+8x+12가 완전제곱식인지 판별하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "첫째 항과 마지막 항에서 제곱근을 찾은 다음, 두 수를 곱하고 2를 곱한 값이 가운데 항과 같은지 비교한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1. (x+7)². 2. (2t-5)². 3. 아니다. 제곱근은 x와 2√3이므로 가운데 항은 4√3x여야 한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "items": [
+                "첫째 항과 마지막 항이 제곱인지 확인했다.",
+                "가운데 항이 두 제곱근의 곱의 두 배인지 검사했다.",
+                "인수분해 결과를 전개해 검산했다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-007",
+          "template": "summary",
+          "title": "한 줄로 설명하고 마치기",
+          "kicker": "도구 없이 다시 떠올리기",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "오늘의 규칙",
+              "text": "x²±2ax+a²=(x±a)². 가운데 항은 두 직사각형의 넓이 ax가 합쳐져 생긴다."
+            },
+            {
+              "type": "thinking",
+              "title": "회상 질문",
+              "text": "m²+2mn+n²와 m²-2mn+n²를 각각 곱의 꼴로 바꾸고, 두 식의 차이를 가운데 항의 부호로 설명하라."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "완전제곱식 공식을 넓이와 연결해 설명한다.",
+                "가운데 항의 부호를 보고 괄호 안 부호를 결정한다.",
+                "전개로 답을 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_인수분해_완전제곱식_BookData_시범.json"
+    }
+  ],
+  "metadata": {
+    "standard_code_status": "candidate_from_source_tags",
+    "source_files": [
+      "공통수학1_나머지정리_BookData_시범.json",
+      "공통수학1_다항식_동류항계산_BookData_시범.json",
+      "공통수학1_인수분해_완전제곱식_BookData_시범.json"
+    ]
+  }
+}

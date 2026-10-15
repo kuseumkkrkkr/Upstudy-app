@@ -1,0 +1,506 @@
+{
+  "title": "중학교 수학 · 판본 미확인 태그 통합 초안",
+  "tags": [
+    "중학교 수학",
+    "판본 미확인",
+    "태그 기반 부분 초안"
+  ],
+  "chapters": [
+    {
+      "title": "중1 수학 · 좌표평면 · 순서쌍",
+      "pages": [
+        {
+          "title": "순서쌍 · 원본 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "중1 수학 · 좌표평면 · 순서쌍 · 시범 · 판본 대조 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "분권 상태: 판본 미확인. 원본 판본과 기준 대조 상태를 초안 메타데이터에 유지합니다."
+            }
+          ],
+          "id": "remaining-중학교수학_판본미확인_태그초안-01-01-001"
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-01-01-002",
+          "template": "opening",
+          "title": "도착점을 먼저 예측하기",
+          "kicker": "좌표 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "원점에서 왼쪽으로 2칸, 위로 3칸 가면 좌표를 어떤 순서로 적을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "잠깐 생각하기",
+              "text": "가로 이동과 세로 이동 중 무엇을 첫 번째 수로 적는지 말해 보자."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-01-01-003",
+          "template": "experiment",
+          "title": "점을 움직여 좌표 확인하기",
+          "kicker": "가로·세로를 따로 조작",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험",
+              "text": "그래프에서 점을 끌거나 x·y 조절값을 바꾸어 보자. 이동 경로는 달라도 도착 좌표가 같으면 같은 점이다."
+            },
+            {
+              "type": "graph",
+              "title": "좌표평면",
+              "text": "A=(-2,3)과 B=(3,-2)를 찾아 두 수의 순서가 바뀌면 점도 달라짐을 확인한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "point-a",
+                    "type": "scatter",
+                    "label": "A=(-2,3)",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "xValues": [
+                      -2
+                    ],
+                    "yValues": [
+                      3
+                    ]
+                  },
+                  {
+                    "id": "point-b",
+                    "type": "scatter",
+                    "label": "B=(3,-2)",
+                    "colorHex": "#1D4ED8",
+                    "enabled": true,
+                    "xValues": [
+                      3
+                    ],
+                    "yValues": [
+                      -2
+                    ]
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -5,
+                    "right": 5,
+                    "top": 5,
+                    "bottom": -5
+                  }
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "점 C=(-4,0)은 어느 사분면에 있을까? 축 위의 점을 억지로 사분면에 넣어도 될까?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "C는 x축 위에 있으므로 어떤 사분면에도 속하지 않는다."
+            },
+            {
+              "type": "misconception",
+              "title": "순서 주의",
+              "text": "좌표를 읽을 때 y부터 읽지 않는다. 괄호 안 첫 수가 x, 둘째 수가 y다."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-01-01-004",
+          "template": "practice",
+          "title": "좌표와 사분면 설명하기",
+          "kicker": "정답 전에 부호를 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 P=(2,-5)는 어느 사분면에 있는가? x와 y의 부호를 이용해 설명하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "먼저 오른쪽/왼쪽 중 어디인지 판단하자. 그다음 위/아래 중 어디인지 판단하면 어떤 사분면이 남을까?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "첫째 좌표 2는 양수, 둘째 좌표 -5는 음수다. 표에서 (+,−)에 해당하는 위치를 찾아라."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "제4사분면이다. x>0이므로 오른쪽, y<0이므로 아래쪽에 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "순서쌍에서 첫째 수는 x, 둘째 수는 y라고 설명한다.",
+                "축 위의 점과 사분면의 점을 구분한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "중등수학_좌표와순서쌍_BookData_시범.json",
+      "source_tags": [
+        "중1 수학",
+        "좌표평면",
+        "순서쌍",
+        "시범",
+        "판본 대조 전"
+      ],
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "중2 수학 · 연립일차방정식 · 연립방정식과 일차함수",
+      "pages": [
+        {
+          "title": "연립방정식과 일차함수 · 원본 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "중2 수학 · 연립일차방정식 · 일차함수 · 시범 · 판본 대조 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "분권 상태: 판본 미확인. 원본 판본과 기준 대조 상태를 초안 메타데이터에 유지합니다."
+            }
+          ],
+          "id": "remaining-중학교수학_판본미확인_태그초안-02-02-001"
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-02-02-002",
+          "template": "opening",
+          "title": "두 조건을 모두 만족하는 점",
+          "kicker": "연립방정식의 해",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 직선이 한 점에서 만나면 그 교점은 두 식 중 어느 하나만 만족할까, 둘 다 만족할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측하기",
+              "text": "직선 두 개가 평행하다면 공통으로 놓이는 점이 있을지 먼저 말해 보자."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-02-02-003",
+          "template": "experiment",
+          "title": "직선을 움직여 해의 개수 찾기",
+          "kicker": "기울기와 y절편 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험 순서",
+              "text": "두 직선의 기울기와 y절편을 바꾸어 보자. 교점이 하나인지, 만나지 않는지, 완전히 겹치는지 관찰한다."
+            },
+            {
+              "type": "graph",
+              "title": "두 일차방정식의 그래프",
+              "text": "y=m₁x+b₁과 y=m₂x+b₂를 조절한다. 교점이 있으면 좌표를 두 식에 대입해 두 식이 모두 참인지 확인한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "line-one",
+                    "type": "function",
+                    "label": "첫째 식 y=m₁x+b₁",
+                    "colorHex": "#176B4A",
+                    "enabled": true,
+                    "expression": "m1*x+b1"
+                  },
+                  {
+                    "id": "line-two",
+                    "type": "function",
+                    "label": "둘째 식 y=m₂x+b₂",
+                    "colorHex": "#B94C2B",
+                    "enabled": true,
+                    "expression": "m2*x+b2"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -6,
+                    "right": 6,
+                    "top": 8,
+                    "bottom": -8
+                  },
+                  "parameters": [
+                    {
+                      "id": "m1",
+                      "label": "첫째 직선 기울기",
+                      "value": 1,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    },
+                    {
+                      "id": "b1",
+                      "label": "첫째 직선 y절편",
+                      "value": 0,
+                      "min": -4,
+                      "max": 4,
+                      "step": 1
+                    },
+                    {
+                      "id": "m2",
+                      "label": "둘째 직선 기울기",
+                      "value": -1,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    },
+                    {
+                      "id": "b2",
+                      "label": "둘째 직선 y절편",
+                      "value": 4,
+                      "min": -4,
+                      "max": 4,
+                      "step": 1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "두 직선의 기울기가 다르면 공통 해는 몇 개일까? 기울기가 같을 때 y절편까지 같은 경우도 비교해 보자."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "먼저 두 기울기를 비교하면 어떤 관계를 알 수 있을까? 기울기가 같다면 y절편을 비교해 서로 다른 직선인지 같은 직선인지 설명해 보자."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "교점은 두 식의 y값이 동시에 같아지는 점이다. 기울기가 다르면 한 번 만나고, 기울기가 같으면 y절편을 비교한다."
+            },
+            {
+              "type": "misconception",
+              "title": "자주 하는 혼동",
+              "text": "평행한 두 직선은 해가 하나가 아니라 없다. 같은 직선이 겹치는 경우에는 특정한 교점 하나만 있는 것이 아니라 해가 무수히 많다."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-02-02-004",
+          "template": "practice",
+          "title": "교점을 계산하고 검산하기",
+          "kicker": "두 식에 모두 대입",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=2x+1, y=−x+7을 함께 만족하는 순서쌍을 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "풀이를 말로 설명",
+              "text": "두 식의 오른쪽을 같게 놓으면 어떤 일차방정식이 되는가? 구한 x를 어느 식에 넣어 y를 찾을까?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "2x+1=−x+7을 풀어 x를 구한 뒤, 두 식 중 하나에 대입해 y를 구한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답과 검산",
+              "text": "3x=6이므로 x=2, y=5다. (2,5)를 대입하면 첫째 식은 5=2·2+1, 둘째 식은 5=−2+7로 둘 다 성립한다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "해는 두 식을 동시에 만족하는 순서쌍이라고 설명한다.",
+                "두 직선의 기울기·절편으로 해의 개수를 구분한다.",
+                "구한 해를 두 식에 각각 대입해 검산한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "중등수학_연립일차방정식_BookData_시범.json",
+      "source_tags": [
+        "중2 수학",
+        "연립일차방정식",
+        "일차함수",
+        "시범",
+        "판본 대조 전"
+      ],
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "중3 수학 · 제곱근 · 제곱근과 제곱",
+      "pages": [
+        {
+          "title": "제곱근과 제곱 · 원본 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "중3 수학 · 제곱근 · 제곱 · 시범 · 판본 대조 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "분권 상태: 판본 미확인. 원본 판본과 기준 대조 상태를 초안 메타데이터에 유지합니다."
+            }
+          ],
+          "id": "remaining-중학교수학_판본미확인_태그초안-03-03-001"
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-03-03-002",
+          "template": "opening",
+          "title": "제곱하면 9, 거꾸로는?",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "3²=9라면 √9는 얼마일까요? x²=9의 해도 하나뿐일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "두 질문 구분",
+              "text": "제곱근 기호는 0 이상인 값을 묻고, 방정식은 조건을 만족하는 모든 실수를 찾습니다. 두 답을 따로 예측해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-03-03-003",
+          "template": "experiment",
+          "title": "입력과 제곱 결과를 움직여 보기",
+          "kicker": "x≥0에서 y=x²",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 안내",
+              "text": "짝 HTML에서 0 이상인 x를 바꾸면 y=x²인 점이 움직입니다. 같은 양수 y에서 원래 입력 x를 되찾아 보세요."
+            },
+            {
+              "type": "graph",
+              "title": "제곱 관계의 그래프",
+              "text": "그래프는 x≥0 부분만 보여 줍니다. y=9일 때 이 부분의 입력은 3이므로 √9=3입니다. 방정식 x²=9는 음수 입력도 허용하므로 해가 ±3입니다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "square-nonnegative",
+                    "type": "function",
+                    "label": "y=x² (x≥0)",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x*x"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": 0,
+                    "right": 5,
+                    "top": 25,
+                    "bottom": 0
+                  }
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "점이 (4,16)에 있을 때 √16은 얼마일까요? x²=16의 해와 비교해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "그래프의 입력은 0 이상으로 제한되어 있어요. 방정식에서는 x가 음수인 경우도 제곱해 확인할 수 있을까요?"
+            },
+            {
+              "type": "misconception",
+              "title": "기호와 방정식의 차이",
+              "text": "√16은 4 하나를 뜻하지만 x²=16의 해는 4와 −4입니다."
+            }
+          ]
+        },
+        {
+          "id": "remaining-중학교수학_판본미확인_태그초안-03-03-004",
+          "template": "practice",
+          "title": "제곱근과 방정식 구분하기",
+          "kicker": "값의 범위까지 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "① √25 ② x²=25의 해 ③ √0 ④ 실수 범위에서 √(−4)가 정의되는지 각각 답하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "제곱근 기호의 값은 음수일 수 있을까요? 제곱하면 음수가 되는 실수가 있을까요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제곱근 기호는 0 이상인 제곱근을 뜻합니다. 방정식은 양수와 음수 입력을 모두 대입해 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "① 5 ② x=±5 ③ 0 ④ 실수 범위에서 정의되지 않습니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "√a는 음이 아닌 값임을 설명한다.",
+                "x²=a의 해와 √a를 구분한다.",
+                "실수 범위에서 a≥0 조건을 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "중등수학_제곱근과제곱_개념서_BookData_시범.json",
+      "source_tags": [
+        "중3 수학",
+        "제곱근",
+        "제곱",
+        "시범",
+        "판본 대조 전"
+      ],
+      "candidate_standard_codes": []
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "edition_status": "판본 미확인",
+    "source_files": [
+      "중등수학_좌표와순서쌍_BookData_시범.json",
+      "중등수학_연립일차방정식_BookData_시범.json",
+      "중등수학_제곱근과제곱_개념서_BookData_시범.json"
+    ]
+  }
+}

@@ -1,0 +1,855 @@
+{
+  "title": "공통수학1 단원 코드 02 · 후보 묶음",
+  "tags": [
+    "공통수학1",
+    "2022 개정",
+    "10공수1-02",
+    "자동 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "두 근의 합과 곱",
+      "pages": [
+        {
+          "id": "cm1-02-01-001",
+          "title": "두 근의 합과 곱 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-02-03 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-01-002",
+          "template": "opening",
+          "title": "근 두 개가 계수로 바뀌는 순간",
+          "kicker": "먼저 부호를 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "근이 −1과 3인 방정식은 x²−2x−3=0일까요, x²+2x−3=0일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "두 근의 합은 2, 곱은 −3입니다. 일차항 계수의 부호를 먼저 고르고 조작 도구에서 확인해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-01-003",
+          "template": "concept",
+          "title": "합에는 왜 마이너스가 붙을까?",
+          "kicker": "인수형을 전개해 계수 비교",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "근과 계수의 관계",
+              "text": "(x−r)(x−s)=x²−(r+s)x+rs이므로 x²+bx+c=0의 두 근 r,s는 r+s=−b, rs=c를 만족한다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "부호의 이유",
+              "items": [
+                "x항은 (−r)x+(−s)x=−(r+s)x다.",
+                "상수항은 (−r)(−s)=rs다.",
+                "따라서 b=−(r+s), c=rs다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "자주 하는 실수",
+              "text": "근의 합을 b와 그대로 같다고 두지 않는다. 인수형을 전개해 x항의 부호를 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-01-004",
+          "template": "experiment",
+          "title": "근을 움직이고 그래프와 계수 읽기",
+          "kicker": "조작 → 예측 → 전개 → 검산",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 순서",
+              "text": "r,s를 바꾸면 x절편, 합, 전개식의 b,c가 함께 바뀝니다. 조작 전에 합과 곱을 적어 보세요."
+            },
+            {
+              "type": "graph",
+              "title": "포물선과 두 근",
+              "text": "슬라이더로 r,s를 조절하세요. 점이 같은 위치에 겹치면 중근입니다. 그래프는 학습용 시각화이며 관계는 전개식으로도 확인하세요.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "root-quadratic",
+                    "type": "function",
+                    "label": "y=(x−r)(x−s)",
+                    "colorHex": "#315DA8",
+                    "enabled": true,
+                    "expression": "(x-r)*(x-s)"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -4,
+                    "right": 4,
+                    "top": 16,
+                    "bottom": -8
+                  },
+                  "parameters": [
+                    {
+                      "id": "r",
+                      "label": "첫째 근 r",
+                      "value": -1,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    },
+                    {
+                      "id": "s",
+                      "label": "둘째 근 s",
+                      "value": 3,
+                      "min": -3,
+                      "max": 3,
+                      "step": 1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "왜 b는 r+s가 아니라 −(r+s)일까요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "전개식의 x항은 −sx−rx입니다. 이를 bx와 비교해 보세요."
+            },
+            {
+              "type": "verification",
+              "title": "조작 뒤 검산",
+              "text": "현재 두 근을 r,s라 할 때 인수형을 전개해 x²−(r+s)x+rs와 비교합니다. 그래프의 x절편도 같은 r,s인지 확인하세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-01-005",
+          "template": "example",
+          "title": "근으로 방정식 만들기",
+          "kicker": "합·곱과 인수형을 함께 사용",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 근이 −1과 3인 최고차항 계수 1인 이차방정식을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "인수형은 (x+1)(x−3)=0이다.",
+                "전개하면 x²−2x−3=0이다.",
+                "두 근을 대입하면 각각 0이 되어 근을 확인한다."
+              ]
+            },
+            {
+              "type": "thinking",
+              "title": "한 번 더 설명",
+              "text": "합 2가 일차항 계수 −2로 바뀐 까닭을 인수형의 x항으로 설명해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-01-006",
+          "template": "practice",
+          "title": "새 근으로 관계 적용하기",
+          "kicker": "도구 없이 풀고 마지막에 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "두 근의 합이 1, 곱이 −6인 최고차항 계수 1인 이차방정식을 만들고 인수분해로 확인하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x²+bx+c에서 b는 합의 반대 부호, c는 곱입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "x²−x−6=0=(x−3)(x+2)이다. 근은 3과 −2이며 합은 1, 곱은 −6이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "items": [
+                "인수형을 전개해 x항의 부호를 설명했다.",
+                "근의 합과 곱을 그래프와 식에서 각각 확인했다.",
+                "중근이면 같은 근을 두 번 세었다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_근과계수_BookData_시범.json"
+    },
+    {
+      "title": "꼭짓점형으로 포물선을 읽어 보자",
+      "pages": [
+        {
+          "id": "cm1-02-02-001",
+          "title": "꼭짓점형으로 포물선을 읽어 보자 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-02-06 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-002",
+          "template": "opening",
+          "title": "먼저 예측하기",
+          "kicker": "조작 전 10초",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=x²를 오른쪽으로 2, 아래로 1만큼 옮기면 어떤 식일까? 그래프를 열기 전에 적어 보자."
+            },
+            {
+              "type": "question",
+              "title": "예측",
+              "text": "x가 2일 때 제곱 부분이 0이 되도록 괄호를 만들어 보자."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-003",
+          "template": "experiment",
+          "title": "그래프를 직접 움직이기",
+          "kicker": "m>0, h와 k를 조작",
+          "blocks": [
+            {
+              "type": "thinking",
+              "title": "조작 전에 예측",
+              "text": "꼭짓점은 (2,−1)로 고정하고 x=3을 보겠습니다. m=0.5일 때와 m=2일 때 그래프의 y값은 꼭짓점보다 각각 얼마나 높을까요? 먼저 예상값을 적으세요."
+            },
+            {
+              "type": "graph",
+              "title": "두 포물선 비교",
+              "text": "m은 양수인 폭 조절값이다. h=2, k=-1로 바꾸고 두 꼭짓점과 대칭축을 찾아라.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "quadratic-up",
+                    "type": "function",
+                    "label": "위로 열림",
+                    "colorHex": "#DD5F34",
+                    "enabled": true,
+                    "expression": "m*(x-h)^2+k"
+                  },
+                  {
+                    "id": "quadratic-down",
+                    "type": "function",
+                    "label": "아래로 열림",
+                    "colorHex": "#315DA8",
+                    "enabled": true,
+                    "expression": "-m*(x-h)^2+k"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -8,
+                    "right": 8,
+                    "top": 8,
+                    "bottom": -8
+                  },
+                  "parameters": [
+                    {
+                      "id": "m",
+                      "label": "폭 조절 (m>0)",
+                      "value": 1,
+                      "min": 0.25,
+                      "max": 3,
+                      "step": 0.25
+                    },
+                    {
+                      "id": "h",
+                      "label": "꼭짓점 x좌표",
+                      "value": 0,
+                      "min": -5,
+                      "max": 5,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "k",
+                      "label": "꼭짓점 y좌표",
+                      "value": 0,
+                      "min": -5,
+                      "max": 5,
+                      "step": 0.5
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "verification",
+              "title": "예측 검산",
+              "text": "x=3은 꼭짓점에서 오른쪽으로 1만큼 떨어져 있다. 따라서 꼭짓점보다 높이는 m만큼 차이 난다. m=0.5이면 y=−0.5, m=2이면 y=1이다. 두 꼭짓점은 (2,−1), 대칭축은 x=2이고, 위/아래 그래프의 최솟값/최댓값은 각각 −1이다."
+            },
+            {
+              "type": "misconception",
+              "title": "부호 주의",
+              "text": "x+3은 x-(-3)이므로 꼭짓점 x좌표는 -3이다. 괄호 안 부호를 그대로 읽지 말고 x-h=0을 풀어 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-004",
+          "template": "practice",
+          "title": "직접 풀어 보기",
+          "kicker": "풀이를 가리고 시도한 뒤 확인",
+          "blocks": [
+            {
+              "type": "solutionStep",
+              "title": "예시",
+              "items": [
+                "y=-(x-1)^2+4의 꼭짓점은 (1,4), 대칭축은 x=1이다.",
+                "아래로 열리므로 최댓값은 4, 치역은 y≤4이다."
+              ]
+            },
+            {
+              "type": "question",
+              "title": "독립 연습",
+              "text": "y=2(x+3)^2-5의 꼭짓점, 대칭축, 최솟값을 구하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x+3=x-(-3)으로 고쳐 h를 확인한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "꼭짓점 (-3,-5), 대칭축 x=-3, 최솟값 -5."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-005",
+          "template": "example",
+          "title": "꼭짓점형에서 최댓값까지 읽기",
+          "kicker": "풀이 이유를 한 줄씩 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=−2(x+3)^2+5의 꼭짓점, 대칭축, 최댓값, 치역을 구하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x+3=x−(−3)이므로 h=−3, k=5, a=−2이다.",
+                "꼭짓점은 (−3,5), 대칭축은 x=−3이다.",
+                "a<0이므로 아래로 열려 최댓값은 5이고 치역은 y≤5이다."
+              ]
+            },
+            {
+              "type": "thinking",
+              "title": "한 번 더 설명",
+              "text": "꼭짓점에서 좌우로 같은 거리만큼 이동하면 왜 y값이 같을까? 식의 제곱 부분을 이용해 말해 보자."
+            },
+            {
+              "type": "verification",
+              "title": "이유 확인",
+              "text": "x=−3+d와 x=−3−d는 제곱 부분이 각각 d²이므로 함수값이 같다. 따라서 x=−3이 대칭축이다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-006",
+          "template": "practice",
+          "title": "부호를 거꾸로 읽은 풀이 찾기",
+          "kicker": "오류 탐정",
+          "blocks": [
+            {
+              "type": "misconception",
+              "title": "학생의 주장",
+              "text": "y=−(x+3)^2+1에서 괄호 안이 x+3이므로 꼭짓점은 (3,1)이다."
+            },
+            {
+              "type": "question",
+              "title": "어디서 틀렸을까?",
+              "text": "x+3을 x−h 꼴로 고쳐 h를 구하고, 학생 주장의 오류를 설명하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x+3=x−(−3)으로 쓰거나, 제곱 부분이 0이 되는 x를 직접 풀어 보자."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "x+3=x−(−3)이므로 h=−3이다. 꼭짓점은 (−3,1), 대칭축은 x=−3이다. 아래로 열리므로 최댓값은 1, 치역은 y≤1이다."
+            },
+            {
+              "type": "question",
+              "title": "새 조건으로 전이",
+              "text": "y=3(2−x)^2−4의 꼭짓점과 최솟값을 구하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "(2−x)^2=(x−2)^2이고 계수 3은 양수다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "꼭짓점은 (2,−4), 최솟값은 −4이다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-02-007",
+          "template": "summary",
+          "title": "도구를 닫고 다시 떠올리기",
+          "kicker": "누적 회상 · 정답은 시도 후 확인",
+          "blocks": [
+            {
+              "type": "thinking",
+              "title": "핵심 세 가지",
+              "text": "식 y=a(x−h)^2+k만 보고 꼭짓점·대칭축·열리는 방향을 먼저 말해 보자."
+            },
+            {
+              "type": "question",
+              "title": "회상 문제",
+              "text": "y=−0.5(x−4)^2+2의 꼭짓점, 대칭축, 최댓값, 치역은?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "h=4, k=2를 읽고 a의 부호를 확인한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "꼭짓점 (4,2), 대칭축 x=4, 최댓값 2, 치역 y≤2."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "items": [
+                "괄호의 부호를 x−h와 비교했다.",
+                "a의 부호로 최대·최소를 구분했다.",
+                "치역을 부등식으로 나타냈다.",
+                "그래프를 보지 않고 새 식에 적용했다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_꼭짓점형_BookData_시범.json"
+    },
+    {
+      "title": "복소수에 i를 곱하면",
+      "pages": [
+        {
+          "id": "cm1-02-03-001",
+          "title": "복소수에 i를 곱하면 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-02-01 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-03-002",
+          "template": "opening",
+          "title": "먼저 어디로 움직일지 예측",
+          "kicker": "오늘의 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "예측",
+              "text": "복소수 z=2+i를 좌표 (2,1)로 놓아 보세요. i를 곱하면 어느 사분면으로 이동할까요?"
+            },
+            {
+              "type": "question",
+              "title": "잠시 생각하기",
+              "text": "실수 부분과 허수 부분의 계수 가운데 무엇이 바뀌거나 자리를 바꿀지 먼저 예측하세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-03-003",
+          "template": "experiment",
+          "title": "복소평면에서 직접 회전시키기",
+          "kicker": "계수 조작 → 관찰 → 계산",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "체험 도구",
+              "text": "a와 b를 조절해 z=a+bi의 점을 옮기세요. 먼저 iz의 위치를 예측하고 단계 버튼으로 새 벡터를 공개합니다. 독립 체험 HTML은 별도 파일이며 앱 BookData와 실시간 연결되지는 않습니다."
+            },
+            {
+              "type": "thinking",
+              "title": "규칙 찾기",
+              "text": "원래 좌표 (a,b)와 i를 곱한 뒤 좌표를 비교하세요. 새 좌표가 (−b,a)인지 확인하고, 원점에서 점까지의 길이도 비교하세요."
+            },
+            {
+              "type": "verification",
+              "title": "계산으로 확인",
+              "text": "i(a+bi)=ai+b i²=−b+ai이므로 (a,b)→(−b,a)입니다. 두 점까지 거리의 제곱은 각각 a²+b²로 같고, 방향은 반시계 90° 회전입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "그림은 계산을 대신하지 않아요",
+              "text": "회전 그림은 i²=−1과 분배법칙에서 나온 계산을 설명하는 모델입니다. 다른 복소수의 곱셈이나 나눗셈까지 같은 단순 회전이라고 말하지 않습니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-03-004",
+          "template": "example",
+          "title": "복소수 곱셈을 계수로 확인",
+          "kicker": "표현을 바꾸어 검산",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "z=1+2i일 때 iz를 구하고, 복소평면에서의 이동을 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "i(1+2i)=i+2i²이다.",
+                "i²=−1이므로 결과는 −2+i다.",
+                "좌표는 (1,2)에서 (−2,1)로 바뀌며, 원점 중심 반시계 90° 회전이다."
+              ]
+            },
+            {
+              "type": "thinking",
+              "title": "길이도 확인",
+              "text": "두 좌표의 길이는 각각 √(1²+2²), √((-2)²+1²)입니다. 값이 같은 까닭을 말해 보세요."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "두 제곱합은 모두 5이므로 길이는 √5로 같습니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-03-005",
+          "template": "practice",
+          "title": "새 복소수에 적용하기",
+          "kicker": "계산과 좌표 설명을 함께",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "z=1+2i를 i배 하면 무엇일까요? 실수부와 허수부 계수를 바꾸고 부호를 확인하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "(a,b)→(−b,a) 또는 i(1+2i)=i+2i²를 사용하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−2+i입니다. 좌표는 (−2,1)이고, 원래 점을 반시계 90° 돌린 위치입니다."
+            },
+            {
+              "type": "question",
+              "title": "독립 연습",
+              "text": "z=3−2i일 때 iz를 계산하고, 좌표와 벡터 길이를 적으세요."
+            },
+            {
+              "type": "hint",
+              "title": "한 단계 힌트",
+              "text": "a=3, b=−2이므로 새 좌표는 (−b,a)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "풀이 확인",
+              "text": "iz=i(3−2i)=3i−2i²=2+3i입니다. 좌표는 (2,3), 길이는 √13으로 원래 z의 길이 √(3²+(−2)²)=√13과 같습니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-03-006",
+          "template": "summary",
+          "title": "회전 규칙을 떠올리기",
+          "kicker": "핵심 연결 확인",
+          "blocks": [
+            {
+              "type": "thinking",
+              "title": "말로 설명",
+              "text": "왜 i(a+bi)가 −b+ai가 되는지, 그 결과가 복소평면에서 어떤 움직임인지 계산과 그림을 이어 설명하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "items": [
+                "a는 실수부, b는 허수부의 계수로 좌표화했다.",
+                "i²=−1과 분배법칙으로 iz=−b+ai를 얻었다.",
+                "(a,b)→(−b,a)가 반시계 90° 회전임을 설명했다.",
+                "길이가 보존되는 것을 제곱합으로 확인했다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_복소수와90도회전_BookData_시범.json"
+    },
+    {
+      "title": "판별식과 그래프의 만남",
+      "pages": [
+        {
+          "id": "cm1-02-04-001",
+          "title": "판별식과 그래프의 만남 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "공통수학1 · 2022개정 · 10공수1-02-02 · 10공수1-02-04 · 부분시범 · 교사검수대기",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-04-002",
+          "template": "opening",
+          "title": "근을 구하기 전에 예측하기",
+          "kicker": "오늘의 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "문제",
+              "text": "x²+bx+c=0의 해를 구하지 않고 실근이 몇 개인지 알아낼 방법이 있을까요?"
+            },
+            {
+              "type": "question",
+              "title": "먼저 예측",
+              "text": "b=0일 때 c=1, 0, −1을 차례로 대입해 보세요. 포물선과 x축은 각각 몇 번 만날까요?"
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-04-003",
+          "template": "experiment",
+          "title": "계수와 교점을 연결하기",
+          "kicker": "도구를 조작하고 관찰값을 말하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 순서",
+              "text": "b=0, c=1에서 교점 수를 먼저 예상하고, c를 0과 −1로 바꾸며 판별식의 부호와 비교합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "조작 전 기록",
+              "text": "먼저 b=0, c=1에서 교점 수를 예상하세요. 그 다음 c를 0, −1로 바꾸며 D=b²−4c의 부호와 비교하세요."
+            },
+            {
+              "type": "graph",
+              "title": "포물선과 x축",
+              "text": "b와 c를 조절해 보세요. x절편은 방정식의 실근이며, 화면 밖 교점 여부는 판별식으로 확인하세요.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "monic-quadratic",
+                    "type": "function",
+                    "label": "y=x²+bx+c",
+                    "colorHex": "#315DA8",
+                    "enabled": true,
+                    "expression": "x^2+b*x+c"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -6,
+                    "right": 6,
+                    "top": 8,
+                    "bottom": -5
+                  },
+                  "parameters": [
+                    {
+                      "id": "b",
+                      "label": "일차항 계수 b",
+                      "value": 0,
+                      "min": -4,
+                      "max": 4,
+                      "step": 1
+                    },
+                    {
+                      "id": "c",
+                      "label": "상수항 c",
+                      "value": 1,
+                      "min": -4,
+                      "max": 4,
+                      "step": 1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "verification",
+              "title": "관찰을 식으로 설명",
+              "text": "b=0일 때 c=1이면 D=−4<0이라 교점이 없고, c=0이면 D=0이라 원점에서 접하며, c=−1이면 D=4>0이라 x=−1, 1에서 만납니다."
+            },
+            {
+              "type": "misconception",
+              "title": "화면에 안 보이면 근이 없을까?",
+              "text": "아니요. 그래프 창의 범위 밖에 교점이 있을 수 있습니다. 화면이 아니라 D의 부호와 식을 함께 확인하세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-04-004",
+          "template": "example",
+          "title": "판별식에서 접점을 찾기",
+          "kicker": "계산 → 그래프 해석",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x²+2x+1=0의 실근 개수와 y=x²+2x+1의 x축 교점을 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "D=2²−4×1=0이다.",
+                "D=0이므로 중근을 갖고, 그래프는 x축과 한 점에서 만난다.",
+                "x²+2x+1=(x+1)²이므로 접점은 (−1,0)이다."
+              ]
+            },
+            {
+              "type": "thinking",
+              "title": "왜 한 점에서 만날까?",
+              "text": "중근은 같은 x절편이 두 번 겹친다는 뜻입니다. 완전제곱식과 포물선의 접하는 모양을 연결해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-04-005",
+          "template": "practice",
+          "title": "새 식으로 전이하기",
+          "kicker": "도구를 잠깐 덮고 풀기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습 1",
+              "text": "x²−4x+3=0의 실근 개수를 D로 판단하고, 그래프 교점 수와 연결하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "D=(−4)²−4×3을 계산하고 부호를 확인하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "D=4>0이므로 서로 다른 두 실근입니다. 그래프는 x축과 두 점에서 만나며, (x−1)(x−3)=0에서 근은 1, 3입니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "x²+2x+k=0이 중근을 갖게 하는 k를 구하고, 그래프의 접점을 말하세요."
+            },
+            {
+              "type": "hint",
+              "title": "한 단계 힌트",
+              "text": "중근일 때 D=0입니다. 2²−4k=0을 풀어 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "k=1입니다. 식은 (x+1)²=0이므로 그래프 y=(x+1)²은 (−1,0)에서 x축에 접합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-02-04-006",
+          "template": "summary",
+          "title": "핵심 연결 회상하기",
+          "kicker": "식과 그래프를 말로 연결",
+          "blocks": [
+            {
+              "type": "thinking",
+              "title": "세 경우를 설명",
+              "text": "D의 부호 세 가지가 실근과 x축 교점에 어떤 차이를 만드는지 도구 없이 설명해 보세요."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "items": [
+                "f(x)=0의 실근을 그래프의 x절편으로 연결했다.",
+                "D>0, D=0, D<0의 교점 수를 구분했다.",
+                "화면 범위와 실근의 존재 여부를 혼동하지 않았다.",
+                "새 이차방정식에서 D를 계산해 그래프 관계를 설명했다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_판별식과그래프교점_BookData_시범.json"
+    }
+  ],
+  "metadata": {
+    "standard_code_status": "candidate_from_source_tags",
+    "source_files": [
+      "공통수학1_근과계수_BookData_시범.json",
+      "공통수학1_꼭짓점형_BookData_시범.json",
+      "공통수학1_복소수와90도회전_BookData_시범.json",
+      "공통수학1_판별식과그래프교점_BookData_시범.json"
+    ]
+  }
+}

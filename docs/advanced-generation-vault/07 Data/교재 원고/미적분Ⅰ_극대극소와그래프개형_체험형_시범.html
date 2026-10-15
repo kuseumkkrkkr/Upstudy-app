@@ -1,0 +1,143 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>미적분Ⅰ 개념서 · 극대·극소와 그래프 개형</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#f4f6fa;color:#172033;font:16px/1.55 system-ui,sans-serif}
+.wrap{max-width:900px;margin:auto;padding:20px}
+header,main{background:#fff;border:1px solid #dce3ef;border-radius:14px;padding:18px;margin-bottom:14px}
+h1{line-height:1.25}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 220px;gap:14px;align-items:center}
+svg{width:100%;height:auto;background:#fbfcff;border-radius:10px}
+.grid{stroke:#e3e8f0;stroke-width:1}.axis{stroke:#7b8798;stroke-width:1}
+.curve{fill:none;stroke:#2457c5;stroke-width:3}.tangent{stroke:#111827;stroke-width:1.5}.point{fill:#111827}
+.controls{display:flex;gap:8px;flex-wrap:wrap}
+button{font:inherit;padding:8px 12px;border:0;border-radius:8px;background:#e8edf7;cursor:pointer}
+button:focus-visible,input:focus-visible{outline:3px solid #d97706;outline-offset:2px}
+input{accent-color:#2457c5}.readout{font-weight:650}.stage{min-height:3.2em}
+.signs{padding:10px;background:#eef2fa;border-radius:8px;white-space:pre-wrap}
+details{margin-top:12px}
+@media(max-width:650px){.wrap{padding:10px}.layout{grid-template-columns:1fr}header,main{padding:14px}}
+@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <small>미적분Ⅰ · 2022 개정 후보</small>
+  <h1>도함수 부호로 극대·극소와 그래프 개형 읽기</h1>
+  <p>도함수 부호가 바뀌는 방향을 먼저 예측하고, 함수값과 함께 확인하세요.</p>
+  <p><strong>검토용 시범</strong> — 기준 코드 후보이며 교육부 원문 전체 대조·교사 검수 전입니다.</p>
+</header>
+<main>
+  <h2>f(x)=x³−3x</h2>
+  <p>f′(x)=3x²−3. 점을 움직여 함수 그래프와 접선을 보고, 도함수 부호는 단계표에서 확인하세요.</p>
+  <div class="layout">
+    <svg viewBox="0 0 600 360" role="img" aria-labelledby="plot-title plot-description">
+      <title id="plot-title">삼차함수와 움직이는 접선</title>
+      <desc id="plot-description">−2에서 2까지 함수 그래프 위 점과 접선. 도함수 부호는 별도 단계표로 제공한다.</desc>
+      <g id="grid"></g>
+      <line class="axis" x1="55" y1="180" x2="555" y2="180"/>
+      <line class="axis" x1="305" y1="25" x2="305" y2="335"/>
+      <path id="function-curve" class="curve"/>
+      <line id="tangent" class="tangent"/>
+      <circle id="point" class="point" r="5"/>
+    </svg>
+    <div>
+      <label for="x">관찰 위치 x = <output id="x-output">−1.0</output></label>
+      <input id="x" type="range" min="-2" max="2" step="0.1" value="-1" aria-label="관찰 위치 x">
+      <p id="value" class="readout" aria-live="polite"></p>
+      <div class="controls">
+        <button id="previous" type="button">이전 단계</button>
+        <button id="next" type="button">다음 단계</button>
+      </div>
+      <p id="stage" class="stage" aria-live="polite">1단계: 도함수가 0인 곳을 찾아보세요.</p>
+      <p id="sign-table" class="signs" hidden></p>
+    </div>
+  </div>
+</main>
+<main>
+  <h2>도구 퀴즈</h2>
+  <p>현재 점의 도함수 부호를 고르세요.</p>
+  <div class="controls">
+    <button type="button" data-choice="positive">양수</button>
+    <button type="button" data-choice="zero">0</button>
+    <button type="button" data-choice="negative">음수</button>
+  </div>
+  <p id="feedback" aria-live="polite"></p>
+  <details>
+    <summary>전이 연습: g(x)=x³에서 x=0은 극값인가?</summary>
+    <p>아니요. g′(x)=3x²은 0의 양쪽에서 양수여서 계속 증가합니다. 도함수가 0이라는 사실만으로 극값이라 할 수 없습니다.</p>
+  </details>
+</main>
+</div>
+<script>
+(()=>{
+  const ns='http://www.w3.org/2000/svg';
+  const slider=document.querySelector('#x');
+  const output=document.querySelector('#x-output');
+  const curve=document.querySelector('#function-curve');
+  const tangent=document.querySelector('#tangent');
+  const point=document.querySelector('#point');
+  const value=document.querySelector('#value');
+  const stage=document.querySelector('#stage');
+  const signTable=document.querySelector('#sign-table');
+  const xPixel=x=>55+(x+2)*125;
+  const yPixel=y=>180-y*55;
+  const f=x=>x*x*x-3*x;
+  const df=x=>3*x*x-3;
+
+  for(let x=-2;x<=2.001;x+=1){
+    const line=document.createElementNS(ns,'line');
+    line.setAttribute('x1',xPixel(x)); line.setAttribute('x2',xPixel(x));
+    line.setAttribute('y1',25); line.setAttribute('y2',335); line.setAttribute('class','grid');
+    document.querySelector('#grid').append(line);
+  }
+  let path='';
+  for(let i=0;i<=120;i++){
+    const x=-2+i/30;
+    path+=(i?'L':'M')+xPixel(x)+','+yPixel(f(x));
+  }
+  curve.setAttribute('d',path);
+
+  function draw(){
+    const x=Number(slider.value), y=f(x), slope=df(x);
+    output.value=x.toFixed(1);
+    point.setAttribute('cx',xPixel(x)); point.setAttribute('cy',yPixel(y));
+    const left=Math.max(-2,x-.35), right=Math.min(2,x+.35);
+    tangent.setAttribute('x1',xPixel(left)); tangent.setAttribute('x2',xPixel(right));
+    tangent.setAttribute('y1',yPixel(y+slope*(left-x)));
+    tangent.setAttribute('y2',yPixel(y+slope*(right-x)));
+    const kind=x===-1?'극대 후보':x===1?'극소 후보':x < -1||x > 1?'증가 구간':'감소 구간';
+    value.textContent=`f(x)=${y.toFixed(2)} · f′(x)=${slope.toFixed(2)} · ${kind}`;
+    document.querySelector('#plot-description').textContent=`x=${x.toFixed(1)}, 함수값 ${y.toFixed(2)}, 도함수 ${slope.toFixed(2)}, ${kind}`;
+  }
+
+  let currentStep=0;
+  const stepText=['도함수가 0인 x값을 −1과 1에서 찾아보세요.','부호는 +, −, + 순서입니다. 극대값은 2, 극솟값은 −2입니다.'];
+  function showStep(step){
+    currentStep=Math.max(0,Math.min(1,step));
+    stage.textContent=`${currentStep+1}단계: ${stepText[currentStep]}`;
+    signTable.hidden=currentStep===0;
+    signTable.textContent='x 구간: (−∞,−1)  |  (−1,1)  |  (1,∞)\nf′ 부호:      +       |    −    |   +\n함수:          증가   |  감소  | 증가';
+    if(currentStep===1)slider.value='-1';
+    draw();
+  }
+  slider.addEventListener('input',draw);
+  document.querySelector('#previous').onclick=()=>showStep(currentStep-1);
+  document.querySelector('#next').onclick=()=>showStep(currentStep+1);
+  document.querySelectorAll('[data-choice]').forEach(button=>button.onclick=()=>{
+    const slope=df(Number(slider.value));
+    const correct=slope>1e-8?'positive':slope< -1e-8?'negative':'zero';
+    document.querySelector('#feedback').textContent=button.dataset.choice===correct
+      ?'맞아요. 현재 x를 도함수에 대입해 부호를 확인했어요.'
+      :'다시 계산해 보세요. f′(x)=3x²−3입니다.';
+  });
+  draw();
+})();
+</script>
+</body>
+</html>

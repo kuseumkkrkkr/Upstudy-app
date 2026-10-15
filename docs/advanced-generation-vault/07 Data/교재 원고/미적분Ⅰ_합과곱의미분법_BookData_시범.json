@@ -1,0 +1,71 @@
+{
+  "title": "미적분Ⅰ 개념서 · 합과 곱의 미분법",
+  "subtitle": "변화량의 합과 곱의 두 변화 경로 비교하기",
+  "category": "concept_textbook_prototype",
+  "tags": ["미적분Ⅰ", "다항함수의 미분", "곱의 미분법", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-04"],
+  "chapters": [
+    {
+      "title": "합·차·상수배와 곱의 미분",
+      "intro": [
+        "3x²−2x+4의 항별 변화와 x(x+1)의 곱 변화를 그래프 및 차분몫으로 비교한다. 기준점 a와 h를 조절해 할선 기울기와 극한에서 예상하는 도함수를 구별한다.",
+        "곱의 미분법은 u'v+uv'다. u'v'만 곱하는 오개념을 x(x+1), a=1의 반례로 점검한다. 성취기준은 후보이며 공식 원문 직접 대조와 교사 검수 전이다."
+      ],
+      "sections": [
+        {
+          "title": "합·차·실수배의 변화율",
+          "paragraphs": [
+            "F(x)=3x²−2x+4의 각 항을 미분하면 F'(x)=6x−2다. 상수항은 변하지 않으므로 변화량이 0이다.",
+            "현재 간격 h의 할선 기울기는 6a+3h−2이고, h→0의 미분계수는 6a−2다. 유한한 간격에서 두 값은 다를 수 있다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"sum-function","type":"function","label":"F(x)=3x²−2x+4","colorHex":"#2457C5","enabled":true,"expression":"3*x^2-2*x+4"},
+              {"id":"sum-secant","type":"function","label":"F의 할선","colorHex":"#C2410C","enabled":true,"expression":"((3*(a+side*d)^2-2*(a+side*d)+4)-(3*a^2-2*a+4))/(side*d)*(x-a)+(3*a^2-2*a+4)"},
+              {"id":"product-function","type":"function","label":"G(x)=x(x+1)","colorHex":"#16805D","enabled":true,"expression":"x*(x+1)"},
+              {"id":"product-secant","type":"function","label":"G의 할선","colorHex":"#A33B8F","enabled":true,"expression":"((a+side*d)*(a+side*d+1)-a*(a+1))/(side*d)*(x-a)+a*(a+1)"}
+            ],
+            "settings": {"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-2,"right":2,"top":14,"bottom":-2},"parameters":[{"id":"a","label":"기준점 a","value":1,"min":-1,"max":1,"step":0.5},{"id":"side","label":"h 방향","value":1,"min":-1,"max":1,"step":2},{"id":"d","label":"간격 |h|","value":0.2,"min":0.1,"max":0.5,"step":0.1}]}
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"calc1-sum-product-opening",
+          "template":"opening",
+          "title":"곱의 도함수는 도함수끼리 곱하면 될까?",
+          "kicker":"x=1에서 두 값을 예측",
+          "blocks":[
+            {"type":"lead","title":"먼저 예상","text":"G(x)=x(x+1)이다. x=1에서 G의 기울기를 u'v'=1이라고 예상한다면, 그래프와 차분몫에서 실제 값도 1인지 확인하자."},
+            {"type":"thinking","title":"합과 곱을 구분","text":"항별 변화율을 더하는 규칙과 두 함수가 곱해진 변화율은 같은 방식일까?"}
+          ]
+        },
+        {
+          "id":"calc1-sum-product-experiment",
+          "template":"experiment",
+          "title":"합 모드와 곱 모드 비교",
+          "kicker":"기준점·방향·간격을 직접 조절",
+          "blocks":[
+            {"type":"lead","title":"조작","text":"독립 HTML에서 합·차·상수배 또는 곱을 고르고 기준점 a, h 방향, |h|를 움직인다. 현재 할선 기울기와 h→0에서 예상하는 미분계수를 비교한다."},
+            {"type":"graph","title":"두 함수와 할선","text":"F(x)=3x²−2x+4의 할선은 6a+3h−2, 도함수는 6a−2다. G(x)=x(x+1)의 할선은 2a+h+1, 도함수는 2a+1이다. 그래프는 두 함수와 해당 할선을 표시한다.","graph":{"items":[{"id":"sum-function","type":"function","label":"F(x)=3x²−2x+4","colorHex":"#2457C5","enabled":true,"expression":"3*x^2-2*x+4"},{"id":"sum-secant","type":"function","label":"F의 할선","colorHex":"#C2410C","enabled":true,"expression":"((3*(a+side*d)^2-2*(a+side*d)+4)-(3*a^2-2*a+4))/(side*d)*(x-a)+(3*a^2-2*a+4)"},{"id":"product-function","type":"function","label":"G(x)=x(x+1)","colorHex":"#16805D","enabled":true,"expression":"x*(x+1)"},{"id":"product-secant","type":"function","label":"G의 할선","colorHex":"#A33B8F","enabled":true,"expression":"((a+side*d)*(a+side*d+1)-a*(a+1))/(side*d)*(x-a)+a*(a+1)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-2,"right":2,"top":14,"bottom":-2},"parameters":[{"id":"a","label":"기준점 a","value":1,"min":-1,"max":1,"step":0.5},{"id":"side","label":"h 방향","value":1,"min":-1,"max":1,"step":2},{"id":"d","label":"간격 |h|","value":0.2,"min":0.1,"max":0.5,"step":0.1}]}}},
+            {"type":"question","title":"Socratic 질문","text":"a=1에서 G의 할선 기울기는 h가 작아지면 어디로 가는가? u'v'와 u'v+uv'는 각각 얼마인가?"},
+            {"type":"verification","title":"확인","text":"G(x)=x(x+1)=x²+x이므로 G'(x)=2x+1, G'(1)=3이다. u'v'=1은 실제 기울기 3과 다르다."},
+            {"type":"misconception","title":"곱의 미분 오개념","text":"곱의 도함수는 u'v'가 아니다. 한 인수의 변화가 다른 인수의 현재 크기와 곱해지는 두 경로 u'v와 uv'를 모두 더한다."}
+          ]
+        },
+        {
+          "id":"calc1-sum-product-practice",
+          "template":"practice",
+          "title":"새 식에서 두 규칙 적용",
+          "kicker":"계산하고 정의로 연결",
+          "blocks":[
+            {"type":"question","title":"연습","text":"F(x)=3x²−2x+4의 x=1 도함수와 H(x)=(2x−1)(x²+1)의 도함수를 구하라."},
+            {"type":"thinking","title":"Socratic 발판","text":"첫 식은 항별로 미분하고, 둘째 식은 첫 인수의 변화와 둘째 인수의 변화를 각각 한 항씩 만든다."},
+            {"type":"hint","title":"힌트","text":"(uv)'=u'v+uv'. H에서는 u=2x−1, v=x²+1로 둔다."},
+            {"type":"answer","title":"정답 확인","text":"F'(1)=6−2=4. H'=2(x²+1)+(2x−1)·2x=6x²−2x+2."},
+            {"type":"checklist","title":"마무리","items":["합·차·상수배를 항별 미분으로 설명한다.","곱의 두 변화 경로 u'v와 uv'를 구분한다.","u'v'가 틀리는 반례를 말한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,573 @@
+{
+  "title": "기하 2015 개정 · 평면벡터 태그별 통합 초안",
+  "tags": [
+    "기하",
+    "2015 개정",
+    "평면벡터",
+    "태그 기반 초안"
+  ],
+  "chapters": [
+    {
+      "title": "1장 · 벡터의 덧셈과 실수배",
+      "pages": [
+        {
+          "title": "1장 · 벡터의 덧셈과 실수배 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "기하 · 2015 개정 · 평면벡터 · 개념서 시범 · 교사 검수 전 · 성취기준 원문 대조 완료"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 시범 BookData의 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "geo15-01-01-001"
+        },
+        {
+          "id": "geo15-01-01-002",
+          "template": "opening",
+          "title": "두 이동을 하나로 합치기",
+          "kicker": "끝점을 먼저 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "u=(3,1) 다음에 v=(1,2)만큼 이동하면 최종 이동은?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "화살표를 잇기 전에 성분 합을 예상하세요."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-01-003",
+          "template": "experiment",
+          "title": "성분과 화살표로 연산하기",
+          "kicker": "부호·방향·길이 관찰",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "u와 v의 성분, 연산 종류, 실수배 계수를 바꾸어 결과를 예측하세요."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "별도 HTML에서 덧셈·뺄셈·실수배를 조작합니다. 앱 안의 응답 저장 퀴즈는 아닙니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "뺄셈에서 v의 방향은 어떻게 바뀌며, 음수 계수는 무엇을 바꾸나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "u−v는 u+(−v)로 고쳐 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "뺄셈은 반대 방향 −v를 더합니다. 계수의 부호는 방향, 절댓값은 크기를 정합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-01-004",
+          "template": "practice",
+          "title": "벡터 연산 전이",
+          "kicker": "다른 성분으로 풀기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "u=(−2,3), v=(4,−1)일 때 u+v, u−v, −2u를 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "(2,2), (−6,4), (4,−6)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "화살표 연결과 성분 합을 연결한다.",
+                "뺄셈을 반대 벡터의 덧셈으로 나타낸다.",
+                "실수배 부호·절댓값을 구분한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "source_tags": [
+        "기하",
+        "2015 개정",
+        "평면벡터",
+        "개념서 시범",
+        "교사 검수 전",
+        "성취기준 원문 대조 완료"
+      ]
+    },
+    {
+      "title": "2장 · 위치벡터와 좌표",
+      "pages": [
+        {
+          "title": "2장 · 위치벡터와 좌표 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "기하 · 2015 개정 · 평면벡터 · 개념서 시범 · 교사 검수 전 · 성취기준 원문 대조 완료"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 시범 BookData의 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "geo15-01-02-001"
+        },
+        {
+          "id": "geo15-01-02-002",
+          "template": "opening",
+          "title": "점은 위치, 벡터는 이동",
+          "kicker": "좌표 차를 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A에서 B로 가는 화살표의 성분은?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "A(−2,1), B(3,4)의 가로·세로 이동을 각각 예상하세요."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-02-003",
+          "template": "experiment",
+          "title": "위치벡터와 두 점 사이 이동",
+          "kicker": "A·B 좌표 직접 조절",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "A와 B의 좌표를 바꾸고 OA, OB, AB를 비교합니다."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "별도 SVG HTML에서 좌표·화살표·B−A·단계 설명이 동기화됩니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "현재 AB의 x성분은 B의 x좌표와 A의 x좌표 중 어떤 것을 먼저 빼야 할까요?"
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "도착점에서 시작점을 뺍니다. OA+AB=OB도 좌표 성분으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-02-004",
+          "template": "practice",
+          "title": "좌표 차와 벡터 합",
+          "kicker": "도구 없이 전이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A(−1,3), B(4,−2)일 때 AB를 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "(4−(−1),−2−3)=(5,−5)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "위치와 이동을 구별한다.",
+                "AB를 B−A로 계산한다.",
+                "OA+AB=OB를 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "source_tags": [
+        "기하",
+        "2015 개정",
+        "평면벡터",
+        "개념서 시범",
+        "교사 검수 전",
+        "성취기준 원문 대조 완료"
+      ]
+    },
+    {
+      "title": "3장 · 평면벡터의 내적",
+      "pages": [
+        {
+          "title": "3장 · 평면벡터의 내적 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "기하 · 2015 개정 · 평면벡터 · 개념서 시범 · 교사 검수 전 · 성취기준 원문 대조 완료"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 시범 BookData의 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "geo15-01-03-001"
+        },
+        {
+          "id": "geo15-01-03-002",
+          "template": "opening",
+          "title": "방향을 숫자로 나타내기",
+          "kicker": "각도 전에 부호 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 벡터의 방향 관계는 내적의 부호에 어떻게 나타날까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "끼인각 60°에서 내적은 양수·0·음수 중 무엇일까요?"
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-03-003",
+          "template": "experiment",
+          "title": "각도와 투영 조작",
+          "kicker": "투영·내적·성분 연결",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "벡터 크기와 끼인각을 바꾸고 내적의 부호와 값을 예측합니다."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "별도 HTML에서 화살표, 부호 있는 투영, 단계형 공식 설명을 조작합니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 질문",
+              "text": "투영이 u와 같은 쪽인지 반대쪽인지가 부호를 어떻게 정하나요?"
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "u·v=|u||v|cosθ이며 좌표 성분식도 같은 값을 나타냅니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-03-004",
+          "template": "practice",
+          "title": "각·좌표로 내적 계산",
+          "kicker": "새 조건에서 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "벡터 크기가 2, 5이고 끼인각이 120°일 때 내적은?"
+            },
+            {
+              "type": "answer",
+              "title": "풀이",
+              "text": "10×cos120°=−5입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "투영으로 내적의 뜻을 설명한다.",
+                "각도와 부호를 연결한다.",
+                "좌표 성분식과 비교한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "source_tags": [
+        "기하",
+        "2015 개정",
+        "평면벡터",
+        "개념서 시범",
+        "교사 검수 전",
+        "성취기준 원문 대조 완료"
+      ]
+    },
+    {
+      "title": "위치벡터",
+      "pages": [
+        {
+          "title": "위치벡터 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "기하 · 2015 개정 · 평면벡터 · 위치벡터 · 부분 시범 · 교사 검수 전 · 성취기준 원문 대조 완료"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 시범 BookData의 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "geo15-01-04-001"
+        },
+        {
+          "id": "geo15-01-04-002",
+          "template": "opening",
+          "title": "점은 위치, 벡터는 이동",
+          "kicker": "좌표를 보기 전에 이동을 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "점 A에서 점 B로 가는 화살표의 성분은 좌표를 어떤 순서로 계산할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측",
+              "text": "A(−2,1), B(3,4)일 때 가로·세로로 각각 몇 칸 움직이나요?"
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-04-003",
+          "template": "experiment",
+          "title": "두 점을 옮겨 위치벡터와 이동 관찰",
+          "kicker": "점 좌표·화살표·성분을 함께 조작",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 방법",
+              "text": "A와 B의 좌표를 바꾸고, 원점 기준 위치벡터 OA·OB와 A에서 B로 가는 AB를 비교합니다."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "독립 HTML에서 A·B의 x,y 좌표를 조절합니다. 좌표평면의 세 화살표와 B−A 성분, 단계형 벡터 합 설명이 연동됩니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 퀴즈",
+              "text": "현재 AB의 가로 성분은 얼마인가요? B의 x좌표에서 A의 x좌표를 빼 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "시작점 A에서 도착점 B로 이동합니다. 좌표 차의 순서는 도착점−시작점입니다."
+            },
+            {
+              "type": "answer",
+              "title": "관계 확인",
+              "text": "OA+AB=OB이며, (a₁,a₂)+(b₁−a₁,b₂−a₂)=(b₁,b₂)입니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-04-004",
+          "template": "practice",
+          "title": "좌표 차와 벡터 합 연습",
+          "kicker": "조작한 뒤 다른 좌표로 전이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습 1",
+              "text": "A(−1,3), B(4,−2)일 때 AB를 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "(4−(−1),−2−3)=(5,−5)입니다."
+            },
+            {
+              "type": "question",
+              "title": "연습 2",
+              "text": "A(2,−3), B(6,1)일 때 OA+AB를 구하고 OB와 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "(2,−3)+(4,4)=(6,1)=OB입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "위치벡터와 점의 위치를 구별한다.",
+                "AB의 성분을 B−A로 계산한다.",
+                "OA+AB=OB를 좌표 성분으로 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_위치벡터와좌표_BookData_시범.json",
+      "source_tags": [
+        "기하",
+        "2015 개정",
+        "평면벡터",
+        "위치벡터",
+        "부분 시범",
+        "교사 검수 전",
+        "성취기준 원문 대조 완료"
+      ]
+    },
+    {
+      "title": "내적",
+      "pages": [
+        {
+          "title": "내적 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "기하 · 2015 개정 · 평면벡터 · 내적 · 부분 시범 · 성취기준 원문 대조 완료 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 시범 BookData의 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "geo15-01-05-001"
+        },
+        {
+          "id": "geo15-01-05-002",
+          "template": "opening",
+          "title": "화살표가 직각이면 내적은 얼마일까?",
+          "kicker": "계산하기 전에 방향으로 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 화살표가 나란하거나 직각일 때 내적의 부호와 값은 어떻게 달라질까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측",
+              "text": "|u|=3, |v|=4, θ=60°에서 내적은 양수·0·음수 중 무엇일지 골라 보세요."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-05-003",
+          "template": "experiment",
+          "title": "각도를 바꾸며 투영과 내적 관찰하기",
+          "kicker": "화살표·투영·계산값을 함께 조작",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 방법",
+              "text": "두 벡터의 크기와 끼인각을 바꾸세요. 각도에 따른 내적의 부호를 예측하고 화살표와 투영으로 확인합니다."
+            },
+            {
+              "type": "visual",
+              "title": "체험 도구",
+              "text": "독립 HTML에서 |u|, |v|, θ를 조절합니다. v의 u 방향 투영과 |u||v|cosθ 계산값을 표시하고, 수동 단계 버튼으로 공식 유도를 한 단계씩 확인합니다."
+            },
+            {
+              "type": "question",
+              "title": "Socratic 퀴즈",
+              "text": "현재 끼인각에서 내적은 양수·0·음수 중 무엇인가요? 선택 후 투영이 u와 같은 쪽인지 반대쪽인지 확인하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "θ가 90°보다 작으면 cosθ>0, 90°이면 cosθ=0, 90°보다 크면 cosθ<0입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정식화",
+              "text": "u·v=|u||v|cosθ이며 좌표로는 u₁v₁+u₂v₂입니다. 두 표현은 같은 값을 나타냅니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-01-05-004",
+          "template": "practice",
+          "title": "각과 좌표로 내적 계산하기",
+          "kicker": "조작값을 바꾸고 도구 없이 전이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습 1",
+              "text": "두 벡터의 크기가 2, 5이고 끼인각이 120°일 때 내적을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "투영은 u와 같은 방향인가요, 반대 방향인가요? cos120°의 부호는 무엇인가요?"
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "2×5×cos120°=10×(−1/2)=−5입니다."
+            },
+            {
+              "type": "question",
+              "title": "연습 2",
+              "text": "u=(3,0), v=(2,2)일 때 성분으로 내적을 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "3×2+0×2=6입니다. 각의 식으로 계산한 값과 성분식이 같은 개념인지 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "내적의 부호를 끼인각과 연결한다.",
+                "투영으로 내적의 뜻을 설명한다.",
+                "각의 식과 좌표 성분식을 같은 값으로 확인한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "고등수학_기하_평면벡터내적_BookData_시범.json",
+      "source_tags": [
+        "기하",
+        "2015 개정",
+        "평면벡터",
+        "내적",
+        "부분 시범",
+        "성취기준 원문 대조 완료",
+        "교사 검수 전"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "고등수학_기하_위치벡터와좌표_BookData_시범.json",
+      "고등수학_기하_평면벡터내적_BookData_시범.json"
+    ]
+  }
+}

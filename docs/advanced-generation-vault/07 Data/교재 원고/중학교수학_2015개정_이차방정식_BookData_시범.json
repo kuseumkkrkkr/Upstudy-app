@@ -1,0 +1,35 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 이차방정식",
+  "subtitle": "인수분해·그래프·검산으로 해 이해하기 · 부분 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "문자와 식", "이차방정식", "인수분해", "9수02-13", "부분 시범", "교사 검수 전"],
+  "chapters": [{
+    "title": "곱이 0이 되는 순간을 해로 연결하기",
+    "intro": [
+      "이차방정식의 해는 원래 방정식을 참으로 만드는 값이다.",
+      "정수 인수분해가 가능한 사례에서 곱이 0인 성질을 사용해 해를 구하고 원래 식에 대입해 확인한다.",
+      "함수 그래프의 x절편은 방정식의 해를 시각적으로 나타낸다."
+    ],
+    "sections": [{
+      "title": "인수분해와 x절편",
+      "paragraphs": [
+        "x²−5x+6=0은 (x−2)(x−3)=0으로 인수분해된다.",
+        "두 인수의 곱이 0이므로 x−2=0 또는 x−3=0이고, 해는 x=2 또는 x=3이다.",
+        "y=x²−5x+6 그래프의 x절편은 2와 3이다. 각 값을 원래 식에 대입해 해인지 확인한다."
+      ],
+      "graph": {
+        "items": [{"id":"quadratic","type":"function","label":"y=x²+bx+c","colorHex":"#54D6A0","enabled":true,"expression":"x*x+b*x+c"}],
+        "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-6,"right":8,"top":18,"bottom":-10},"parameters":[{"id":"b","label":"x의 계수 b","value":-5,"min":-10,"max":10,"step":1},{"id":"c","label":"상수항 c","value":6,"min":-25,"max":25,"step":1}]}
+      },
+      "visuals": [{"kind":"table","title":"대수·그래프·검산","caption":"서로 다른 표현이 같은 해를 확인한다.","rows":[["표현","확인"],["인수분해","(x−2)(x−3)=0"],["곱이 0","x=2 또는 x=3"],["그래프","x절편 2, 3"],["원래 식 대입","두 값 모두 좌변이 0"]]}]
+    }],
+    "pages": [
+      {"id":"ms15-quadratic-opening","template":"opening","title":"해는 그래프의 어디에 있을까?","kicker":"y가 0인 x 찾기","blocks":[{"type":"lead","title":"오늘의 질문","text":"y=x²−5x+6 그래프가 x축과 만나는 곳의 x좌표는 무엇일까요?"},{"type":"thinking","title":"먼저 예상하기","text":"x=2와 x=3을 원래 식에 넣으면 좌변은 각각 얼마가 될까요?"},{"type":"answer","title":"핵심","text":"방정식의 해는 좌변이 0이 되는 x값이며 그래프의 x절편과 같습니다."}]},
+      {"id":"ms15-quadratic-concept","template":"concept","title":"곱이 0이면 한 인수가 0","kicker":"두 후보를 각각 구하기","blocks":[{"type":"definition","title":"곱이 0인 성질","text":"두 수의 곱이 0이면 적어도 한 인수가 0입니다. (x−2)(x−3)=0이면 x−2=0 또는 x−3=0입니다."},{"type":"derivation","title":"해 구하기","text":"x−2=0에서 x=2, x−3=0에서 x=3을 얻습니다."},{"type":"visual","title":"그래프 연결","text":"y=x²−5x+6에서 y=0인 점의 x좌표가 두 해입니다.","formula":"y=(x−2)(x−3)"},{"type":"misconception","title":"해를 빠뜨리지 않기","text":"한 인수가 0이 되는 경우를 모두 찾아야 합니다. 구한 값은 원래 방정식에 대입해 확인합니다."}]},
+      {"id":"ms15-quadratic-experiment","template":"experiment","title":"계수와 시험값을 조절하기","kicker":"그래프·대수·검산","blocks":[{"type":"lead","title":"사용 방법","text":"b, c를 바꾸어 y=x²+bx+c의 그래프를 관찰하고 시험값 x에서 함수값을 확인합니다. 인수분해 경로는 정수 인수분해 가능한 경우에만 제공합니다."},{"type":"graph","title":"포물선과 x축","text":"x값을 움직여 점이 x축 위에 놓이는지 보세요. 그때 함수값이 0이고, 해당 x가 방정식의 해입니다."},{"type":"thinking","title":"Socratic 질문","text":"곱이 0일 때 두 인수를 모두 0으로 만들어야 할까요, 둘 중 하나만 0이어도 될까요?"},{"type":"hint","title":"힌트","text":"한 인수가 0이면 다른 인수가 어떤 값이어도 곱은 얼마인가요?"},{"type":"verification","title":"확인","text":"곱이 0이면 두 인수 중 적어도 하나가 0이면 충분합니다. 각 경우를 풀고 원식에 대입합니다."}]},
+      {"id":"ms15-quadratic-example","template":"example","title":"인수분해한 뒤 그래프와 검산","kicker":"두 표현에서 같은 해 확인","blocks":[{"type":"question","title":"대표 예제","text":"x²−5x+6=0을 풀고 그래프의 x절편과 연결하세요."},{"type":"solutionStep","title":"인수분해","text":"x²−5x+6=(x−2)(x−3)입니다."},{"type":"solutionStep","title":"곱이 0인 성질","text":"x−2=0 또는 x−3=0이므로 x=2 또는 x=3입니다."},{"type":"answer","title":"해","text":"x=2, 3이며 그래프가 x축과 만나는 x좌표입니다."},{"type":"verification","title":"원래 식에 대입","text":"2²−5·2+6=0, 3²−5·3+6=0으로 각각 확인합니다."}]},
+      {"id":"ms15-quadratic-practice","template":"practice","title":"해를 구하고 조건으로 고르기","kicker":"방정식·문장제 연습","blocks":[{"type":"question","title":"1번","text":"x²−7x+12=0을 풀고 원래 식에 대입하세요."},{"type":"question","title":"2번","text":"세로가 x, 가로가 x+3인 직사각형의 넓이가 40일 때 가능한 길이를 구하세요."},{"type":"hint","title":"힌트","text":"1번은 인수의 곱이 12이고 합해 가운데 계수 −7을 만드는 수를 찾으세요. 2번은 x(x+3)=40을 먼저 세웁니다."},{"type":"answer","title":"정답","text":"1. (x−3)(x−4)=0, x=3 또는 4. 2. (x+8)(x−5)=0이므로 길이는 세로 5, 가로 8입니다."},{"type":"checklist","title":"스스로 확인","items":["두 인수 중 하나가 0인 경우를 모두 풀었다.","해를 원래 식에 대입했다.","문장제에서 길이 조건과 단위를 확인했다."]}]},
+      {"id":"ms15-quadratic-summary","template":"summary","title":"한 줄로 설명하고 마치기","kicker":"해와 x절편 다시 연결","blocks":[{"type":"summary","title":"오늘의 규칙","text":"인수분해하여 곱이 0인 성질로 후보 해를 구하고, 원래 식과 상황 조건으로 확인합니다. 그래프의 x절편은 해를 보여 줍니다."},{"type":"thinking","title":"회상 질문","text":"(x−4)(x+2)=0의 해를 모두 말하고, y=(x−4)(x+2) 그래프에서 각각이 무엇을 뜻하는지 설명하세요."},{"type":"checklist","title":"마무리","items":["인수분해로 곱의 형태를 만들었다.","두 경우의 해를 모두 구했다.","원식 대입과 문장제 조건으로 확인했다."]}]}
+    ]
+  }]
+}

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>부등식 수직선 실험실</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color-scheme:light dark}*{box-sizing:border-box}body{max-width:900px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1rem}h1{font-size:1.55rem}.muted{color:#c4cede}.panel{margin:1rem 0;padding:1rem;background:#152237;border-radius:14px}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.8rem}.controls label{display:grid;gap:.3rem}.controls input,.controls select,button{min-height:44px;padding:.45rem;font:inherit}.controls input{width:100%}button{cursor:pointer;font-weight:650}.equation{font-size:1.2rem}.numberline{overflow-x:auto}.numberline svg{display:block;width:100%;min-width:520px;height:auto}.axis{stroke:#bec9d9;stroke-width:2}.ray{stroke:#60a5fa;stroke-width:7;stroke-linecap:round}.tick{stroke:#bec9d9;stroke-width:2}.endpoint{stroke:#fbbf24;stroke-width:4;fill:#152237}.endpoint.closed{fill:#fbbf24}.number-label{fill:currentColor;font:14px system-ui,sans-serif}.steps{padding:.7rem;background:#1e304a;border-left:4px solid #60a5fa;border-radius:6px}.steps[hidden]{display:none!important}.steps li{margin:.25rem 0}.show .steps{animation:rise .35s ease-out}.feedback{min-height:2.4rem}.quiz button{margin:.25rem}@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;scroll-behavior:auto!important}}@media(max-width:420px){body{padding:.5rem}main,.panel{padding:.75rem}}
+</style></head><body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-09] · 부등식과 그 해 부분 시범 · 학기 미지정 · 교사 검수 전</p>
+<h1>부등식의 해는 수직선의 범위예요</h1>
+<p>경계값과 부등호를 조절하세요. 특정 수를 대입한 참·거짓과 전체 해 범위를 함께 살펴봅니다.</p>
+<section class="panel" aria-labelledby="solution-title"><h2 id="solution-title">해 집합 수직선</h2>
+<div class="controls">
+<label for="relation">부등호<select id="relation"><option value="&lt;">작다 (&lt;)</option><option value="&lt;=">작거나 같다 (≤)</option><option value="&gt;">크다 (&gt;)</option><option value="&gt;=">크거나 같다 (≥)</option></select></label>
+<label for="boundary">경계 a: <output id="a-out">3</output><input id="boundary" type="range" min="-5" max="5" value="3"></label>
+<label for="test-value">시험값 x: <output id="x-out">2</output><input id="test-value" type="range" min="-8" max="8" value="2"></label>
+</div>
+<p class="equation" id="base-expression" aria-live="polite"></p><div class="numberline"><svg id="line" viewBox="0 0 640 150" role="img" aria-label="부등식의 해를 나타내는 수직선"></svg></div>
+<p id="truth" class="steps" aria-live="polite"></p></section>
+<section class="panel" aria-labelledby="property-title"><h2 id="property-title">양변을 같이 바꾸면?</h2>
+<div class="controls"><label for="operation">변형<select id="operation"><option value="add">양변에 같은 수 더하기/빼기</option><option value="multiply">양변에 같은 수 곱하기</option></select></label>
+<label for="amount" id="amount-label">더할 수 c: <output id="amount-out">2</output><input id="amount" type="range" min="-3" max="3" value="2"></label>
+<label for="factor" id="factor-label" hidden>곱할 수 k (0 제외)<select id="factor"><option value="-3">−3</option><option value="-2">−2</option><option value="-1">−1</option><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label></div>
+<p class="equation" id="transformed" aria-live="polite"></p><button type="button" id="show-steps" aria-expanded="false">변형 과정을 단계로 보기</button>
+<ol id="steps-list" class="steps" hidden></ol><p class="muted">음수를 곱하거나 나누면 비교 방향이 바뀝니다. 0을 곱하면 원래 해를 되돌릴 수 없어 성질 확인의 대상으로 쓰지 않습니다.</p></section>
+<section class="panel quiz"><h2>Socratic 퀴즈</h2><p><strong>x&lt;3</strong>의 양변에 −2를 곱한 결과는?</p><button type="button" data-answer="wrong">−2x &lt; −6</button><button type="button" data-answer="right">−2x &gt; −6</button><button type="button" data-answer="wrong">−2x &gt; 6</button><p class="feedback" id="feedback" aria-live="polite">해인 x=2를 대입해 두 수의 크기를 비교해 보세요.</p></section>
+<section class="panel"><h2>도구를 닫고 풀어보기</h2><p>−3x&lt;12를 풀고, x=−5가 해인지 수직선과 대입으로 확인하세요.</p><details><summary>힌트와 정답</summary><p>−3으로 나누므로 방향이 바뀌어 x&gt;−4입니다. −5는 −4보다 작으므로 해가 아닙니다.</p></details></section>
+<p class="muted">범위: 부등식과 해의 의미, 같은 수 더하기·빼기, 양수·음수 곱하기의 기본 성질. 복합 일차부등식 활용은 포함하지 않습니다. 교사 검수 전 시범입니다.</p>
+</main><script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),relation=$('relation'),boundary=$('boundary'),testValue=$('test-value'),operation=$('operation'),amount=$('amount'),factor=$('factor');
+const reverse={'<':'>','<=':'>=','>':'<','>=':'<='}, display={'<':'<','<=':'≤','>':'>','>=':'≥'},ns='http://www.w3.org/2000/svg';
+function compare(left,op,right){return op==='<'?left<right:op==='<='?left<=right:op==='>'?left>right:left>=right;}
+function fmt(n){return n<0?`−${Math.abs(n)}`:String(n)}
+function svg(tag,attrs={},text=''){const e=document.createElementNS(ns,tag);for(const [k,v] of Object.entries(attrs))e.setAttribute(k,String(v));if(text)e.textContent=text;return e;}
+function draw(a,op){const s=$('line'),x0=36,x1=604,y=72,scale=(x1-x0)/16,map=n=>x0+(n+8)*scale,edge=op.startsWith('<')?x0:x1,bx=map(a);s.replaceChildren();s.setAttribute('aria-label',`x ${display[op]} ${a}; ${op.startsWith('<')?'경계에서 왼쪽':'경계에서 오른쪽'}의 해 범위, 경계 ${op.includes('=')?'포함':'미포함'}`);s.append(svg('line',{x1:x0,y1:y,x2:x1,y2:y,class:'axis'}));s.append(svg('line',{x1:edge,y1:y,x2:bx,y2:y,class:'ray'}));
+ for(let n=-8;n<=8;n+=2){const px=map(n);s.append(svg('line',{x1:px,y1:y-7,x2:px,y2:y+7,class:'tick'}));s.append(svg('text',{x:px,y:y+29,class:'number-label','text-anchor':'middle'},String(n)));}
+ s.append(svg('circle',{cx:bx,cy:y,r:9,class:`endpoint ${op.includes('=')?'closed':''}`}));
+}
+function render(){const a=Number(boundary.value),op=relation.value,x=Number(testValue.value),addMode=operation.value==='add',v=addMode?Number(amount.value):Number(factor.value),nextOp=!addMode&&v<0?reverse[op]:op,nextRight=addMode?a+v:a*v;
+ $('a-out').value=a;$('x-out').value=x;$('amount-out').value=v;$('base-expression').textContent=`x ${display[op]} ${fmt(a)}`;draw(a,op);const truth=compare(x,op,a);$('truth').textContent=`x=${x} 대입: ${x} ${display[op]} ${a} → ${truth?'참, 이 수는 해입니다.':'거짓, 이 수는 해가 아닙니다.'} 전체 해 집합은 수직선의 표시 범위입니다.`;
+ $('amount-label').hidden=!addMode;$('factor-label').hidden=addMode;
+ const lhs=addMode?(v<0?`x − ${Math.abs(v)}`:`x + ${v}`):`${fmt(v)}x`;$('transformed').textContent=addMode?`${lhs} ${display[op]} ${fmt(nextRight)}　(해 집합은 x ${display[op]} ${a}와 같음)`: `${lhs} ${display[nextOp]} ${fmt(nextRight)}　(해 집합은 x ${display[op]} ${a}와 같음)`;
+ const stages=addMode?[`처음: x ${display[op]} ${fmt(a)}`,`양쪽에 ${fmt(v)}를 더함: ${lhs} ${display[op]} ${fmt(nextRight)}`,`같은 수만큼 이동해 해 집합 유지: x ${display[op]} ${fmt(a)}`]:[`처음: x ${display[op]} ${fmt(a)}`,`양쪽에 ${fmt(v)}를 곱함: ${lhs} ${display[nextOp]} ${fmt(nextRight)}`,v<0?'음수를 곱했으므로 부등호 방향을 뒤집음':'양수를 곱했으므로 부등호 방향을 유지',`나누어 원래 변수로 돌아가도 해 집합은 x ${display[op]} ${fmt(a)}`];
+ const list=$('steps-list');list.replaceChildren(...stages.map(t=>{const li=document.createElement('li');li.textContent=t;return li;}));
+}
+[relation,boundary,testValue,operation,amount,factor].forEach(el=>el.addEventListener('input',render));$('show-steps').addEventListener('click',()=>{const button=$('show-steps'),list=$('steps-list'),open=list.hidden;list.hidden=!open;button.setAttribute('aria-expanded',String(open));button.textContent=open?'변형 과정 숨기기':'변형 과정을 단계로 보기';});
+document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{$('feedback').textContent=button.dataset.answer==='right'?'맞아요. x=2에서 2<3은 참이고 −4>−6도 참이므로 방향을 뒤집습니다.':'x=2를 넣어 보세요. −4와 −6의 크기 비교에서 방향을 확인할 수 있어요.'}));render();
+})();
+</script></body></html>

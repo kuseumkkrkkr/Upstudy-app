@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>수학Ⅰ 개념서 | 지수와 로그 · 2015 개정</title>
+<style>
+:root{color-scheme:light;--ink:#17243a;--muted:#52627a;--line:#d6deea;--paper:#fff;--bg:#f3f6fb;--blue:#2457c5;--orange:#c2410c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:920px;margin:auto;padding:18px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}h1{font-size:1.55rem;margin:.15rem 0}.muted{color:var(--muted)}.grid{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(230px,.8fr);gap:16px}.plot{display:block;width:100%;height:auto;background:white;border:1px solid var(--line);border-radius:12px}.control{display:grid;grid-template-columns:42px 1fr 52px;gap:10px;align-items:center;margin:14px 0}.control input{width:100%;accent-color:var(--blue)}.control select{width:100%;font:inherit;padding:7px;border:1px solid #9aa9bd;border-radius:8px;background:#fff;color:var(--ink)}output{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-block;background:#eaf0ff;color:#173d90;padding:3px 10px;border-radius:999px;font-weight:700}button{font:inherit;color:var(--ink);background:#fff;border:1px solid #9aa9bd;border-radius:10px;padding:9px 13px;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap}.feedback{min-height:2em;font-weight:650}.quiz label{display:block;margin:8px 0}svg text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}@media(max-width:680px){.wrap{padding:10px}.grid{grid-template-columns:1fr}.card,header{padding:14px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style></head><body><main class="wrap">
+<header><p class="muted">수학Ⅰ 개념서 · 지수와 로그 · 2015 개정 시범</p><h1>로그는 지수에서 무엇을 되돌려 줄까?</h1><p>밑과 지수를 바꾸면 결과가 달라지고, 그 결과에서 로그가 지수를 찾아냅니다.</p></header>
+<section class="card"><h2>거듭제곱과 로그를 함께 조작</h2><div class="grid">
+<svg id="plot" class="plot" viewBox="0 0 440 300" role="img" aria-label="지수함수 그래프와 현재 선택된 점"><title>y=a^x와 현재 점</title><desc id="desc">지수함수 그래프 위 현재 선택한 지수와 결과를 표시합니다.</desc><g id="gridLines"></g><path d="M30 250H410M224 25V270" stroke="#64748b" stroke-width="2"/><text x="404" y="244">x</text><text x="231" y="32">y</text><path id="curve" fill="none" stroke="#2457c5" stroke-width="3"/><line id="xGuide" x1="0" y1="0" x2="0" y2="0" stroke="#c2410c" stroke-width="2" stroke-dasharray="6 5" visibility="hidden"/><line id="yGuide" x1="0" y1="0" x2="0" y2="0" stroke="#15803d" stroke-width="2" stroke-dasharray="6 5" visibility="hidden"/><circle id="point" r="7" fill="#c2410c"/><text id="label"></text></svg>
+<div><p>현재 관계 <span class="pill" id="relation">2²=4</span></p><label class="control"><span>밑 a</span><select id="base" aria-label="밑 a 선택"><option value="0.5">0.5</option><option value="0.8">0.8</option><option value="1.2">1.2</option><option value="1.5">1.5</option><option value="2" selected>2</option><option value="3">3</option></select><output id="baseOut">2.0</output></label><label class="control"><span>지수 x</span><input id="power" type="range" min="-2" max="2" step="0.25" value="2" aria-label="지수 x"><output id="powerOut">2</output></label><p id="logRelation" aria-live="polite">log₂(4)=2</p><div class="actions"><button id="animation" type="button">다음 단계 보기</button><button id="reset" type="button">처음 값으로</button></div><p id="stage" class="feedback" aria-live="polite">먼저 밑과 지수를 정하고 결과를 예측한 뒤 단계를 넘겨 보세요.</p></div></div></section>
+<section class="card quiz"><h2>확인 퀴즈</h2><p>2⁻²의 값과 log₂(1/4)를 고르세요.</p><label><input type="radio" name="q" value="a"> 4, 2</label><label><input type="radio" name="q" value="b"> 1/4, −2</label><label><input type="radio" name="q" value="c"> −4, 1/2</label><button id="check" type="button">확인</button><p id="feedback" class="feedback" aria-live="polite"></p></section>
+<section class="card"><h2>생각 질문</h2><p>밑을 1로 두면 왜 로그가 지수를 하나로 정해 주지 못할까?</p><button id="hint" type="button">힌트 보기</button><p id="hintText" aria-live="polite">1을 몇 번 곱해도 결과가 어떻게 되는지 생각해 보세요.</p></section>
+<details class="card"><summary>독립 연습</summary><p>log₃(1/27)을 구하고 3의 거듭제곱으로 확인하라.</p><p>정답: 3⁻³=1/27이므로 −3.</p></details>
+</main><script>
+(()=>{
+  'use strict';
+  const aEl=document.getElementById('base'),xEl=document.getElementById('power');
+  const grid=document.getElementById('gridLines'),X=x=>100+(x+2)*62,Y=y=>250-y*22;
+  for(let i=-2;i<=2;i++){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M${X(i)} 25V270`);p.setAttribute('stroke','#e7ecf3');grid.appendChild(p)}
+  for(let y=0;y<=10;y+=2){const p=document.createElementNS('http://www.w3.org/2000/svg','path');p.setAttribute('d',`M30 ${Y(y)}H410`);p.setAttribute('stroke','#e7ecf3');grid.appendChild(p)}
+  let stage=0;
+  function fmt(v){return Number.isInteger(v)?String(v):Number(v.toFixed(6)).toString()}
+  function draw(){
+    const a=+aEl.value,x=+xEl.value,y=Math.pow(a,x),shownY=Number(fmt(y)),approx=Math.abs(shownY-y)>1e-12*Math.max(1,Math.abs(y)),operator=approx?'≈':'=',curve=document.getElementById('curve');let d='';
+    for(let i=0;i<=100;i++){const xx=-2+4*i/100,yy=Math.min(10,Math.pow(a,xx));d+=(i?'L':'M')+X(xx)+' '+Y(yy)+' '}
+    curve.setAttribute('d',d);const px=X(x),py=Y(Math.min(10,y)),pt=document.getElementById('point');pt.setAttribute('cx',px);pt.setAttribute('cy',py);
+    const xGuide=document.getElementById('xGuide'),yGuide=document.getElementById('yGuide');xGuide.setAttribute('x1',px);xGuide.setAttribute('x2',px);xGuide.setAttribute('y1',250);xGuide.setAttribute('y2',py);xGuide.setAttribute('visibility',stage>=1?'visible':'hidden');yGuide.setAttribute('x1',224);yGuide.setAttribute('x2',px);yGuide.setAttribute('y1',py);yGuide.setAttribute('y2',py);yGuide.setAttribute('visibility',stage>=2?'visible':'hidden');
+    const label=document.getElementById('label');label.setAttribute('x',px+8);label.setAttribute('y',py-8);label.textContent=`(${fmt(x)}, ${approx?'≈':''}${fmt(y)})`;
+    document.getElementById('baseOut').value=a.toFixed(1);document.getElementById('powerOut').value=fmt(x);document.getElementById('relation').textContent=`${a.toFixed(1)}^${fmt(x)}${operator}${fmt(y)}`;
+    document.getElementById('logRelation').textContent=`log_${a.toFixed(1)}(${fmt(y)})${operator}${fmt(x)} · ${approx?'반올림한 값으로 확인합니다.':'지수를 되찾았습니다.'}`;
+    document.getElementById('desc').textContent=`밑 ${a.toFixed(1)}, 지수 ${fmt(x)}, 결과 ${fmt(y)}인 지수함수의 점입니다.`;
+    document.getElementById('stage').textContent=stage===0?`시작: 밑과 지수를 정하고 결과를 먼저 예측하세요.`:stage===1?`1단계 · 지수 x=${fmt(x)}를 그래프의 가로축에서 찾습니다.`:stage===2?`2단계 · 곡선 위 점의 높이에서 결과 a^x${operator}${fmt(y)}를 읽습니다.`:`3단계 · 같은 관계를 거꾸로 읽으면 log_${a.toFixed(1)}(${fmt(y)})${operator}${fmt(x)}입니다.`;
+    document.getElementById('animation').disabled=stage>=3;
+  }
+  aEl.addEventListener('change',()=>{stage=0;draw()});xEl.addEventListener('input',()=>{stage=0;draw()});
+  document.getElementById('animation').addEventListener('click',()=>{stage=Math.min(3,stage+1);draw()});
+  document.getElementById('reset').addEventListener('click',()=>{aEl.value=2;xEl.value=2;stage=0;draw()});
+  document.getElementById('check').addEventListener('click',()=>{const q=document.querySelector('input[name="q"]:checked');document.getElementById('feedback').textContent=!q?'하나를 선택해 보세요.':q.value==='b'?'맞아요. 2⁻²=1/4이고 log₂(1/4)=−2입니다.':'다시 확인해 보세요. 음의 지수는 역수 관계를 나타냅니다.'});
+  document.getElementById('hint').addEventListener('click',()=>document.getElementById('hintText').textContent='1^x는 x가 무엇이든 1입니다. 따라서 결과만으로 지수 x를 하나로 정할 수 없습니다.');draw()
+})();
+</script></body></html>

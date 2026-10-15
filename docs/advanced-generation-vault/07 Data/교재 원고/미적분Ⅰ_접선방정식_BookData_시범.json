@@ -1,0 +1,71 @@
+{
+  "title": "미적분Ⅰ 개념서 · 접선의 방정식",
+  "subtitle": "접점과 도함수로 접선을 만들고 검산하기",
+  "category": "concept_textbook_prototype",
+  "tags": ["미적분Ⅰ", "미분계수", "접선의 방정식", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-05"],
+  "chapters": [
+    {
+      "title": "한 점의 기울기로 접선 만들기",
+      "intro": [
+        "f(x)=x²에서 기준점 a를 바꾸며 곡선 위 접점 P=(a,a²), 접선 y=2ax−a², 움직이는 할선을 비교한다.",
+        "접선의 방정식 성취기준 후보를 위한 부분 시범이다. 공식 교육과정 원문 직접 대조와 교사 검수 전이다."
+      ],
+      "sections": [
+        {
+          "title": "점과 기울기를 직선식에 넣기",
+          "paragraphs": [
+            "곡선 위 x=a에서 접점은 (a,a²)이고 미분계수는 f'(a)=2a다.",
+            "점 (x₁,y₁)을 지나고 기울기 m인 직선은 y−y₁=m(x−x₁)이다. 따라서 접선은 y−a²=2a(x−a), 즉 y=2ax−a²다.",
+            "접점 좌표와 기울기를 각각 확인한다. 할선은 h=side·d (h≠0)에서 기울기 2a+h이고, h→0일 때 2a에 가까워진다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"tangent-parabola","type":"function","label":"f(x)=x²","colorHex":"#2457C5","enabled":true,"expression":"x^2"},
+              {"id":"tangent-secant","type":"function","label":"움직이는 할선","colorHex":"#C2410C","enabled":true,"expression":"((a+side*d)^2-a^2)/(side*d)*(x-a)+a^2"},
+              {"id":"tangent-line","type":"function","label":"x=a에서 접선","colorHex":"#16805D","enabled":true,"expression":"2*a*(x-a)+a^2"}
+            ],
+            "settings": {"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-2,"right":2,"top":8,"bottom":-1},"parameters":[{"id":"a","label":"접점 x좌표 a","value":1,"min":-1,"max":1,"step":0.5},{"id":"side","label":"할선 접근 방향","value":1,"min":-1,"max":1,"step":2},{"id":"d","label":"간격 |h| (0보다 큼)","value":0.5,"min":0.1,"max":0.5,"step":0.1}]}
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"calc1-tangent-opening",
+          "template":"opening",
+          "title":"접점과 기울기로 접선을 결정할 수 있을까?",
+          "kicker":"f(x)=x², a=1",
+          "blocks":[
+            {"type":"lead","title":"먼저 예측","text":"접점 P=(1,1)과 기울기 2를 아는 경우, 이 두 정보로 직선 하나를 만들 수 있을까?"},
+            {"type":"thinking","title":"두 조건을 따로 보기","text":"접선 방정식이 맞으려면 그 점을 지나고, 그 점에서의 기울기도 맞아야 한다. 각각 어떻게 확인할까?"}
+          ]
+        },
+        {
+          "id":"calc1-tangent-experiment",
+          "template":"experiment",
+          "title":"할선을 움직이고 접선과 비교하기",
+          "kicker":"접점 a와 0이 아닌 h 조절",
+          "blocks":[
+            {"type":"lead","title":"조작","text":"독립 HTML에서 접점 a, 접근 방향, 양수 간격 |h|를 바꾸고 원함수·할선·접선을 비교한다. 단계는 버튼으로 직접 진행한다."},
+            {"type":"graph","title":"곡선과 두 직선","text":"f(x)=x², 할선 기울기 2a+h, 접선 기울기 2a다. 접선 y=2ax−a²은 (a,a²)를 지나고 기울기가 f'(a)=2a다.","graph":{"items":[{"id":"tangent-parabola","type":"function","label":"f(x)=x²","colorHex":"#2457C5","enabled":true,"expression":"x^2"},{"id":"tangent-secant","type":"function","label":"할선","colorHex":"#C2410C","enabled":true,"expression":"((a+side*d)^2-a^2)/(side*d)*(x-a)+a^2"},{"id":"tangent-line","type":"function","label":"접선","colorHex":"#16805D","enabled":true,"expression":"2*a*(x-a)+a^2"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-2,"right":2,"top":8,"bottom":-1},"parameters":[{"id":"a","label":"접점 x좌표 a","value":1,"min":-1,"max":1,"step":0.5},{"id":"side","label":"할선 접근 방향","value":1,"min":-1,"max":1,"step":2},{"id":"d","label":"간격 |h|","value":0.5,"min":0.1,"max":0.5,"step":0.1}]}}},
+            {"type":"question","title":"Socratic 확인","text":"a=1, h=0.2일 때 할선 기울기와 접선 기울기는 각각 얼마인가? 차이는 h와 어떤 관계인가?"},
+            {"type":"verification","title":"두 조건 검산","text":"접선 y=2ax−a²에서 x=a를 대입하면 y=a²이므로 접점을 지난다. x의 계수는 2a=f'(a)여서 기울기도 맞다."},
+            {"type":"misconception","title":"함숫값과 기울기 구분","text":"a²은 접점의 y좌표이고, 접선 기울기는 2a다. 두 수를 혼동하지 않도록 점 조건과 기울기 조건을 별도로 확인한다."}
+          ]
+        },
+        {
+          "id":"calc1-tangent-practice",
+          "template":"practice",
+          "title":"새 접점에서 접선 세우기",
+          "kicker":"도구를 닫고 두 조건 검산",
+          "blocks":[
+            {"type":"question","title":"연습","text":"f(x)=x²의 x=−1에서 접선 방정식을 구하세요. 접점 통과와 기울기를 각각 검산하세요."},
+            {"type":"thinking","title":"도움 질문","text":"먼저 점은 (−1,1)이다. f'(x)=2x에 −1을 넣으면 기울기는 얼마인가?"},
+            {"type":"hint","title":"힌트","text":"y−y₁=m(x−x₁)에 x₁=−1, y₁=1, m=−2를 넣는다."},
+            {"type":"answer","title":"정답 확인","text":"y−1=−2(x+1), 즉 y=−2x−1이다. x=−1이면 y=1이고 기울기는 −2다."},
+            {"type":"checklist","title":"마무리","items":["접점을 원함수에 대입해 좌표를 구한다.","미분계수로 접선 기울기를 구한다.","직선이 접점을 지나며 기울기가 맞는지 각각 확인한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

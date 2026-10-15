@@ -1,0 +1,120 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학수학 1-1 개념서 · 정수와 유리수 · 2022 개정</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:white;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:210px;flex:1}.controls input{width:100%}button,select{font:inherit;color:var(--ink);background:white;border:1px solid var(--line);border-radius:10px;padding:9px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.small{font-size:.94rem}.line{width:100%;height:auto;display:block}.axis{stroke:#50617b;stroke-width:3}.tick{stroke:#9aa8bd;stroke-width:1}.label{font:14px system-ui;fill:var(--muted)}.point{fill:var(--blue);stroke:white;stroke-width:3}.compareA{fill:var(--green)}.compareB{fill:var(--red)}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}.step-text{font-size:1.05rem;min-height:3.3em}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2022 개정 · 중학교 1학년 1학기 · [9수01-03], [9수01-04] 시범</p>
+<h1>정수와 유리수: 0을 기준으로 수를 읽기</h1>
+<p>상황의 기준을 정하고, 수의 부호와 위치를 직접 바꾸어 보세요. 단계는 자동으로 넘어가지 않습니다.</p>
+
+<section class="card" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">개념을 한 걸음씩</h2>
+<p id="stepText" class="step-text" aria-live="polite"></p>
+<div class="controls"><button id="stepBack" type="button">이전</button><button id="stepNext" type="button">다음</button><button id="stepReset" type="button">처음</button><span id="stepCount" class="muted" aria-live="polite"></span></div>
+</section>
+
+<section class="card" aria-labelledby="toolTitle">
+<h2 id="toolTitle">상황과 수를 조절해 보기</h2>
+<div class="controls">
+<label>상황<select id="context"><option value="temperature">기온 · 0°C 기준</option><option value="sea">해수면 높이 · 0 m 기준</option><option value="balance">잔액 · 0원 기준</option></select></label>
+<label>수의 값 <output id="valueOut" for="value">−2</output><input id="value" type="range" min="-4" max="4" step="0.25" value="-2" aria-label="수직선에 놓을 값"></label>
+</div>
+<p id="contextReadout" class="status" aria-live="polite"></p>
+<svg class="line" viewBox="0 0 760 190" role="img" aria-labelledby="lineTitle lineDesc"><title id="lineTitle">유리수 수직선</title><desc id="lineDesc">0을 가운데 두고 음수는 왼쪽, 양수는 오른쪽에 놓입니다. 슬라이더로 값의 위치를 조절합니다.</desc><line class="axis" x1="80" y1="100" x2="680" y2="100"/><g id="ticks"></g><circle id="point" class="point" cy="100" r="9"/></svg>
+<p id="signReadout" aria-live="polite"></p>
+</section>
+
+<section class="card" aria-labelledby="compareTitle">
+<h2 id="compareTitle">두 수 중 어느 쪽이 더 클까요?</h2>
+<div class="controls">
+<label>수 A <output id="aOut" for="aValue">−1/2</output><input id="aValue" type="range" min="-4" max="4" step="0.25" value="-0.5" aria-label="비교할 수 A"></label>
+<label>수 B <output id="bOut" for="bValue">−3/2</output><input id="bValue" type="range" min="-4" max="4" step="0.25" value="-1.5" aria-label="비교할 수 B"></label>
+</div>
+<svg class="line" viewBox="0 0 760 190" role="img" aria-labelledby="compareSvgTitle compareSvgDesc"><title id="compareSvgTitle">두 수의 위치 비교</title><desc id="compareSvgDesc">초록 점은 수 A, 빨간 점은 수 B입니다. 오른쪽에 있는 수가 더 큽니다.</desc><line class="axis" x1="80" y1="100" x2="680" y2="100"/><g id="compareTicks"></g><circle id="pointA" class="point compareA" cy="75" r="9"/><circle id="pointB" class="point compareB" cy="125" r="9"/></svg>
+<p id="comparison" class="status" aria-live="polite"></p>
+<div class="quiz"><p><strong>생각 질문.</strong> 왜 −1/2가 −3/2보다 클까요?</p><button id="compareHint" type="button">힌트 보기</button><p id="compareFeedback" class="feedback" role="status" aria-live="polite">수직선에서 두 점의 위치를 먼저 살펴보세요.</p></div>
+</section>
+
+<section class="card" aria-labelledby="quizTitle">
+<h2 id="quizTitle">도구 퀴즈</h2>
+<div class="quiz"><p><strong>0보다 작은 수</strong>는 수직선의 어느 쪽에 놓일까요?</p>
+<div class="controls"><button type="button" data-answer="left">왼쪽</button><button type="button" data-answer="right">오른쪽</button></div>
+<p id="quizFeedback" class="feedback" role="status" aria-live="polite">먼저 답을 고르고, 이유를 말해 보세요.</p>
+<button id="quizHint" type="button">한 단계 힌트</button>
+</div>
+<div class="quiz"><p><strong>−1/4와 −3/4 중 큰 수</strong>를 고르세요.</p>
+<div class="controls"><button type="button" data-order="-0.25">−1/4</button><button type="button" data-order="-0.75">−3/4</button></div>
+<p id="orderFeedback" class="feedback" role="status" aria-live="polite">오른쪽에 놓인 수가 더 큽니다.</p></div>
+</section>
+
+<section class="card"><h2>도구 없이 확인하기</h2><p>기온이 기준보다 3°C 낮으면 어떤 수로 나타낼까요? −2는 정수이면서 유리수일까요? 수직선과 `−2=−2/1`을 이용해 말해 보세요.</p><p class="small muted">정답 확인: `−3°C`입니다. `−2`는 정수이고 `−2/1`로 나타낼 수 있으므로 유리수이기도 합니다.</p></section>
+<p class="small muted">이 HTML은 독립 시범입니다. BookData 앱 페이지에 자동 삽입되거나 학생 진도가 저장되지는 않습니다.</p>
+</main>
+<script>
+(()=>{
+  'use strict';
+  const value=document.querySelector('#value'), context=document.querySelector('#context'), valueOut=document.querySelector('#valueOut');
+  const contextReadout=document.querySelector('#contextReadout'), signReadout=document.querySelector('#signReadout'), point=document.querySelector('#point');
+  const aValue=document.querySelector('#aValue'), bValue=document.querySelector('#bValue');
+  const aOut=document.querySelector('#aOut'), bOut=document.querySelector('#bOut'), comparison=document.querySelector('#comparison');
+  const pointA=document.querySelector('#pointA'), pointB=document.querySelector('#pointB');
+  const xOf=n=>80+(n+4)*75;
+  const gcd=(a,b)=>b===0?Math.abs(a):gcd(b,a%b);
+  function formatValue(value){
+    const numerator=Math.round(Number(value)*4);
+    if(numerator===0)return '0';
+    if(numerator%4===0)return String(numerator/4).replace('-','−');
+    const divisor=gcd(numerator,4), top=numerator/divisor, bottom=4/divisor;
+    return `${String(top).replace('-','−')}/${bottom}`;
+  }
+  function signDescription(value){return value>0?'양수':value<0?'음수':'양수도 음수도 아닌 0'}
+  const ticks=document.querySelector('#ticks'), compareTicks=document.querySelector('#compareTicks');
+  for(let n=-4;n<=4;n++){
+    for(const group of [ticks,compareTicks]){
+      const x=xOf(n), tick=document.createElementNS('http://www.w3.org/2000/svg','line');
+      tick.setAttribute('x1',x);tick.setAttribute('x2',x);tick.setAttribute('y1','92');tick.setAttribute('y2','108');tick.setAttribute('class','tick');group.append(tick);
+      const label=document.createElementNS('http://www.w3.org/2000/svg','text');label.setAttribute('x',x);label.setAttribute('y','140');label.setAttribute('text-anchor','middle');label.setAttribute('class','label');label.textContent=String(n).replace('-','−');group.append(label);
+    }
+  }
+  const contexts={temperature:{name:'기온',unit:'°C',negative:'기준보다 낮은 기온',positive:'기준보다 높은 기온'},sea:{name:'해수면 높이',unit:'m',negative:'해수면 아래',positive:'해수면 위'},balance:{name:'잔액',unit:'만원',negative:'갚아야 할 금액',positive:'남아 있는 금액'}};
+  function renderValue(){
+    const n=Number(value.value), item=contexts[context.value], shown=formatValue(n);
+    valueOut.value=shown;point.setAttribute('cx',xOf(n));
+    contextReadout.textContent=`${item.name}를 0${item.unit} 기준으로 보면 ${shown}${item.unit}은 ${n<0?item.negative:n>0?item.positive:'기준과 같은 값'}입니다.`;
+    signReadout.textContent=`${shown}은 ${signDescription(n)}이며 수직선에서 0의 ${n<0?'왼쪽':n>0?'오른쪽':'위치'}에 있습니다.`;
+  }
+  function renderComparison(){
+    const a=Number(aValue.value), b=Number(bValue.value);aOut.value=formatValue(a);bOut.value=formatValue(b);
+    pointA.setAttribute('cx',xOf(a));pointB.setAttribute('cx',xOf(b));
+    comparison.textContent=a===b?`${formatValue(a)} = ${formatValue(b)} · 두 점은 같은 위치입니다.`:`${formatValue(a)} ${a>b?'>':'<'} ${formatValue(b)} · 오른쪽에 있는 수가 더 큽니다.`;
+  }
+  value.addEventListener('input',renderValue);context.addEventListener('change',renderValue);
+  aValue.addEventListener('input',renderComparison);bValue.addEventListener('input',renderComparison);
+  renderValue();renderComparison();
+
+  const steps=[
+    '1/3 · 먼저 0을 기준으로 정합니다. 0보다 작은 값은 왼쪽, 큰 값은 오른쪽에 놓입니다.',
+    '2/3 · 수직선에서 두 수의 위치를 비교합니다. 오른쪽에 있는 수가 더 큽니다.',
+    '3/3 · 정수도 a/1로 나타낼 수 있으므로 유리수입니다. 예를 들어 −2=−2/1입니다.'
+  ];let stepIndex=0;
+  function showStep(){document.querySelector('#stepText').textContent=steps[stepIndex];document.querySelector('#stepCount').textContent=`${stepIndex+1}/${steps.length}`;document.querySelector('#stepBack').disabled=stepIndex===0;document.querySelector('#stepNext').disabled=stepIndex===steps.length-1}
+  document.querySelector('#stepBack').addEventListener('click',()=>{stepIndex=Math.max(0,stepIndex-1);showStep()});
+  document.querySelector('#stepNext').addEventListener('click',()=>{stepIndex=Math.min(steps.length-1,stepIndex+1);showStep()});
+  document.querySelector('#stepReset').addEventListener('click',()=>{stepIndex=0;showStep()});showStep();
+
+  document.querySelector('#compareHint').addEventListener('click',()=>{document.querySelector('#compareFeedback').textContent='두 수를 수직선에 놓았을 때 오른쪽에 있는 점이 더 큽니다. −1/2는 −3/2보다 오른쪽입니다.'});
+  document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{
+    const correct=button.dataset.answer==='left';document.querySelector('#quizFeedback').textContent=correct?'맞아요. 0보다 작은 수는 0의 왼쪽에 놓입니다.':'다시 생각해 보세요. 오른쪽으로 갈수록 수가 커집니다.';
+  }));
+  document.querySelector('#quizHint').addEventListener('click',()=>{document.querySelector('#quizFeedback').textContent='수직선에서 오른쪽은 0보다 큰 방향입니다. 0보다 작은 수는 반대쪽에 놓입니다.'});
+  document.querySelectorAll('[data-order]').forEach(button=>button.addEventListener('click',()=>{
+    const correct=Number(button.dataset.order)===-0.25;document.querySelector('#orderFeedback').textContent=correct?'맞아요. −1/4가 −3/4보다 오른쪽이므로 더 큽니다.':'다시 확인해 보세요. −1/4와 −3/4 중 오른쪽 점을 고르세요.';
+  }));
+})();
+</script>
+</body></html>

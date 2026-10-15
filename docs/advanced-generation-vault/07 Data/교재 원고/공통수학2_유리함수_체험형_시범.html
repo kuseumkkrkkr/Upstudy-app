@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>공통수학2 개념서 | 유리함수</title>
+<style>
+:root{color-scheme:light;--ink:#17243a;--muted:#52627a;--line:#d6deea;--paper:#fff;--bg:#f3f6fb;--blue:#2457c5;--orange:#c2410c}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}.wrap{max-width:960px;margin:auto;padding:18px}header,.card{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px}h1{font-size:1.55rem;margin:.15rem 0}.muted{color:var(--muted)}.layout{display:grid;grid-template-columns:minmax(0,1.3fr) minmax(230px,.8fr);gap:16px}.plot{display:block;width:100%;height:auto;background:#fff;border:1px solid var(--line);border-radius:12px}.control{display:grid;grid-template-columns:44px 1fr 52px;gap:10px;align-items:center;margin:14px 0}.control input{width:100%;accent-color:var(--blue)}.control select{width:100%;font:inherit;padding:7px;border:1px solid #9aa9bd;border-radius:8px;background:white;color:var(--ink)}output{font-weight:700;text-align:right;font-variant-numeric:tabular-nums}.pill{display:inline-block;background:#eaf0ff;color:#173d90;padding:3px 10px;border-radius:999px;font-weight:700}button{font:inherit;color:var(--ink);background:#fff;border:1px solid #9aa9bd;border-radius:10px;padding:9px 13px;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #93c5fd;outline-offset:2px}.actions{display:flex;gap:8px;flex-wrap:wrap}.feedback{min-height:2em;font-weight:650}.quiz label{display:block;margin:8px 0}svg text{font:13px system-ui,"Malgun Gothic",sans-serif;fill:var(--muted)}@media(max-width:680px){.wrap{padding:10px}.layout{grid-template-columns:1fr}.card,header{padding:14px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition-duration:.01ms!important;animation-duration:.01ms!important}}
+</style></head><body><main class="wrap">
+<header><p class="muted">공통수학2 개념서 · 유리함수</p><h1>점근선은 그래프의 어떤 정보를 줄까?</h1><p>분모가 0인 위치와 그래프가 가까워지는 높이를 따로 조절해 보세요.</p></header>
+<section class="card"><h2>유리함수의 점근선 조작</h2><div class="layout"><svg id="plot" class="plot" viewBox="0 0 500 360" role="img" aria-label="유리함수 그래프와 수직·수평 점근선"><title>y=a/(x-h)+k</title><desc id="desc">현재 함수의 정의역에서 제외되는 값과 두 점근선을 나타냅니다.</desc><g id="grid"></g><path d="M40 180H460M250 25V335" stroke="#58677d" stroke-width="2"/><text x="452" y="173">x</text><text x="258" y="34">y</text><path id="vertical" stroke="#c2410c" stroke-dasharray="6 5" stroke-width="2"/><path id="horizontal" stroke="#7c3aed" stroke-dasharray="6 5" stroke-width="2"/><path id="branch1" fill="none" stroke="#2457c5" stroke-width="3"/><path id="branch2" fill="none" stroke="#2457c5" stroke-width="3"/><circle id="sample" r="6" fill="#17243a"/><text id="sampleLabel"></text></svg>
+<div><p>현재 식 <span class="pill" id="equation">y=2/(x−1)−3</span></p><label class="control"><span>a</span><select id="a" aria-label="a, 0은 제외"><option value="-2">−2</option><option value="-1">−1</option><option value="1">1</option><option value="2" selected>2</option></select><output id="aOut">2</output></label><label class="control"><span>h</span><input id="h" type="range" min="-2" max="2" step="0.5" value="1" aria-label="수직점근선 x=h"><output id="hOut">1</output></label><label class="control"><span>k</span><input id="k" type="range" min="-3" max="3" step="0.5" value="-3" aria-label="수평점근선 y=k"><output id="kOut">−3</output></label><p id="domain" aria-live="polite">정의역: x≠1 · 수직점근선 x=1 · 수평점근선 y=−3</p><div class="actions"><button id="step" type="button">이동 단계 보기</button><button id="reset" type="button">처음 값으로</button></div><p id="stage" class="feedback" aria-live="polite">먼저 분모가 0이 되는 x를 찾아보세요.</p></div></div></section>
+<section class="card quiz"><h2>확인 퀴즈</h2><p>y=2/(x−1)−3의 정의역과 두 점근선은?</p><label><input type="radio" name="q" value="a"> x≠1, x=1과 y=−3</label><label><input type="radio" name="q" value="b"> x≠−1, x=−1과 y=3</label><label><input type="radio" name="q" value="c"> 모든 실수, x=1과 y=3</label><button id="check" type="button">확인</button><p id="feedback" class="feedback" aria-live="polite"></p></section>
+<section class="card"><h2>생각 질문</h2><p>h를 바꾸면 어느 점근선이 움직이고, k를 바꾸면 어느 점근선이 움직일까?</p><button id="hint" type="button">힌트 보기</button><p id="hintText" aria-live="polite">분모를 0으로 만드는 값과 분수식 바깥의 상수를 따로 보세요.</p></section>
+<details class="card"><summary>독립 연습</summary><p>y=−1/(x+2)+4의 정의역에서 제외되는 값과 점근선을 구하라.</p><p>정답: x≠−2, 수직점근선 x=−2, 수평점근선 y=4.</p></details>
+</main><script>
+(() => {
+  'use strict';
+  const aEl = document.getElementById('a');
+  const hEl = document.getElementById('h');
+  const kEl = document.getElementById('k');
+  const grid = document.getElementById('grid');
+  const X = x => 250 + x * 42;
+  const Y = y => 180 - y * 25;
+
+  for (let n = -5; n <= 5; n++) {
+    if (n === 0) continue;
+    const line = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+    line.setAttribute('d', `M${X(n)} 25V335M40 ${Y(n)}H460`);
+    line.setAttribute('stroke', '#e8edf4');
+    grid.appendChild(line);
+  }
+
+  let stage = 0;
+  function draw() {
+    const a = Number(aEl.value);
+    const h = Number(hEl.value);
+    const k = Number(kEl.value);
+    document.getElementById('aOut').value = a;
+    document.getElementById('hOut').value = h;
+    document.getElementById('kOut').value = k < 0 ? `−${Math.abs(k)}` : k;
+    document.getElementById('equation').textContent =
+      `y=${a}/(x${h < 0 ? '+' : '−'}${Math.abs(h)})${k < 0 ? `−${Math.abs(k)}` : `+${k}`}`;
+    document.getElementById('domain').textContent =
+      `정의역: x≠${h} · 수직점근선 x=${h} · 수평점근선 y=${k}`;
+    document.getElementById('vertical').setAttribute('d', `M${X(h)} 25V335`);
+    document.getElementById('horizontal').setAttribute('d', `M40 ${Y(k)}H460`);
+
+    function drawBranch(start, end, id) {
+      let path = '';
+      let drawing = false;
+      let previous = null;
+      for (let i = 0; i <= 240; i++) {
+        const x = start + (end - start) * i / 240;
+        const y = a / (x - h) + k;
+        const py = Y(y);
+        const inside = Number.isFinite(py) && py >= 25 && py <= 335;
+
+        if (inside) {
+          if (!drawing && previous) {
+            const boundary = previous.py < 25 ? 25 : 335;
+            const t = (boundary - previous.py) / (py - previous.py);
+            const crossX = previous.x + (x - previous.x) * t;
+            path += `M${X(crossX)} ${boundary}L`;
+          } else if (!drawing) {
+            path += 'M';
+          } else {
+            path += 'L';
+          }
+          path += `${X(x)} ${py}`;
+          drawing = true;
+        } else {
+          if (drawing && previous) {
+            const boundary = py < 25 ? 25 : 335;
+            const t = (boundary - previous.py) / (py - previous.py);
+            const crossX = previous.x + (x - previous.x) * t;
+            path += `L${X(crossX)} ${boundary}`;
+          }
+          drawing = false;
+        }
+        previous = { x, py };
+      }
+      document.getElementById(id).setAttribute('d', path);
+    }
+
+    drawBranch(-5, h - 0.09, 'branch1');
+    drawBranch(h + 0.09, 5, 'branch2');
+    const sx = h + 1.5;
+    const sy = a / 1.5 + k;
+    const sample = document.getElementById('sample');
+    sample.setAttribute('cx', X(sx));
+    sample.setAttribute('cy', Y(sy));
+    const label = document.getElementById('sampleLabel');
+    label.setAttribute('x', X(sx) + 8);
+    label.setAttribute('y', Y(sy) - 8);
+    label.textContent = `(${sx.toFixed(1)},${sy.toFixed(2)})`;
+    document.getElementById('desc').textContent =
+      `x=${h}는 정의역에서 제외되고 수직점근선이며 y=${k}는 수평점근선입니다.`;
+    document.getElementById('stage').textContent = stage === 0
+      ? `정의역 확인: x=${h}에서는 분모가 0입니다.`
+      : stage === 1
+        ? `수직 위치: x=${h}에서 그래프가 끊어집니다.`
+        : `수평 위치: |x|가 커지면 y는 ${k}에 가까워집니다.`;
+  }
+
+  aEl.addEventListener('change', draw);
+  hEl.addEventListener('input', draw);
+  kEl.addEventListener('input', draw);
+  document.getElementById('step').addEventListener('click', () => {
+    stage = (stage + 1) % 3;
+    draw();
+  });
+  document.getElementById('reset').addEventListener('click', () => {
+    aEl.value = 2;
+    hEl.value = 1;
+    kEl.value = -3;
+    stage = 0;
+    draw();
+  });
+  document.getElementById('check').addEventListener('click', () => {
+    const choice = document.querySelector('input[name="q"]:checked');
+    document.getElementById('feedback').textContent = !choice
+      ? '선택지를 하나 골라 보세요.'
+      : choice.value === 'a'
+        ? '맞아요. x=1은 분모를 0으로 만들고 점근선은 x=1, y=−3입니다.'
+        : '다시 보세요. 분모 x−1=0에서 제외할 값을 찾고, 바깥의 −3을 확인하세요.';
+  });
+  document.getElementById('hint').addEventListener('click', () => {
+    document.getElementById('hintText').textContent =
+      'x=h는 분모를 0으로 만드는 수직선 위치이고, k는 그래프가 멀리서 가까워지는 높이입니다.';
+  });
+  draw();
+})();
+</script></body></html>

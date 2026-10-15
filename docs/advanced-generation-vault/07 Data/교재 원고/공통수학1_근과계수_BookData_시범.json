@@ -1,0 +1,46 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-02-03 중 최고차항 계수 1인 실근의 합·곱 관계",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-02-03", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-02-03"],
+  "standard_coverage": "partial_monic_quadratic_roots_sum_and_product",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [{
+    "title": "두 근의 합과 곱",
+    "intro": [
+      "두 근을 직접 조절해 인수형, 전개형, 그래프 x절편을 연결한다.",
+      "2022 개정 별책 8의 10공수1-02-03과 연결한 부분 시범이다. 최고차항 계수 1인 이차방정식의 실근만 다루며 기준 전체를 다룬 것은 아니다."
+    ],
+    "sections": [{
+      "title": "전개식의 계수는 근을 요약한다",
+      "paragraphs": [
+        "근이 r,s이면 (x−r)(x−s)=0이고, 전개하면 x²−(r+s)x+rs=0이다.",
+        "x²+bx+c=0과 비교하면 r+s=−b, rs=c이다. x항은 −r과 −s를 더한 값이고, 상수항은 (−r)(−s)다.",
+        "포물선의 x절편은 두 근의 위치를 보여 준다. 두 근이 같으면 그래프가 x축에 접하고 같은 근을 두 번 세어 합과 곱에 사용한다."
+      ],
+      "graph": {
+        "items": [{"id":"root-quadratic","type":"function","label":"y=(x−r)(x−s)","colorHex":"#315DA8","enabled":true,"expression":"(x-r)*(x-s)"}],
+        "settings": {
+          "showAxes": true,
+          "showGrid": true,
+          "lockViewport": false,
+          "degreeMode": false,
+          "viewport": {"left":-4,"right":4,"top":16,"bottom":-8},
+          "parameters": [
+            {"id":"r","label":"첫째 근 r","value":-1,"min":-3,"max":3,"step":1},
+            {"id":"s","label":"둘째 근 s","value":3,"min":-3,"max":3,"step":1}
+          ]
+        }
+      }
+    }],
+    "pages": [
+      {"id":"cm1-roots-coefficients-opening","template":"opening","title":"근 두 개가 계수로 바뀌는 순간","kicker":"먼저 부호를 예측","blocks":[{"type":"lead","title":"오늘의 질문","text":"근이 −1과 3인 방정식은 x²−2x−3=0일까요, x²+2x−3=0일까요?"},{"type":"thinking","title":"예측","text":"두 근의 합은 2, 곱은 −3입니다. 일차항 계수의 부호를 먼저 고르고 조작 도구에서 확인해 보세요."}]},
+      {"id":"cm1-roots-coefficients-concept","template":"concept","title":"합에는 왜 마이너스가 붙을까?","kicker":"인수형을 전개해 계수 비교","blocks":[{"type":"definition","title":"근과 계수의 관계","text":"(x−r)(x−s)=x²−(r+s)x+rs이므로 x²+bx+c=0의 두 근 r,s는 r+s=−b, rs=c를 만족한다."},{"type":"solutionStep","title":"부호의 이유","items":["x항은 (−r)x+(−s)x=−(r+s)x다.","상수항은 (−r)(−s)=rs다.","따라서 b=−(r+s), c=rs다."]},{"type":"misconception","title":"자주 하는 실수","text":"근의 합을 b와 그대로 같다고 두지 않는다. 인수형을 전개해 x항의 부호를 확인한다."}]},
+      {"id":"cm1-roots-coefficients-experiment","template":"experiment","title":"근을 움직이고 그래프와 계수 읽기","kicker":"조작 → 예측 → 전개 → 검산","blocks":[{"type":"lead","title":"조작 순서","text":"r,s를 바꾸면 x절편, 합, 전개식의 b,c가 함께 바뀝니다. 조작 전에 합과 곱을 적어 보세요."},{"type":"graph","title":"포물선과 두 근","text":"슬라이더로 r,s를 조절하세요. 점이 같은 위치에 겹치면 중근입니다. 그래프는 학습용 시각화이며 관계는 전개식으로도 확인하세요.","graph":{"items":[{"id":"root-quadratic","type":"function","label":"y=(x−r)(x−s)","colorHex":"#315DA8","enabled":true,"expression":"(x-r)*(x-s)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-4,"right":4,"top":16,"bottom":-8},"parameters":[{"id":"r","label":"첫째 근 r","value":-1,"min":-3,"max":3,"step":1},{"id":"s","label":"둘째 근 s","value":3,"min":-3,"max":3,"step":1}]}}},{"type":"question","title":"Socratic 질문","text":"왜 b는 r+s가 아니라 −(r+s)일까요?"},{"type":"hint","title":"힌트","text":"전개식의 x항은 −sx−rx입니다. 이를 bx와 비교해 보세요."},{"type":"verification","title":"조작 뒤 검산","text":"현재 두 근을 r,s라 할 때 인수형을 전개해 x²−(r+s)x+rs와 비교합니다. 그래프의 x절편도 같은 r,s인지 확인하세요."}]},
+      {"id":"cm1-roots-coefficients-example","template":"example","title":"근으로 방정식 만들기","kicker":"합·곱과 인수형을 함께 사용","blocks":[{"type":"question","title":"예제","text":"두 근이 −1과 3인 최고차항 계수 1인 이차방정식을 구하세요."},{"type":"solutionStep","title":"풀이","items":["인수형은 (x+1)(x−3)=0이다.","전개하면 x²−2x−3=0이다.","두 근을 대입하면 각각 0이 되어 근을 확인한다."]},{"type":"thinking","title":"한 번 더 설명","text":"합 2가 일차항 계수 −2로 바뀐 까닭을 인수형의 x항으로 설명해 보세요."}]},
+      {"id":"cm1-roots-coefficients-practice","template":"practice","title":"새 근으로 관계 적용하기","kicker":"도구 없이 풀고 마지막에 확인","blocks":[{"type":"question","title":"연습","text":"두 근의 합이 1, 곱이 −6인 최고차항 계수 1인 이차방정식을 만들고 인수분해로 확인하세요."},{"type":"hint","title":"힌트","text":"x²+bx+c에서 b는 합의 반대 부호, c는 곱입니다."},{"type":"answer","title":"정답 확인","text":"x²−x−6=0=(x−3)(x+2)이다. 근은 3과 −2이며 합은 1, 곱은 −6이다."},{"type":"checklist","title":"스스로 점검","items":["인수형을 전개해 x항의 부호를 설명했다.","근의 합과 곱을 그래프와 식에서 각각 확인했다.","중근이면 같은 근을 두 번 세었다."]}]}
+    ]
+  }]
+}

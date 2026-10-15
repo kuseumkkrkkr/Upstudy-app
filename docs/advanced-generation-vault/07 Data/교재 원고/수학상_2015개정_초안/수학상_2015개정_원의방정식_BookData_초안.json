@@ -1,0 +1,135 @@
+{
+  "title": "수학(상) 2015 개정 · 원의 방정식 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "도형의 방정식",
+    "원의 방정식",
+    "중심",
+    "반지름",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "원의 표준형과 중심·반지름",
+      "pages": [
+        {
+          "id": "math-upper-circle-opening",
+          "template": "opening",
+          "title": "중심과 반지름으로 원을 나타내기",
+          "kicker": "원의 방정식",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "중심이 (2,−1)이고 반지름이 3인 원 위의 점은 어떤 식을 만족할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "중심에서의 거리",
+              "text": "원 위의 점 (x,y)와 중심 사이의 거리가 항상 얼마인지 생각하고 거리 공식을 적용하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "중심에서 거리가 3이므로 (x−2)²+(y+1)²=9입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-circle-concept",
+          "template": "concept",
+          "title": "원의 방정식은 중심에서 거리가 일정",
+          "kicker": "(x−a)²+(y−b)²=r²",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "중심과 반지름",
+              "text": "중심이 (a,b), 반지름이 r인 원의 방정식은 (x−a)²+(y−b)²=r²입니다. r>0일 때 실제 원을 나타냅니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "일반형에서 읽기",
+              "items": [
+                "x²+y²+Dx+Ey+F=0을 x와 y에 대해 각각 완전제곱식으로 만듭니다.",
+                "중심은 (−D/2,−E/2)입니다.",
+                "반지름의 제곱은 (D/2)²+(E/2)²−F입니다. 값이 양수여야 원을 나타냅니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "중심 좌표의 부호",
+              "text": "(x−a)²에서 중심의 x좌표는 a입니다. 괄호 안 부호와 중심 좌표의 부호가 반대입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-circle-example",
+          "template": "example",
+          "title": "일반형을 표준형으로 바꾸기",
+          "kicker": "x²+y²−4x+6y+9=0",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x²+y²−4x+6y+9=0의 중심과 반지름을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x²−4x=(x−2)²−4입니다.",
+                "y²+6y=(y+3)²−9입니다.",
+                "정리하면 (x−2)²+(y+3)²=4이므로 중심은 (2,−3), 반지름은 2입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "중심 (2,−3), 반지름 2"
+            }
+          ]
+        },
+        {
+          "id": "math-upper-circle-practice",
+          "template": "practice",
+          "title": "원의 중심과 반지름 연습",
+          "kicker": "각 변수별 완전제곱",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "x²+y²+2x−8y+8=0의 중심과 반지름을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "x항끼리, y항끼리 묶고 각각 완전제곱식으로 바꾸세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x+1)²+(y−4)²=9이므로 중심은 (−1,4), 반지름은 3입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "완전제곱을 만들 때 더한 수를 등식에 반영했나요?",
+                "중심 좌표와 괄호 안 부호를 구분했나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

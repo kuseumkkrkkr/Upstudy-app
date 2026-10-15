@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>일차식의 덧셈과 뺄셈 · 체험수학</title>
+<style>
+:root{font:16px/1.6 system-ui,sans-serif;color-scheme:light dark}body{max-width:780px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1.2rem;background:#1b2638;border:1px solid #35445d;border-radius:18px}h1{font-size:1.5rem}.muted{color:#c4cede}.card{padding:1rem;background:#111c2b;border-radius:12px;margin:.8rem 0}.controls{display:flex;gap:1rem;flex-wrap:wrap;align-items:center}label{display:grid;gap:.25rem;min-width:145px;flex:1}input,button{font:inherit}button{padding:.55rem .8rem;border:0;border-radius:9px;background:#7dd3fc;color:#082f49;font-weight:700;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}.tiles{display:flex;gap:.4rem;flex-wrap:wrap;min-height:3rem}.tile{padding:.25rem .55rem;border:1px solid #64748b;border-radius:7px;background:#23354a}.xTile{border-color:#38bdf8}.unitTile{border-color:#fbbf24}.answer{font-weight:700;font-size:1.15rem}.steps{min-height:3rem}.selected{box-shadow:0 0 0 2px #fbbf24}.choice[aria-pressed=true]{background:#fbbf24;color:#422006}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style></head><body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-03] 일차식의 덧셈과 뺄셈 · 학년·학기 미지정 · 교사 검수 전</p><h1>같은 종류의 항끼리 모아 봐요</h1><p>파란 타일은 x항, 노란 타일은 상수항입니다. 두 식을 더하거나 빼며 각 종류의 항이 어떻게 바뀌는지 관찰하세요.</p>
+<section class="card" aria-labelledby="tool-title"><h2 id="tool-title">일차식 항 묶기 실험실</h2><div class="controls">
+<label for="p">첫 식의 x계수 p: <output id="pOut">2</output><input id="p" type="range" min="-4" max="4" value="2"></label><label for="r">첫 식의 상수 r: <output id="rOut">3</output><input id="r" type="range" min="-5" max="5" value="3"></label><label for="q">둘째 식의 x계수 q: <output id="qOut">1</output><input id="q" type="range" min="-4" max="4" value="1"></label><label for="s">둘째 식의 상수 s: <output id="sOut">-2</output><input id="s" type="range" min="-5" max="5" value="-2"></label>
+</div><div class="controls" role="group" aria-label="연산 선택"><button id="add" type="button" aria-pressed="true">더하기</button><button id="subtract" type="button" aria-pressed="false">빼기</button></div>
+<p id="predict" aria-live="polite"></p><h3>첫 번째 식의 항 타일</h3><div id="xTilesA" class="tiles" aria-label="첫 번째 식 x항 타일"></div><div id="unitTilesA" class="tiles" aria-label="첫 번째 식 상수항 타일"></div><h3 id="second-label">두 번째 식의 항 타일</h3><div id="xTilesB" class="tiles" aria-label="두 번째 식 x항 타일"></div><div id="unitTilesB" class="tiles" aria-label="두 번째 식 상수항 타일"></div><p id="expression" class="answer" aria-live="polite">결과를 예상해 보세요.</p><div class="controls"><button id="group" type="button">동류항 묶기</button><button id="combine" type="button" disabled>계수 계산</button></div><p id="step" class="steps" aria-live="polite">연산을 고르고 각 항의 부호를 살펴보세요.</p></section>
+<section class="card"><h2>Socratic 퀴즈</h2><p>-(2x-3)을 괄호 없이 쓰면?</p><div id="choices" class="controls"></div><p id="feedback" aria-live="polite">괄호 안 각 항에 -1을 곱해 보세요.</p></section>
+<section class="card"><h2>혼자 연습</h2><p>(2x+3)+(5x-4), (6x-2)-(3x+5)를 각각 간단히 하세요.</p><details><summary>정답과 풀이</summary><p>7x-1, 6x-2-3x-5=3x-7입니다.</p></details></section>
+<p class="muted">타일은 항의 종류와 부호를 보여 주는 모형입니다. 크기나 개수는 계수의 부호·절댓값을 나타내며 실제 물리적 길이 척도는 아닙니다.</p></main>
+<script>
+(()=>{
+  'use strict';
+  const $=selector=>document.querySelector(selector), ids=['p','r','q','s'];
+  let operation=1, stage=0;
+  const value=id=>Number($('#'+id).value);
+  function term(coefficient,symbol){
+    if(coefficient===0)return '';
+    const magnitude=Math.abs(coefficient), body=symbol?(magnitude===1?symbol:`${magnitude}${symbol}`):String(magnitude);
+    return coefficient<0?`-${body}`:body;
+  }
+  function format(xCoefficient,constant){
+    if(xCoefficient===0&&constant===0)return '0';
+    const xTerm=term(xCoefficient,'x'), numberTerm=term(constant,'');
+    return xTerm&&numberTerm?(constant>0?`${xTerm}+${numberTerm}`:`${xTerm}${numberTerm}`):xTerm||numberTerm;
+  }
+  function renderTiles(selector,coefficient,symbol,reverse=false){
+    const box=$(selector), shown=reverse?-coefficient:coefficient, count=Math.min(Math.abs(shown),8);
+    box.replaceChildren();
+    for(let i=0;i<count;i++){
+      const tile=document.createElement('span');
+      tile.className=`tile ${symbol?'xTile':'unitTile'}`;
+      tile.textContent=`${shown<0?'−':'+'}${symbol||'1'}`;
+      box.append(tile);
+    }
+    if(Math.abs(shown)>8){const more=document.createElement('span');more.className='tile';more.textContent=`… (${Math.abs(shown)}개)`;box.append(more);}
+  }
+  function sumTerms(first,second,symbol){
+    const left=term(first,symbol),right=term(second,symbol);
+    if(!left)return right||'0';
+    if(!right)return left;
+    return `${left}${second>0?'+':''}${right}`;
+  }
+  function update(){
+    ids.forEach(id=>$('#'+id+'Out').textContent=$('#'+id).value);
+    const p=value('p'),r=value('r'),q=value('q'),s=value('s'), reverse=operation===-1;
+    $('#predict').textContent=`예상: (${format(p,r)}) ${reverse?'−':'+'} (${format(q,s)}) = ?`;
+    $('#second-label').textContent=reverse?'두 번째 식의 항 타일 (부호 반전)':'두 번째 식의 항 타일';
+    renderTiles('#xTilesA',p,'x');renderTiles('#unitTilesA',r,'');
+    renderTiles('#xTilesB',q,'x',reverse);renderTiles('#unitTilesB',s,'',reverse);
+    $('#expression').textContent=`x항: ${sumTerms(p,reverse?-q:q,'x')} · 상수항: ${sumTerms(r,reverse?-s:s,'')}`;
+    $('#step').textContent='첫째 식과 둘째 식의 항을 나누어 표시했습니다. 동류항 묶기를 눌러 보세요.';
+    $('#group').disabled=false;$('#combine').disabled=true;stage=0;
+  }
+  function selectOperation(next){
+    operation=next;$('#add').setAttribute('aria-pressed',String(operation===1));
+    $('#subtract').setAttribute('aria-pressed',String(operation===-1));update();
+  }
+  ids.forEach(id=>$('#'+id).addEventListener('input',update));
+  $('#add').addEventListener('click',()=>selectOperation(1));
+  $('#subtract').addEventListener('click',()=>selectOperation(-1));
+  $('#group').addEventListener('click',()=>{
+    stage=1;$('#group').disabled=true;$('#combine').disabled=false;
+    $('#step').textContent=operation===1?'1단계: x항끼리, 상수항끼리 모았습니다. 이제 각 종류의 계수를 계산하세요.':'1단계: 둘째 식 전체를 빼므로 x항과 상수항의 부호가 모두 반대로 바뀝니다. 이제 동류항끼리 계산하세요.';
+  });
+  $('#combine').addEventListener('click',()=>{
+    if(stage===0)return;stage=2;
+    const xResult=value('p')+operation*value('q'), numberResult=value('r')+operation*value('s');
+    $('#expression').textContent=`결과: ${format(xResult,numberResult)}`;
+    $('#step').textContent=`2단계: x항 계수는 ${value('p')} ${operation===1?'+':'−'} ${value('q')} = ${xResult}, 상수항은 ${value('r')} ${operation===1?'+':'−'} (${value('s')}) = ${numberResult}입니다.`;
+    $('#combine').disabled=true;
+  });
+  [['-2x+3','-2x+3'],['-2x-3','-2x-3'],['2x+3','2x+3']].forEach(([label,result])=>{
+    const button=document.createElement('button');button.type='button';button.className='choice';button.textContent=label;button.setAttribute('aria-pressed','false');
+    button.addEventListener('click',()=>{
+      document.querySelectorAll('.choice').forEach(item=>item.setAttribute('aria-pressed',String(item===button)));
+      $('#feedback').textContent=result==='-2x+3'?'맞아요. -1을 두 항에 곱해 -2x+3입니다.':'다시 확인해 보세요. -1×(-3)의 부호를 생각하세요.';
+    });
+    $('#choices').append(button);
+  });
+  update();
+})();
+</script></body></html>

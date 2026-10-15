@@ -1,0 +1,30 @@
+{
+  "title": "수학Ⅰ 개념서 · 수열",
+  "subtitle": "규칙을 항과 합으로 설명하기 · 2015 개정 시범, 성취기준 코드·교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["수학Ⅰ", "수열", "등차수열", "등비수열", "수열의 합", "수학적 귀납법", "2015 개정", "시범", "미검수"],
+  "chapters": [
+    {
+      "title": "규칙을 항과 합으로 설명하기",
+      "intro": [
+        "수열에서 일정한 차와 일정한 비를 찾아 등차·등비수열의 항과 합을 표현한다.",
+        "앞의 몇 항을 확인하는 것과 모든 자연수에 대한 증명을 구별하고 수학적 귀납법의 기초·귀납 단계를 이해한다.",
+        "2015 개정 수학Ⅰ 시범이며 성취기준 코드·교사 검수·학생 파일럿은 미완료다."
+      ],
+      "sections": [
+        {"title":"등차수열","paragraphs":["이웃한 항의 차가 d로 일정한 수열이다.","n번째 항은 aₙ=a₁+(n−1)d이고, 첫째 항부터 n번째 항까지의 합은 Sₙ=n(a₁+aₙ)/2다.","합 공식은 앞에서 더한 식과 뒤에서 더한 식을 포개 항의 쌍이 모두 a₁+aₙ인 점에서 얻는다."],"visuals":[{"kind":"steps","title":"등차수열의 항과 합","caption":"차이는 일정하고 정수 n에서 항을 읽는다.","formula":"aₙ=a₁+(n−1)d","items":["첫째 항 a₁ 확인","이웃한 항의 차 d 확인","n−1번 더해 aₙ 구하기","앞·뒤 항을 짝지어 Sₙ 계산"],"rows":[]}]},
+        {"title":"등비수열","paragraphs":["이웃한 항의 비가 r로 일정한 수열이다.","n번째 항은 aₙ=a₁rⁿ⁻¹이다.","r≠1일 때 Sₙ=a₁(rⁿ−1)/(r−1)이고 r=1이면 Sₙ=na₁이다."],"visuals":[{"kind":"steps","title":"등비수열의 항","caption":"정수 n에서 공비가 만드는 변화를 확인한다.","formula":"aₙ=a₁rⁿ⁻¹","items":["첫째 항 a₁ 확인","이웃한 항의 비 r 확인","n−1번 곱해 aₙ 구하기","r=1인지 확인하고 합 공식 선택"],"rows":[]}]},
+        {"title":"모든 자연수에 대한 귀납법","paragraphs":["기초 단계에서 P(1)을 확인하고, 귀납 단계에서 P(k)를 가정해 P(k+1)을 증명한다.","앞의 몇 사례가 참인 것만으로 모든 자연수에 대한 명제가 증명되지는 않는다.","이 시범은 간단한 합 공식의 증명을 예로 들며 복잡한 증명을 다루지 않는다."],"visuals":[{"kind":"steps","title":"P(1)에서 P(k+1)로","caption":"각 단계에서 증명해야 할 명제를 확인한다.","formula":"P(1),  P(k) ⇒ P(k+1)","items":["기초: P(1)이 참임을 확인","가정: 임의의 k에서 P(k)를 가정","연결: 가정으로 P(k+1)을 유도","결론: 모든 자연수 n≥1에서 참"],"rows":[]}]}
+      ],
+      "pages": [
+        {"id":"m1-seq-opening","template":"opening","title":"차이가 일정할까, 비가 일정할까?","kicker":"먼저 다음 항 예측","blocks":[{"type":"lead","title":"오늘의 질문","text":"수열에서 어떤 변화가 반복되는지 찾아 항과 합을 구한다."},{"type":"thinking","title":"예측","text":"4,7,10,13,…은 다음 항을 구할 때 더하는 변화와 곱하는 변화 중 무엇을 확인해야 할까?"}]},
+        {"id":"m1-seq-arithmetic","template":"experiment","title":"등차수열: 한 걸음씩 같은 차이","kicker":"항은 정수 n에서 읽기","blocks":[{"type":"lead","title":"조작","text":"첫째 항 a₁과 공차 d를 움직여 aₙ=a₁+(n−1)d 그래프를 살펴본다. 점 사이의 선은 규칙을 보기 위한 안내이며 수열의 항은 정수 n에서만 읽는다."},{"type":"graph","title":"등차수열의 항 그래프","text":"정수 n에서 그래프의 값을 수열의 항으로 해석한다. a₁과 d를 바꾸며 일정한 차와 n번째 항을 확인한다.","graph":{"items":[{"id":"arithmetic-sequence","type":"function","label":"aₙ=a₁+(n−1)d (정수 n)","colorHex":"#2457C5","enabled":true,"expression":"a1+(x-1)*d"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":1,"right":8,"top":35,"bottom":0},"parameters":[{"id":"a1","label":"첫째 항 a₁","value":3,"min":1,"max":5,"step":1},{"id":"d","label":"공차 d","value":2,"min":0,"max":4,"step":1}]}}},{"type":"question","title":"Socratic 질문","text":"a₁=3, d=2일 때 a₈을 구하기 전에 공차 2를 몇 번 더하는지 말해 보세요."},{"type":"hint","title":"힌트","text":"첫째 항에서 여덟째 항까지는 이웃한 항 사이의 간격이 몇 개인지 세어 보세요."},{"type":"answer","title":"확인","text":"간격은 7개이므로 a₈=3+7·2=17이다."}]},
+        {"id":"m1-seq-geometric","template":"experiment","title":"등비수열: 같은 비율로 곱하기","kicker":"정수 n에서 항 읽기","blocks":[{"type":"lead","title":"조작","text":"첫째 항 a₁과 공비 r을 움직여 aₙ=a₁rⁿ⁻¹ 그래프를 본다. 정수 n에서 이웃한 항의 비가 r인지 확인한다."},{"type":"graph","title":"등비수열의 항 그래프","text":"정수 n에서 그래프의 값을 수열의 항으로 읽는다. 연결된 곡선은 연속함수를 뜻하지 않고 항의 크기 변화를 돕는 시각 안내다.","graph":{"items":[{"id":"geometric-sequence","type":"function","label":"aₙ=a₁rⁿ⁻¹ (정수 n)","colorHex":"#14735B","enabled":true,"expression":"a1*r^(x-1)"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":1,"right":7,"top":280,"bottom":0},"parameters":[{"id":"a1","label":"첫째 항 a₁","value":2,"min":1,"max":4,"step":1},{"id":"r","label":"공비 r","value":1.5,"min":0.5,"max":2,"step":0.25}]}}},{"type":"question","title":"Socratic 질문","text":"2,6,18,54,…은 왜 이웃한 두 항을 빼기보다 나누어 볼까요?"},{"type":"hint","title":"힌트","text":"각 항이 앞 항의 몇 배인지 비교해 보세요."},{"type":"answer","title":"확인","text":"이웃한 항의 비가 3으로 일정한 등비수열이다."}]},
+        {"id":"m1-seq-sums","template":"concept","title":"여러 항의 합을 짝지어 보기","kicker":"등차합과 등비합","blocks":[{"type":"definition","title":"등차수열의 합","text":"앞에서 더한 식과 뒤에서 더한 식을 더하면 각 쌍이 a₁+aₙ이다.","formula":"Sₙ=n(a₁+aₙ)/2"},{"type":"derivation","title":"등비수열의 합","text":"원래 합과 r배한 합을 빼면 가운데 항들이 소거된다. r=1이면 모든 항이 같아 별도 계산한다.","formula":"r≠1: Sₙ=a₁(rⁿ−1)/(r−1),  r=1: Sₙ=na₁"},{"type":"example","title":"등차 예제","text":"3+5+…+17은 8개 항이므로 S₈=8(3+17)/2=80이다."}]},
+        {"id":"m1-seq-induction","template":"principle","title":"몇 사례를 넘어 증명하기","kicker":"기초와 귀납 단계","blocks":[{"type":"thinking","title":"왜 두 단계일까?","text":"처음 몇 개가 참이어도 뒤의 모든 명제가 따라오지는 않는다. P(1)과 P(k)에서 P(k+1)로 이어지는 연결을 증명한다."},{"type":"solutionStep","title":"기초 단계","text":"P(1): 1=1·2/2이므로 참이다."},{"type":"solutionStep","title":"귀납 단계","text":"P(k)를 가정하면 1+…+k+(k+1)=k(k+1)/2+(k+1)=(k+1)(k+2)/2이므로 P(k+1)이 참이다."},{"type":"answer","title":"결론","text":"기초 단계와 귀납 단계가 모두 성립하므로 모든 자연수 n≥1에서 1+…+n=n(n+1)/2이다."}]},
+        {"id":"m1-seq-practice","template":"practice","title":"규칙을 새 조건에 적용하기","kicker":"도구 없이 먼저 풀기","blocks":[{"type":"question","title":"1번","text":"등차수열 4,7,10,…의 a₁₀과 S₁₀을 구한다."},{"type":"question","title":"2번","text":"등비수열 2,1,1/2,…의 a₅와 S₅를 구한다."},{"type":"question","title":"3번","text":"r=1인 등비수열에서 일반 등비합 식을 그대로 쓰면 안 되는 까닭을 설명한다."},{"type":"hint","title":"힌트","text":"등차는 차이 d, 등비는 비 r을 확인하고, 합에서는 r=1 여부를 먼저 살핀다."},{"type":"answer","title":"정답","text":"1. a₁₀=31, S₁₀=175. 2. a₅=1/8, S₅=31/8. 3. 분모 r−1이 0이므로 Sₙ=na₁을 쓴다."}]},
+        {"id":"m1-seq-summary","template":"summary","title":"규칙과 증명을 구별하기","kicker":"핵심 회상","blocks":[{"type":"summary","title":"한 줄 정리","text":"등차는 일정한 차, 등비는 일정한 비를 이용해 항과 합을 구하고, 모든 자연수에 대한 주장은 귀납법으로 증명한다."},{"type":"checklist","title":"스스로 확인","items":["수열에서 항·일반항·합 기호를 구별한다.","등차수열의 공차와 등비수열의 공비를 확인한다.","등비합에서 r=1을 별도로 처리한다.","수학적 귀납법에서 P(1)과 P(k)⇒P(k+1)을 설명한다.","앞의 몇 사례와 전체 증명을 혼동하지 않는다."]}]}
+      ]
+    }
+  ]
+}

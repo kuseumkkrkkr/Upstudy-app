@@ -1,0 +1,135 @@
+{
+  "title": "수학(상) 2015 개정 · 연립이차방정식 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "방정식과 부등식",
+    "연립방정식",
+    "연립이차방정식",
+    "대입법",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "대입법으로 푸는 연립이차방정식",
+      "pages": [
+        {
+          "id": "math-upper-simultaneous-quadratic-opening",
+          "template": "opening",
+          "title": "직선과 원이 만나는 점을 식으로 구할까?",
+          "kicker": "연립이차방정식",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=x+1과 x²+y²=25를 동시에 만족하는 점은 몇 개일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "한 식을 다른 식에 대입",
+              "text": "직선에서 y를 x로 나타낸 다음 원의 식에 넣어 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "x²+(x+1)²=25라는 이차방정식을 얻습니다. 해를 구해 두 식을 모두 만족하는 점을 찾습니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-simultaneous-quadratic-concept",
+          "template": "concept",
+          "title": "한 변수를 없애 이차방정식으로 바꾼다",
+          "kicker": "대입법과 해의 순서쌍",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "연립이차방정식",
+              "text": "이차식이 포함된 두 방정식을 동시에 만족하는 해의 순서쌍을 구합니다. 한 방정식에서 한 변수를 나타내 다른 식에 대입할 수 있습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 순서",
+              "items": [
+                "일차식에서 한 변수를 다른 변수로 나타냅니다.",
+                "이를 이차식에 대입해 한 변수에 대한 이차방정식을 풉니다.",
+                "각 해에 대응하는 다른 변수도 구해 두 식에 모두 대입해 확인합니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "해는 순서쌍",
+              "text": "한 변수의 값만으로는 연립방정식의 해가 완성되지 않습니다. 각 값에 대응하는 다른 변수까지 써서 순서쌍으로 답합니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-simultaneous-quadratic-example",
+          "template": "example",
+          "title": "직선과 원의 교점 좌표 구하기",
+          "kicker": "y=x+1, x²+y²=25",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "연립방정식 y=x+1, x²+y²=25를 풀어 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "y=x+1을 원의 식에 대입하면 x²+(x+1)²=25입니다.",
+                "정리하면 x²+x−12=0=(x+4)(x−3)이므로 x=−4 또는 3입니다.",
+                "각각 y=−3 또는 4이므로 해는 (−4,−3), (3,4)입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "(x,y)=(−4,−3), (3,4)"
+            }
+          ]
+        },
+        {
+          "id": "math-upper-simultaneous-quadratic-practice",
+          "template": "practice",
+          "title": "대입법으로 연립이차방정식 풀기",
+          "kicker": "각 변수 값을 함께 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "연립방정식 y=2x, x²+y²=20을 풀어 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "y=2x를 이차식에 대입해 x를 구한 뒤 y값도 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5x²=20이므로 x=±2입니다. y=2x에서 y=±4이므로 해는 (2,4), (−2,−4)입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "대입 뒤 얻은 이차방정식을 정확히 풀었나요?",
+                "각 해의 순서쌍이 두 식을 모두 만족하는지 확인했나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

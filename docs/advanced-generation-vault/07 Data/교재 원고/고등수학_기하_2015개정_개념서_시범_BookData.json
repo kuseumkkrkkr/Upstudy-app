@@ -1,0 +1,41 @@
+{
+  "title": "2015 개정 기하 개념서 · 평면벡터",
+  "subtitle": "벡터 연산 → 위치벡터와 좌표 → 내적 순서의 학생용 연결 시범 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["기하", "2015 개정", "평면벡터", "개념서 시범", "교사 검수 전", "성취기준 원문 대조 완료"],
+  "chapters": [
+    {
+      "title": "1장 · 벡터의 덧셈과 실수배",
+      "intro": [
+        "벡터를 크기와 방향으로 읽고, 화살표 연결과 성분 계산을 연결한다.",
+        "[12기하02-01] 벡터의 뜻, [12기하02-02] 벡터의 덧셈·뺄셈·실수배 기준에 연결한 부분 시범이며 전체 벡터 영역을 다루지 않는다."
+      ],
+      "sections": [{"title": "화살표와 성분", "paragraphs": ["u=(a,b)는 가로 a, 세로 b만큼의 이동이다.", "u+v는 화살표를 머리-꼬리로 잇고 각 성분을 더한다.", "u−v=u+(−v)이며 실수배의 부호는 방향, 절댓값은 크기를 바꾼다."]}],
+      "pages": [
+        {"id": "geometry-volume-vector-opening", "template": "opening", "title": "두 이동을 하나로 합치기", "kicker": "끝점을 먼저 예측", "blocks": [{"type": "lead", "title": "오늘의 질문", "text": "u=(3,1) 다음에 v=(1,2)만큼 이동하면 최종 이동은?"}, {"type": "thinking", "title": "예측", "text": "화살표를 잇기 전에 성분 합을 예상하세요."}]},
+        {"id": "geometry-volume-vector-experiment", "template": "experiment", "title": "성분과 화살표로 연산하기", "kicker": "부호·방향·길이 관찰", "blocks": [{"type": "lead", "title": "조작", "text": "u와 v의 성분, 연산 종류, 실수배 계수를 바꾸어 결과를 예측하세요."}, {"type": "visual", "title": "체험 도구", "text": "별도 HTML에서 덧셈·뺄셈·실수배를 조작합니다. 앱 안의 응답 저장 퀴즈는 아닙니다."}, {"type": "question", "title": "Socratic 질문", "text": "뺄셈에서 v의 방향은 어떻게 바뀌며, 음수 계수는 무엇을 바꾸나요?"}, {"type": "hint", "title": "힌트", "text": "u−v는 u+(−v)로 고쳐 보세요."}, {"type": "answer", "title": "확인", "text": "뺄셈은 반대 방향 −v를 더합니다. 계수의 부호는 방향, 절댓값은 크기를 정합니다."}]},
+        {"id": "geometry-volume-vector-practice", "template": "practice", "title": "벡터 연산 전이", "kicker": "다른 성분으로 풀기", "blocks": [{"type": "question", "title": "연습", "text": "u=(−2,3), v=(4,−1)일 때 u+v, u−v, −2u를 구하세요."}, {"type": "answer", "title": "풀이", "text": "(2,2), (−6,4), (4,−6)입니다."}, {"type": "checklist", "title": "마무리", "items": ["화살표 연결과 성분 합을 연결한다.", "뺄셈을 반대 벡터의 덧셈으로 나타낸다.", "실수배 부호·절댓값을 구분한다."]}]}
+      ]
+    },
+    {
+      "title": "2장 · 위치벡터와 좌표",
+      "intro": ["점 A의 위치벡터를 원점 기준 이동으로 보고, 두 점 사이 벡터를 도착점−시작점으로 계산한다.", "[12기하02-03] 위치벡터의 뜻과 평면벡터·좌표의 대응 기준의 원문 문구를 대조했다. 교사 검수 전이다."],
+      "sections": [{"title": "위치와 이동", "paragraphs": ["A(a₁,a₂)의 위치벡터 OA는 (a₁,a₂)이다.", "A(a₁,a₂)에서 B(b₁,b₂)로 가는 AB는 (b₁−a₁,b₂−a₂)이다.", "OA+AB=OB이므로 A 좌표가 중간에서 상쇄된다."]}],
+      "pages": [
+        {"id": "geometry-volume-position-opening", "template": "opening", "title": "점은 위치, 벡터는 이동", "kicker": "좌표 차를 예측", "blocks": [{"type": "lead", "title": "오늘의 질문", "text": "A에서 B로 가는 화살표의 성분은?"}, {"type": "thinking", "title": "예측", "text": "A(−2,1), B(3,4)의 가로·세로 이동을 각각 예상하세요."}]},
+        {"id": "geometry-volume-position-experiment", "template": "experiment", "title": "위치벡터와 두 점 사이 이동", "kicker": "A·B 좌표 직접 조절", "blocks": [{"type": "lead", "title": "조작", "text": "A와 B의 좌표를 바꾸고 OA, OB, AB를 비교합니다."}, {"type": "visual", "title": "체험 도구", "text": "별도 SVG HTML에서 좌표·화살표·B−A·단계 설명이 동기화됩니다."}, {"type": "question", "title": "Socratic 질문", "text": "현재 AB의 x성분은 B의 x좌표와 A의 x좌표 중 어떤 것을 먼저 빼야 할까요?"}, {"type": "answer", "title": "확인", "text": "도착점에서 시작점을 뺍니다. OA+AB=OB도 좌표 성분으로 확인합니다."}]},
+        {"id": "geometry-volume-position-practice", "template": "practice", "title": "좌표 차와 벡터 합", "kicker": "도구 없이 전이", "blocks": [{"type": "question", "title": "연습", "text": "A(−1,3), B(4,−2)일 때 AB를 구하세요."}, {"type": "answer", "title": "풀이", "text": "(4−(−1),−2−3)=(5,−5)입니다."}, {"type": "checklist", "title": "마무리", "items": ["위치와 이동을 구별한다.", "AB를 B−A로 계산한다.", "OA+AB=OB를 확인한다."]}]}
+      ]
+    },
+    {
+      "title": "3장 · 평면벡터의 내적",
+      "intro": ["부호 있는 투영으로 내적을 이해하고 길이·끼인각 식과 좌표 성분식을 연결한다.", "[12기하02-04] 두 평면벡터의 내적의 뜻과 계산 기준의 원문 문구를 대조했다. 교사 검수 전이다."],
+      "sections": [{"title": "투영과 내적", "paragraphs": ["v를 u 방향으로 투영한 부호 있는 길이는 |v|cosθ이다.", "u·v=|u||v|cosθ이고 좌표로는 u₁v₁+u₂v₂이다.", "예각·직각·둔각에서 내적의 부호는 양수·0·음수다."]}],
+      "pages": [
+        {"id": "geometry-volume-dot-opening", "template": "opening", "title": "방향을 숫자로 나타내기", "kicker": "각도 전에 부호 예측", "blocks": [{"type": "lead", "title": "오늘의 질문", "text": "두 벡터의 방향 관계는 내적의 부호에 어떻게 나타날까요?"}, {"type": "thinking", "title": "예측", "text": "끼인각 60°에서 내적은 양수·0·음수 중 무엇일까요?"}]},
+        {"id": "geometry-volume-dot-experiment", "template": "experiment", "title": "각도와 투영 조작", "kicker": "투영·내적·성분 연결", "blocks": [{"type": "lead", "title": "조작", "text": "벡터 크기와 끼인각을 바꾸고 내적의 부호와 값을 예측합니다."}, {"type": "visual", "title": "체험 도구", "text": "별도 HTML에서 화살표, 부호 있는 투영, 단계형 공식 설명을 조작합니다."}, {"type": "question", "title": "Socratic 질문", "text": "투영이 u와 같은 쪽인지 반대쪽인지가 부호를 어떻게 정하나요?"}, {"type": "answer", "title": "확인", "text": "u·v=|u||v|cosθ이며 좌표 성분식도 같은 값을 나타냅니다."}]},
+        {"id": "geometry-volume-dot-practice", "template": "practice", "title": "각·좌표로 내적 계산", "kicker": "새 조건에서 확인", "blocks": [{"type": "question", "title": "연습", "text": "벡터 크기가 2, 5이고 끼인각이 120°일 때 내적은?"}, {"type": "answer", "title": "풀이", "text": "10×cos120°=−5입니다."}, {"type": "checklist", "title": "마무리", "items": ["투영으로 내적의 뜻을 설명한다.", "각도와 부호를 연결한다.", "좌표 성분식과 비교한다."]}]}
+      ]
+    }
+  ]
+}

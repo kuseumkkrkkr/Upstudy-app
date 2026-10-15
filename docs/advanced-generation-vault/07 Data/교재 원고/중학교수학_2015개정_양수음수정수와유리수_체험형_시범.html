@@ -1,0 +1,74 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 양수와 음수, 정수와 유리수</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--orange:#ad4c18;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:850px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:180px;flex:1}.controls input{width:100%}button,select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.line-wrap{position:relative;padding:34px 4px 26px;margin:25px 0 8px}.axis{height:4px;background:#65758c;position:relative}.axis:before,.axis:after{content:"";position:absolute;top:-5px;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent}.axis:before{left:-2px;border-right:10px solid #65758c}.axis:after{right:-2px;border-left:10px solid #65758c}.ticks{position:absolute;inset:0 4px;display:flex;justify-content:space-between}.tick{position:relative;width:1px;height:15px;background:#65758c}.tick span{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.82rem}.tick.zero{height:22px;background:var(--ink);width:2px}.point{position:absolute;top:14px;left:50%;width:18px;height:18px;border-radius:50%;background:var(--blue);border:2px solid #fff;box-shadow:0 0 0 2px var(--blue);transform:translateX(-50%);transition:left .38s ease}.point-label{position:absolute;left:50%;top:-18px;transform:translateX(-50%);white-space:nowrap;font-weight:700;color:var(--blue)}.legend{display:flex;justify-content:space-between;color:var(--muted);font-size:.88rem}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-03] 원문 문구 대조 · 학년·학기 미지정</p>
+<h1>0을 기준으로 위치 읽기</h1>
+<p>분수를 조절해 점이 0의 어느 쪽에 놓이는지 살펴보세요. 먼저 위치를 예상하고, 필요할 때만 단계 버튼을 눌러 이동 과정을 확인합니다.</p>
+
+<section class="card" aria-labelledby="controlsTitle">
+<h2 id="controlsTitle">수를 직접 만들어 보기</h2>
+<div class="controls">
+<label>분자 <output id="numeratorOut" for="numerator">−2</output><input id="numerator" type="range" min="-9" max="9" step="1" value="-2" aria-label="분자"></label>
+<label>분모 <output id="denominatorOut" for="denominator">4</output><input id="denominator" type="range" min="1" max="9" step="1" value="4" aria-label="분모"></label>
+<label>상황<select id="context" aria-label="수를 해석할 상황"><option value="온도">기온</option><option value="높이">기준 높이</option><option value="잔액">잔액</option></select></label>
+</div>
+<p id="valueReadout" class="status" aria-live="polite">−2/4 = −1/2 · 0보다 작은 음수 · 유리수, 정수 아님</p>
+<div class="line-wrap" role="img" aria-label="−9부터 9까지의 수직선. 0을 중심으로 음수는 왼쪽, 양수는 오른쪽에 표시">
+<div class="point-label" id="pointLabel">−1/2</div><div class="point" id="point" aria-hidden="true"></div><div class="axis"></div>
+<div class="ticks" aria-hidden="true"><i class="tick"><span>−9</span></i><i class="tick"><span>−6</span></i><i class="tick"><span>−3</span></i><i class="tick zero"><span>0</span></i><i class="tick"><span>3</span></i><i class="tick"><span>6</span></i><i class="tick"><span>9</span></i></div>
+</div>
+<div class="legend"><span id="negativeContext">기준보다 낮은 쪽</span><span>0 · 기준</span><span id="positiveContext">기준보다 높은 쪽</span></div>
+<p id="contextExample" class="muted">기온으로 읽으면 기준 0°C보다 낮은 −1/2°C입니다. 상황을 바꾸면 설명은 달라져도 수의 위치는 같습니다.</p>
+</section>
+
+<section class="card" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">0에서 점까지 생각의 순서</h2>
+<div class="controls"><button id="stepBack" type="button">이전 단계</button><button id="stepNext" type="button">다음 단계</button><button id="stepReset" type="button">처음으로</button><span id="stepReadout" class="status" aria-live="polite">1 / 3 · 0에서 출발</span></div>
+<p id="stepExplanation" role="status" aria-live="polite">먼저 0을 기준점으로 잡습니다. 아직 방향은 정하지 않았어요.</p>
+<p class="muted">애니메이션 없이도 분수·부호·위치 설명을 읽고 같은 결론을 확인할 수 있습니다.</p>
+</section>
+
+<section class="card quiz" aria-labelledby="quizTitle">
+<h2 id="quizTitle">짧은 확인 퀴즈</h2><p id="quizPrompt">−2/4는 양수, 음수, 0 중 무엇일까요?</p>
+<div class="controls"><button type="button" data-sign="positive">양수</button><button type="button" data-sign="negative">음수</button><button type="button" data-sign="zero">0</button></div>
+<button id="hint" type="button">힌트 보기</button><p id="hintText" class="muted" role="status" aria-live="polite">부호를 계산하기 전에 분자가 0보다 큰지, 작은지, 같은지 살펴보세요.</p>
+<p id="quizFeedback" class="feedback" role="status" aria-live="polite">답을 고른 뒤, 0을 기준으로 위치를 설명해 보세요.</p>
+</section>
+
+<section class="card"><h2>도구를 닫고 새 값으로</h2><p>−5/2, 0, 7/3을 수직선 위에 순서대로 그려 보세요. 각 수가 정수인지 유리수인지도 분리해 말해 보세요.</p><p class="muted">확인: −5/2는 0의 왼쪽인 음수 유리수(정수 아님), 0은 정수이자 유리수, 7/3은 0의 오른쪽인 양수 유리수(정수 아님)입니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData·구매·학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const numerator=document.querySelector('#numerator'),denominator=document.querySelector('#denominator');let stage=0;
+const gcdInt=(a,b)=>{a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a||1};
+const signOf=value=>value<0?'negative':value>0?'positive':'zero';
+function render(){
+ const n=Number(numerator.value),d=Number(denominator.value),value=n/d,common=gcdInt(n,d),simplifiedN=n/common,simplifiedD=d/common,sign=signOf(value),simple=`${simplifiedN}/${simplifiedD}`;
+ document.querySelector('#numeratorOut').value=n;document.querySelector('#denominatorOut').value=d;
+ const display=n===0?'0':`${n}/${d}`;const simplified=Number.isInteger(value)?String(value):simple;
+ document.querySelector('#valueReadout').textContent=n===0?'0 · 양수도 음수도 아님 · 정수이자 유리수':`${display} = ${simplified} · 0보다 ${sign==='positive'?'큰 양수':'작은 음수'} · 유리수${Number.isInteger(value)?'이며 정수':'이며 정수 아님'}`;
+ document.querySelector('#pointLabel').textContent=simplified;document.querySelector('#quizPrompt').textContent=`${display}는 양수, 음수, 0 중 무엇일까요?`;
+ const target=50+value/18*100,progress=stage/2,position=50+(target-50)*progress;document.querySelector('#point').style.left=`${position}%`;document.querySelector('#pointLabel').style.left=`${position}%`;
+ const stageTexts=['먼저 0을 기준점으로 잡습니다. 아직 방향은 정하지 않았어요.',`분수의 값은 ${simplified}입니다. ${sign==='zero'?'0과 같습니다.':`0에서 ${sign==='positive'?'오른쪽':'왼쪽'} 방향입니다.`}`,`점은 ${value===0?'0에':`${Math.abs(value)}만큼 ${sign==='positive'?'오른쪽':'왼쪽'}에`} 놓입니다. 상황이 달라도 수의 위치는 변하지 않습니다.`];
+ document.querySelector('#stepReadout').textContent=`${stage+1} / 3 · ${['0에서 출발','부호로 방향 정하기','수직선 위치 확인'][stage]}`;document.querySelector('#stepExplanation').textContent=stageTexts[stage];
+ document.querySelector('#stepBack').disabled=stage===0;document.querySelector('#stepNext').disabled=stage===2;
+ document.querySelector('#negativeContext').textContent=document.querySelector('#context').value==='기온'?'0°C보다 낮은 쪽':document.querySelector('#context').value==='높이'?'기준 높이보다 아래':'기준 잔액보다 부족한 쪽';
+ document.querySelector('#positiveContext').textContent=document.querySelector('#context').value==='기온'?'0°C보다 높은 쪽':document.querySelector('#context').value==='높이'?'기준 높이보다 위':'기준 잔액보다 많은 쪽';
+ const context=document.querySelector('#context').value,amount=Math.abs(value),meaning=value===0?`${context} 기준과 같습니다.`:context==='기온'?`0°C보다 ${value<0?'낮은':'높은'} ${amount}°C입니다.`:context==='높이'?`기준 높이보다 ${amount}만큼 ${value<0?'아래':'위'}입니다.`:`기준 잔액보다 ${amount}만큼 ${value<0?'부족':'많습니다'}.`;document.querySelector('#contextExample').textContent=`${context} 상황으로 읽으면 ${meaning} 상황을 바꾸어도 수의 위치는 같습니다.`;
+ document.querySelector('#quizFeedback').textContent='답을 고른 뒤, 0을 기준으로 위치를 설명해 보세요.';
+}
+numerator.addEventListener('input',()=>{stage=0;render()});denominator.addEventListener('input',()=>{stage=0;render()});document.querySelector('#context').addEventListener('change',render);
+document.querySelector('#stepBack').addEventListener('click',()=>{stage=Math.max(0,stage-1);render()});document.querySelector('#stepNext').addEventListener('click',()=>{stage=Math.min(2,stage+1);render()});document.querySelector('#stepReset').addEventListener('click',()=>{stage=0;render()});
+document.querySelectorAll('[data-sign]').forEach(button=>button.addEventListener('click',()=>{const value=Number(numerator.value)/Number(denominator.value),correct=button.dataset.sign===signOf(value);document.querySelector('#quizFeedback').textContent=correct?`맞아요. ${value===0?'0은 어느 쪽도 아닙니다.':`0의 ${value<0?'왼쪽':'오른쪽'}에 놓입니다.`}`:'다시 확인해 보세요. 0과 비교해 분수의 부호와 위치를 살펴보세요.'}));
+document.querySelector('#hint').addEventListener('click',()=>{document.querySelector('#hintText').textContent='분모는 양수예요. 따라서 분자의 부호가 분수의 부호를 정합니다. 분자가 0이면 값도 0입니다.'});render();
+})();
+</script>
+</body></html>

@@ -1,0 +1,175 @@
+{
+  "title": "수학Ⅱ 2015 개정 · 함수의 극한 단원 초안",
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정 후보",
+    "함수의 극한",
+    "태그 기반 초안"
+  ],
+  "chapters": [
+    {
+      "title": "함수의 극한",
+      "pages": [
+        {
+          "title": "함수의 극한 · 태그 경로",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "수학Ⅱ · 2015 개정 · 함수의 극한 · 성취기준: 12수학Ⅱ01-01 · 성취기준: 12수학Ⅱ01-02 · 시범 · 교사 검수 전"
+            },
+            {
+              "type": "paragraph",
+              "text": "기존 수학Ⅱ 시범 원고 지면을 이어서 학습합니다."
+            }
+          ],
+          "id": "math2-2015-03-01-001"
+        },
+        {
+          "id": "math2-2015-03-01-002",
+          "template": "opening",
+          "title": "함숫값을 몰라도 가까워지는 값을 알 수 있을까?",
+          "kicker": "먼저 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "x가 a에 가까워질 때 f(x)가 가까워지는 수를 어떻게 찾을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "x=a에서 찍힌 점 하나를 바꾸면, 양쪽에서 가까워지는 값도 바뀔까?"
+            }
+          ]
+        },
+        {
+          "id": "math2-2015-03-01-003",
+          "template": "experiment",
+          "title": "왼쪽·오른쪽에서 다가가 보기",
+          "kicker": "[12수학Ⅱ01-01] · [12수학Ⅱ01-02]",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "그래프 도구",
+              "text": "시범 HTML에서 a와 접근 거리를 직접 조절한다. 점의 높이만 바꾼 그래프와 점프 그래프를 비교하고, 왼쪽·오른쪽 접근을 단계별로 확인한다."
+            },
+            {
+              "type": "graph",
+              "title": "기준 그래프",
+              "text": "앱 지면의 기준 그래프는 y=x−a이다. 구멍·점프·접근거리 조작은 독립 HTML 시범의 동작이며, 앱 그래프 블록이 동일한 상호작용을 제공한다고 가정하지 않는다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "math2-limit-reference-line",
+                    "type": "function",
+                    "label": "y=x−a",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x-a"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -3,
+                    "right": 3,
+                    "top": 4,
+                    "bottom": -4
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "기준 위치 a",
+                      "value": 0,
+                      "min": -2,
+                      "max": 2,
+                      "step": 0.5
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "점의 함수값만 다른 그래프에서 좌극한과 우극한이 같은가? 점프 그래프에서는 양쪽 극한이 존재하는가?"
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "x=a의 점을 잠시 무시하고, a의 왼쪽과 오른쪽에 그려진 그래프 조각의 높이가 어디로 가까워지는지 각각 본다."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "점의 값만 바뀌면 양쪽 극한은 바뀌지 않는다. 점프에서는 좌극한과 우극한이 달라 양쪽 극한이 존재하지 않는다."
+            },
+            {
+              "type": "misconception",
+              "title": "자주 하는 오해",
+              "text": "f(a)를 대입한 값이 곧 lim(x→a)f(x)라고 생각하지 않는다. 극한은 a와 다른 x에서의 함수값이 가까워지는 양상으로 판단한다."
+            }
+          ]
+        },
+        {
+          "id": "math2-2015-03-01-004",
+          "template": "practice",
+          "title": "식과 함수값을 따로 보기",
+          "kicker": "도구 없이 적용",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x≠1에서 g(x)=3x−2, g(1)=10이다. 좌극한·우극한·함수의 극한을 구하고 g(1)과 비교하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "x≠1에서 적용되는 식은 무엇인가? 그 식으로 양쪽에서 다가가는 값을 찾을 수 있는가?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "3x−2에 x가 1에 가까워지는 상황을 적용한 뒤, g(1)=10은 마지막에 별도로 비교한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "좌극한과 우극한은 모두 1이므로 lim(x→1)g(x)=1이다. g(1)=10과 달라도 극한은 존재한다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "왼쪽에서의 접근값을 확인한다.",
+                "오른쪽에서의 접근값을 확인한다.",
+                "두 값이 같으면 양쪽 극한으로 정리한다.",
+                "그 점의 함수값은 별도로 비교한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "수학Ⅱ_함수의극한_BookData_시범.json",
+      "source_tags": [
+        "수학Ⅱ",
+        "2015 개정",
+        "함수의 극한",
+        "성취기준: 12수학Ⅱ01-01",
+        "성취기준: 12수학Ⅱ01-02",
+        "시범",
+        "교사 검수 전"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "수학Ⅱ_함수의극한_BookData_시범.json"
+    ]
+  }
+}

@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>2015 개정 중학교 수학 · 연립일차방정식 실험실</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color-scheme:light dark;background:#101827;color:#f4f7fc}*{box-sizing:border-box}body{max-width:980px;margin:auto;padding:1rem}h1{font-size:1.55rem}.muted{color:#c4cede}.panel{background:#152237;border-radius:14px;padding:1rem;margin:1rem 0}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:.7rem}.controls label{display:grid;gap:.25rem}.controls input,.controls select,button{min-height:44px;font:inherit}.controls input{width:100%}button{padding:.5rem .8rem;cursor:pointer;font-weight:650}.equations{font-size:1.15rem;overflow-wrap:anywhere}.graph{overflow-x:auto}.graph svg{display:block;width:100%;min-width:560px;height:auto}.grid{stroke:#40516d;stroke-width:1}.axis{stroke:#bec9d9;stroke-width:1.6}.line-one{stroke:#54d6a0;stroke-width:3}.line-two{stroke:#ff987f;stroke-width:3}.point{fill:#ffd166;stroke:#101827;stroke-width:2}.tick-label{fill:#dce6f5;font:12px system-ui,sans-serif}.status{padding:.7rem;border-left:4px solid #60a5fa;background:#1e304a;border-radius:6px;min-height:3rem}.steps{padding:.7rem;background:#1e304a;border-radius:6px;min-height:3.5rem}.buttons{display:flex;gap:.6rem;flex-wrap:wrap;margin:.6rem 0}.feedback{min-height:2.8rem}.scenario{border:1px solid #40516d;border-radius:10px;padding:.8rem}.quiz button{margin:.25rem}@keyframes reveal{from{opacity:.3;transform:translateY(5px)}to{opacity:1;transform:none}}.steps.reveal{animation:reveal .2s ease-out}@media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}@media(max-width:480px){body{padding:.5rem}.panel{padding:.75rem}}
+</style>
+</head>
+<body>
+<main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-11] · 부분 시범 · 학년·학기 미지정 · 교사 검수 전</p>
+<h1>두 식을 모두 만족하는 점을 찾아요</h1>
+<p>계수와 상수항을 조절해 그래프의 교점, 소거법으로 얻는 순서쌍, 두 식의 검산을 연결하세요.</p>
+<section class="panel" aria-labelledby="tool-title">
+<h2 id="tool-title">연립방정식 계수 실험</h2>
+<div class="controls">
+<label for="a1">첫째 식 x 계수 a₁ <output id="a1-out">2</output><input id="a1" type="range" min="-4" max="4" value="2"></label>
+<label for="b1">첫째 식 y 계수 b₁<select id="b1"><option>−4</option><option>−3</option><option>−2</option><option>−1</option><option value="1" selected>1</option><option>2</option><option>3</option><option>4</option></select></label>
+<label for="c1">첫째 식 상수항 c₁ <output id="c1-out">7</output><input id="c1" type="range" min="-30" max="30" value="7"></label>
+<label for="a2">둘째 식 x 계수 a₂ <output id="a2-out">1</output><input id="a2" type="range" min="-4" max="4" value="1"></label>
+<label for="b2">둘째 식 y 계수 b₂<select id="b2"><option>−4</option><option>−3</option><option>−2</option><option>−1</option><option value="1" selected>1</option><option>2</option><option>3</option><option>4</option></select></label>
+<label for="c2">둘째 식 상수항 c₂ <output id="c2-out">4</output><input id="c2" type="range" min="-30" max="30" value="4"></label>
+</div>
+<p class="equations" id="eq-one" aria-live="polite"></p><p class="equations" id="eq-two" aria-live="polite"></p>
+<p class="status" id="relation" aria-live="polite"></p>
+<div class="graph"><svg id="plane" viewBox="0 0 680 360" role="img" aria-label="두 연립방정식의 직선과 교점 그래프"></svg></div>
+<p class="status" id="solution" aria-live="polite"></p>
+<div class="buttons"><button id="previous" type="button" disabled>이전 단계</button><button id="next" type="button">풀이 단계 보기</button><button id="reset" type="button">기본 예제로</button></div>
+<p class="muted" id="step-count" aria-live="polite">준비</p><p class="steps" id="step" aria-live="polite">먼저 그래프의 교점 수를 예상한 뒤 풀이 단계를 열어 보세요.</p>
+</section>
+<section class="panel scenario"><h2>문장제에 적용하기</h2><p>어른 표 3천 원, 어린이 표 2천 원이다. 표를 12장 팔아 3만 원을 받았다. 어른·어린이 표 수를 각각 x,y라 하고 금액은 천 원 단위로 둡니다.</p><button id="load-scenario" type="button">표 판매 예제 불러오기</button><p class="muted">두 식은 x+y=12, 3x+2y=30입니다. 도구에서 해를 구한 뒤 표 수 합과 금액 합을 각각 검산하세요.</p></section>
+<section class="panel quiz"><h2>Socratic 퀴즈</h2><p><strong>2x+y=7, x+y=4</strong>에서 y를 없애 x를 구하려면?</p><button type="button" data-answer="wrong">두 식을 그대로 더한다</button><button type="button" data-answer="right">둘째 식을 첫째 식에서 뺀다</button><button type="button" data-answer="wrong">첫째 식에서 둘째 식을 곱한다</button><p id="feedback" class="feedback" aria-live="polite">y의 계수가 두 식에서 같다는 점을 이용해 보세요.</p></section>
+<section class="panel"><h2>도구 없이 연습하기</h2><p>x+y=9, 2x+y=13의 해를 구하고 두 식에 각각 대입해 확인하세요.</p><details><summary>힌트와 정답</summary><p>둘째 식에서 첫째 식을 빼면 x=4, y=5입니다. 4+5=9, 2·4+5=13이므로 두 식이 모두 성립합니다.</p></details></section>
+<p class="muted">교육과정 기준에 맞춘 부분 시범입니다. 학생 기록·진도 저장·적응형 분기는 연결되지 않았으며, 교사 검수 전입니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const $=id=>document.getElementById(id),ids=['a1','b1','c1','a2','b2','c2'],input=ids.map($),svg=$('plane'),ns='http://www.w3.org/2000/svg';let stageIndex=-1,stages=[];
+const values=()=>input.map(el=>Number(el.value));
+function fmt(n){if(Object.is(n,-0))n=0;return Number.isInteger(n)?(n<0?`−${-n}`:`${n}`):`${Number(n.toFixed(3))}`.replace('-','−')}
+function gcd(a,b){a=Math.abs(a);b=Math.abs(b);while(b)[a,b]=[b,a%b];return a||1}
+function fraction(n,d){if(d<0){n=-n;d=-d}const g=gcd(n,d);n/=g;d/=g;return d===1?fmt(n):`${fmt(n)}/${d}`}
+function term(a,v){return a===0?'':a===1?v:a===-1?`−${v}`:`${fmt(a)}${v}`}
+function equation(a,b,c){const left=[term(a,'x'),term(b,'y')].filter(Boolean);if(!left.length)left.push('0');return `${left[0]}${left.length>1?(b<0?' − ':' + ')+term(Math.abs(b),'y'):''} = ${fmt(c)}`}
+function el(name,attrs={},text=''){const node=document.createElementNS(ns,name);for(const[k,v]of Object.entries(attrs))node.setAttribute(k,String(v));if(text)node.textContent=text;return node}
+function draw(v,det,xNum,yNum){const[a1,b1,c1,a2,b2,c2]=v,W=680,H=360,L=46,R=652,T=24,B=324,xMap=x=>L+(x+6)/12*(R-L),yMap=y=>T+(6-y)/12*(B-T);svg.replaceChildren();svg.setAttribute('aria-label','두 직선의 그래프. 초록은 첫째 식, 주황은 둘째 식.');const defs=el('defs');const clip=el('clipPath',{id:'plot-clip'});clip.append(el('rect',{x:L,y:T,width:R-L,height:B-T}));defs.append(clip);svg.append(defs);for(let n=-6;n<=6;n+=2){let x=xMap(n),y=yMap(n);svg.append(el('line',{x1:x,y1:T,x2:x,y2:B,class:n===0?'axis':'grid'}),el('line',{x1:L,y1:y,x2:R,y2:y,class:n===0?'axis':'grid'}));if(n!==0){svg.append(el('text',{x,y:B+20,class:'tick-label','text-anchor':'middle'},String(n)),el('text',{x:L-12,y:y+4,class:'tick-label','text-anchor':'end'},String(n)))}}const group=el('g',{ 'clip-path':'url(#plot-clip)' });for(const[a,b,c,cls]of [[a1,b1,c1,'line-one'],[a2,b2,c2,'line-two']]){const y1=(-a*(-10)+c)/b,y2=(-a*10+c)/b;group.append(el('line',{x1:xMap(-10),y1:yMap(y1),x2:xMap(10),y2:yMap(y2),class:cls}))}if(det!==0){const x=xNum/det,y=yNum/det;if(x>=-6&&x<=6&&y>=-6&&y<=6)group.append(el('circle',{cx:xMap(x),cy:yMap(y),r:7,class:'point'}))}svg.append(group)}
+function render(){const v=values(),[a1,b1,c1,a2,b2,c2]=v,D=a1*b2-a2*b1,xN=c1*b2-c2*b1,yN=a1*c2-a2*c1;$('a1-out').value=a1;$('a2-out').value=a2;$('c1-out').value=c1;$('c2-out').value=c2;$('eq-one').textContent=`① ${equation(a1,b1,c1)}`;$('eq-two').textContent=`② ${equation(a2,b2,c2)}`;let relation,answer;if(D!==0){const x=xN/D,y=yN/D;relation=`한 점에서 만남 · 소거계수 D=${D}`;answer=`해: (x,y)=(${fraction(xN,D)}, ${fraction(yN,D)}) · 근삿값 (${fmt(x)}, ${fmt(y)})`;stages=[`첫째 식에 b₂=${b2}, 둘째 식에 −b₁=${fmt(-b1)}를 곱해 더하면 y가 사라집니다.`,`D=a₁b₂−a₂b₁=${a1}·${b2}−${a2}·${b1}=${D}이므로 해가 하나입니다.`,`x=(c₁b₂−c₂b₁)/D=${fraction(xN,D)}입니다.`,`x를 첫째 식에 대입하면 y=(c₁−a₁x)/b₁=${fraction(yN,D)}입니다. 두 값을 원래 식에 넣어 검산하세요.`]}else if(a1*c2-a2*c1===0&&b1*c2-b2*c1===0){relation='두 직선이 겹침 · 같은 조건을 나타냅니다.';answer='해: 무수히 많음 · 한 직선 위의 모든 점이 두 식을 만족합니다.';stages=['y계수를 없애면 x의 계수도 0이 됩니다.','상수항도 같은 비율이므로 두 식은 같은 직선을 나타냅니다.','한 점만 해가 아니라 직선 위의 모든 점이 해입니다.']}else{relation='서로 다른 평행선 · 공통으로 만족하는 점이 없습니다.';answer='해: 없음 · 두 식을 동시에 참으로 만드는 순서쌍이 없습니다.';stages=['y계수를 없앴을 때 x의 계수가 0이 됩니다.','상수항은 0이 아니므로 모순된 등식이 남습니다.','따라서 두 직선은 평행하고 연립방정식의 해가 없습니다.']}$('relation').textContent=relation;$('solution').textContent=answer;draw(v,D,xN,yN);stageIndex=-1;$('step').textContent='먼저 그래프의 교점 수를 예상한 뒤 풀이 단계를 열어 보세요.';$('step-count').textContent='준비';$('previous').disabled=true;$('next').disabled=false;$('next').textContent='풀이 단계 보기'}
+function reveal(i){stageIndex=Math.max(0,Math.min(stages.length-1,i));const box=$('step');box.classList.remove('reveal');void box.offsetWidth;box.classList.add('reveal');box.textContent=stages[stageIndex];$('step-count').textContent=`${stageIndex+1} / ${stages.length}`;$('previous').disabled=stageIndex===0;$('next').disabled=stageIndex===stages.length-1;$('next').textContent=stageIndex===stages.length-1?'풀이 완료':'다음 단계'}
+input.forEach(el=>el.addEventListener('input',render));$('next').addEventListener('click',()=>reveal(stageIndex+1));$('previous').addEventListener('click',()=>reveal(stageIndex-1));$('reset').addEventListener('click',()=>{[2,1,7,1,1,4].forEach((v,i)=>input[i].value=v);render()});$('load-scenario').addEventListener('click',()=>{[1,1,12,3,2,30].forEach((v,i)=>input[i].value=v);render()});document.querySelectorAll('[data-answer]').forEach(btn=>btn.addEventListener('click',()=>{$('feedback').textContent=btn.dataset.answer==='right'?'맞아요. 첫째 식에서 둘째 식을 빼면 x=3, y는 원래 식에 대입해 구할 수 있습니다.':'y의 계수가 두 식에서 같으므로 한 식을 빼면 y항이 사라집니다. 어느 식에서 빼야 할지 확인해 보세요.'}));render();
+})();
+</script>
+</body>
+</html>

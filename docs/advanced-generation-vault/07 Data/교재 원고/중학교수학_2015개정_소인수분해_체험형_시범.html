@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 소인수분해</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:end}.controls label{display:grid;gap:5px;min-width:220px;flex:1}.controls input{width:100%}button,select{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px}button{cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #d99a19;outline-offset:2px}button:disabled{opacity:.55;cursor:not-allowed}.status{font-weight:650;min-height:1.5em}.tree-wrap{overflow:auto;background:#f7f9fd;border-radius:12px;padding:12px;min-height:130px}.tree,.tree ol{display:flex;justify-content:center;gap:18px;list-style:none;margin:0;padding:12px 0 0}.tree li{position:relative;text-align:center;padding:10px 4px 0}.tree li::before{content:"";position:absolute;top:0;left:50%;height:10px;border-left:1px solid #9aa8bd}.tree>li::before{display:none}.node{min-width:58px}.node.active{border-color:var(--blue);box-shadow:0 0 0 2px #dce7ff}.node.prime{border-color:#95c5ac;background:#f0faf4}.node-label{display:block;font-size:.82rem;color:var(--muted)}.feedback{min-height:1.5em}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}.tree,.tree ol{gap:8px}.node{min-width:48px;padding:7px}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-01] 원문 대조 · 학년·학기 미지정</p>
+<h1>합성수를 소수의 곱으로 바꾸기</h1>
+<p>인수 트리를 직접 만드세요. 합성수는 다시 나누고, 소수만 남았는지 확인합니다.</p>
+
+<section class="card" aria-labelledby="toolTitle">
+<h2 id="toolTitle">내가 만드는 인수 트리</h2>
+<div class="controls"><label>분해할 자연수 <output id="numberOut" for="number">60</output><input id="number" type="range" min="2" max="120" step="1" value="60" aria-label="인수분해할 자연수"></label><button id="reset" type="button">새 수로 시작</button><button id="undo" type="button">한 번 되돌리기</button></div>
+<p id="selectionPrompt" class="status" aria-live="polite"></p>
+<div class="tree-wrap" role="region" aria-label="직접 구성하는 인수 트리" tabindex="0"><ol id="tree" class="tree"></ol></div>
+<div class="controls" style="margin-top:14px"><label>선택한 수를 나눌 인수 <select id="factor" aria-label="선택한 합성수의 진인수"></select></label><button id="split" type="button">두 인수로 나누기</button></div>
+<p id="feedback" class="feedback" role="status" aria-live="polite"></p><p id="factorization" class="status" aria-live="polite"></p>
+<div class="quiz"><p><strong>생각 질문.</strong> 1은 왜 인수 트리 끝의 소수로 둘 수 없을까요?</p><button id="hint" type="button">한 단계 힌트</button><p id="hintText" class="feedback" role="status" aria-live="polite">소수의 양의 약수 개수를 떠올려 보세요.</p></div>
+</section>
+
+<section class="card" aria-labelledby="quizTitle"><h2 id="quizTitle">짧은 확인 퀴즈</h2><p><strong>60=6×10</strong>에서 멈추면 소인수분해가 끝났을까요?</p><div class="controls"><button type="button" data-finish="yes">끝났다</button><button type="button" data-finish="no">더 분해한다</button></div><p id="quizFeedback" class="feedback" role="status" aria-live="polite">6과 10이 소수인지 먼저 확인하세요.</p></section>
+
+<section class="card"><h2>도구 없이 전이하기</h2><p>72와 45를 소인수분해하고, 끝의 인수가 모두 소수인지 확인한 뒤 곱으로 검산하세요.</p><p class="muted">확인: 72=2³×3², 45=3²×5입니다. 1은 소수도 합성수도 아닙니다.</p></section>
+<p class="muted">작은 HTML·DOM 요소로 만든 독립 시범입니다. 앱의 BookData·진도 저장과 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const numberInput=document.querySelector('#number'),numberOut=document.querySelector('#numberOut'),tree=document.querySelector('#tree'),factorSelect=document.querySelector('#factor');
+const prompt=document.querySelector('#selectionPrompt'),feedback=document.querySelector('#feedback'),factorization=document.querySelector('#factorization');
+let nodes=new Map(),history=[],activeId='root',nextId=0;
+function isPrime(n){if(n<2)return false;for(let d=2;d*d<=n;d++)if(n%d===0)return false;return true}
+function properFactors(n){const out=[];for(let d=2;d<=Math.floor(n/2);d++)if(n%d===0)out.push(d);return out}
+function begin(){const n=Number(numberInput.value);numberOut.value=n;nodes=new Map([['root',{id:'root',value:n,children:null}]]);history=[];nextId=0;activeId='root';feedback.textContent='분해할 합성수를 고르고, 그 수를 나누어떨어지게 하는 인수를 선택하세요.';render()}
+function leafIds(){return [...nodes.values()].filter(node=>node.children===null).map(node=>node.id)}
+function renderNode(node){
+ const li=document.createElement('li');const button=document.createElement('button');button.type='button';button.className='node';button.textContent=node.value;button.setAttribute('aria-label',`인수 ${node.value}${node.children===null&&!isPrime(node.value)?', 합성수, 선택해서 분해':''}`);
+ if(node.id===activeId)button.classList.add('active');if(node.children===null&&isPrime(node.value))button.classList.add('prime');
+ button.disabled=node.children!==null||isPrime(node.value);button.addEventListener('click',()=>{activeId=node.id;feedback.textContent=`${node.value}를 나누어떨어지게 하는 인수 쌍을 찾아보세요.`;render()});li.append(button);
+ if(node.children===null&&isPrime(node.value)){const label=document.createElement('span');label.className='node-label';label.textContent='소수';li.append(label)}
+ if(node.children){const list=document.createElement('ol');for(const childId of node.children)list.append(renderNode(nodes.get(childId)));li.append(list)}return li;
+}
+function render(){
+ tree.replaceChildren(renderNode(nodes.get('root')));const active=nodes.get(activeId),divisors=active?properFactors(active.value):[];factorSelect.replaceChildren();
+ for(const d of divisors){const option=document.createElement('option');option.value=d;option.textContent=`${d} × ${active.value/d}`;factorSelect.append(option)}
+ const canSplit=!!active&&active.children===null&&divisors.length>0;factorSelect.disabled=!canSplit;document.querySelector('#split').disabled=!canSplit;document.querySelector('#undo').disabled=history.length===0;
+ if(canSplit)prompt.textContent=`${active.value}를 분해합니다. 왼쪽 인수만 고르면 다른 인수는 나눗셈으로 정해집니다.`;
+ else if(active&&isPrime(active.value))prompt.textContent=`${active.value}는 1과 자기 자신 외의 약수가 없습니다. 소수이므로 이 가지는 끝입니다.`;
+ else if(active)prompt.textContent='분해할 수를 다시 선택하세요.';
+ const leaves=leafIds(),complete=leaves.every(id=>isPrime(nodes.get(id).value));
+ if(complete){const factors=leaves.map(id=>nodes.get(id).value).sort((a,b)=>a-b),n=Number(numberInput.value);factorization.textContent=`완성: ${n} = ${factors.join(' × ')}${factors.length>1?` = ${factorPowers(factors)}`:''}`;}
+ else factorization.textContent='모든 가지 끝에 소수만 남으면 소인수분해가 완성됩니다.';
+}
+function factorPowers(values){const counts=new Map();for(const v of values)counts.set(v,(counts.get(v)||0)+1);return [...counts].map(([p,k])=>k===1?`${p}`:`${p}^${k}`).join(' × ')}
+document.querySelector('#split').addEventListener('click',()=>{const parent=nodes.get(activeId),d=Number(factorSelect.value);if(!parent||!d||parent.value%d!==0)return;const leftId=`n${nextId++}`,rightId=`n${nextId++}`;parent.children=[leftId,rightId];nodes.set(leftId,{id:leftId,value:d,children:null});nodes.set(rightId,{id:rightId,value:parent.value/d,children:null});history.push(parent.id);const next=nodes.get(leftId);activeId=!isPrime(next.value)&&properFactors(next.value).length?leftId:rightId;feedback.textContent=`${parent.value}=${d}×${parent.value/d}. 합성수가 남아 있는 가지를 계속 선택하세요.`;render()});
+document.querySelector('#undo').addEventListener('click',()=>{const id=history.pop();if(!id)return;const parent=nodes.get(id);for(const childId of parent.children||[])nodes.delete(childId);parent.children=null;activeId=id;feedback.textContent='마지막 분해를 되돌렸습니다. 다른 인수 쌍을 선택할 수 있습니다.';render()});
+numberInput.addEventListener('input',begin);document.querySelector('#reset').addEventListener('click',begin);
+document.querySelector('#hint').addEventListener('click',()=>{document.querySelector('#hintText').textContent='소수는 양의 약수가 정확히 두 개입니다. 1의 양의 약수는 하나뿐이므로 소수가 아닙니다.'});
+document.querySelectorAll('[data-finish]').forEach(button=>button.addEventListener('click',()=>{document.querySelector('#quizFeedback').textContent=button.dataset.finish==='no'?'맞아요. 6과 10은 합성수라 각각 소수의 곱으로 더 분해해야 합니다.':'다시 확인해 보세요. 인수 트리 끝에 6과 10처럼 합성수가 남아 있습니다.'}));
+begin();
+})();
+</script>
+</body></html>

@@ -1,0 +1,20 @@
+{
+  "title": "미적분Ⅰ 개념서 · 극대·극소와 그래프 개형",
+  "subtitle": "도함수 부호 변화에서 극값과 함수 모양 읽기",
+  "category": "concept_textbook_prototype",
+  "tags": ["미적분Ⅰ", "2022 개정 후보", "도함수 활용", "극대와 극소", "그래프 개형", "시범", "성취기준 후보: 12미적Ⅰ-02-07, 12미적Ⅰ-02-08"],
+  "chapters": [{
+    "title": "도함수 부호로 극대·극소와 그래프 개형 읽기",
+    "intro": ["f(x)=x³−3x의 도함수 부호를 그래프의 증가·감소와 연결해 극값을 찾아본다.", "교육부 별책 8 원문 전체 대조와 교사 검수 전인 기준 후보 시범이다."],
+    "sections": [{
+      "title": "부호가 바뀌는 점에서 극값 찾기",
+      "paragraphs": ["f′(x)=3x²−3=3(x−1)(x+1)이므로 임계점은 −1과 1이다.", "부호는 +, −, + 순서로 바뀐다. 따라서 x=−1에서 극대값 2, x=1에서 극솟값 −2를 갖는다.", "도함수 값이 0인 점이라도 양쪽 부호가 같으면 극값이 아닐 수 있다."],
+      "graph": {"items":[{"id":"function","type":"function","label":"f(x)=x³−3x","colorHex":"#2457C5","enabled":true,"expression":"x^3-3*x"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-2.2,"right":2.2,"top":2.8,"bottom":-2.8},"parameters":[{"id":"x","label":"관찰 위치 x","value":-1,"min":-2,"max":2,"step":0.1}]}}
+    }],
+    "pages": [
+      {"id":"calc1-extrema-opening","template":"opening","title":"기울기가 0이면 꼭 극값일까?","kicker":"양쪽의 부호를 비교","blocks":[{"type":"lead","title":"오늘의 질문","text":"f(x)=x³−3x에서 도함수 부호가 바뀌는 곳은 어디일까?"},{"type":"thinking","title":"예측","text":"도함수가 0인 점에서 왼쪽과 오른쪽 부호가 바뀌는지 먼저 예상하자."}]},
+      {"id":"calc1-extrema-experiment","template":"experiment","title":"함수 그래프와 도함수 부호 연결","kicker":"점과 단계를 직접 조절","blocks":[{"type":"lead","title":"실험 안내","text":"x를 움직여 함수값과 도함수 부호를 확인한다. 단계 버튼으로 임계점과 부호표를 차례로 공개한다."},{"type":"graph","title":"함수 그래프","text":"f(x)=x³−3x의 그래프 위 점과 접선을 움직인다. 도함수 부호 그래프를 같은 축에 겹치지 않고, 별도의 부호표에서 증가·감소를 읽는다.","graph":{"items":[{"id":"function","type":"function","label":"f(x)=x³−3x","colorHex":"#2457C5","enabled":true,"expression":"x^3-3*x"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-2.2,"right":2.2,"top":2.8,"bottom":-2.8},"parameters":[{"id":"x","label":"관찰 위치 x","value":-1,"min":-2,"max":2,"step":0.1}]}}},{"type":"question","title":"도구 퀴즈","text":"현재 x에서 도함수는 양수, 0, 음수 중 무엇인가? 그래프는 오른쪽으로 갈 때 증가하는가 감소하는가?"},{"type":"verification","title":"확인","text":"도함수 부호가 +에서 −로 바뀌면 극대, −에서 +로 바뀌면 극소다. f(−1)=2, f(1)=−2다."}]},
+      {"id":"calc1-extrema-practice","template":"practice","title":"도구를 닫고 반례 찾기","kicker":"도함수 0만으로는 부족","blocks":[{"type":"question","title":"연습","text":"g(x)=x³에서 x=0은 극대·극소 중 무엇인가?"},{"type":"thinking","title":"Socratic 질문","text":"g′(0)=0이다. 그런데 0의 왼쪽과 오른쪽에서 g′(x)의 부호는 각각 어떤가?"},{"type":"hint","title":"힌트","text":"g′(x)=3x²이므로 0을 제외한 양쪽에서 모두 양수다."},{"type":"answer","title":"정답 확인","text":"극값이 아니다. 양쪽에서 계속 증가하므로 도함수 부호가 바뀌지 않는다."},{"type":"checklist","title":"마무리","items":["도함수 부호의 좌우 변화를 확인한다.","극값 위치의 함수값을 원래 함수에 대입한다.","도함수 0과 극값을 같은 뜻으로 쓰지 않는다."]}]}
+    ]
+  }]
+}

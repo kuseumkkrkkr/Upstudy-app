@@ -1,0 +1,113 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-02-02·02-04의 이차항 계수 1인 사례만 다루는 원고",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-02-02", "10공수1-02-04", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-02-02", "10공수1-02-04"],
+  "standard_coverage": "partial_monic_quadratic_discriminant_and_x_intercepts",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [
+    {
+      "title": "판별식과 그래프의 만남",
+      "intro": [
+        "이차방정식 x²+bx+c=0의 실근을 포물선 y=x²+bx+c와 x축의 교점으로 연결한다.",
+        "교육부 2022 개정 별책 8의 10공수1-02-02·02-04와 연결한 부분 시범이다. 이차항 계수를 1로 제한하며 일반식 확장과 교사 검수는 미완료다."
+      ],
+      "sections": [
+        {
+          "title": "실근은 x축 교점의 x좌표",
+          "paragraphs": [
+            "그래프 y=f(x)에서 x축 위의 점은 y=0이다. 따라서 f(x)=0의 실근은 그래프와 x축이 만나는 점의 x좌표다.",
+            "f(x)=x²+bx+c이면 근의 공식의 제곱근 안은 b²−4c이다. 이 값을 D라 두고 판별식이라 부른다.",
+            "D>0은 서로 다른 두 실근과 두 교점, D=0은 중근인 실근 하나와 접점 한 개, D<0은 실근 없음과 교점 없음에 대응한다."
+          ]
+        },
+        {
+          "title": "계수를 바꾸고 먼저 예측하기",
+          "paragraphs": [
+            "b=0을 고정하고 c를 1, 0, −1로 바꾸면 D는 −4, 0, 4가 된다. 포물선은 x축 위에 놓인 채 아래로 이동하며 교점 수가 0, 1, 2로 바뀐다.",
+            "b도 바꿔 꼭짓점 위치가 달라지는 상황을 관찰한다. 교점 개수는 그래프의 모양을 눈으로만 추정하지 않고 D의 부호로 검산한다.",
+            "화면에 보이지 않는 교점이 있을 수 있으므로, 현재 그래프 창에 점이 안 보인다는 이유만으로 실근이 없다고 결론내리지 않는다."
+          ],
+          "graph": {
+            "items": [
+              {"id":"monic-quadratic","type":"function","label":"y=x²+bx+c","colorHex":"#315DA8","enabled":true,"expression":"x^2+b*x+c"}
+            ],
+            "settings": {
+              "showAxes": true,
+              "showGrid": true,
+              "lockViewport": false,
+              "degreeMode": false,
+              "viewport": {"left":-6,"right":6,"top":8,"bottom":-5},
+              "parameters": [
+                {"id":"b","label":"일차항 계수 b","value":0,"min":-4,"max":4,"step":1},
+                {"id":"c","label":"상수항 c","value":1,"min":-4,"max":4,"step":1}
+              ]
+            }
+          }
+        }
+      ],
+      "pages": [
+        {
+          "id":"cm1-discriminant-opening",
+          "template":"opening",
+          "title":"근을 구하기 전에 예측하기",
+          "kicker":"오늘의 질문",
+          "blocks":[
+            {"type":"lead","title":"문제","text":"x²+bx+c=0의 해를 구하지 않고 실근이 몇 개인지 알아낼 방법이 있을까요?"},
+            {"type":"question","title":"먼저 예측","text":"b=0일 때 c=1, 0, −1을 차례로 대입해 보세요. 포물선과 x축은 각각 몇 번 만날까요?"}
+          ]
+        },
+        {
+          "id":"cm1-discriminant-experiment",
+          "template":"experiment",
+          "title":"계수와 교점을 연결하기",
+          "kicker":"도구를 조작하고 관찰값을 말하기",
+          "blocks":[
+            {"type":"lead","title":"조작 순서","text":"b=0, c=1에서 교점 수를 먼저 예상하고, c를 0과 −1로 바꾸며 판별식의 부호와 비교합니다."},
+            {"type":"thinking","title":"조작 전 기록","text":"먼저 b=0, c=1에서 교점 수를 예상하세요. 그 다음 c를 0, −1로 바꾸며 D=b²−4c의 부호와 비교하세요."},
+            {"type":"graph","title":"포물선과 x축","text":"b와 c를 조절해 보세요. x절편은 방정식의 실근이며, 화면 밖 교점 여부는 판별식으로 확인하세요.","graph":{"items":[{"id":"monic-quadratic","type":"function","label":"y=x²+bx+c","colorHex":"#315DA8","enabled":true,"expression":"x^2+b*x+c"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":false,"degreeMode":false,"viewport":{"left":-6,"right":6,"top":8,"bottom":-5},"parameters":[{"id":"b","label":"일차항 계수 b","value":0,"min":-4,"max":4,"step":1},{"id":"c","label":"상수항 c","value":1,"min":-4,"max":4,"step":1}]}}},
+            {"type":"verification","title":"관찰을 식으로 설명","text":"b=0일 때 c=1이면 D=−4<0이라 교점이 없고, c=0이면 D=0이라 원점에서 접하며, c=−1이면 D=4>0이라 x=−1, 1에서 만납니다."},
+            {"type":"misconception","title":"화면에 안 보이면 근이 없을까?","text":"아니요. 그래프 창의 범위 밖에 교점이 있을 수 있습니다. 화면이 아니라 D의 부호와 식을 함께 확인하세요."}
+          ]
+        },
+        {
+          "id":"cm1-discriminant-example",
+          "template":"example",
+          "title":"판별식에서 접점을 찾기",
+          "kicker":"계산 → 그래프 해석",
+          "blocks":[
+            {"type":"question","title":"예제","text":"x²+2x+1=0의 실근 개수와 y=x²+2x+1의 x축 교점을 설명하세요."},
+            {"type":"solutionStep","title":"풀이","items":["D=2²−4×1=0이다.","D=0이므로 중근을 갖고, 그래프는 x축과 한 점에서 만난다.","x²+2x+1=(x+1)²이므로 접점은 (−1,0)이다."]},
+            {"type":"thinking","title":"왜 한 점에서 만날까?","text":"중근은 같은 x절편이 두 번 겹친다는 뜻입니다. 완전제곱식과 포물선의 접하는 모양을 연결해 보세요."}
+          ]
+        },
+        {
+          "id":"cm1-discriminant-practice",
+          "template":"practice",
+          "title":"새 식으로 전이하기",
+          "kicker":"도구를 잠깐 덮고 풀기",
+          "blocks":[
+            {"type":"question","title":"연습 1","text":"x²−4x+3=0의 실근 개수를 D로 판단하고, 그래프 교점 수와 연결하세요."},
+            {"type":"hint","title":"힌트","text":"D=(−4)²−4×3을 계산하고 부호를 확인하세요."},
+            {"type":"answer","title":"정답 확인","text":"D=4>0이므로 서로 다른 두 실근입니다. 그래프는 x축과 두 점에서 만나며, (x−1)(x−3)=0에서 근은 1, 3입니다."},
+            {"type":"question","title":"Socratic 질문","text":"x²+2x+k=0이 중근을 갖게 하는 k를 구하고, 그래프의 접점을 말하세요."},
+            {"type":"hint","title":"한 단계 힌트","text":"중근일 때 D=0입니다. 2²−4k=0을 풀어 보세요."},
+            {"type":"answer","title":"확인","text":"k=1입니다. 식은 (x+1)²=0이므로 그래프 y=(x+1)²은 (−1,0)에서 x축에 접합니다."}
+          ]
+        },
+        {
+          "id":"cm1-discriminant-summary",
+          "template":"summary",
+          "title":"핵심 연결 회상하기",
+          "kicker":"식과 그래프를 말로 연결",
+          "blocks":[
+            {"type":"thinking","title":"세 경우를 설명","text":"D의 부호 세 가지가 실근과 x축 교점에 어떤 차이를 만드는지 도구 없이 설명해 보세요."},
+            {"type":"checklist","title":"점검","items":["f(x)=0의 실근을 그래프의 x절편으로 연결했다.","D>0, D=0, D<0의 교점 수를 구분했다.","화면 범위와 실근의 존재 여부를 혼동하지 않았다.","새 이차방정식에서 D를 계산해 그래프 관계를 설명했다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

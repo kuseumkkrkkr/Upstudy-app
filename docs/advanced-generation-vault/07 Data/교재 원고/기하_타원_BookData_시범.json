@@ -1,0 +1,67 @@
+{
+  "title": "기하 개념서 · 두 초점까지의 거리합",
+  "subtitle": "초점·점·거리합을 직접 조절해 타원을 이해",
+  "category": "concept_textbook_prototype",
+  "tags": ["기하", "이차곡선", "타원", "2022 개정", "12기하01-02", "부분 시범", "교사 검수 전"],
+  "curriculum_version": "2022",
+  "standard_codes": ["12기하01-02"],
+  "chapters": [
+    {
+      "title": "두 초점까지의 거리합으로 타원 이해하기",
+      "intro": [
+        "교육부 공식 기준 [12기하01-02]에 부분 연결한 중심 원점·장축 x축 표준형 시범이다.",
+        "전체 기준 충족·교사 검수 전이며 승인·판매 콘텐츠가 아니다."
+      ],
+      "sections": [
+        {
+          "title": "초점에서의 거리합",
+          "paragraphs": [
+            "타원은 두 초점에서 점까지의 거리 합이 일정한 점들의 모임이다.",
+            "초점이 (−c,0),(c,0), 긴 반지름이 a인 표준 타원은 0<c<a, b=√(a²−c²)이며 거리 합은 2a이다.",
+            "P=(a cosθ,b sinθ)에서 d₁²=(a cosθ+c)²+b²sin²θ=(a+c cosθ)²이다. a>c이므로 d₁=a+c cosθ이다.",
+            "같은 전개로 d₂²=(a cosθ−c)²+b²sin²θ=(a−c cosθ)²이고 a>c이므로 d₂=a−c cosθ다. 따라서 d₁+d₂=2a이며 θ와 무관하다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "geometry-ellipse-opening",
+          "template": "opening",
+          "title": "두 초점까지의 거리 합은 어떻게 될까?",
+          "kicker": "점이 움직여도 일정한 값 예측하기",
+          "blocks": [
+            {"type": "lead", "title": "오늘의 질문", "text": "두 초점에서 점까지의 거리 합이 일정한 점을 모으면 어떤 곡선이 될까요?"},
+            {"type": "thinking", "title": "먼저 예상하기", "text": "θ를 바꾸면 두 초점까지의 거리 각각은 변할 수 있습니다. 그 합도 변할까요?"}
+          ]
+        },
+        {
+          "id": "geometry-ellipse-experiment",
+          "template": "experiment",
+          "title": "a·c·θ를 움직여 거리합 확인하기",
+          "kicker": "그래프와 거리 수치를 동시에 비교",
+          "blocks": [
+            {"type": "lead", "title": "조작 안내", "text": "a는 긴 반지름, c는 중심에서 초점까지 거리, θ는 타원 위 점의 위치를 정합니다. 0<c<a 범위에서 하나씩 바꾸세요."},
+            {"type": "visual", "title": "두 초점과 점 P", "text": "F₁=(−c,0), F₂=(c,0), P=(a cosθ,b sinθ), b=√(a²−c²)입니다. 표시는 P와 두 초점을 잇고 각각의 거리 및 합을 갱신합니다."},
+            {"type": "question", "title": "Socratic 확인", "text": "θ를 바꾸었을 때 d₁, d₂, d₁+d₂는 각각 어떻게 변하나요?"},
+            {"type": "hint", "title": "요청형 힌트", "text": "두 초점에서 P까지의 거리 제곱을 각각 계산하세요. 좌표에 삼각함수 항등식 sin²θ+cos²θ=1을 사용해 볼 수 있습니다."},
+            {"type": "thinking", "title": "일반 성질을 식으로 확인", "text": "b²=a²−c²를 대입하면 d₁²=(a+c cosθ)², d₂²=(a−c cosθ)²이다. a>c라 두 괄호는 양수이므로 d₁=a+c cosθ, d₂=a−c cosθ이며 합은 2a다."},
+            {"type": "answer", "title": "확인", "text": "P의 위치에 따라 두 거리는 달라질 수 있지만 표준 타원 위에서는 d₁+d₂=2a입니다. a를 바꾸면 합의 기준도 달라집니다."},
+            {"type": "misconception", "title": "오개념 점검", "text": "몇 개의 점을 움직여 합이 같게 보인 것만으로 전체 타원의 성질이 증명된 것은 아닙니다. 수식 또는 정의를 함께 사용해야 합니다."}
+          ]
+        },
+        {
+          "id": "geometry-ellipse-practice",
+          "template": "practice",
+          "title": "새 조건에서 거리합 설명하기",
+          "kicker": "도구 값을 보지 않고 먼저 계산",
+          "blocks": [
+            {"type": "question", "title": "연습", "text": "a=5,c=3,θ=90°일 때 b, P 좌표, 각 초점까지의 거리와 거리합을 구하세요."},
+            {"type": "thinking", "title": "생각 순서", "text": "먼저 a²=b²+c²로 b를 구하고, P=(a cosθ,b sinθ)를 계산한 뒤 두 초점까지 거리를 구하세요."},
+            {"type": "answer", "title": "풀이", "text": "b=4, P=(0,4). F₁=(−3,0), F₂=(3,0)에서 각각의 거리는 5이므로 합은 10=2a입니다."},
+            {"type": "checklist", "title": "마무리", "items": ["a와 c의 허용 관계 0<c<a를 확인한다.", "두 거리와 그 합을 구별한다.", "계산 사례와 타원의 일반 정의를 혼동하지 않는다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}

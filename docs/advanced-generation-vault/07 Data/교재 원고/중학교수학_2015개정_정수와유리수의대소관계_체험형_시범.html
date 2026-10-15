@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 정수와 유리수의 대소 관계</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--orange:#ad4c18;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:190px;flex:1}.controls input{width:100%}button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.line-wrap{position:relative;padding:44px 4px 30px;margin:20px 0 8px}.axis{height:4px;background:#65758c;position:relative}.axis:before,.axis:after{content:"";position:absolute;top:-5px;width:0;height:0;border-top:7px solid transparent;border-bottom:7px solid transparent}.axis:before{left:-2px;border-right:10px solid #65758c}.axis:after{right:-2px;border-left:10px solid #65758c}.ticks{position:absolute;inset:0 4px;display:flex;justify-content:space-between}.tick{position:relative;width:1px;height:15px;background:#65758c}.tick span{position:absolute;top:14px;left:50%;transform:translateX(-50%);font-size:.82rem}.tick.zero{height:22px;background:var(--ink);width:2px}.point{position:absolute;top:20px;width:16px;height:16px;border-radius:50%;transform:translateX(-50%);transition:left .35s ease}.point.a{background:var(--blue);box-shadow:0 0 0 2px var(--blue)}.point.b{top:0;background:var(--orange);box-shadow:0 0 0 2px var(--orange)}.point-label{position:absolute;left:50%;transform:translateX(-50%);white-space:nowrap;font-weight:700}.point-label.a{top:37px;color:var(--blue)}.point-label.b{top:-23px;color:var(--orange)}.legend{display:flex;gap:16px;flex-wrap:wrap;font-weight:650}.legend .a{color:var(--blue)}.legend .b{color:var(--orange)}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-04] 원문 문구 대조 · 학년·학기 미지정</p>
+<h1>수직선에서 더 오른쪽인 수 찾기</h1>
+<p>분수 A와 B를 조절하고, 어느 점이 오른쪽인지 부등호와 함께 확인하세요. 먼저 결과를 예상한 뒤 도구로 검산해 봅시다.</p>
+
+<section class="card" aria-labelledby="experimentTitle">
+<h2 id="experimentTitle">두 유리수 비교하기</h2>
+<div class="controls">
+<label>A의 분자 <output id="aNumOut" for="aNum">−3</output><input id="aNum" type="range" min="-9" max="9" step="1" value="-3" aria-label="A의 분자"></label>
+<label>A의 분모 <output id="aDenOut" for="aDen">2</output><input id="aDen" type="range" min="1" max="9" step="1" value="2" aria-label="A의 분모"></label>
+<label>B의 분자 <output id="bNumOut" for="bNum">−4</output><input id="bNum" type="range" min="-9" max="9" step="1" value="-4" aria-label="B의 분자"></label>
+<label>B의 분모 <output id="bDenOut" for="bDen">3</output><input id="bDen" type="range" min="1" max="9" step="1" value="3" aria-label="B의 분모"></label>
+</div>
+<p id="relation" class="status" aria-live="polite">A=−3/2 < B=−4/3</p>
+<div class="legend"><span class="a">● A</span><span class="b">● B</span><span>수직선에서 오른쪽에 놓인 수가 더 큽니다.</span></div>
+<div class="line-wrap" role="img" aria-label="−9부터 9까지의 수직선에 A와 B의 분수 위치를 표시">
+<span class="point-label b" id="bLabel">−4/3</span><span class="point b" id="bPoint" aria-hidden="true"></span><span class="point-label a" id="aLabel">−3/2</span><span class="point a" id="aPoint" aria-hidden="true"></span><div class="axis"></div>
+<div class="ticks" aria-hidden="true"><i class="tick"><span>−9</span></i><i class="tick"><span>−6</span></i><i class="tick"><span>−3</span></i><i class="tick zero"><span>0</span></i><i class="tick"><span>3</span></i><i class="tick"><span>6</span></i><i class="tick"><span>9</span></i></div>
+</div>
+<p id="crossProducts" class="muted">교차 곱 확인: (−3)×3=−9, (−4)×2=−8</p>
+</section>
+
+<section class="card" aria-labelledby="stepsTitle">
+<h2 id="stepsTitle">판단 순서 한 단계씩 보기</h2>
+<div class="controls"><button id="stepBack" type="button">이전</button><button id="stepNext" type="button">다음</button><button id="stepReset" type="button">처음으로</button><span id="stepReadout" class="status" aria-live="polite">1 / 3 · 위치 관찰</span></div>
+<p id="stepText" role="status" aria-live="polite">A와 B 중 어느 점이 수직선에서 오른쪽인지 먼저 눈으로 비교하세요.</p>
+</section>
+
+<section class="card quiz" aria-labelledby="quizTitle">
+<h2 id="quizTitle">짧은 확인 퀴즈</h2><p id="quizPrompt">A와 B 중 더 큰 수는?</p>
+<div class="controls"><button type="button" data-choice="A">A</button><button type="button" data-choice="equal">같다</button><button type="button" data-choice="B">B</button></div>
+<button id="hint" type="button">힌트 보기</button><p id="hintText" class="muted" role="status" aria-live="polite">분모가 양수라면 교차 곱의 크기와 부호를 비교할 수 있습니다.</p>
+<p id="quizFeedback" class="feedback" role="status" aria-live="polite">답을 고르고 수직선의 위치로 이유를 말해 보세요.</p>
+</section>
+
+<section class="card"><h2>도구를 닫고 풀기</h2><p>−5/2와 −9/4를 비교하세요. 먼저 0에 더 가까운 수를 예상하고, 이어서 교차 곱으로 확인하세요.</p><p class="muted">확인: −5×4=−20, −9×2=−18이고 −20&lt;−18이므로 −5/2&lt;−9/4입니다. −9/4가 더 오른쪽입니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData·구매·학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const controls=['#aNum','#aDen','#bNum','#bDen'].map(selector=>document.querySelector(selector));let stage=0;
+const rationalText=(n,d)=>n===0?'0':Number.isInteger(n/d)?String(n/d):`${n}/${d}`;
+function render(){
+ const [aNum,aDen,bNum,bDen]=controls.map(input=>Number(input.value)),crossA=aNum*bDen,crossB=bNum*aDen,difference=crossA-crossB,relation=difference<0?'<':difference>0?'>':'=',choice=difference<0?'B':difference>0?'A':'equal';
+ for(const [selector,value] of [['#aNumOut',aNum],['#aDenOut',aDen],['#bNumOut',bNum],['#bDenOut',bDen]])document.querySelector(selector).value=value;
+ const aValue=aNum/aDen,bValue=bNum/bDen,aText=rationalText(aNum,aDen),bText=rationalText(bNum,bDen),aPosition=50+aValue/18*100,bPosition=50+bValue/18*100;
+ document.querySelector('#aPoint').style.left=`${aPosition}%`;document.querySelector('#aLabel').style.left=`${aPosition}%`;document.querySelector('#bPoint').style.left=`${bPosition}%`;document.querySelector('#bLabel').style.left=`${bPosition}%`;
+ document.querySelector('#relation').textContent=`A=${aText} ${relation} B=${bText}`;document.querySelector('#aLabel').textContent=aText;document.querySelector('#bLabel').textContent=bText;
+ document.querySelector('#crossProducts').textContent=`교차 곱 확인: (${aNum})×${bDen}=${crossA}, (${bNum})×${aDen}=${crossB}`;
+ document.querySelector('#quizPrompt').textContent=`A=${aText}, B=${bText}일 때 더 큰 수는?`;
+ const texts=[`A=${aText}, B=${bText}의 위치를 보고 어느 점이 오른쪽인지 찾습니다.`,`분모는 모두 양수입니다. A의 분자에 B의 분모를 곱하면 ${crossA}, B의 분자에 A의 분모를 곱하면 ${crossB}입니다.`,`교차 곱을 비교하면 A ${relation} B입니다. 수직선에서 더 오른쪽인 수와 같은 결과인지 확인하세요.`];
+ document.querySelector('#stepReadout').textContent=`${stage+1} / 3 · ${['위치 관찰','교차 곱 계산','결과 검산'][stage]}`;document.querySelector('#stepText').textContent=texts[stage];document.querySelector('#stepBack').disabled=stage===0;document.querySelector('#stepNext').disabled=stage===2;document.querySelector('#quizFeedback').textContent='답을 고르고 수직선의 위치로 이유를 말해 보세요.';
+}
+for(const input of controls)input.addEventListener('input',()=>{stage=0;render()});document.querySelector('#stepBack').addEventListener('click',()=>{stage=Math.max(0,stage-1);render()});document.querySelector('#stepNext').addEventListener('click',()=>{stage=Math.min(2,stage+1);render()});document.querySelector('#stepReset').addEventListener('click',()=>{stage=0;render()});
+document.querySelectorAll('[data-choice]').forEach(button=>button.addEventListener('click',()=>{const [aNum,aDen,bNum,bDen]=controls.map(input=>Number(input.value)),difference=aNum*bDen-bNum*aDen,correct=difference<0?'B':difference>0?'A':'equal';document.querySelector('#quizFeedback').textContent=button.dataset.choice===correct?`맞아요. A ${difference<0?'<':difference>0?'>':'='} B입니다. 위치와 교차 곱이 같은 관계를 보여요.`:'다시 확인해 보세요. 두 점의 좌우 관계 또는 분모를 맞춘 교차 곱을 살펴보세요.'}));
+document.querySelector('#hint').addEventListener('click',()=>{document.querySelector('#hintText').textContent='A=a/b, B=c/d에서 b,d가 양수라면 ad와 cb를 비교합니다. 음수의 곱도 부호까지 비교하세요.'});render();
+})();
+</script>
+</body></html>

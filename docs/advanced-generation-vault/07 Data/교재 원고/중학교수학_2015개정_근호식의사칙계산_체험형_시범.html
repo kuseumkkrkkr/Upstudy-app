@@ -1,0 +1,42 @@
+<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>근호식의 사칙계산 · 체험 탐구</title>
+<style>
+:root{font:16px/1.55 system-ui,sans-serif;color-scheme:light dark}body{max-width:820px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1.2rem;background:#1b2638;border:1px solid #35445d;border-radius:18px}h1{font-size:1.5rem}.muted{color:#c4cede}.card{padding:.8rem;background:#111c2b;border-radius:12px;margin:.7rem 0}.controls{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap}label{display:grid;gap:.2rem;min-width:180px;flex:1}input,select,button{font:inherit}button,select{padding:.55rem .8rem;border:0;border-radius:9px}button{background:#7dd3fc;color:#082f49;font-weight:700;cursor:pointer}button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}svg{width:100%;height:120px;background:#101827;border-radius:10px}.barA{stroke:#38bdf8;stroke-width:12;stroke-linecap:round}.barB{stroke:#fb7185;stroke-width:12;stroke-linecap:round}circle{transition:cx .28s ease}.barA,.barB{transition:x2 .28s ease}.answer{font-size:1.2rem;font-weight:700}output{display:block;margin:.5rem 0}.steps{min-height:3em}.active{box-shadow:0 0 0 2px #fbbf24}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style></head><body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수01-10] 근호를 포함한 식의 사칙계산 · 시범 / 교사 검수 전</p><h1>근호항을 정리하고 계산해 보기</h1><p>계수와 근호 안 수를 조절하세요. 막대 길이는 크기를 짐작하는 근삿값이고, 정확한 답은 제곱인수와 계수 계산으로 구합니다.</p>
+<section class="card" aria-label="근호식 조작 도구"><svg viewBox="0 0 720 120" role="img" aria-labelledby="plotTitle plotDesc"><title id="plotTitle">두 근호항의 크기 시각화</title><desc id="plotDesc">두 항의 절댓값을 파란색과 분홍색 막대로 근사해 표시합니다.</desc><line x1="40" y1="42" x2="40" y2="100" stroke="#94a3b8"/><line id="barA" class="barA" x1="40" y1="50" x2="100" y2="50"/><line id="barB" class="barB" x1="40" y1="88" x2="100" y2="88"/><text x="55" y="24" fill="currentColor">항 A</text><text x="110" y="24" fill="currentColor">항 B</text></svg>
+<div class="controls"><label for="a">항 A 계수 a: <output id="aOut">1</output><input id="a" type="range" min="-6" max="6" value="1"></label><label for="m">항 A 근호 안 m: <output id="mOut">12</output><input id="m" type="range" min="1" max="64" value="12"></label><label for="op">연산<select id="op"><option value="+">더하기</option><option value="-">빼기</option><option value="*">곱하기</option><option value="/">나누기</option></select></label><label for="b">항 B 계수 b: <output id="bOut">1</output><input id="b" type="range" min="-6" max="6" value="1"></label><label for="n">항 B 근호 안 n: <output id="nOut">27</output><input id="n" type="range" min="1" max="64" value="27"></label></div>
+<output id="expression" aria-live="polite"></output><output id="result" class="answer" aria-live="polite"></output><p id="explanation" aria-live="polite"></p>
+<div class="controls" aria-label="단계별 풀이"><button type="button" data-step="0">1 제곱인수 찾기</button><button type="button" data-step="1">2 연산 규칙</button><button type="button" data-step="2">3 답 확인</button></div><p id="stepText" class="steps" aria-live="polite">먼저 두 근호 안에서 제곱인수를 찾아 보세요.</p></section>
+<section class="card"><h2>Socratic 퀴즈</h2><p>√12+√27을 간단히 하면 무엇일까요?</p><div id="quiz" class="controls"></div><p id="feedback" aria-live="polite">답을 고르고 이유를 확인하세요.</p></section><details class="card"><summary>왜 √2+√3을 √5로 합치면 안 될까?</summary><p>근호의 덧셈은 곱셈 성질이 아닙니다. √2+√3과 √5는 일반적으로 다른 수입니다. 동류근호인지 먼저 확인합니다.</p></details><p class="muted">근호 안의 값은 양의 정수만 사용합니다. 나눗셈은 분모가 0이 아닌지 확인하고 근호를 유리화합니다.</p>
+</main><script>
+(()=>{
+  const $=s=>document.querySelector(s),a=$('#a'),m=$('#m'),op=$('#op'),b=$('#b'),n=$('#n');
+  function gcd(x,y){return y===0?Math.abs(x):gcd(y,x%y)}
+  function simplify(r){let outside=1,inside=r;for(let f=2;f*f<=inside;f++){while(inside%(f*f)===0){inside/=f*f;outside*=f}}return{outside,inside}}
+  function term(c,r){if(c===0)return'0';if(r===1)return String(c);if(c===1)return`√${r}`;if(c===-1)return`−√${r}`;return`${c<0?'−':''}${Math.abs(c)}√${r}`}
+  function joinTerms(c1,r1,c2,r2,operator){if(c1===0)return term(operator==='-'?-c2:c2,r2);if(c2===0)return term(c1,r1);if(operator==='+'&&c2<0)return`${term(c1,r1)} − ${term(-c2,r2)}`;if(operator==='-'&&c2<0)return`${term(c1,r1)} + ${term(-c2,r2)}`;return`${term(c1,r1)} ${operator} ${term(c2,r2)}`}
+  function fractionTerm(num,den,r){if(num===0)return'0';if(den<0){num=-num;den=-den}const g=gcd(num,den)||1;num/=g;den/=g;if(r===1)return den===1?String(num):`${num}/${den}`;const top=num===1?'':num===-1?'−':String(num),coef=den===1?top:`${top||'1'}/${den}`;return`${coef}√${r}`}
+  function compute(){
+    const av=Number(a.value),mv=Number(m.value),bv=Number(b.value),nv=Number(n.value),opv=op.value,u=simplify(mv),v=simplify(nv),expression=`(${term(av,mv)}) ${opv} (${term(bv,nv)})`;
+    let answer='',why='';
+    if(opv==='+'||opv==='-'){
+      const cu=av*u.outside,cv=bv*v.outside;
+      answer=u.inside===v.inside?term(cu+(opv==='+'?cv:-cv),u.inside):joinTerms(cu,u.inside,cv,v.inside,opv);
+      why=u.inside===v.inside?`${term(av,mv)}=${term(cu,u.inside)}, ${term(bv,nv)}=${term(cv,v.inside)}이므로 동류근호 계수를 계산합니다.`:'근호 안이 다르므로 동류근호로 합치지 않습니다.';
+    }else if(opv==='*'){
+      const s=simplify(u.inside*v.inside),coef=av*u.outside*bv*v.outside*s.outside;
+      answer=term(coef,s.inside);why=`계수와 근호 안을 각각 곱한 뒤 제곱인수를 꺼냅니다. √${mv}×√${nv}=√${mv*nv}.`;
+    }else if(bv===0){
+      answer='계산할 수 없음 (분모가 0)';why='나누는 항의 계수가 0이므로 나눗셈이 정의되지 않습니다.';
+    }else{
+      const s=simplify(u.inside*v.inside),num=av*u.outside*s.outside,den=bv*v.outside*v.inside;
+      answer=fractionTerm(num,den,s.inside);why=`분모 근호를 유리화하고 약분합니다. 분모의 계수 ${bv}는 0이 아닙니다.`;
+    }
+    return{av,mv,bv,nv,opv,u,v,expression,answer,why};
+  }
+  function draw(){const x=compute(),scale=(c,r)=>Math.min(610,Math.abs(c)*Math.sqrt(r)*42);$('#aOut').textContent=a.value;$('#mOut').textContent=m.value;$('#bOut').textContent=b.value;$('#nOut').textContent=n.value;$('#barA').setAttribute('x2',String(40+scale(x.av,x.mv)));$('#barB').setAttribute('x2',String(40+scale(x.bv,x.nv)));$('#expression').textContent=x.expression;$('#result').textContent=x.answer;$('#explanation').textContent=x.why;$('#stepText').textContent=`현재 정리: ${term(x.av*x.u.outside,x.u.inside)} ${x.opv} ${term(x.bv*x.v.outside,x.v.inside)}. ${x.why}`}
+  for(const control of[a,m,op,b,n])control.addEventListener('input',draw);op.addEventListener('change',draw);
+  document.querySelectorAll('[data-step]').forEach(button=>button.addEventListener('click',()=>{const x=compute(),stage=Number(button.dataset.step);document.querySelectorAll('[data-step]').forEach(item=>item.classList.toggle('active',item===button));$('#stepText').textContent=stage===0?`1단계: √${x.mv}=${term(x.u.outside,x.u.inside)}, √${x.nv}=${term(x.v.outside,x.v.inside)}로 정리합니다.`:stage===1?x.why:`3단계: ${x.expression}=${x.answer}.` }));
+  const quiz=$('#quiz');for(const choice of['5√3','√39','5√39']){const button=document.createElement('button');button.type='button';button.textContent=choice;button.addEventListener('click',()=>$('#feedback').textContent=choice==='5√3'?'맞아요. √12=2√3, √27=3√3이므로 5√3입니다.':'제곱인수를 먼저 꺼낸 뒤 동류근호인지 확인해 보세요.');quiz.append(button)}draw();
+})();
+</script></body></html>

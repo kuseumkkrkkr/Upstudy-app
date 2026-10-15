@@ -1,0 +1,48 @@
+{
+  "title": "수학Ⅰ 개념서 · 사인법칙과 코사인법칙",
+  "subtitle": "2015 개정 삼각함수 영역 시범 · 성취기준 코드 및 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["수학Ⅰ", "삼각함수", "사인법칙", "코사인법칙", "2015 개정", "시범", "미검수"],
+  "chapters": [
+    {
+      "title": "삼각형의 길이를 찾는 두 법칙",
+      "intro": [
+        "삼각형에서 알고 있는 각과 변의 정보에 맞춰 사인법칙과 코사인법칙을 선택한다.",
+        "공식 암기보다 각과 맞은편 변, 끼인각의 위치를 그림에 표시하고 결과를 검산한다.",
+        "2015 개정 수학Ⅰ의 시범 원고이며 성취기준 코드·교사 검수·학생 파일럿은 미완료다."
+      ],
+      "sections": [
+        {
+          "title": "사인법칙과 넓이",
+          "paragraphs": [
+            "삼각형 ABC에서 각 A,B,C의 맞은편 변을 각각 a,b,c라 하면 a/sin A=b/sin B=c/sin C다.",
+            "같은 삼각형의 넓이를 1/2 ab sin C와 1/2 ac sin B로 나타내면 b/sin B=c/sin C가 나온다.",
+            "사인법칙으로 각과 변의 관계를 찾고, 두 변과 끼인각으로 넓이 1/2 bc sin A를 구할 수 있다."
+          ],
+          "visuals": [
+            {"kind":"steps","title":"같은 넓이에서 사인 비 만들기","caption":"넓이를 두 번 나타내고 공통인 항을 정리한다.","formula":"K=1/2 ac sin B=1/2 ab sin C","items":["삼각형의 같은 넓이를 선택","밑변과 높이를 두 방식으로 표현","공통 인수를 정리","맞은편 변과 사인값의 비 비교"],"rows":[]}
+          ]
+        },
+        {
+          "title": "끼인각과 코사인법칙",
+          "paragraphs": [
+            "삼각형에서 변 a,b,c는 각 A,B,C의 맞은편 변이다.",
+            "a²=b²+c²−2bc cos A에서 각 A는 변 b와 c 사이의 끼인각이다.",
+            "두 변과 끼인각이 주어지면 코사인법칙으로 나머지 변을 구하고 제곱으로 검산한다."
+          ],
+          "visuals": [
+            {"kind":"steps","title":"코사인법칙의 투영 아이디어","caption":"두 변의 가로 성분과 높이를 비교해 피타고라스 정리로 연결한다.","formula":"a²=b²+c²−2bc cos A","items":["두 변과 그 사이 각 표시","한 변을 다른 변의 방향으로 분해","피타고라스 정리 적용","끼인각의 cos 항 확인"],"rows":[]}
+          ]
+        }
+      ],
+      "pages": [
+        {"id":"m1-trig-laws-opening","template":"opening","title":"어떤 법칙을 골라야 할까?","kicker":"먼저 정보 표시","blocks":[{"type":"lead","title":"오늘의 질문","text":"알고 있는 변과 각의 위치만 보고 사인법칙과 코사인법칙 중 무엇을 선택할 수 있을까?"},{"type":"thinking","title":"예측","text":"계산 전에 삼각형 그림에 각과 맞은편 변을 표시하고, 끼인각이 주어졌는지 확인한다."}]},
+        {"id":"m1-trig-laws-sine","template":"concept","title":"사인법칙은 맞은편 쌍을 잇는다","kicker":"각과 변을 짝짓기","blocks":[{"type":"definition","title":"사인법칙","text":"삼각형 ABC에서 a=BC, b=CA, c=AB라면 세 비가 같다.","formula":"a/sin A = b/sin B = c/sin C"},{"type":"thinking","title":"넓이로 이유 찾기","text":"K=1/2 ab sin C=1/2 ac sin B를 비교하면 b/sin B=c/sin C를 얻는다."},{"type":"misconception","title":"맞은편 변 확인","text":"a는 각 A와 마주 보는 변이다. 옆에 붙은 변을 짝으로 잘못 고르지 않는다."}]},
+        {"id":"m1-trig-laws-cosine","template":"concept","title":"코사인법칙은 끼인각을 본다","kicker":"두 변 사이 각","blocks":[{"type":"definition","title":"공식","text":"a²=b²+c²−2bc cos A에서 A는 b와 c 사이의 끼인각이다.","formula":"a²=b²+c²−2bc cos A"},{"type":"example","title":"예제 데이터","text":"a=6, c=8, B=60°일 때 b²=6²+8²−2·6·8·cos60°=52, 따라서 b=2√13이다."},{"type":"verification","title":"길이 검산","text":"길이는 양수이므로 제곱근의 양의 값을 택하고, 다시 제곱해 52인지 확인한다."}]},
+        {"id":"m1-trig-laws-experiment","template":"experiment","title":"삼각형을 조절해 비율 관찰하기","kicker":"예측 → 조작 → 설명","blocks":[{"type":"lead","title":"조작 순서","text":"a,c를 고정하고 그래프 도구의 각도 x를 움직여 b의 변화를 관찰한다. 이어 독립 체험 페이지에서 삼각형 전체와 각·넓이를 함께 조절한다."},{"type":"graph","title":"끼인각에 따라 달라지는 맞은편 변","text":"각도 x는 도 단위이며 두 변 a,c는 슬라이더로 조절한다. 그래프 b(x)=√(a²+c²−2ac cos x)는 코사인법칙의 양의 제곱근이다. x=0°,180°는 퇴화 삼각형이므로 표시 범위에서 제외했다.","graph":{"items":[{"id":"opposite-side-by-angle","type":"function","label":"b(x)=√(a²+c²−2ac cos x)","colorHex":"#C2410C","enabled":true,"expression":"sqrt(a^2+c^2-2*a*c*cos(x))"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":true,"viewport":{"left":25,"right":155,"top":19,"bottom":0},"parameters":[{"id":"a","label":"주어진 변 a","value":6,"min":3,"max":9,"step":0.5},{"id":"c","label":"주어진 변 c","value":8,"min":3,"max":9,"step":0.5}]}}},{"type":"visual","title":"삼각형 전체 조작·단계 풀이","text":"수학Ⅰ_삼각함수_사인법칙코사인법칙_체험형_시범.html","items":["a,c,B 조절로 삼각형 모양 바꾸기","세 각과 맞은편 변을 일관된 색·라벨로 확인","사인 비와 넓이 비교","단계 버튼과 단계형 Socratic 힌트로 이유 설명"]},{"type":"question","title":"Socratic 질문","text":"왜 두 변과 그 사이 각을 알 때 코사인법칙을 고를까요?"},{"type":"hint","title":"단계형 힌트","text":"1) 각 B가 어떤 두 변 사이에 놓였는지 찾는다. 2) 미지의 변 b가 각 B의 맞은편인지 확인한다. 그래도 막히면 풀이에서 b²=a²+c²−2ac cos B와 현재 입력값을 확인한다."},{"type":"answer","title":"확인","text":"두 변과 끼인각 정보는 코사인법칙의 구조와 일치한다. 입력한 각이 실제로 두 변 사이에 있는지도 확인한다."}]},
+        {"id":"m1-trig-laws-practice","template":"practice","title":"정보에 맞는 법칙 고르기","kicker":"도구 없이 풀기","blocks":[{"type":"question","title":"1번","text":"두 변이 5,7이고 그 사이 각이 60°다. 맞은편 변의 제곱을 구한다."},{"type":"question","title":"2번","text":"a=8, A=30°, B=45°일 때 사인법칙으로 b를 구한다."},{"type":"question","title":"3번","text":"코사인법칙의 각이 두 사용 변 사이의 끼인각이어야 하는 이유를 설명한다."},{"type":"hint","title":"힌트","text":"1번은 두 변과 끼인각, 2번은 맞은편 변과 각 한 쌍을 사용한다."},{"type":"answer","title":"정답","text":"1. 39. 2. 8√2. 3. 공식의 cos 항은 두 변 사이 각의 투영을 반영한다."}]},
+        {"id":"m1-trig-laws-summary","template":"summary","title":"그림에서 정보 읽기","kicker":"핵심 회상","blocks":[{"type":"summary","title":"한 줄 정리","text":"맞은편 각·변 쌍은 사인법칙, 두 변과 그 사이 각은 코사인법칙으로 연결한다."},{"type":"checklist","title":"스스로 확인","items":["a,b,c와 A,B,C의 맞은편 관계를 표시한다.","코사인법칙에 끼인각을 넣는다.","계산한 변과 넓이를 그림·다른 표현으로 검산한다.","도구를 닫고 새 수치 조건에 적용한다."]}]}
+      ]
+    }
+  ]
+}

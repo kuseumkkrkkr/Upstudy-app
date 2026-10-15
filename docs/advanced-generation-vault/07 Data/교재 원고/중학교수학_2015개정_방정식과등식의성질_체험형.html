@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>방정식의 해와 등식의 성질 · 체험수학</title>
+<style>
+:root{font:16px/1.6 system-ui,sans-serif;color-scheme:light dark}body{max-width:780px;margin:auto;padding:1rem;background:#101827;color:#f4f7fc}main{padding:1.2rem;background:#1b2638;border:1px solid #35445d;border-radius:18px}h1{font-size:1.5rem}.muted{color:#c4cede}.card{padding:1rem;background:#111c2b;border-radius:12px;margin:.8rem 0}.controls{display:flex;gap:.8rem;align-items:center;flex-wrap:wrap}label{display:grid;gap:.25rem;min-width:180px;flex:1}input,button{font:inherit}button{padding:.55rem .8rem;border:0;border-radius:9px;background:#7dd3fc;color:#082f49;font-weight:700;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #fbbf24;outline-offset:3px}svg{width:100%;max-height:260px;background:#101827;border-radius:10px}.beam{stroke:#38bdf8;stroke-width:8;stroke-linecap:round;transform-box:view-box;transform-origin:360px 80px;transition:transform .25s ease}.rope{stroke:#c4cede;stroke-width:3}.pan{fill:#fbbf24;stroke:#fff;stroke-width:2}.answer{font-size:1.1rem;font-weight:700}.steps{min-height:3em}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
+</style></head><body><main>
+<p class="muted">2015 개정 중학교 수학 · [9수02-04] 방정식과 등식의 성질 · 학년·학기 미지정 · 교사 검수 전</p><h1>등식은 균형을 나타내요</h1><p>왼쪽 접시에는 x 주머니와 추 3개, 오른쪽에는 추 7개가 있습니다. 주머니 무게를 바꾸어 저울이 수평이 되는 값을 찾아보세요.</p>
+<section class="card" aria-labelledby="scale-title"><h2 id="scale-title">x+3=7 균형 실험실</h2>
+<svg viewBox="0 0 720 240" role="img" aria-labelledby="svg-title svg-desc"><title id="svg-title">방정식의 균형 저울</title><desc id="svg-desc">왼쪽과 오른쪽에 표시된 식의 값에 따라 저울의 기울기가 바뀝니다.</desc><line x1="360" y1="80" x2="360" y2="190" stroke="#94a3b8" stroke-width="12"/><path d="M270 210 L450 210 L400 190 L320 190 Z" fill="#64748b"/><g id="beam-group"><line id="beam" class="beam" x1="100" y1="80" x2="620" y2="80"/><line class="rope" x1="170" y1="80" x2="170" y2="145"/><line class="rope" x1="550" y1="80" x2="550" y2="145"/><path d="M115 145 Q170 175 225 145" fill="none" stroke="#fbbf24" stroke-width="5"/><path d="M495 145 Q550 175 605 145" fill="none" stroke="#fbbf24" stroke-width="5"/><text id="left-label" x="170" y="137" text-anchor="middle" fill="currentColor" font-size="20">x + 3</text><text id="right-label" x="550" y="137" text-anchor="middle" fill="currentColor" font-size="20">7</text></g></svg>
+<div class="controls"><label for="x">주머니 무게 x: <output id="xOut">2</output><input id="x" type="range" min="0" max="8" value="2"></label></div><p id="balanceText" class="answer" aria-live="polite"></p>
+<div class="controls"><button id="both" type="button">양쪽에서 3 덜기</button><button id="leftOnly" type="button">왼쪽에서만 3 덜기</button><button id="reset" type="button">처음으로</button></div><p id="equation" aria-live="polite">원래 등식: x+3=7</p><p id="step" class="steps" aria-live="polite">먼저 저울을 수평으로 맞추고 x를 방정식에 대입해 보세요.</p>
+</section><section class="card"><h2>Socratic 퀴즈</h2><p>x+3=7에서 x=5는 해일까요?</p><div class="controls"><button type="button" data-answer="yes">해다</button><button type="button" data-answer="no">해가 아니다</button></div><p id="feedback" aria-live="polite">대입했을 때 양쪽 값이 같은지 확인하세요.</p></section>
+<section class="card"><h2>혼자 연습</h2><p>x+2=9에서 x=7이 해인지 확인하고, 양쪽에서 2를 빼 보세요.</p><details><summary>정답과 풀이</summary><p>7+2=9이므로 해입니다. 양쪽에서 2를 빼면 x+2−2=9−2, 즉 x=7입니다.</p></details></section>
+<p class="muted">저울은 등식의 양쪽에 같은 무게를 더하거나 빼는 성질을 보여 주는 모형입니다. 일차방정식 전체 풀이를 대신하는 도구는 아닙니다.</p></main>
+<script>
+(()=>{
+  'use strict';
+  const $=selector=>document.querySelector(selector), x=$('#x');
+  let mode='original';
+  function draw(){
+    const value=Number(x.value), left=mode==='original'?value+3:value, right=mode==='both'?4:7;
+    const difference=left-right, angle=Math.max(-12,Math.min(12,difference*2.4));
+    $('#xOut').textContent=x.value;
+    $('#left-label').textContent=mode==='original'?'x + 3':'x';
+    $('#right-label').textContent=String(right);
+    $('#beam').style.transform=`rotate(${-angle}deg)`;
+    $('#balanceText').textContent=difference===0
+      ?`수평! 왼쪽 ${left}, 오른쪽 ${right}입니다. x=${value}는 현재 식의 해입니다.`
+      :`기울어짐: 왼쪽 ${left}, 오른쪽 ${right}입니다. ${difference>0?'왼쪽':'오른쪽'} 접시가 더 무거워요.`;
+    if(mode==='original')$('#step').textContent=difference===0
+      ?'두 접시의 값이 같아요. 원래 식 x+3=7에 x를 대입해 확인했습니다.'
+      :'x를 움직여 두 접시의 값이 같아지는 지점을 찾아보세요.';
+  }
+  x.addEventListener('input',draw);
+  $('#both').addEventListener('click',()=>{
+    mode='both';$('#equation').textContent='같은 조작: x+3−3=7−3  →  x=4';
+    $('#step').textContent='양쪽에서 같은 수 3을 빼므로 같음이 유지됩니다. 원래 해 x=4가 변형된 식 x=4도 참으로 만듭니다.';draw();
+  });
+  $('#leftOnly').addEventListener('click',()=>{
+    mode='left';$('#equation').textContent='한쪽만 조작: x+3−3=7  →  x=7';
+    $('#step').textContent='왼쪽에서만 3을 빼면 새 식의 해는 x=7입니다. 원래 방정식의 해 x=4와 달라 등식의 성질을 보존하지 못합니다.';draw();
+  });
+  $('#reset').addEventListener('click',()=>{
+    mode='original';x.value='2';$('#equation').textContent='원래 등식: x+3=7';draw();
+  });
+  document.querySelectorAll('[data-answer]').forEach(button=>button.addEventListener('click',()=>{
+    $('#feedback').textContent=button.dataset.answer==='no'
+      ?'맞아요. 5+3=8이므로 8=7은 거짓이고, 5는 해가 아닙니다.'
+      :'다시 대입해 보세요. 5+3과 7은 같나요?';
+  }));
+  draw();
+})();
+</script></body></html>

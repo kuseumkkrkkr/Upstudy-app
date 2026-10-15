@@ -1,0 +1,136 @@
+{
+  "title": "수학(상) 2015 개정 · 평행·수직 직선 시범",
+  "subtitle": "태그 기반 신규 소단원 초안",
+  "category": "concept_textbook",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "도형의 방정식",
+    "직선의 방정식",
+    "평행",
+    "수직",
+    "기울기",
+    "신규 시범",
+    "공식 코드 대조 전"
+  ],
+  "chapters": [
+    {
+      "title": "평행한 직선과 수직인 직선의 방정식",
+      "pages": [
+        {
+          "id": "math-upper-parallel-perpendicular-opening",
+          "template": "opening",
+          "title": "기울기를 알면 평행·수직을 찾을까?",
+          "kicker": "평행한 직선과 수직인 직선",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "기울기가 2인 직선과 평행한 직선의 기울기는 얼마일까요? 수직인 직선은요?"
+            },
+            {
+              "type": "thinking",
+              "title": "방향 비교",
+              "text": "평행한 두 직선은 같은 방향으로 뻗습니다. 수직한 두 직선은 기울기 사이에 어떤 관계가 있을지 살펴보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "평행한 두 비수직 직선의 기울기는 같습니다. 수직한 두 비수직 직선의 기울기 곱은 −1입니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-parallel-perpendicular-concept",
+          "template": "concept",
+          "title": "기울기와 한 점으로 평행·수직선 정하기",
+          "kicker": "m₁=m₂, m₁m₂=−1",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기울기 관계",
+              "text": "서로 다른 두 비수직 직선이 평행하면 기울기가 같고, 수직하면 두 기울기의 곱이 −1입니다. 수직선과 수평선은 기울기 공식의 예외를 따로 확인합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "방정식 구하기",
+              "items": [
+                "기준 직선의 방정식을 기울기 꼴로 바꾸어 기울기를 읽습니다.",
+                "평행선은 같은 기울기, 수직선은 음의 역수를 기울기로 정합니다.",
+                "주어진 점과 기울기를 점기울기식에 대입합니다."
+              ]
+            },
+            {
+              "type": "misconception",
+              "title": "수직선의 기울기는 정의되지 않음",
+              "text": "수직선은 x=a 꼴이며 유한한 기울기가 없습니다. 수직선과 수평선이 수직인 경우에는 기울기 곱 공식을 쓰지 않습니다."
+            }
+          ]
+        },
+        {
+          "id": "math-upper-parallel-perpendicular-example",
+          "template": "example",
+          "title": "주어진 직선과 평행한 직선",
+          "kicker": "2x−y+3=0",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "직선 2x−y+3=0과 평행하고 점 (1,2)를 지나는 직선의 방정식을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "기준 직선을 y=2x+3으로 고치면 기울기는 2입니다.",
+                "평행선의 기울기도 2입니다.",
+                "점 (1,2)를 대입하면 y−2=2(x−1), 즉 y=2x입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "y=2x"
+            }
+          ]
+        },
+        {
+          "id": "math-upper-parallel-perpendicular-practice",
+          "template": "practice",
+          "title": "주어진 직선에 수직인 직선",
+          "kicker": "기울기의 음의 역수",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "직선 y=(1/2)x−4에 수직이고 점 (−2,3)을 지나는 직선의 방정식을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 순서",
+              "text": "수직선의 기울기 m에 대해 m·(1/2)=−1을 만족시키고 점기울기식에 대입하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "기울기는 −2입니다. y−3=−2(x+2)이므로 y=−2x−1입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "평행 조건과 수직 조건을 구분했나요?",
+                "점 좌표와 기울기를 점기울기식에 대입했나요?"
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "not_crosschecked"
+  }
+}

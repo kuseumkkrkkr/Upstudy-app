@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>기하 개념서 | 초점·준선 포물선 실험</title>
+<style>
+:root{font-family:system-ui,"Noto Sans KR",sans-serif;color:#18253b;background:#f3f6fa}*{box-sizing:border-box}body{margin:0;padding:18px;line-height:1.65}main{max-width:900px;margin:auto}.card{background:white;border:1px solid #e1e7ef;border-radius:18px;padding:22px;margin:0 0 14px;box-shadow:0 5px 20px #17263b0a}h1,h2{line-height:1.3;margin:0 0 12px}h1{font-size:clamp(1.45rem,4vw,2.1rem)}h2{font-size:1.2rem}.muted{color:#607086}.controls{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.controls label{display:grid;gap:6px}.controls input{width:100%;accent-color:#315da8}output{font-weight:800}svg{display:block;width:100%;height:auto;background:#fff;border:1px solid #e5ebf3;border-radius:12px}.metric-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}.metric{background:#f1f5f9;border-radius:12px;padding:12px}.metric strong{display:block;font-size:1.2rem}button{border:1px solid #cbd5e1;border-radius:10px;background:#fff;padding:10px 14px;font:inherit;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #f59e0b;outline-offset:2px}.primary{background:#315da8;color:#fff;border:0}.step{display:none;background:#f1f5f9;border-radius:12px;padding:14px}.step.active{display:block}.actions{display:flex;align-items:center;gap:8px;margin-top:10px}.quiz label{display:block;padding:7px}.feedback{font-weight:700;min-height:1.6em}details summary{cursor:pointer;font-weight:700}@media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important;animation:none!important;transition:none!important}}@media(max-width:480px){body{padding:10px}.card{padding:16px;border-radius:14px}}
+</style>
+</head>
+<body><main>
+<p class="muted">2022 개정 기하 · [12기하01-01] 부분 시범 · 교사 검수 전</p>
+<header class="card"><p class="muted">고등수학 기하 · 포물선</p><h1>초점과 준선까지의 거리가 같은 점은?</h1><p>초점 F(0,p), 준선 y=-p를 정해 보세요. 점 P가 포물선 위에 남으려면 두 거리가 어떻게 변해야 할까요?</p></header>
+<section class="card"><h2>포물선과 점을 직접 움직이기</h2><div class="controls"><label>초점 거리 p<input id="p" type="range" min="0.5" max="3" step="0.5" value="2"><output id="pout">2</output></label><label>점의 x좌표<input id="x" type="range" min="-4" max="4" step="0.25" value="4"><output id="xout">4</output></label></div>
+<svg viewBox="0 0 720 420" role="img" aria-labelledby="title desc"><title id="title">초점과 준선이 표시된 포물선</title><desc id="desc">초점은 (0,p), 준선은 y=-p이고, 포물선 위 점 P에서 두 거리를 비교합니다.</desc><g stroke="#e8edf4"><path d="M180 90V402M240 90V402M300 90V402M360 90V402M420 90V402M480 90V402M540 90V402M180 138H540M180 186H540M180 234H540M180 282H540M180 330H540M180 378H540"/></g><path d="M180 330H550M360 80V402" stroke="#64748b" stroke-width="2"/><path id="directrix" d="" stroke="#dd5f34" stroke-width="3" stroke-dasharray="8 6"/><path id="curve" d="" fill="none" stroke="#315da8" stroke-width="4"/><line id="distance" x1="0" y1="0" x2="0" y2="0" stroke="#16a085" stroke-width="2"/><circle id="focus" r="7" fill="#dd5f34"/><circle id="point" r="7" fill="#315da8"/><text id="f-label" font-size="15">F</text><text id="p-label" font-size="15">P</text><text id="l-label" x="555" font-size="14">준선</text><text id="eq-label" x="18" y="30" font-size="16">y=x²/(4p)</text></svg>
+<div class="metric-row"><div class="metric">P<strong id="coords">(4, 2)</strong></div><div class="metric">초점까지 거리 PF<strong id="focus-distance">4</strong></div><div class="metric">준선까지 거리<strong id="line-distance">4</strong></div></div><p id="status" class="muted" aria-live="polite">포물선 위에서 두 거리가 같음을 관찰하세요.</p>
+<div class="actions"><button id="trace-play" class="primary" type="button">포물선 따라 움직이기</button><button id="trace-stop" type="button">재생 정지</button><span id="trace-status" class="muted" aria-live="polite">초점 거리는 초록색, 준선 거리는 보라색 점선입니다.</span></div><p class="muted">움직임 감소 설정에서는 자동 이동을 생략합니다. x 슬라이더로 같은 경로를 직접 따라가 보세요.</p></section>
+<section class="card"><h2>한 단계씩 이해하기</h2><div class="step active"><strong>1 / 3 · 거리 조건</strong><p>포물선은 초점과 준선까지 거리가 같은 점들의 모임입니다.</p></div><div class="step"><strong>2 / 3 · 좌표로 쓰기</strong><p>F=(0,p), 준선 y=-p, P=(x,y)로 두고 √(x²+(y-p)²)=|y+p|를 세웁니다.</p></div><div class="step"><strong>3 / 3 · 동치 변형 확인</strong><p>제곱근과 절댓값은 모두 0 이상이므로 제곱이 동치입니다. 전개하면 x²=4py이고 p&gt;0에서 y=x²/(4p)≥0이므로 |y+p|=y+p입니다.</p></div><div class="actions"><button id="prev">이전</button><button id="next" class="primary">다음</button><span id="step-status" aria-live="polite">1단계</span></div></section>
+<section class="card quiz"><h2>도구 퀴즈</h2><p>p=2, x=4일 때 포물선 위 점의 y좌표와 PF는?</p><label><input type="radio" name="q" value="a"> y=1, PF=3</label><label><input type="radio" name="q" value="b"> y=2, PF=4</label><label><input type="radio" name="q" value="c"> y=4, PF=2</label><button id="check" class="primary">답 확인</button><p id="feedback" class="feedback" aria-live="polite"></p></section>
+<section class="card quiz"><h2>유도 조건 퀴즈</h2><p>√(x²+(y-p)²)=|y+p|를 제곱해도 동치인 이유는?</p><label><input type="radio" name="sign-q" value="a"> 제곱근과 절댓값은 모두 0 이상이다</label><label><input type="radio" name="sign-q" value="b"> 양변은 언제나 음수다</label><label><input type="radio" name="sign-q" value="c"> p가 0이어도 된다</label><button id="sign-check" class="primary" type="button">조건 확인</button><p id="sign-feedback" class="feedback" aria-live="polite"></p></section>
+<section class="card"><h2>Socratic 질문</h2><p>점을 초점 쪽으로만 옮기면 여전히 포물선 위에 있을까요? 두 거리 조건을 함께 말해 보세요.</p><button id="hint">힌트 보기</button><p id="hint-text" aria-live="polite">먼저 자신의 설명을 생각해 보세요.</p></section>
+<details class="card"><summary>연습하고 답 확인하기</summary><p>p=1, x=2일 때 P, 초점까지 거리, 준선까지 거리를 구하세요.</p><p>정답: P=(2,1), F=(0,1), PF=2, 준선 y=-1까지 거리도 2입니다.</p></details>
+</main>
+<script>
+(()=>{'use strict';const p=document.getElementById('p'),x=document.getElementById('x'),sv=24,xc=360,y0=330;function render(){const pv=+p.value,xv=+x.value,yv=xv*xv/(4*pv),fx=xc,fy=y0-pv*sv,px=xc+xv*sv,py=y0-yv*sv,dy=y0+pv*sv;document.getElementById('pout').value=pv;document.getElementById('xout').value=xv;document.getElementById('curve').setAttribute('d',Array.from({length:81},(_,i)=>{const u=-4+i*.1,v=u*u/(4*pv);return`${i?'L':'M'}${(xc+u*sv).toFixed(1)} ${(y0-v*sv).toFixed(1)}`}).join(' '));document.getElementById('directrix').setAttribute('d',`M180 ${dy}H540`);const f=document.getElementById('focus'),pt=document.getElementById('point');f.setAttribute('cx',fx);f.setAttribute('cy',fy);pt.setAttribute('cx',px);pt.setAttribute('cy',py);document.getElementById('distance').setAttribute('x1',px);document.getElementById('distance').setAttribute('y1',py);document.getElementById('distance').setAttribute('x2',fx);document.getElementById('distance').setAttribute('y2',fy);document.getElementById('f-label').setAttribute('x',fx+9);document.getElementById('f-label').setAttribute('y',fy-9);document.getElementById('f-label').textContent=`F(0, ${pv})`;document.getElementById('p-label').setAttribute('x',px+8);document.getElementById('p-label').setAttribute('y',py-8);document.getElementById('p-label').textContent=`P(${xv}, ${yv.toFixed(2)})`;document.getElementById('l-label').setAttribute('y',dy-7);document.getElementById('eq-label').textContent=`y=x²/(4·${pv})`;const fd=Math.hypot(xv,yv-pv),ld=Math.abs(yv+pv);document.getElementById('coords').textContent=`(${xv}, ${yv.toFixed(2)})`;document.getElementById('focus-distance').textContent=fd.toFixed(2);document.getElementById('line-distance').textContent=ld.toFixed(2);document.getElementById('status').textContent=Math.abs(fd-ld)<1e-8?'두 거리가 같습니다. 포물선의 거리 정의가 확인됩니다.':'계산값을 다시 확인하세요.'}p.addEventListener('input',render);x.addEventListener('input',render);render();let step=0;const steps=[...document.querySelectorAll('.step')];function show(i){step=Math.max(0,Math.min(2,i));steps.forEach((el,j)=>el.classList.toggle('active',j===step));document.getElementById('step-status').textContent=`${step+1}단계`}document.getElementById('prev').addEventListener('click',()=>show(step-1));document.getElementById('next').addEventListener('click',()=>show(step+1));document.getElementById('check').addEventListener('click',()=>{const a=document.querySelector('input[name="q"]:checked');document.getElementById('feedback').textContent=!a?'답을 선택해 주세요.':a.value==='b'?'맞아요. y=16/(8)=2이고 F=(0,2)이므로 PF=4입니다.':'다시 계산해 보세요. y=x²/(4p)를 먼저 사용하세요.'});document.getElementById('hint').addEventListener('click',()=>{document.getElementById('hint-text').textContent='포물선 위 점에서는 초점까지 거리와 준선까지 거리가 항상 같습니다. 한쪽 거리만 바꾸면 점은 포물선 위에 남지 않습니다.'})})();
+</script><script>
+(()=>{
+'use strict';
+const svg=document.querySelector('svg');
+const x=document.getElementById('x');
+const p=document.getElementById('p');
+const play=document.getElementById('trace-play');
+const stop=document.getElementById('trace-stop');
+const status=document.getElementById('trace-status');
+const reduced=matchMedia('(prefers-reduced-motion: reduce)');
+const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+line.setAttribute('stroke','#8b5cf6');
+line.setAttribute('stroke-width','3');
+line.setAttribute('stroke-dasharray','5 4');
+line.setAttribute('aria-label','점에서 준선까지의 수직거리');
+svg.insertBefore(line,document.getElementById('distance'));
+let frame=0,startAt=0,internal=false;
+function drawLine(){
+ const xv=+x.value,pv=+p.value,yv=xv*xv/(4*pv),px=360+xv*24,py=330-yv*24,dy=330+pv*24;
+ line.setAttribute('x1',px);line.setAttribute('x2',px);line.setAttribute('y1',py);line.setAttribute('y2',dy);
+}
+function stopMotion(message){if(frame){cancelAnimationFrame(frame);frame=0}if(message)status.textContent=message}
+function tick(now){
+ if(!startAt)startAt=now;
+ const t=Math.min((now-startAt)/5000,1);
+ internal=true;x.value=(-4+8*t).toFixed(2);x.dispatchEvent(new Event('input',{bubbles:true}));internal=false;
+ drawLine();
+ if(t<1)frame=requestAnimationFrame(tick);else{frame=0;status.textContent='재생 완료: 움직이는 동안 PF와 준선까지의 거리가 같습니다.'}
+}
+x.addEventListener('input',()=>{drawLine();if(frame&&!internal)stopMotion('직접 조작으로 재생을 멈췄습니다. 두 거리 값을 비교하세요.')});
+p.addEventListener('input',()=>{drawLine();if(frame)stopMotion('초점·준선 조작으로 재생을 멈췄습니다. 점을 직접 움직여 보세요.')});
+play.addEventListener('click',()=>{
+ stopMotion();
+ if(reduced.matches){drawLine();status.textContent='움직임 감소 설정으로 자동 이동을 생략했습니다. 현재 위치는 유지되며 슬라이더로 직접 조작할 수 있습니다.';return}
+ internal=true;x.value='-4';x.dispatchEvent(new Event('input',{bubbles:true}));internal=false;
+ drawLine();startAt=0;status.textContent='P가 포물선을 따라 움직입니다. 초점 거리와 준선 거리를 비교하세요.';frame=requestAnimationFrame(tick);
+});
+stop.addEventListener('click',()=>stopMotion('재생을 정지했습니다. 슬라이더로 이어서 조작할 수 있습니다.'));
+reduced.addEventListener('change',()=>{if(reduced.matches)stopMotion('움직임 감소 설정이 감지되어 자동 이동을 멈췄습니다.')});
+drawLine();
+})();
+</script><script>
+document.getElementById('sign-check').addEventListener('click',()=>{const a=document.querySelector('input[name="sign-q"]:checked');document.getElementById('sign-feedback').textContent=!a?'선택지를 골라 보세요.':a.value==='a'?'맞아요. 두 변이 모두 0 이상이므로 제곱은 동치입니다. 전개 후 p>0에서 y≥0도 얻습니다.':'조건을 확인해 보세요. 거리식의 오른쪽은 절댓값이고, 제곱근과 절댓값은 모두 0 이상입니다.'});
+</script></body></html>

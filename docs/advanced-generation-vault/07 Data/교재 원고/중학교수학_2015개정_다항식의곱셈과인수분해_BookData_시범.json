@@ -1,0 +1,31 @@
+{
+  "title": "중학교 수학 개념서 · 2015 개정 · 다항식의 곱셈과 인수분해",
+  "subtitle": "넓이 조각을 펼쳐 보고 역으로 묶기 · 부분 시범 · 학기 미지정 · 교사 검수 전",
+  "category": "concept_textbook_prototype",
+  "tags": ["중학교 수학", "2015 개정", "문자와 식", "다항식의 곱셈", "인수분해", "9수02-12", "부분 시범", "교사 검수 전"],
+  "chapters": [{
+    "title": "전개와 인수분해를 서로 거꾸로 읽기",
+    "intro": [
+      "(x+a)(x+b)를 네 조각의 넓이와 전개식 x²+(a+b)x+ab로 연결한다.",
+      "인수분해는 전개의 역과정이며, 두 수의 합과 곱을 함께 확인하고 전개로 검산한다.",
+      "넓이 모형의 길이는 양수다. 음수 사례는 도형 길이로 해석하지 않고 대수식으로 다룬다."
+    ],
+    "sections": [{
+      "title": "직사각형의 넓이와 두 수의 합·곱",
+      "paragraphs": [
+        "가로 x+a, 세로 x+b인 직사각형은 x², ax, bx, ab 네 조각으로 나뉜다.",
+        "따라서 (x+a)(x+b)=x²+(a+b)x+ab다.",
+        "x²+7x+12에서는 합이 7이고 곱이 12인 두 수 3과 4를 찾아 (x+3)(x+4)로 되돌린 뒤 전개해 검산한다."
+      ],
+      "visuals": [{"kind":"area-model","title":"네 조각 넓이","caption":"전체 넓이와 네 조각의 넓이 합은 같다.","formula":"(x+a)(x+b)=x²+ax+bx+ab=x²+(a+b)x+ab","items":["x² 정사각형","ax 직사각형","bx 직사각형","ab 정사각형"],"rows":[]}]
+    }],
+    "pages": [
+      {"id":"ms15-factor-predict","template":"opening","title":"가운데 항은 어디서 생길까?","kicker":"곱셈을 네 조각으로","blocks":[{"type":"lead","title":"오늘의 질문","text":"(x+3)(x+4)를 전개하면 x²와 12 외에 어떤 항이 생길까요?"},{"type":"thinking","title":"먼저 예측하기","text":"가로와 세로를 각각 x와 수로 나누었을 때 직사각형 조각은 몇 개일지 생각하세요."},{"type":"answer","title":"핵심","text":"x², 3x, 4x, 12가 생겨 x²+7x+12가 됩니다."}]},
+      {"id":"ms15-factor-concept","template":"concept","title":"네 넓이를 더해 전개하기","kicker":"전체는 부분의 합","blocks":[{"type":"definition","title":"전개","text":"(x+a)(x+b)=x²+ax+bx+ab=x²+(a+b)x+ab입니다."},{"type":"visual","title":"넓이 조각","text":"전체 넓이를 네 부분으로 나누어 각 부분의 식을 더합니다.","formula":"x² | bx\nax | ab"},{"type":"derivation","title":"가운데 항","text":"서로 다른 두 조각 ax와 bx를 합쳐 (a+b)x가 됩니다."},{"type":"misconception","title":"빠뜨리기 쉬운 곱","text":"괄호의 각 항끼리 모두 곱합니다. x²와 ab만 남기면 ax와 bx를 빠뜨린 것입니다."}]},
+      {"id":"ms15-factor-experiment","template":"experiment","title":"조각을 펼치고 다시 묶기","kicker":"조작 → 관찰 → 역으로 추론","blocks":[{"type":"lead","title":"사용 방법","text":"a와 b를 1부터 5까지 조절해 네 조각의 넓이와 전개식을 비교합니다. 도형은 양의 길이 모형입니다."},{"type":"visual","title":"체험 도구","text":"독립 HTML 시범 파일: 중학교수학_2015개정_다항식의곱셈과인수분해_체험형.html","items":["a·b 슬라이더","수동 단계 애니메이션","곱과 합을 맞추는 인수분해 퀴즈"]},{"type":"question","title":"Socratic 질문","text":"x²+7x+12에서 두 수는 곱만 12이면 충분할까요? 가운데 항의 계수 7은 어떤 조건으로 확인하나요?"},{"type":"hint","title":"힌트","text":"곱이 12인 정수 쌍을 적고, 각 쌍의 합을 7과 비교하세요."},{"type":"verification","title":"확인","text":"3×4=12이고 3+4=7이므로 (x+3)(x+4)입니다."}]},
+      {"id":"ms15-factor-example","template":"example","title":"두 조건을 모두 만족하는 쌍","kicker":"합·곱·전개 검산","blocks":[{"type":"question","title":"대표 예제","text":"x²+9x+20을 인수분해하세요."},{"type":"solutionStep","title":"곱 조건","text":"두 수의 곱이 20이어야 합니다."},{"type":"solutionStep","title":"합 조건","text":"4와 5는 합이 9이므로 가운데 항도 맞습니다."},{"type":"answer","title":"인수분해","text":"x²+9x+20=(x+4)(x+5)."},{"type":"verification","title":"전개 검산","text":"x²+5x+4x+20=x²+9x+20으로 되돌아옵니다."}]},
+      {"id":"ms15-factor-practice","template":"practice","title":"전개하고 곱으로 되돌리기","kicker":"답을 보기 전에 직접 풀기","blocks":[{"type":"question","title":"1번","text":"(x+2)(x+6)을 전개하세요."},{"type":"question","title":"2번","text":"x²+11x+24를 인수분해하고 검산하세요."},{"type":"question","title":"3번","text":"x²+8x+16을 완전제곱식으로 나타내세요."},{"type":"hint","title":"힌트","text":"인수분해에서는 두 수의 곱과 합을 각각 확인하세요."},{"type":"answer","title":"정답","text":"1. x²+8x+12. 2. (x+3)(x+8). 3. (x+4)²."},{"type":"checklist","title":"스스로 확인","items":["괄호 항의 곱을 빠뜨리지 않았다.","두 수의 합과 곱을 모두 확인했다.","곱셈으로 되돌려 검산했다."]}]},
+      {"id":"ms15-factor-summary","template":"summary","title":"한 줄로 설명하고 마치기","kicker":"도구 없이 다시 떠올리기","blocks":[{"type":"summary","title":"오늘의 규칙","text":"(x+a)(x+b)=x²+(a+b)x+ab. 인수분해는 합과 곱이 맞는 두 수를 찾아 전개를 거꾸로 하는 일입니다."},{"type":"thinking","title":"회상 질문","text":"x²+10x+21을 인수분해하고, 선택한 두 수가 합과 곱 조건을 만족하는지 말해 보세요."},{"type":"checklist","title":"마무리","items":["전개를 넓이 조각과 연결했다.","합과 곱 조건을 모두 사용했다.","전개로 답을 검산했다."]}]}
+    ]
+  }]
+}

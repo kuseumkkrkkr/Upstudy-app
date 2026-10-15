@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>중학교 수학 개념서 · 2015 개정 · 최대공약수와 최소공배수</title>
+<style>
+:root{color-scheme:light;--ink:#18243a;--muted:#59677e;--blue:#2459c4;--green:#147047;--red:#af3342;--line:#d7e0ed;--bg:#f3f6fb}*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.55 system-ui,"Malgun Gothic",sans-serif}main{max-width:900px;margin:auto;padding:22px 16px 48px}h1{font-size:clamp(1.4rem,4vw,2rem);margin:.2em 0}.muted{color:var(--muted)}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px;margin:14px 0}.controls{display:flex;gap:14px;flex-wrap:wrap;align-items:center}.controls label{display:grid;gap:5px;min-width:210px;flex:1}.controls input{width:100%}button{font:inherit;color:var(--ink);background:#fff;border:1px solid var(--line);border-radius:10px;padding:9px 12px;cursor:pointer}button:focus-visible,input:focus-visible{outline:3px solid #d99a19;outline-offset:2px}.status{font-weight:650;min-height:1.5em}.pair{display:grid;grid-template-columns:1fr 1fr;gap:12px}.number-card{background:#f7f9fd;border:1px solid var(--line);border-radius:12px;padding:12px}.chips{display:flex;gap:7px;flex-wrap:wrap}.chip{padding:4px 9px;border:1px solid var(--line);border-radius:999px;background:#fff}.chip.common{border-color:#77b18e;background:#eff9f2;color:#145b36;font-weight:700}.pulse-list{display:grid;gap:5px;max-height:260px;overflow:auto;padding:4px}.pulse{display:grid;grid-template-columns:64px 1fr 1fr;gap:8px;align-items:center;padding:5px 8px;border-radius:8px;background:#f7f9fd}.pulse.active{outline:2px solid var(--blue)}.pulse.meet{background:#eff9f2;color:#145b36;font-weight:700}.event{min-height:1.3em}.quiz{background:#f7f9fd;border-radius:10px;padding:14px;margin-top:12px}.feedback{min-height:1.5em}.sr{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}@media(max-width:540px){.card{padding:14px}.controls label{min-width:100%}.pair{grid-template-columns:1fr}.pulse{grid-template-columns:52px 1fr 1fr}}@media(prefers-reduced-motion:reduce){*,*::before,*::after{scroll-behavior:auto!important;transition:none!important;animation:none!important}}
+</style>
+</head>
+<body><main>
+<p class="muted">2015 개정 수학과 교육과정 · [9수01-02] 원문 대조 · 학년·학기 미지정</p>
+<h1>함께 나누고 다시 만나는 수</h1>
+<p>두 수를 조절해 공약수와 공배수를 찾고, 주기를 한 칸씩 진행해 첫 동시 시점을 확인하세요.</p>
+
+<section class="card" aria-labelledby="divisorTitle">
+<h2 id="divisorTitle">공약수 중 가장 큰 수 찾기</h2>
+<div class="controls">
+<label>수 A <output id="aOut" for="a">12</output><input id="a" type="range" min="2" max="12" step="1" value="12" aria-label="최대공약수를 구할 첫 번째 수"></label>
+<label>수 B <output id="bOut" for="b">18</output><input id="b" type="range" min="2" max="12" step="1" value="6" aria-label="최대공약수를 구할 두 번째 수"></label>
+</div>
+<div class="pair"><div class="number-card"><h3 id="aDivisorLabel">12의 약수</h3><div id="aDivisors" class="chips" aria-label="수 A의 약수"></div></div><div class="number-card"><h3 id="bDivisorLabel">6의 약수</h3><div id="bDivisors" class="chips" aria-label="수 B의 약수"></div></div></div>
+<p class="muted">초록색으로 겹쳐 보이는 약수를 살펴보고, 공약수 중 가장 큰 수를 찾아보세요.</p>
+<div class="controls"><label>공약수 후보 <select id="candidate" aria-label="검사할 공약수 후보"></select></label><button id="checkCandidate" type="button">두 수를 모두 나누는지 확인</button></div>
+<p id="divisorFeedback" class="status" role="status" aria-live="polite">공약수 중 가장 큰 수인지 목록을 비교하세요.</p>
+</section>
+
+<section class="card" aria-labelledby="multipleTitle">
+<h2 id="multipleTitle">두 주기의 첫 만남 찾기</h2>
+<p>수 A는 <span id="periodA">12</span>칸마다, 수 B는 <span id="periodB">6</span>칸마다 표시됩니다. 시간을 직접 한 칸씩 움직여 보세요.</p>
+<div class="controls"><button id="previous" type="button">한 칸 뒤로</button><button id="next" type="button">한 칸 앞으로</button><button id="restart" type="button">처음부터</button><span id="timeReadout" class="status" aria-live="polite">시작 전</span></div>
+<div id="pulseList" class="pulse-list" role="list" aria-label="두 주기의 시간표"></div>
+<p id="multipleFeedback" class="status" role="status" aria-live="polite">두 표시가 처음 동시에 나타나는 양의 시점이 최소공배수입니다.</p>
+<div class="quiz"><p><strong>Socratic 질문.</strong> A만 표시되고 B는 표시되지 않은 칸은 공배수일까요?</p><button id="multipleHint" type="button">힌트 보기</button><p id="multipleHintText" class="feedback" role="status" aria-live="polite">공배수는 두 수의 배수 조건을 모두 만족해야 합니다.</p></div>
+</section>
+
+<section class="card"><h2>짧은 확인 퀴즈</h2><p id="quizPrompt"><strong>12와 6</strong>의 최대공약수는 얼마일까요?</p><div id="quizChoices" class="controls"></div><p id="quizFeedback" class="feedback" role="status" aria-live="polite">두 약수 목록에서 겹치는 수 중 가장 큰 것을 고르세요.</p></section>
+
+<section class="card"><h2>도구 없이 전이하기</h2><p>8초·12초마다 반복되는 알림의 다음 동시 시점, 그리고 15개·20개 물건을 남김없이 가장 큰 같은 묶음으로 나눌 때의 묶음 크기를 구해 보세요.</p><p class="muted">확인: 처음 다시 만나는 시점은 24초(최소공배수), 가장 큰 묶음 크기는 5개(최대공약수)입니다.</p></section>
+<p class="muted">독립 HTML 시범입니다. 앱의 BookData·구매·학습 진도와 연결되어 있지 않습니다.</p>
+</main>
+<script>
+(()=>{'use strict';
+const a=document.querySelector('#a'),b=document.querySelector('#b'),candidate=document.querySelector('#candidate');let time=0;
+const gcdInt=(x,y)=>{while(y!==0)[x,y]=[y,x%y];return x};
+const lcmInt=(x,y)=>x/gcdInt(x,y)*y;
+const divisors=n=>Array.from({length:n},(_,i)=>i+1).filter(d=>n%d===0);
+function renderDivisors(){
+ const av=Number(a.value),bv=Number(b.value),da=divisors(av),db=divisors(bv),shared=new Set(da.filter(d=>db.includes(d)));
+ document.querySelector('#aOut').value=av;document.querySelector('#bOut').value=bv;
+ document.querySelector('#aDivisorLabel').textContent=`${av}의 약수`;document.querySelector('#bDivisorLabel').textContent=`${bv}의 약수`;
+ document.querySelector('#quizPrompt').innerHTML=`<strong>${av}와 ${bv}</strong>의 최대공약수는 얼마일까요?`;
+ const quizChoices=document.querySelector('#quizChoices'),answer=gcdInt(av,bv),distractors=[1,Math.max(av,bv)].filter(value=>value!==answer);quizChoices.replaceChildren();for(const value of [answer,...distractors]){const button=document.createElement('button');button.type='button';button.dataset.gcd=String(value);button.textContent=value;quizChoices.append(button)}
+ for(const [id,values] of [['#aDivisors',da],['#bDivisors',db]]){const host=document.querySelector(id);host.replaceChildren();for(const value of values){const chip=document.createElement('span');chip.className=`chip${shared.has(value)?' common':''}`;chip.textContent=value;host.append(chip)}}
+ candidate.replaceChildren();for(let d=1;d<=Math.min(av,bv);d++){const option=document.createElement('option');option.value=d;option.textContent=d;candidate.append(option)}
+ document.querySelector('#divisorFeedback').textContent='초록색 공약수 중 가장 큰 수를 찾으세요.';renderMultiples(true);
+}
+function renderMultiples(reset){
+ const av=Number(a.value),bv=Number(b.value),target=lcmInt(av,bv);if(reset)time=0;
+ const list=document.querySelector('#pulseList');list.replaceChildren();
+ for(let t=1;t<=time;t++){const row=document.createElement('div'),atA=t%av===0,atB=t%bv===0;row.className=`pulse${t===time?' active':''}${atA&&atB?' meet':''}`;row.setAttribute('role','listitem');
+  for(const value of [t,atA?'●':'—',atB?'●':'—']){const cell=document.createElement('span');cell.className='event';cell.textContent=value;row.append(cell)}list.append(row)}
+ document.querySelector('#periodA').textContent=av;document.querySelector('#periodB').textContent=bv;
+ document.querySelector('#timeReadout').textContent=time===0?'시작 전':`시간 ${time}`;
+ document.querySelector('#previous').disabled=time===0;document.querySelector('#next').disabled=time>=target;
+ document.querySelector('#multipleFeedback').textContent=time===0?'두 표시가 처음 동시에 나타나는 양의 시점이 최소공배수입니다.':time%av===0&&time%bv===0?`두 주기가 ${time}에서 만났습니다. 처음 만나는 시점인지 앞의 칸도 살펴보세요.`:`${time}에서는 ${time%av===0?'A':'B'} 표시만 나타납니다. 두 수의 배수 조건을 모두 확인하세요.`;
+}
+a.addEventListener('input',renderDivisors);b.addEventListener('input',renderDivisors);
+document.querySelector('#checkCandidate').addEventListener('click',()=>{const av=Number(a.value),bv=Number(b.value),d=Number(candidate.value),g=gcdInt(av,bv);document.querySelector('#divisorFeedback').textContent=av%d===0&&bv%d===0?d===g?`${d}는 두 수의 최대공약수입니다.`:`${d}는 공약수입니다. 더 큰 공약수가 있는지 목록을 비교하세요.`:`${d}는 두 수를 모두 나누지 못하므로 공약수가 아닙니다.`});
+document.querySelector('#previous').addEventListener('click',()=>{time=Math.max(0,time-1);renderMultiples(false)});
+document.querySelector('#next').addEventListener('click',()=>{time=Math.min(lcmInt(Number(a.value),Number(b.value)),time+1);renderMultiples(false)});
+document.querySelector('#restart').addEventListener('click',()=>{time=0;renderMultiples(false)});
+document.querySelector('#multipleHint').addEventListener('click',()=>{document.querySelector('#multipleHintText').textContent='A와 B가 같은 시간 칸에 모두 표시되어야 공통 배수입니다. 그중 처음 만나는 양의 칸을 찾으세요.'});
+document.querySelector('#quizChoices').addEventListener('click',event=>{const button=event.target.closest('[data-gcd]');if(!button)return;const av=Number(a.value),bv=Number(b.value),answer=gcdInt(av,bv);document.querySelector('#quizFeedback').textContent=Number(button.dataset.gcd)===answer?`맞아요. ${av}와 ${bv}의 최대공약수는 ${answer}입니다.`:'다시 살펴보세요. 두 수를 모두 나누는지 확인한 뒤 더 큰 공약수가 있는지 비교하세요.'});
+renderDivisors();
+})();
+</script>
+</body></html>

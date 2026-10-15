@@ -1,0 +1,83 @@
+{
+  "title": "공통수학1 개념서 · 2022 개정 부분 시범",
+  "subtitle": "10공수1-01-03의 완전제곱식 유형만 다루는 교사 검수 전 원고",
+  "category": "concept_textbook_prototype",
+  "tags": ["공통수학1", "2022개정", "10공수1-01-03", "부분시범", "교사검수대기"],
+  "standard_codes": ["10공수1-01-03"],
+  "standard_coverage": "partial_perfect_square_factorization_only",
+  "grade_semester_status": "not_assigned",
+  "teacher_review_status": "pending",
+  "chapters": [
+    {
+      "title": "정사각형 넓이로 완전제곱식 이해하기",
+      "intro": [
+        "x²+2ax+a²가 (x+a)²가 되는 이유를 넓이 분할과 전개로 설명하고 두 식을 서로 바꿔 쓴다.",
+        "교육부 2022 개정 별책 8의 10공수1-01-03과 연결한 부분 시범이다. 인수분해 전체를 다루지 않으며 교사 검수는 대기 중이다."
+      ],
+      "sections": [
+        {
+          "title": "완전제곱식의 구조",
+          "paragraphs": [
+            "한 변이 x+a인 정사각형을 x와 a에서 나누면 x², ax, ax, a²의 네 부분으로 나뉜다.",
+            "전체 넓이는 (x+a)²이고, 부분 넓이의 합은 x²+ax+ax+a²=x²+2ax+a²다. 따라서 x²+2ax+a²=(x+a)²다.",
+            "(x-a)²=x²-2ax+a²도 같은 구조이며 가운데 항의 부호만 달라진다. 그림의 길이는 양수라서 부호 사례는 식으로 따로 해석한다."
+          ],
+          "visuals": [
+            {"kind":"area-model","title":"정사각형 넓이 분할","caption":"전체 넓이와 조각 넓이의 합은 같다.","formula":"(x+a)²=x²+ax+ax+a²=x²+2ax+a²","items":["x² 정사각형","ax 직사각형","ax 직사각형","a² 정사각형"],"rows":[]}
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id":"cm1-perfect-square-predict","template":"opening","title":"먼저 예측하기","kicker":"가운데 항을 예상해 보자","blocks":[
+            {"type":"lead","title":"오늘의 질문","text":"(x+a)²를 전개할 때 x²와 a² 외에 어떤 항이 더 생길까?"},
+            {"type":"thinking","title":"예측","text":"곱셈 기호를 풀어 (x+a)(x+a)로 쓴 뒤, 서로 다른 항의 곱이 몇 번 나오는지 세어 보자."}
+          ]
+        },
+        {
+          "id":"cm1-perfect-square-concept","template":"concept","title":"네 조각의 넓이가 식이 된다","kicker":"전체와 부분은 같은 넓이","blocks":[
+            {"type":"definition","title":"완전제곱식","text":"x²+2ax+a²는 (x+a)²로 인수분해되는 식이다. x²-2ax+a²는 (x-a)²다."},
+            {"type":"visual","title":"넓이 분할","text":"한 변 x+a인 정사각형을 x와 a에서 나눈다.","formula":"x² | ax\nax | a²"},
+            {"type":"derivation","title":"왜 2ax인가","text":"두 직사각형의 넓이가 각각 ax다. 그래서 가운데 항은 ax+ax=2ax다."},
+            {"type":"misconception","title":"자주 빠뜨리는 항","text":"(x+a)²를 x²+a²로 쓰면 두 직사각형의 넓이 ax를 빠뜨린 것이다."}
+          ]
+        },
+        {
+          "id":"cm1-perfect-square-experiment","template":"experiment","title":"넓이 조각을 직접 움직이기","kicker":"예측 → 조작 → 설명","blocks":[
+            {"type":"lead","title":"사용 방법","text":"x와 a를 움직여 전체 정사각형과 네 조각의 넓이를 비교한다. 그림은 x>0, a>0에서만 유효하다."},
+            {"type":"visual","title":"체험 도구","text":"독립 HTML 시범 파일: 공통수학1_인수분해_완전제곱식_체험형_시범.html","items":["단계별 분할 보기","x·a 슬라이더 조작","넓이 합 퀴즈"]},
+            {"type":"question","title":"도구 퀴즈","text":"a=3일 때 x²의 계수와 상수항은 그대로다. 가운데 항의 계수는 얼마인가?"},
+            {"type":"verification","title":"확인","text":"2a=6이므로 (x+3)²=x²+6x+9다."},
+            {"type":"hint","title":"Socratic 힌트","text":"넓이 ax인 직사각형이 몇 개 겹쳐 있지? a=3을 가운데 항 2ax에 넣어 보자."}
+          ]
+        },
+        {
+          "id":"cm1-perfect-square-example","template":"example","title":"세 항이 같은 구조인지 확인","kicker":"제곱근과 가운데 항을 함께 검사","blocks":[
+            {"type":"question","title":"대표 예제","text":"9y²+12y+4를 인수분해하라."},
+            {"type":"solutionStep","title":"첫째·마지막 항","text":"9y²=(3y)²이고 4=2²다."},
+            {"type":"solutionStep","title":"가운데 항 검산","text":"2·3y·2=12y이므로 가운데 항도 맞는다."},
+            {"type":"answer","title":"인수분해","text":"9y²+12y+4=(3y+2)²."},
+            {"type":"verification","title":"전개 검산","text":"(3y+2)(3y+2)=9y²+6y+6y+4=9y²+12y+4."}
+          ]
+        },
+        {
+          "id":"cm1-perfect-square-practice","template":"practice","title":"부호와 구조 연습","kicker":"답을 보기 전에 직접 풀기","blocks":[
+            {"type":"question","title":"1번","text":"x²+14x+49를 인수분해하라."},
+            {"type":"question","title":"2번","text":"4t²-20t+25를 인수분해하고 가운데 항의 부호를 설명하라."},
+            {"type":"question","title":"3번","text":"x²+8x+12가 완전제곱식인지 판별하라."},
+            {"type":"hint","title":"힌트","text":"첫째 항과 마지막 항에서 제곱근을 찾은 다음, 두 수를 곱하고 2를 곱한 값이 가운데 항과 같은지 비교한다."},
+            {"type":"answer","title":"정답","text":"1. (x+7)². 2. (2t-5)². 3. 아니다. 제곱근은 x와 2√3이므로 가운데 항은 4√3x여야 한다."},
+            {"type":"checklist","title":"스스로 확인","items":["첫째 항과 마지막 항이 제곱인지 확인했다.","가운데 항이 두 제곱근의 곱의 두 배인지 검사했다.","인수분해 결과를 전개해 검산했다."]}
+          ]
+        },
+        {
+          "id":"cm1-perfect-square-summary","template":"summary","title":"한 줄로 설명하고 마치기","kicker":"도구 없이 다시 떠올리기","blocks":[
+            {"type":"summary","title":"오늘의 규칙","text":"x²±2ax+a²=(x±a)². 가운데 항은 두 직사각형의 넓이 ax가 합쳐져 생긴다."},
+            {"type":"thinking","title":"회상 질문","text":"m²+2mn+n²와 m²-2mn+n²를 각각 곱의 꼴로 바꾸고, 두 식의 차이를 가운데 항의 부호로 설명하라."},
+            {"type":"checklist","title":"마무리","items":["완전제곱식 공식을 넓이와 연결해 설명한다.","가운데 항의 부호를 보고 괄호 안 부호를 결정한다.","전개로 답을 확인한다."]}
+          ]
+        }
+      ]
+    }
+  ]
+}
