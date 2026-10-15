@@ -13,6 +13,19 @@ async function api(path, options = {}) {
 }
 function busy(value) { for (const button of document.querySelectorAll('button')) button.disabled = value; }
 async function action(fn) { busy(true); try { await fn(); } catch (error) { status(error.message); } finally { busy(false); } }
+function confirmArchive(row) {
+  const dialog = $('archiveConfirm');
+  $('archiveMessage').textContent = `“${row.payload.title}”을 공개 목록에서 숨길까요? 학생 기록은 유지됩니다.`;
+  dialog.returnValue = '';
+  dialog.onclose = () => {
+    if (dialog.returnValue !== 'archive') return;
+    action(async () => {
+      await mutate(`/admin/api/content/${encodeURIComponent(row.id)}?version=${row.version}`, 'DELETE');
+      await reload(); status('보관했습니다.');
+    });
+  };
+  dialog.showModal();
+}
 function draw() {
   $('items').replaceChildren();
   const query = $('search').value.trim().toLocaleLowerCase();
@@ -38,10 +51,7 @@ function draw() {
       }); li.append(restore);
     } else {
       const archive = document.createElement('button'); archive.textContent='보관';
-      archive.onclick = () => { if (confirm(`“${row.payload.title}”을 공개 목록에서 숨길까요? 학생 기록은 유지됩니다.`)) action(async () => {
-        await mutate(`/admin/api/content/${encodeURIComponent(row.id)}?version=${row.version}`, 'DELETE');
-        await reload(); status('보관했습니다.');
-      }); }; li.append(archive);
+      archive.onclick = () => confirmArchive(row); li.append(archive);
     }
     $('items').append(li);
   }

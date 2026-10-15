@@ -147,6 +147,8 @@ def test_ui_is_no_store_and_does_not_persist_credentials(setup):
     source = client.get('/admin/app.js').text
     assert '.textContent =' in source and '.innerHTML' not in source
     assert 'localStorage.' not in source and 'sessionStorage.' not in source
+    assert 'confirm(' not in source and 'dialog.showModal()' in source
+    assert 'method="dialog"' in response.text and 'value="cancel"' in response.text
 
 
 def test_migration_privileges_and_transaction_guards():

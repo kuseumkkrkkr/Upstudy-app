@@ -2,6 +2,13 @@
 
 ## 최신 상태: 별도 관리자 DB로 전환
 
+### 보관 확인 UI 후속 수정 (후보 이후)
+
+- 이전 후보 탭10은 재검사에서도 focus CDP timeout. 새 탭11은 렌더·필드 입력은 가능하지만 연결 클릭이 동작하지 않음. 이전 기본 JS 확인창의 브라우저 입력 차단 가능성이 있어 사용자에게 해당 후보 탭/확인창 닫기 요청. 확인되지 않은 클릭을 성공 처리하지 않음.
+- 관리자 보관 확인을 blocking window.confirm 대신 표준 HTML dialog/form method=dialog로 전환. 취소·Escape는 쓰기 없이 닫고, 명시적 확인만 기존 멱등 DELETE를 실행한다. 원래 제목은 textContent로 표시, 보관/복원/서버 권한 계약 불변.
+- `node --check data/content/admin.js` 성공. `pytest tests/test_content_admin.py -q`: 9 passed, 기존 경고1. 새 dialog 실제 UI는 브라우저 차단 해제 후 확인해야 함. 이 수정은 이전 후보에 아직 포함되지 않았다.
+- 실제 DB 메타데이터 확인을 위해 Supabase 공식 read-only Management query를 요청했으나 403: 현재 PAT 계정의 해당 endpoint 권한 부족. 기본 select1도 같은403이며 쿼리 오류 아님. DB 직접 호스트 DNS도 미해결. RLS 실측 미완료; 스키마 소스/이전 service_role REST 거부와 구분한다.
+
 ### 후속 실제 DB 검증
 
 ### 후보 배포 체크포인트
