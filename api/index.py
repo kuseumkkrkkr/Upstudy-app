@@ -27,6 +27,7 @@ from api.question_bank import (
     get_question as _get_canonical_question,
     get_question_by_codebase_seed as _get_canonical_question_by_seed,
 )
+from api import content_admin
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -401,6 +402,11 @@ def _build_marketplace_questions(listing: dict[str, Any]) -> list[dict[str, Any]
     """필요 변수: 시험지·문제세트 카탈로그의 ID·제목·난이도·문항 수. 작동 원리:
     상품 ID 해시를 시드로 사용해 같은 상품에는 항상 같은 고유 문항을 할당하고,
     목록의 problem_ids·개별 조회·시험지 상세·채점이 동일한 문항 원장을 공유한다."""
+    if listing.get("_canonical_questions"):
+        questions = [_get_canonical_question(question_id) for question_id in listing["problem_ids"]]
+        if any(question is None for question in questions):
+            raise HTTPException(503, "Published question is unavailable")
+        return copy.deepcopy(questions)
     item_count = min(max(int(listing.get("item_count") or 5), 1), 50)
     seed = int(hashlib.sha256(str(listing["id"]).encode("utf-8")).hexdigest()[:8], 16)
     topics = _marketplace_topic_pool(listing)
@@ -546,7 +552,7 @@ def _build_generated_questions(payload: QuestGenerateRequest) -> list[dict[str, 
 def _build_marketplace_exam_status(listing: dict[str, Any]) -> dict[str, Any]:
     """필요 변수: 시험지 상품과 공유 문항 원장이다. 작동 원리: ExamPaperPage가 요구하는
     완료 상태·문항 메타데이터로 변환해 시험지 목록과 실제 풀이 화면의 문항 수를 일치시킨다."""
-    if UI_TEST_CONTENT:
+    if UI_TEST_CONTENT and not listing.get("_canonical_questions"):
         exam = next((item for item in UI_TEST_CONTENT['exams'] if item['exam_id'] == listing['asset_id']), None)
         if exam is None:
             raise HTTPException(status_code=404, detail='UI test exam not found')
@@ -566,9 +572,9 @@ def _build_marketplace_exam_status(listing: dict[str, Any]) -> dict[str, Any]:
                 "item_index": index + 1,
                 "status": "done",
                 "subject_key": str(listing.get("grade_band") or "수학"),
-                "hash_tags": data.get("hash_tags", []),
+                "hash_tags": data.get("hash_tags", data.get("hash_tag", [])),
                 "difficulty_tier": difficulty_tier,
-                "question_type": header["quest_type"],
+                "question_type": header.get("quest_type", data.get("question_type", "short_answer")),
                 "quest_id": header["quest_id"],
                 "quest_title": data["quest_title"],
                 "quest_options": data["quest_options"],
@@ -1056,6 +1062,9 @@ def _data_api() -> SupabaseDataApi:
         return SupabaseDataApi()
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail=str(error)) from error
+
+
+content_admin.install(app, lambda: _data_api(), _current_user, MARKETPLACE_CATALOG, _get_canonical_question)
 
 
 def _require_ocr_worker_secret(x_worker_secret: str | None) -> None:
@@ -3064,6 +3073,19 @@ def replay_problem_habit_vercel(
 
 def _catalog_course(item: dict[str, Any]) -> dict[str, Any]:
     """필요 변수: 마켓 코스 상품. 작동 원리: 같은 ID·제목을 코스 목록과 상세 화면이 파싱할 수 있는 V2 코스 계약으로 변환한다."""
+    if item.get("_canonical_questions"):
+        return {
+            "id": item["asset_id"], "title": item["title"], "description": item["description"],
+            "difficulty": item["difficulty"], "duration": "직접 학습", "lessons": len(item["problem_ids"]),
+            "focus_tags": [item["grade_band"]], "is_demo": False, "is_public": True,
+            "benefits": [], "outline": [], "modules": [
+                {"id": f"{item['asset_id']}-module-{index + 1}", "type": "problem_solve",
+                 "title": f"{index + 1}. 문제 학습", "position": index, "problem_ids": [question_id],
+                 "question_count": 1, "pass_rate": 100, "hash_tags": [],
+                 "flow_policy": {"mode": "sequential", "allow_skip": False, "allow_back": True}}
+                for index, question_id in enumerate(item["problem_ids"])
+            ],
+        }
     if UI_TEST_CONTENT:
         course = next((course for course in UI_TEST_CONTENT['courses'] if course['id'] == item['asset_id']), None)
         if course is None:
@@ -3087,12 +3109,16 @@ def _catalog_course(item: dict[str, Any]) -> dict[str, Any]:
     }
 
 
-def _find_catalog_listing(identifier: str) -> dict[str, Any] | None:
-    """필요 변수: 상품 ID 또는 코스 asset ID. 작동 원리: 81개 메모리 카탈로그를 단순 순회해 상세 요청 하나를 찾는다."""
+def _effective_catalog(*, include_archived: bool = False):
+    return content_admin.catalogue(MARKETPLACE_CATALOG, _data_api, include_archived=include_archived)
+
+
+def _find_catalog_listing(identifier: str, *, include_archived: bool = True) -> dict[str, Any] | None:
+    """번들+DB 카탈로그에서 상품/asset ID를 찾는다. 기존 보유 자료는 보관 후에도 읽는다."""
     return next(
         (
             item
-            for item in MARKETPLACE_CATALOG
+            for item in _effective_catalog(include_archived=include_archived)
             if item["id"] == identifier or item["asset_id"] == identifier
         ),
         None,
@@ -3212,7 +3238,7 @@ def _filtered_catalog_courses(
     normalized = (query or "").strip().casefold()
     courses = [
         _catalog_course(item)
-        for item in MARKETPLACE_CATALOG
+        for item in _effective_catalog()
         if item["kind"] == "course"
         and (
             not normalized
@@ -3334,6 +3360,8 @@ async def start_course_runtime(request: Request, user_id: str = Depends(_current
     if not course_id or listing is None or listing.get("kind") != "course":
         raise HTTPException(status_code=404, detail="course_not_found")
     owned = _load_owned_marketplace(user_id)
+    if listing.get("_archived") and listing["id"] not in owned:
+        raise HTTPException(status_code=404, detail="course_not_found")
     state = owned.setdefault(
         str(listing["id"]),
         {"progress_index": 0, "status": "in_progress", "completed": False},
@@ -3381,6 +3409,8 @@ async def submit_course_runtime(request: Request, user_id: str = Depends(_curren
     total_count = max(1, int(payload.get("total_count") or 0))
     correct_count = max(0, int(payload.get("correct_count") or 0))
     owned = _load_owned_marketplace(user_id)
+    if listing.get("_archived") and listing["id"] not in owned:
+        raise HTTPException(status_code=404, detail="course_not_found")
     state = owned.setdefault(
         str(listing["id"]),
         {"progress_index": 0, "status": "in_progress", "completed": False},
@@ -3438,7 +3468,7 @@ def list_marketplace_items(
         return not normalized_query or normalized_query in searchable
 
     filtered = sorted(
-        (item for item in MARKETPLACE_CATALOG if matches(item)),
+        (item for item in _effective_catalog() if matches(item)),
         key=lambda item: (-int(item["featured_rank"]), str(item["title"])),
     )
     page = filtered[safe_offset : safe_offset + safe_limit]
@@ -3464,8 +3494,9 @@ def list_owned_marketplace_items(user_id: str = Depends(_current_user)) -> dict[
     """필요 변수: 인증 사용자와 보유 상태. 작동 원리: KV의 상품 ID를 공개 카탈로그와 합쳐 내 학습 목록을 반환한다."""
     owned = _load_owned_marketplace(user_id)
     items = []
+    catalog = {item['id']: item for item in _effective_catalog(include_archived=True)}
     for listing_id, state in owned.items():
-        listing = _find_catalog_listing(listing_id)
+        listing = catalog.get(listing_id)
         if listing is not None:
             items.append(
                 {
@@ -3498,7 +3529,7 @@ def purchase_marketplace_item(
     user_id: str = Depends(_current_user),
 ) -> dict[str, Any]:
     """필요 변수: 무료 상품 ID와 인증 사용자. 작동 원리: 가격 차감 없이 KV 보유 목록에 멱등 등록하고 즉시 코스 조회가 가능하게 한다."""
-    listing = _find_catalog_listing(listing_id)
+    listing = _find_catalog_listing(listing_id, include_archived=False)
     if listing is None:
         raise HTTPException(status_code=404, detail="listing_not_found")
     owned = _load_owned_marketplace(user_id)
@@ -5395,7 +5426,7 @@ def list_exams(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     owned = _load_owned_marketplace(user_id)
     exams = [
         {**listing, **owned[listing["id"]], "owned": True}
-        for listing in MARKETPLACE_CATALOG
+        for listing in _effective_catalog(include_archived=True)
         if listing["kind"] == "exam" and listing["id"] in owned
     ]
     return {"items": exams, "exams": exams}

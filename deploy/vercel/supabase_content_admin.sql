@@ -1,0 +1,72 @@
+-- Additive content administration. No accounts are promoted by this migration.
+begin;
+create table if not exists public.canary_content_admins (
+  user_id uuid primary key references public.canary_users(user_id),
+  active boolean not null default true
+);
+create table if not exists public.canary_content (
+  id text primary key check (id ~ '^[a-z0-9][a-z0-9-]{2,119}$'),
+  payload jsonb not null check (jsonb_typeof(payload) = 'object'),
+  version integer not null check (version > 0),
+  archived boolean not null default false,
+  updated_by uuid not null references public.canary_users(user_id),
+  updated_at timestamptz not null default now()
+);
+create table if not exists public.canary_content_changes (
+  actor uuid not null references public.canary_users(user_id),
+  request_key text not null check (length(request_key) between 1 and 160),
+  fingerprint text not null,
+  content_id text not null,
+  before_payload jsonb,
+  result jsonb not null,
+  created_at timestamptz not null default now(),
+  primary key (actor, request_key)
+);
+alter table public.canary_content_admins enable row level security;
+alter table public.canary_content enable row level security;
+alter table public.canary_content_changes enable row level security;
+revoke all on public.canary_content_admins, public.canary_content, public.canary_content_changes from public, anon, authenticated, service_role;
+grant select on public.canary_content_admins, public.canary_content to service_role;
+
+create or replace function public.admin_write_content(
+  p_actor uuid, p_id text, p_payload jsonb, p_version integer,
+  p_archived boolean, p_key text
+) returns jsonb language plpgsql security definer set search_path=pg_catalog,public as $$
+declare
+  previous public.canary_content%rowtype;
+  receipt public.canary_content_changes%rowtype;
+  signature text;
+  result jsonb;
+begin
+  if not exists (select 1 from public.canary_content_admins where user_id=p_actor and active) then
+    return jsonb_build_object('error','not_admin');
+  end if;
+  if p_id is null or p_id !~ '^[a-z0-9][a-z0-9-]{2,119}$' or p_version is null or p_version < 0
+     or p_archived is null or p_key is null or length(p_key) not between 1 and 160
+     or p_payload is null or jsonb_typeof(p_payload) <> 'object' or octet_length(p_payload::text) > 100000 then
+    raise exception 'invalid_content_request';
+  end if;
+  signature := encode(sha256(convert_to(jsonb_build_object('id',p_id,'payload',p_payload,
+    'version',p_version,'archived',p_archived)::text,'UTF8')),'hex');
+  -- Same key on different content cannot race; then serialize all edits to this ID.
+  perform pg_advisory_xact_lock(hashtextextended('content-key:'||p_actor::text||':'||p_key,0));
+  select * into receipt from public.canary_content_changes where actor=p_actor and request_key=p_key;
+  if found then
+    if receipt.fingerprint <> signature then return jsonb_build_object('error','idempotency_conflict'); end if;
+    return receipt.result;
+  end if;
+  perform pg_advisory_xact_lock(hashtextextended('content-id:'||p_id,0));
+  select * into previous from public.canary_content where id=p_id for update;
+  if coalesce(previous.version,0) <> p_version then return jsonb_build_object('error','version_conflict'); end if;
+  insert into public.canary_content(id,payload,version,archived,updated_by)
+    values(p_id,p_payload,p_version+1,p_archived,p_actor)
+    on conflict(id) do update set payload=excluded.payload, version=excluded.version,
+      archived=excluded.archived, updated_by=excluded.updated_by, updated_at=now();
+  result := jsonb_build_object('id',p_id,'version',p_version+1,'archived',p_archived);
+  insert into public.canary_content_changes(actor,request_key,fingerprint,content_id,before_payload,result)
+    values(p_actor,p_key,signature,p_id,previous.payload,result);
+  return result;
+end $$;
+revoke all on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text) from public,anon,authenticated;
+grant execute on function public.admin_write_content(uuid,text,jsonb,integer,boolean,text) to service_role;
+commit;
