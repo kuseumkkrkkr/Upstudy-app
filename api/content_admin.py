@@ -5,12 +5,14 @@ import copy
 import hashlib
 import hmac
 import os
+import time
 from pathlib import Path
 from typing import Any, Literal
 
 from fastapi import Depends, Header, HTTPException, Query
-from fastapi.responses import Response
+from fastapi.responses import JSONResponse, Response
 from pydantic import BaseModel, ConfigDict, Field
+import jwt
 
 
 class ContentInput(BaseModel):
@@ -60,9 +62,22 @@ def catalogue(seed, data_api, *, include_archived=False):
     return list(items.values())
 
 
-def install(app, data_api, current_user, seed, find_question):
-    """Install on the existing Vercel app without a second authentication system."""
-    def admin(user_id: str = Depends(current_user), x_admin_api_key: str | None = Header(default=None)):
+class AdminLogin(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+    username: str = Field(pattern=r"^[A-Za-z0-9]{4,32}$")
+    password: str = Field(min_length=1, max_length=128)
+
+
+def admin_secret():
+    secret = os.getenv('ADMIN_JWT_SECRET', '').strip()
+    if len(secret) < 32 or secret == os.getenv('OMJ_JWT_SECRET', '').strip():
+        raise HTTPException(503, 'Independent admin token secret is not configured')
+    return secret
+
+
+def install(app, data_api, seed, find_question):
+    """Admin accounts and catalog changes live exclusively in the separate admin DB."""
+    def require_key(x_admin_api_key: str | None = Header(default=None)):
         if not enabled():
             raise HTTPException(503, "Content administration is not enabled")
         expected = os.getenv("CONTENT_ADMIN_API_KEY_SHA256", "").strip().lower()
@@ -71,15 +86,55 @@ def install(app, data_api, current_user, seed, find_question):
         supplied = hashlib.sha256((x_admin_api_key or "").encode()).hexdigest()
         if not x_admin_api_key or len(x_admin_api_key) > 512 or not hmac.compare_digest(supplied, expected):
             raise HTTPException(403, "Admin account and API key required")
+
+    def account(user_id):
         try:
-            rows = data_api().request("GET", "canary_content_admins", query={
-                "select": "user_id", "user_id": f"eq.{user_id}", "active": "eq.true", "limit": "1",
+            rows = data_api().request("GET", "content_admin_accounts", query={
+                "select": "id,session_version", "id": f"eq.{user_id}", "active": "eq.true", "limit": "1",
             }) or []
         except RuntimeError as error:
             raise HTTPException(503, "Admin membership storage unavailable") from error
         if not rows:
             raise HTTPException(403, "Admin account and API key required")
+        return rows[0]
+
+    def admin(authorization: str | None = Header(default=None), x_admin_api_key: str | None = Header(default=None)):
+        if not authorization or not authorization.startswith('Bearer '):
+            raise HTTPException(401, 'Admin bearer token required')
+        require_key(x_admin_api_key)
+        try:
+            claims = jwt.decode(authorization[7:], admin_secret(), algorithms=['HS256'],
+                issuer='aiflow-content-admin', audience='content-admin',
+                options={'require':['sub','exp','iat','iss','aud','session_version']})
+        except jwt.PyJWTError as error:
+            raise HTTPException(401, 'Invalid admin token') from error
+        user_id = str(claims['sub'])
+        if account(user_id)['session_version'] != claims['session_version']:
+            raise HTTPException(401, 'Admin session revoked')
         return user_id
+
+    @app.post('/admin/api/login')
+    def login(payload: AdminLogin, _key=Depends(require_key)):
+        secret = admin_secret()
+        try:
+            allowed = data_api().request('POST', 'rpc/claim_content_admin_login', body={'p_username':payload.username})
+            if allowed is not True:
+                raise HTTPException(429, 'Too many admin login attempts; retry later')
+            rows = data_api().request('GET', 'content_admin_accounts', query={
+                'select':'id,password_hash,salt,session_version,active',
+                'username':f'eq.{payload.username}', 'limit':'1',
+            }) or []
+        except RuntimeError as error:
+            raise HTTPException(503, 'Admin authentication storage unavailable') from error
+        row = rows[0] if rows else {}
+        digest = hashlib.pbkdf2_hmac('sha256', payload.password.encode(),
+            str(row.get('salt') or 'nonexistent-admin-dummy-salt').encode(), 600_000).hex()
+        if not row.get('active') or not hmac.compare_digest(digest, str(row.get('password_hash') or '0'*64)):
+            raise HTTPException(401, 'Invalid admin credentials')
+        now = int(time.time())
+        token = jwt.encode({'sub':str(row['id']), 'iat':now, 'exp':now+1800,
+            'iss':'aiflow-content-admin', 'aud':'content-admin', 'session_version':row['session_version']}, secret, algorithm='HS256')
+        return JSONResponse({'token':token}, headers={'Cache-Control':'no-store'})
 
     def write(actor, content_id, payload, version, archived, key, operation="save"):
         if not key or len(key) > 160:

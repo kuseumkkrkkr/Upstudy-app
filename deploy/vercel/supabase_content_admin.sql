@@ -1,19 +1,33 @@
--- Additive content administration. No accounts are promoted by this migration.
+-- Run ONLY in the separate ADMIN Supabase project, never the student database.
 begin;
-create table if not exists public.canary_content_admins (
-  user_id uuid primary key references public.canary_users(user_id),
+do $$ begin
+  if to_regclass('public.canary_users') is not null then
+    raise exception 'Refusing admin migration in the student database';
+  end if;
+end $$;
+create table if not exists public.content_admin_accounts (
+  id uuid primary key,
+  username text not null unique check (username ~ '^[A-Za-z0-9]{4,32}$'),
+  password_hash text not null check (password_hash ~ '^[0-9a-f]{64}$'),
+  salt text not null check (length(salt) >= 32),
+  session_version integer not null default 1 check (session_version > 0),
   active boolean not null default true
+);
+create table if not exists public.content_admin_login_windows (
+  username text primary key check (length(username) between 4 and 32),
+  window_start timestamptz not null,
+  attempts integer not null
 );
 create table if not exists public.canary_content (
   id text primary key check (id ~ '^[a-z0-9][a-z0-9-]{2,119}$'),
   payload jsonb not null check (jsonb_typeof(payload) = 'object'),
   version integer not null check (version > 0),
   archived boolean not null default false,
-  updated_by uuid not null references public.canary_users(user_id),
+  updated_by uuid not null references public.content_admin_accounts(id),
   updated_at timestamptz not null default now()
 );
 create table if not exists public.canary_content_changes (
-  actor uuid not null references public.canary_users(user_id),
+  actor uuid not null references public.content_admin_accounts(id),
   request_key text not null check (length(request_key) between 1 and 160),
   fingerprint text not null,
   content_id text not null,
@@ -22,11 +36,29 @@ create table if not exists public.canary_content_changes (
   created_at timestamptz not null default now(),
   primary key (actor, request_key)
 );
-alter table public.canary_content_admins enable row level security;
+alter table public.content_admin_accounts enable row level security;
+alter table public.content_admin_login_windows enable row level security;
 alter table public.canary_content enable row level security;
 alter table public.canary_content_changes enable row level security;
-revoke all on public.canary_content_admins, public.canary_content, public.canary_content_changes from public, anon, authenticated, service_role;
-grant select on public.canary_content_admins, public.canary_content to service_role;
+revoke all on public.content_admin_accounts, public.content_admin_login_windows, public.canary_content, public.canary_content_changes from public, anon, authenticated, service_role;
+grant select,insert on public.content_admin_accounts to service_role;
+grant select on public.canary_content to service_role;
+
+create or replace function public.claim_content_admin_login(p_username text)
+returns boolean language plpgsql security definer set search_path=pg_catalog,public as $$
+declare n integer;
+begin
+  if p_username is null or p_username !~ '^[A-Za-z0-9]{4,32}$' then return false; end if;
+  insert into public.content_admin_login_windows(username,window_start,attempts)
+    values(p_username,now(),1)
+    on conflict(username) do update set
+      window_start=case when content_admin_login_windows.window_start < now()-interval '5 minutes' then now() else content_admin_login_windows.window_start end,
+      attempts=case when content_admin_login_windows.window_start < now()-interval '5 minutes' then 1 else least(content_admin_login_windows.attempts+1,11) end
+    returning attempts into n;
+  return n <= 10;
+end $$;
+revoke all on function public.claim_content_admin_login(text) from public,anon,authenticated;
+grant execute on function public.claim_content_admin_login(text) to service_role;
 
 create or replace function public.admin_write_content(
   p_actor uuid, p_id text, p_payload jsonb, p_version integer,
@@ -38,7 +70,7 @@ declare
   signature text;
   result jsonb;
 begin
-  if not exists (select 1 from public.canary_content_admins where user_id=p_actor and active) then
+  if not exists (select 1 from public.content_admin_accounts where id=p_actor and active) then
     return jsonb_build_object('error','not_admin');
   end if;
   if p_id is null or p_id !~ '^[a-z0-9][a-z0-9-]{2,119}$' or p_version is null or p_version < 0

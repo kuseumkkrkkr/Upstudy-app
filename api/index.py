@@ -863,17 +863,29 @@ class VariantGradeRequest(BaseModel):
 class SupabaseDataApi:
     """필요 변수: Supabase URL·service role key. 작동 원리: HTTPS PostgREST로만 큐를 읽고 쓴다."""
 
-    def __init__(self) -> None:
-        base_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
-        service_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+    def __init__(self, *, admin_database: bool = False) -> None:
+        prefix = "ADMIN_" if admin_database else ""
+        base_url = os.getenv(f"{prefix}SUPABASE_URL", "").strip().rstrip("/")
+        service_key = os.getenv(f"{prefix}SUPABASE_SERVICE_ROLE_KEY", "").strip()
         if not base_url or not service_key:
-            raise RuntimeError("SUPABASE_URL과 SUPABASE_SERVICE_ROLE_KEY가 필요합니다")
+            raise RuntimeError(f"{prefix}SUPABASE_URL과 {prefix}SUPABASE_SERVICE_ROLE_KEY가 필요합니다")
+        if admin_database:
+            user_url = os.getenv("SUPABASE_URL", "").strip().rstrip("/")
+            user_key = os.getenv("SUPABASE_SERVICE_ROLE_KEY", "").strip()
+            parsed = urllib.parse.urlsplit(base_url)
+            if (not user_url or parsed.scheme != 'https' or not parsed.hostname
+                    or parsed.username or parsed.password or parsed.path not in ('', '/')
+                    or parsed.query or parsed.fragment
+                    or parsed.hostname.lower() == (urllib.parse.urlsplit(user_url).hostname or '').lower()
+                    or (user_key and hmac.compare_digest(service_key, user_key))):
+                raise RuntimeError("Admin database must use a separate HTTPS Supabase project and credential")
         self.base_url = f"{base_url}/rest/v1"
         self.headers = {
             "apikey": service_key,
-            "Authorization": f"Bearer {service_key}",
             "Content-Type": "application/json; charset=utf-8",
         }
+        if service_key.startswith('eyJ'):
+            self.headers['Authorization'] = f'Bearer {service_key}'
 
     def request(
         self,
@@ -1064,7 +1076,14 @@ def _data_api() -> SupabaseDataApi:
         raise HTTPException(status_code=503, detail=str(error)) from error
 
 
-content_admin.install(app, lambda: _data_api(), _current_user, MARKETPLACE_CATALOG, _get_canonical_question)
+def _admin_data_api() -> SupabaseDataApi:
+    try:
+        return SupabaseDataApi(admin_database=True)
+    except RuntimeError as error:
+        raise HTTPException(503, "Separate admin database is not configured") from error
+
+
+content_admin.install(app, lambda: _admin_data_api(), MARKETPLACE_CATALOG, _get_canonical_question)
 
 
 def _require_ocr_worker_secret(x_worker_secret: str | None) -> None:
@@ -3110,7 +3129,7 @@ def _catalog_course(item: dict[str, Any]) -> dict[str, Any]:
 
 
 def _effective_catalog(*, include_archived: bool = False):
-    return content_admin.catalogue(MARKETPLACE_CATALOG, _data_api, include_archived=include_archived)
+    return content_admin.catalogue(MARKETPLACE_CATALOG, _admin_data_api, include_archived=include_archived)
 
 
 def _find_catalog_listing(identifier: str, *, include_archived: bool = True) -> dict[str, Any] | None:

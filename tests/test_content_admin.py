@@ -18,11 +18,17 @@ class Store:
         self.rows = {}
         self.receipts = {}
         self.writes = 0
+        self.login_attempts = 0
 
     def request(self, method, path, *, query=None, body=None, **_):
-        if path == 'canary_content_admins':
-            user = query['user_id'].removeprefix('eq.')
-            return [{'user_id': user}] if user in self.members else []
+        if path == 'rpc/claim_content_admin_login':
+            self.login_attempts += 1
+            return self.login_attempts <= 10
+        if path == 'content_admin_accounts':
+            user = query.get('id', 'eq.admin-user').removeprefix('eq.')
+            row = {'id':user, 'session_version':1, 'active':True, 'salt':'test-salt-for-separated-admin-db-01',
+                'password_hash':hashlib.pbkdf2_hmac('sha256', b'StrongAdminTest123', b'test-salt-for-separated-admin-db-01',600_000).hex()}
+            return [row] if user in self.members and query.get('username', 'eq.admin') == 'eq.admin' else []
         if path == 'canary_content':
             return list(self.rows.values())
         assert path == 'rpc/admin_write_content'
@@ -49,13 +55,15 @@ def setup(monkeypatch):
     monkeypatch.setenv('CONTENT_ADMIN_ENABLED', 'true')
     monkeypatch.setenv('CONTENT_ADMIN_API_KEY_SHA256', hashlib.sha256(b'test-key-not-a-production-secret').hexdigest())
     monkeypatch.setenv('OMJ_JWT_SECRET', 'test-only-secret-12345678901234567890')
+    monkeypatch.setenv('ADMIN_JWT_SECRET', 'independent-admin-secret-for-tests-1234567890')
     store = Store()
-    monkeypatch.setattr(api, '_data_api', lambda: store)
+    monkeypatch.setattr(api, '_admin_data_api', lambda: store)
     with sqlite3.connect(Path(__file__).resolve().parents[1] / 'data/content/question-bank-v1.sqlite') as db:
         question_id = db.execute('select quest_id from quest_header limit 1').fetchone()[0]
     def headers(user='admin-user', key='test-key-not-a-production-secret'):
-        return {'Authorization': 'Bearer ' + jwt.encode({'sub':user,'exp':int(time.time())+60},
-                'test-only-secret-12345678901234567890', algorithm='HS256'), 'X-Admin-Api-Key':key,
+        return {'Authorization': 'Bearer ' + jwt.encode({'sub':user,'exp':int(time.time())+60,
+                'iat':int(time.time()), 'iss':'aiflow-content-admin', 'aud':'content-admin', 'session_version':1},
+                'independent-admin-secret-for-tests-1234567890', algorithm='HS256'), 'X-Admin-Api-Key':key,
                 'X-Idempotency-Key':'request-1'}
     payload = dict(id='admin-test-paper', kind='exam', title='<script>literal title</script>',
                    problem_ids=[question_id], version=0)
@@ -143,7 +151,9 @@ def test_ui_is_no_store_and_does_not_persist_credentials(setup):
 
 def test_migration_privileges_and_transaction_guards():
     sql = (Path(__file__).resolve().parents[1] / 'deploy/vercel/supabase_content_admin.sql').read_text(encoding='utf-8')
-    assert sql.count('enable row level security') == 3
+    assert sql.count('enable row level security') == 4
+    assert "to_regclass('public.canary_users')" in sql
+    assert 'references public.canary_users' not in sql
     assert 'primary key (actor, request_key)' in sql
     assert 'pg_advisory_xact_lock' in sql and 'version_conflict' in sql
     assert 'delete from' not in sql.lower()
@@ -165,3 +175,39 @@ def test_enrollment_lookup_reads_catalog_once_per_request(setup, monkeypatch):
     assert len(reads) == 1
     api.reorder_course_enrollments(api.CourseEnrollmentOrderRequest(course_ids=[item['asset_id'] for item in courses]), 'admin-user')
     assert len(reads) == 2
+
+
+def test_admin_auth_does_not_use_student_accounts_or_tokens(setup, monkeypatch):
+    api, store, client, headers, _ = setup
+    def forbidden():
+        raise AssertionError('Admin auth touched student database')
+    monkeypatch.setattr(api, '_data_api', forbidden)
+    login = client.post('/admin/api/login', json={'username':'admin','password':'StrongAdminTest123'}, headers=headers())
+    assert login.status_code == 200, login.text
+    token = login.json()['token']
+    assert client.get('/auth/me', headers={'Authorization':'Bearer '+token}).status_code == 401
+    assert client.get('/admin/api/content', headers={**headers(),'Authorization':'Bearer '+token}).status_code == 200
+    student_token = jwt.encode({'sub':'admin-user','exp':int(time.time())+60},
+        'test-only-secret-12345678901234567890',algorithm='HS256')
+    assert client.get('/admin/api/content', headers={**headers(),'Authorization':'Bearer '+student_token}).status_code == 401
+    assert client.post('/admin/api/login',json={'username':'admin','password':'wrong'},headers=headers()).status_code == 401
+    store.login_attempts = 10
+    assert client.post('/admin/api/login',json={'username':'admin','password':'StrongAdminTest123'},headers=headers()).status_code == 429
+
+
+def test_separate_database_and_signing_key_cannot_reuse_student_settings(monkeypatch):
+    api=importlib.import_module('api.index')
+    monkeypatch.setenv('SUPABASE_URL','https://student-project.supabase.co')
+    monkeypatch.setenv('SUPABASE_SERVICE_ROLE_KEY','student-service-key')
+    monkeypatch.setenv('ADMIN_SUPABASE_URL','https://student-project.supabase.co/')
+    monkeypatch.setenv('ADMIN_SUPABASE_SERVICE_ROLE_KEY','different-key')
+    with pytest.raises(RuntimeError): api.SupabaseDataApi(admin_database=True)
+    monkeypatch.setenv('ADMIN_SUPABASE_URL','https://admin-project.supabase.co')
+    monkeypatch.setenv('ADMIN_SUPABASE_SERVICE_ROLE_KEY','student-service-key')
+    with pytest.raises(RuntimeError): api.SupabaseDataApi(admin_database=True)
+    monkeypatch.setenv('ADMIN_SUPABASE_SERVICE_ROLE_KEY','admin-only-key')
+    assert api.SupabaseDataApi(admin_database=True).base_url == 'https://admin-project.supabase.co/rest/v1'
+    monkeypatch.setenv('OMJ_JWT_SECRET','shared-key-123456789012345678901234567890')
+    monkeypatch.setenv('ADMIN_JWT_SECRET','shared-key-123456789012345678901234567890')
+    with pytest.raises(Exception) as error: content_admin.admin_secret()
+    assert error.value.status_code == 503

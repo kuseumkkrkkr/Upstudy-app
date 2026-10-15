@@ -1,49 +1,47 @@
-# 내부 콘텐츠 관리
+# 내부 콘텐츠 관리 — 별도 관리자 DB
 
-현재 코드 구현과 실제 서비스 활성화는 별개다. 기본값은 비활성/접근 거부다.
+2026-10-15 사용자 변경 지시: 기존 학생 계정 DB를 관리자 인증에 사용하지 않는다. 관리자의 ID·PW는 바탕화면 텍스트 파일로 전달한다. 이전 학생 admin membership 방식은 폐기했다.
 
-## 활성화 순서
+## 실제 분리
 
-1. 기존 가입 규칙으로 관리자용 `admin` 계정을 생성한다. 영문·숫자 포함 8~20자 비밀번호가 필요하며 인증 규칙을 우회하지 않는다.
-2. Supabase SQL Editor에서 `supabase_content_admin.sql`을 검토·실행한다. 기존 계정·콘텐츠·학생 기록을 삭제하거나 승격하지 않는 추가 마이그레이션이다.
-3. 계정 소유자를 확인한 **정확한 user_id UUID**로 `canary_content_admins(user_id,active)`에 한 행을 등록한다. 아이디 문자열만 믿고 임의 기존 계정을 승격하지 않는다.
-4. 암호학적으로 무작위인 32바이트 이상 전용 API 키를 생성한다. Vercel에는 원문이 아닌 SHA-256을 `CONTENT_ADMIN_API_KEY_SHA256`로 설정한다. 원문은 승인된 관리자에게만 전달한다. Supabase/service role/JWT/OCR 키를 재사용하지 않는다.
-5. Vercel에서 `CONTENT_ADMIN_ENABLED=true`를 설정하고 검증된 hotfix 후보를 배포한다. `/admin`에서 admin 로그인 **및** 전용 API 키를 입력한다.
-6. 실제 DB 두 연결의 생성/충돌/재시도·보관/복원·다른 학생 거부를 검증한다. mock 테스트는 DB 동시성 증거가 아니다.
+- 학생 DB: 기존 `aybqetiydxafeuzudltb`. 이번 관리자 설정으로 수정하지 않는다.
+- 새 무료 프로젝트: `aiflow-admin-canary`, ref `ekogkwhvyqwdxibjfnko`, Tokyo. 대시보드 Healthy 확인.
+- 새 프로젝트에서 `supabase_content_admin.sql` 적용 성공. 계정, 로그인 요청 제한, 콘텐츠, 변경 원장이 모두 별도 DB 안에 있다. 스키마도 기존 `canary_users`가 발견되면 적용을 거부한다.
+- 기본 새 테이블 공개 off, 자동 RLS on. 모든 관리자 테이블에서 public/anon/authenticated 권한 회수. 서버 키만 사용한다.
 
-API 키·Bearer는 탭 메모리에만 존재한다. 새로고침·연결 해제로 제거된다. URL·브라우저 저장소·Flutter 번들에 넣지 않는다. 관리자 로그인도 기존 `/auth/login`을 재사용한다. 계정의 admin 권한은 JWT role이 아닌 별도 DB membership을 매 요청 검사하고, 쓰기 트랜잭션에서도 재검사한다.
+## 설정
 
-## API
+Vercel 서버 전용 환경 변수:
 
-모든 `/admin/api` 요청: `Authorization: Bearer ...`와 `X-Admin-Api-Key: ...`가 모두 필수다. 모든 쓰기에는 `X-Idempotency-Key`(1~160자)를 추가한다. 응답이 불명확하면 동일 요청/키로 재시도한다.
-
-| 경로 | 입력/결과 |
+| 변수 | 의미 |
 |---|---|
-| GET `/admin/api/content` | 원본+저장 카탈로그, version, archived |
-| PUT `/admin/api/content/{id}` | `id,kind,title,description,grade_band,difficulty,problem_ids,version` |
-| DELETE `/admin/api/content/{id}?version=N` | 영구 삭제가 아닌 보관. 학생 보유/진도 유지 |
-| POST `/admin/api/content/{id}/restore?version=N` | 원본 그대로 공개 목록에 복원 |
+| `ADMIN_SUPABASE_URL` | 학생 DB와 다른 프로젝트 HTTPS 주소 |
+| `ADMIN_SUPABASE_SERVICE_ROLE_KEY` | 별도 DB 전용 서버 키, Flutter에 배포 금지 |
+| `ADMIN_JWT_SECRET` | 32자 이상 독립 비밀값, 학생 JWT secret과 같은 값 금지 |
+| `CONTENT_ADMIN_API_KEY_SHA256` | 관리자 전용 API 키의 SHA-256, 원문 키는 브라우저 입력용 |
+| `CONTENT_ADMIN_ENABLED=true` | 명시적 활성화 전에는 접근 거부 |
 
-종류는 `course`, `exam`, `problem_set`. 등록 문항은 기존 canonical question snapshot에서 검증한다. 가격은 무료로 고정한다. 공개한 문항·종류 변경은 새 ID로 등록해야 기존 답안 의미가 보존된다. 코스는 문항당 하나의 기존 `problem_solve` 모듈을 생성한다. 시험·문제집도 원본 문항을 사용하며 샘플 생성기로 바꾸지 않는다. 학생 목록에서는 보관 자료를 숨기되 기존 보유자의 상세·문항 조회는 유지한다. 콘텐츠 모드 활성화 후 DB 오류는 503으로 표시하고 번들 원본으로 조용히 되돌리지 않는다.
+주소 host 또는 서버 키가 학생 DB와 같으면 연결을 거부한다. 설정 누락 시 기존 학생 DB로 fallback하지 않는다. 관리자 계정 비밀번호는 PBKDF2-SHA256 600,000회 해시로만 저장한다. 관리자 JWT는 독립 서명·issuer·audience, 30분 만료이며 active/session_version을 매 요청 재확인한다. 학생 JWT로 관리자 API, 관리자 JWT로 학생 API를 사용할 수 없다.
 
-## 책임/변수
+`tools/create_content_admin_account.ps1`은 별도 DB에만 계정을 만든다. 기존 학생 가입/로그인 API를 호출하지 않고, 기존 별도 admin 계정도 덮어쓰지 않는다. 생성 자격증명은 D: private 디렉터리에 DPAPI 암호화로 보관하고 DB 저장 확인 후 바탕화면 `AIFlow 관리자 로그인.txt`에 ID·PW를 기록한다. 사용자의 명시 요청에 따른 평문 파일이며 현재 Windows 사용자만 파일 ACL을 허용한다. 서버 DB 키·JWT secret은 이 파일에 넣지 않는다. 파일이 이미 있으면 덮어쓰지 않는다.
 
-| 코드 | 입력·반환 / 상태·실패 |
+## 화면/API
+
+`/admin`에서 별도 관리자 로그인과 전용 API 키를 입력한다. 자격증명은 탭 메모리에만 유지하며 localStorage/sessionStorage/URL에 넣지 않는다. `/admin/api/login`도 API 키가 필요하고 DB의 원자적 카운터로 계정당 5분/10회 제한한다. 역할 상승이나 공개 가입 API는 없다.
+
+모든 `/admin/api/content` 경로는 관리자 JWT와 `X-Admin-Api-Key`가 모두 필요하다. 쓰기는 `X-Idempotency-Key`(1~160자)가 추가로 필요하다.
+
+| API | 계약 |
 |---|---|
-| `content_admin.install` | 기존 앱/DB factory/인증/원장/문항 조회를 받아 관리자 경로 등록 |
-| `admin` dependency | JWT 사용자+전용 키 → 검증 user_id; 미설정503, 비관리자/잘못된 키403 |
-| `catalogue` / `_effective_catalog` | 번들 원장+DB override → 표시 목록; 보관 숨김 또는 보유자용 포함 |
-| `admin_write_content` SQL | actor/id/payload/expected version/archive/key → 새 version; 동일 키 재생, 다른 본문·버전409 |
-| `_loadOwnedExams` | 현재 사용자 보유 API → 책가방 상태; 계정 epoch/scope 검증, 오류를 빈 목록으로 숨기지 않음 |
-| `_loadManagedMaterials(kind)` | 선택 종류의 실제 저장소 → 자료 행/열기 콜백; 시험지는 교재·북마크 장애와 독립 조회 |
-| More `_entries` | 현재 학습/도구/내 메뉴와 demo flag → 표시 항목; shrinkWrap+최대 화면 높이로 크기 결정 |
+| GET `/admin/api/content` | 번들+별도 DB 콘텐츠, version/archived |
+| PUT `/admin/api/content/{id}` | id/kind/title/description/grade_band/difficulty/problem_ids/version |
+| DELETE `/admin/api/content/{id}?version=N` | 보관 처리, 학생 보유·진도 유지 |
+| POST `/admin/api/content/{id}/restore?version=N` | 공개 목록 복원 |
 
-`_ownedExams`는 화면/계정 수명, API 출처 시험지 목록이다. `_ownedExamsFailed`는 조회 실패 표시용 boolean이며 서버에 저장하지 않는다. `version`은 DB 콘텐츠별 양의 정수(미저장 원본0), 낙관적 잠금 단위다. admin.js `pending`은 응답 불명 쓰기의 키/요청 지문이며 탭 메모리에만 보존된다. `token`/`apiKey`는 같은 탭 수명의 비밀값으로 로그 출력 금지다.
+kind는 course/exam/problem_set. canonical 문항 ID만 연결, 가격 무료 고정. 공개 후 문항 구성·종류 변경은 새 ID로 등록한다. 코스는 문항별 problem_solve 모듈을 만든다. 학생 앱의 보유 기록은 기존 학생 DB에 그대로 두고, 콘텐츠 추가/보관 원장은 별도 관리자 DB에서 읽는다. 읽기 실패를 빈 데이터나 번들로 숨기지 않는다.
 
-## 현재 검증 범위
+`admin_write_content` SQL은 별도 admin 계정 active 검사, 기대 version, idempotency key, 감사 기록을 단일 트랜잭션에서 처리한다. 보관/복원 지문에는 서버 재조회 메타데이터를 넣지 않아 후속 편집 후 재시도도 최초 결과를 반환한다. 원장 직접 쓰기 권한은 service_role에서도 회수하고 RPC만 허용한다.
 
-보관/복원 요청의 멱등 지문은 `id/version/operation` 기준이며 서버에서 재조회한 메타데이터는 제외한다. 저장 요청은 본문도 지문에 포함한다. 따라서 보관 성공 이후 다른 관리자가 제목을 수정해도 응답 유실 재시도는 최초 결과를 반환하고 후속 변경을 덮어쓰지 않는다. RPC에는 `p_operation`이 필수이며 이전 초안 6인자 RPC의 service_role 실행 권한도 회수한다.
+## 검증 경계
 
-계정 준비 도구는 `tools/create_content_admin_account.ps1`이다. 비밀번호를 Windows DPAPI CLIXML로 암호화하고 디렉터리 ACL도 현재 사용자 SID로 제한한다. 기존 계정은 초기화하지 않으며 같은 자격증명으로 로그인할 수 있을 때만 복구를 인정한다. 이 도구는 admin membership을 부여하지 않는다.
-
-API 단위/회귀와 Flutter 위젯 검사는 실행 원장에 기록한다. 실제 관리자 계정/전용 키 설정, Supabase migration 적용, 실제 PostgreSQL 동시성, 배포본 권한 검사는 별도 통과 전까지 미검증이다. 일반 사용자 로그인 실패를 관리자 권한으로 우회하지 않는다.
+API 단위/회귀 테스트는 실제 분리된 DB의 동시성 또는 배포 UI 검증을 대체하지 않는다. 실제 계정 등록, DB RPC·RLS·충돌·재시도, Vercel 서버 변수 설정, 관리자 UI 로그인/CRUD를 각각 확인한다. 실제 적용·검증 결과는 `design/student/audits/2026-10-15-library-admin.md`를 따른다.

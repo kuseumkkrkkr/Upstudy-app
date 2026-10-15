@@ -1,5 +1,17 @@
 # 자료실/책가방·더보기·관리자 작업 체크포인트
 
+## 최신 상태: 별도 관리자 DB로 전환
+
+- 아래 기존 학생 인증/admin membership 방식과 계정 생성 미확인 기록은 과거 기록이며 폐기된 설계다. 현재 지침은 `deploy/vercel/CONTENT_ADMIN.md`를 따른다.
+- 사용자 승인에 따라 FREE 조직에 `aiflow-admin-canary` (`ekogkwhvyqwdxibjfnko`) 생성. 학생 프로젝트 `aybqetiydxafeuzudltb`와 다른 실제 프로젝트다. 자동 테이블 공개 OFF, 자동 RLS ON, Healthy 확인.
+- 전용 SQL 적용 성공. 관리자 계정/로그인 카운터/콘텐츠/멱등 감사 원장은 별도 DB에만 존재한다. 기존 학생 계정 변경·승격·비밀번호 재설정 없음.
+- 관리자 전용 PBKDF2 비밀번호와 별도 issuer/audience/서명키 JWT 사용. 학생 토큰 및 학생 DB/키 재사용 거부 회귀 검사 포함.
+- 실제 계정 생성 후 localhost:8972/admin에서 computer-use로 ID/PW/API 키 로그인 성공. `관리자 계정과 API 키가 확인되었습니다.` 표시. 실제 별도 DB에 canonical 문항을 연결한 `qa-admin-isolated-course` 저장 성공(v1), 조회 및 보관 성공(v2, `보관됨`). 영구 삭제 없음.
+- 사용자 요청 바탕화면 `AIFlow 관리자 로그인.txt` 생성(ID/PW만 포함, 사용자 ACL). DB/API/JWT 키는 포함하지 않음. DPAPI 백업 확보 후 전달용 임시 평문 키 파일 2개 삭제.
+- 최신 전체 API 회귀 검사: 243 passed, 기존 경고82 (`build/temp/isolated-admin-tests.log`). 실제 DB 200 동시성/RLS 권한별 검증은 미실행이며 단위 검사로 대체하지 않는다.
+- 증거: `evidence/2026-10-15-library-admin/admin-project-created.png`, `admin-schema-applied.png`, `admin-isolated-login.png`.
+- Vercel 전용 환경변수 등록·후보 배포·배포 UI CRUD 검증은 아직 미완료. canary alias 변경 없음. 다음 작업은 전용 환경변수 연결과 실제 RPC 충돌/멱등 검증 후 후보 배포다.
+
 - 작업 경로: `D:\AIFlow-Workspace\Projects\Aiflow\Upstudy-hotfix`, `hotfix`.
 - 시작 HEAD: `87cc9a00fb274377b847802cb9e0c9853757fb66`. 기존 다수 미커밋 수정 보존. 다른 브랜치/작업본 사용 안 함.
 - 기준 HTML SHA256: `EF8F6E40D01B099631C1940628E623A6113E1ADA68CFF3DEC0F1F89DEFCD0868` 확인.

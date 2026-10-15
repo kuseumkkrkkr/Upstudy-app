@@ -61,9 +61,8 @@ $('login').onsubmit = event => { event.preventDefault(); action(async () => {
   token=''; apiKey=$('apiKey').value;
   const username=$('username').value, password=$('password').value;
   $('password').value=''; $('apiKey').value='';
-  const response=await fetch('/auth/login',{method:'POST',redirect:'error',headers:{'Content-Type':'application/json'},body:JSON.stringify({username,password})});
-  if (!response.ok) throw new Error('로그인 실패: 계정과 비밀번호를 확인해 주세요.');
-  token=(await response.json()).token;
+  const response=await api('/admin/api/login',{method:'POST',body:JSON.stringify({username,password})});
+  token=response.token;
   try { await reload(); } catch (error) { token=''; apiKey=''; throw error; }
   $('login').hidden=true; $('logout').hidden=false; $('workspace').hidden=false; $('editor').hidden=false;
   status('관리자 계정과 API 키가 확인되었습니다.');
