@@ -27,6 +27,15 @@ Vercel 서버 전용 환경 변수:
 
 ## 화면/API
 
+관리자 API 키는 ID/PW 텍스트 파일과 분리해 DPAPI 암호화 파일에 보관한다. 현재 Windows 사용자만 D: hotfix 루트에서 `& .\tools\copy_content_admin_api_key.ps1`을 명시적으로 실행해 클립보드로 복사할 수 있다. 사용 후 클립보드를 비운다. `build/temp/private-content-admin`은 빌드 임시물 일괄 정리 전에 반드시 별도로 보존해야 하는 자격증명 백업이다.
+
+| 책임 단위 | 입력/수명 | 결과·실패 처리 |
+|---|---|---|
+| admin.js `confirmArchive` | 목록 row, 열린 dialog 동안 | 확인만 기존 멱등 DELETE; 취소/Escape 무변경, 포커스 복귀 |
+| admin.js `token`/`apiKey` | 관리자 로그인 응답/직접 입력, 탭 메모리 | 로그아웃·새로고침 소거, 저장소·URL에 넣지 않음 |
+| admin.js `pending` | 요청 경로/본문/키, 응답 불명 동안 | 동일 요청 키 유지, 다른 요청으로 덮어쓰기 거부 |
+| `copy_content_admin_api_key.ps1` | 로컬 DPAPI 파일, 사용자 실행 한 번 | 클립보드 복사만; 키 원문 출력 없음, 복호화 실패 시 중단 |
+
 `/admin`에서 별도 관리자 로그인과 전용 API 키를 입력한다. 자격증명은 탭 메모리에만 유지하며 localStorage/sessionStorage/URL에 넣지 않는다. `/admin/api/login`도 API 키가 필요하고 DB의 원자적 카운터로 계정당 5분/10회 제한한다. 역할 상승이나 공개 가입 API는 없다.
 
 모든 `/admin/api/content` 경로는 관리자 JWT와 `X-Admin-Api-Key`가 모두 필요하다. 쓰기는 `X-Idempotency-Key`(1~160자)가 추가로 필요하다.

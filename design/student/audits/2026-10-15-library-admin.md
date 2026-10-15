@@ -2,6 +2,18 @@
 
 ## 최신 상태: 별도 관리자 DB로 전환
 
+### 2026-10-15 실제 canary 반영 및 사용자 여정
+
+- 새 관리자 dialog 후보: `dpl_7g3WN9KaQvE3Nqb5Ynx35xowmuxg`, `https://aiflow-web-canary-t5ntqqghy-cw20208021-9200s-projects.vercel.app`, 배포 HEAD `b6d93f49d9035ba409580cfc8f3c13f9d3afe788` (기존 dirty 소스 보존). 전체 API 243 passed/기존82 warnings.
+- Supabase 관리자 프로젝트 SQL Editor에서 읽기 전용 SELECT 실제 실행: tables_with_rls=4, anon/authenticated exposed_table_roles=0, exposed_rpc_roles=0. QA 동일 키200회 실행 대상의 원장5건/최종version5/archived=true 확인. 최초 저장과 후속 편집·보관·복원·보관이 각각 한 건임. 증거 `admin-db-rls-receipts.png`. 이전 PAT403을 우회하거나 권한을 확대한 것이 아니라 기존 로그인된 프로젝트 소유자 UI에서 조회했다.
+- 후보 실제 UI: 보관된 시험지v2→복원v3, 보관 확인의 취소/Escape 모두 v3 유지 및 보관 버튼으로 포커스 복귀, 명시 확인 후 v4/보관됨. `admin-inline-archive-confirm.png`, `admin-dialog-candidate-archived.png`. 잘못된 API 키는 403, 관리 작업 영역 숨김 (`admin-candidate-invalid-key.png`).
+- 후보 Flutter 부팅 확인. API_BASE_URL은 지정 canary 고정, 후보 출처 CORS preflight400이므로 허용 출처를 넓히지 않음. 지정 도메인만 `vercel alias set ... aiflow-web-canary.vercel.app`으로 위 배포에 연결하고 inspect 재확인. 다른 운영 도메인 변경 없음.
+- 지정 canary에서 내려받은 bundle 크기7,114,524 / SHA256 `B79EFC41F78556A12D3CFC1337CB1FFF6E28AE6AD9F91D378F33DAC3E38411DE`, D: public와 일치. /health ok. 이 후보 직전 Dart 소스가 bundle 생성 이후 변경된 파일0건 확인. API/관리자 별도 DB 연결 실제 성공.
+- 기존 테스트 계정 세션을 유지한 채 새로고침, 기본 자료실→/#/bookbag, 보유 시험지3개 표시, 기존 10문항 시험지 열람 및 나가기→책가방 복귀 확인. 시험 답안 입력·제출·채점은 하지 않음. 더보기 학습/내 메뉴 분산 및 더보기 자료실→/#/marketplace, 기본 자료실로 책가방 복귀 확인.
+- 초기 mobile=true 캡처 일부가 이전 렌더 크기를 잘라 저장돼 시각 증거에서 제외. mobile=false 390×844/DPR≈1, 실제 innerWidth390/innerHeight844를 재측정해 정상 캡처. 승인 증거: `canary-more-measured-390.png`, `canary-more-my-390-verified.png`, `canary-owned-exams-390-verified.png`, `canary-owned-exam-open-390-verified.png`. 검수 후 CDP override 해제. 시험지는 기존 확대/이동 가능한 종이 뷰이며 전체 종이 폭 맞춤 UX를 검증했다고 주장하지 않음.
+- 실제 더보기에서 Escape가 닫히지 않고 닫기 접근성 이름이 비어 있음을 추가 발견. CallbackShortcuts/Focus 및 닫기 Tooltip 보완, 회귀 테스트 추가. 아직 이 추가 보완은 위 배포에 포함되지 않았다. 집중 Flutter4파일 검사→성공 시 D: release 빌드가 같은 실행 세션29753에서 진행 중. 로그 `build/temp/more-close-focused-tests.log`, 이후 `more-close-web-build.log`. 종료 상태 확인 전 재실행하지 말 것. public 동기화/재배포/실제 Escape 재검증 필요.
+- 관리자 ID/PW는 바탕화면 파일 유지. 전용 API 키는 사용자가 명시 실행할 `tools/copy_content_admin_api_key.ps1` 추가(파싱 오류0, 자동 실행하지 않음). 함수/상태 설명은 CONTENT_ADMIN.md 갱신. 백업 DPAPI 디렉터리는 임시물 정리 전에 보존해야 함.
+
 ### 보관 확인 UI 후속 수정 (후보 이후)
 
 - 이전 후보 탭10은 재검사에서도 focus CDP timeout. 새 탭11은 렌더·필드 입력은 가능하지만 연결 클릭이 동작하지 않음. 이전 기본 JS 확인창의 브라우저 입력 차단 가능성이 있어 사용자에게 해당 후보 탭/확인창 닫기 요청. 확인되지 않은 클릭을 성공 처리하지 않음.
