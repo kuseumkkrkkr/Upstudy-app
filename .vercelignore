@@ -13,6 +13,8 @@ artifacts/
 build/
 deploy/
 data/*
+!data/
+!data/content
 !data/content/
 !data/content/**
 data/content/leveltest-expanded-v1/
