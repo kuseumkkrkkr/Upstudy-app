@@ -1061,7 +1061,13 @@ class _HtmlStudentRail extends StatelessWidget {
           width: width - 20,
           height: 58,
           child: InkWell(
-            onTap: () => Navigator.of(context).pushNamed(route),
+            onTap: () {
+              if (route == AppRoutes.learningTools) {
+                MobileStudentBottomAppBar.openMore(context);
+                return;
+              }
+              Navigator.of(context).pushNamed(route);
+            },
             child: Container(
               decoration: BoxDecoration(
                 color: active ? StudentDensityTokens.dark : Colors.transparent,

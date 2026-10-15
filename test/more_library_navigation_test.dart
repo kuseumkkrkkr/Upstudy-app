@@ -1,9 +1,45 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:http/http.dart' as http;
+import 'package:http/testing.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/drawer/student_navigation.dart';
 
 void main() {
+  testWidgets('desktop home More opens shared sheet instead of tools route', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    ApiClient.instance.setTokenForTest('more-desktop-home-test');
+    ApiClient.instance.setHttpClientForTest(
+      MockClient((_) async => http.Response('{}', 404)),
+    );
+    addTearDown(ApiClient.instance.clearTokenForTest);
+    addTearDown(() => ApiClient.instance.setHttpClientForTest(http.Client()));
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    await tester.pumpWidget(
+      const MaterialApp(home: MainStudentPage(username: 'QA')),
+    );
+    await tester.pump(const Duration(milliseconds: 500));
+    await tester.tap(find.text('더보기'));
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.byKey(const ValueKey('mobile-more-sheet')), findsOneWidget);
+    expect(
+      find.byKey(const ValueKey('mobile-more-/marketplace')),
+      findsOneWidget,
+    );
+    await tester.sendKeyEvent(LogicalKeyboardKey.escape);
+    await tester.pump(const Duration(milliseconds: 250));
+    expect(find.byKey(const ValueKey('mobile-more-sheet')), findsNothing);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   testWidgets(
     'primary material tab opens bookbag; more library opens marketplace',
     (tester) async {
