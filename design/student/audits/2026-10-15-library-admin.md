@@ -4,6 +4,17 @@
 
 ### 후속 실제 DB 검증
 
+### 후보 배포 체크포인트
+
+- 배포 원본 D: hotfix HEAD `880cb23a339c7128cce4a46ab57852535d84dc1b`. 기존 dirty Flutter/public 변경은 보존된 상태이며 이 SHA만으로 전체 소스/번들을 재현한다고 주장하지 않는다. 업로드 입력 목록은 `build/temp/admin-deploy-inputs.json`, 빌드 로그는 `build/temp/admin-candidate-deploy.log`.
+- 사전 dry 검사에서 data/content 디렉터리가 통째로 제외되는 문제 발견. .vercelignore에 부모 및 정확한 디렉터리 예외를 추가해 admin.html/js, canonical DB 등 포함 확인. private/build/DPAPI/환경파일/원본 대용량 데이터 제외 검사 통과.
+- `vercel --prod --skip-domain` 후보 성공: `dpl_68SaU1c5P3rq8hFWMzV5ttxruR3T`, `https://aiflow-web-canary-lv2wk9j9s-cw20208021-9200s-projects.vercel.app`.
+- 후보 computer-use 로그인 성공, 별도 DB의 이전 보관 자료 조회, 새 시험지 `qa-admin-deployed-exam-20261015` 저장(v1) 및 새로고침 재조회 확인. 증거 `admin-candidate-login.png`, `admin-candidate-exam-saved.png`.
+- 후보 UI 보관 클릭 후 브라우저 CDP 타임아웃으로 확인 대화상자 결과를 검증하지 못했다. 무작정 반복하지 않고 정확한 QA ID만 REST 재조회 후 RPC 보관(v2/true) 확인. 따라서 후보 UI 보관 성공으로는 계산하지 않는다.
+- 일반 HTTP 번들 다운로드는 Deployment Protection 로그인 HTML로 이동했다. 이를 번들 차이로 오판하지 않고 Vercel 인증 CLI curl로 다시 받음: 7,114,524 bytes / SHA256 `B79EFC41F78556A12D3CFC1337CB1FFF6E28AE6AD9F91D378F33DAC3E38411DE`, 로컬 public와 일치.
+- 지정 `aiflow-web-canary.vercel.app`는 inspect 결과 여전히 `dpl_21dPQZ955gTxpcwWGgBxsgwcHXZS` (10월11일)이다. 후보 alias 승격 안 함. 기본 project alias의 inspect 표시는 별도이며 지정 canary 확인으로 구분한다.
+- 다음 작업: 후보 UI 보관/복원·권한 거부 검증 재개, anon/authenticated 실제 RLS 권한 확인, 보유 시험지 실제 사용자 여정 검증, 검토된 소스/산출물 체크포인트 정리 후 지정 canary만 승격 및 재검수. 목표 미완료.
+
 - `tools/verify_content_admin_live.py`를 실제 별도 Supabase REST/RPC와 localhost:8972 관리자 API에 실행. 2026-10-15 결과 19.28초, QA prefix `qa-admin-753b49b968324e6493ca1c86c8ebcf27`.
 - 동일 키 200회/최대 병렬 HTTP worker20: 모든 응답이 version1 동일. 이는 200 DB 연결이나 앱 전체 200명 부하 시험을 의미하지 않는다. 감사 행 개수는 service_role 조회 권한이 없어 직접 세지 않았으며 단일 버전 증거와 구분한다.
 - 같은 키 다른 본문 충돌, 같은 버전 동시 편집 한 건 성공/한 건 version_conflict, 비관리자 actor 거부, service_role 테이블 직접 INSERT 거부·감사 테이블 읽기 거부 확인.
