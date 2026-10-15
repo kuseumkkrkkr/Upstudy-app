@@ -2,6 +2,15 @@
 
 ## 최신 상태: 별도 관리자 DB로 전환
 
+### 후속 실제 DB 검증
+
+- `tools/verify_content_admin_live.py`를 실제 별도 Supabase REST/RPC와 localhost:8972 관리자 API에 실행. 2026-10-15 결과 19.28초, QA prefix `qa-admin-753b49b968324e6493ca1c86c8ebcf27`.
+- 동일 키 200회/최대 병렬 HTTP worker20: 모든 응답이 version1 동일. 이는 200 DB 연결이나 앱 전체 200명 부하 시험을 의미하지 않는다. 감사 행 개수는 service_role 조회 권한이 없어 직접 세지 않았으며 단일 버전 증거와 구분한다.
+- 같은 키 다른 본문 충돌, 같은 버전 동시 편집 한 건 성공/한 건 version_conflict, 비관리자 actor 거부, service_role 테이블 직접 INSERT 거부·감사 테이블 읽기 거부 확인.
+- 보관→복원→이전 보관 재시도는 최초 결과 반환, 최종 version5/archived=true를 별도 REST 재조회로 확인. 코스/시험지/문제집 3종 API 생성/조회/보관·중복 재시도·다른 본문409·버전 누락422 확인. QA 자료는 모두 보관 상태로 정리, 영구 삭제 없음.
+- Vercel `aiflow-web-canary` Production에 ADMIN_SUPABASE_URL, ADMIN_SUPABASE_SERVICE_ROLE_KEY, ADMIN_JWT_SECRET, CONTENT_ADMIN_API_KEY_SHA256, CONTENT_ADMIN_ENABLED 등록 성공. 기존 학생/AI 설정 변경 없음. 이 변경은 다음 배포부터 적용되며 현재 alias 동작을 증명하지 않는다.
+- 아래 최신 상태의 미실행 문구 중 실제 RPC·충돌·재시도 검증은 위 결과로 대체한다. anon/authenticated 역할의 실제 권한과 RLS SQL 메타데이터, 후보 배포 UI는 아직 별도 확인 필요.
+
 - 아래 기존 학생 인증/admin membership 방식과 계정 생성 미확인 기록은 과거 기록이며 폐기된 설계다. 현재 지침은 `deploy/vercel/CONTENT_ADMIN.md`를 따른다.
 - 사용자 승인에 따라 FREE 조직에 `aiflow-admin-canary` (`ekogkwhvyqwdxibjfnko`) 생성. 학생 프로젝트 `aybqetiydxafeuzudltb`와 다른 실제 프로젝트다. 자동 테이블 공개 OFF, 자동 RLS ON, Healthy 확인.
 - 전용 SQL 적용 성공. 관리자 계정/로그인 카운터/콘텐츠/멱등 감사 원장은 별도 DB에만 존재한다. 기존 학생 계정 변경·승격·비밀번호 재설정 없음.
