@@ -1,0 +1,1046 @@
+{
+  "title": "미적분 2015 개정 · 적분법 부분 통합 초안",
+  "tags": [
+    "미적분",
+    "2015 개정",
+    "적분법",
+    "부분 통합"
+  ],
+  "chapters": [
+    {
+      "title": "치환적분법",
+      "pages": [
+        {
+          "id": "calc15-03-01-001",
+          "template": "opening",
+          "title": "치환적분법 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-01-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "치환적분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-01-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "치환적분법",
+              "text": "합성함수의 안쪽 미분 인수가 함께 있으면 u=g(x)로 치환해 적분을 간단히 한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-01-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫2x e^(x²)dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-01-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫2x e^(x²)dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "e^(x²)+C"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0301-quiz",
+                "kind": "quiz",
+                "prompt": "∫2x e^(x²)dx를 구하세요.",
+                "options": [
+                  "e^(x²)+C",
+                  "2e^(x²)+C",
+                  "x²e^(x²)+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: e^(x²)+C",
+                "incorrect_feedback": "정답은 e^(x²)+C입니다. ∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "치환적분법: 합성함수의 안쪽 미분 인수가 함께 있으면 u=g(x)로 치환해 적분을 간단히 한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "부분적분법",
+      "pages": [
+        {
+          "id": "calc15-03-02-001",
+          "template": "opening",
+          "title": "부분적분법 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-02-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "부분적분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-02-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "부분적분법",
+              "text": "∫u dv=uv−∫v du를 사용하면 곱으로 된 함수의 적분을 다른 적분으로 바꿀 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-02-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫x eˣ dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-02-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫x eˣ dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x−1)eˣ+C"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0302-quiz",
+                "kind": "quiz",
+                "prompt": "∫x eˣ dx를 구하세요.",
+                "options": [
+                  "(x−1)eˣ+C",
+                  "xeˣ+C",
+                  "(x+1)eˣ+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: (x−1)eˣ+C",
+                "incorrect_feedback": "정답은 (x−1)eˣ+C입니다. ∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "부분적분법: ∫u dv=uv−∫v du를 사용하면 곱으로 된 함수의 적분을 다른 적분으로 바꿀 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "여러 함수의 부정·정적분",
+      "pages": [
+        {
+          "id": "calc15-03-03-001",
+          "template": "opening",
+          "title": "여러 함수의 부정·정적분 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-03-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "여러 함수의 부정·정적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-03-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "여러 함수의 부정·정적분",
+              "text": "기본 함수의 원시함수와 정적분을 구하고 적분상수 또는 구간 끝값을 분명히 표시한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-03-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫₀¹ 2x dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-03-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫₀¹ 2x dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0303-quiz",
+                "kind": "quiz",
+                "prompt": "∫₀¹ 2x dx를 구하세요.",
+                "options": [
+                  "1",
+                  "2",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1",
+                "incorrect_feedback": "정답은 1입니다. ∫₀¹ eˣdx=[eˣ]₀¹=e−1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "여러 함수의 부정·정적분: 기본 함수의 원시함수와 정적분을 구하고 적분상수 또는 구간 끝값을 분명히 표시한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "정적분과 급수의 합",
+      "pages": [
+        {
+          "id": "calc15-03-04-001",
+          "template": "opening",
+          "title": "정적분과 급수의 합 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-04-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "정적분과 급수의 합"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-04-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정적분과 급수의 합",
+              "text": "구간을 잘게 나눈 직사각형 넓이의 합이 정적분으로 가까워진다. 극한을 리만 합으로 표현한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-04-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-04-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0304-quiz",
+                "kind": "quiz",
+                "prompt": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?",
+                "options": [
+                  "1",
+                  "0",
+                  "n"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1",
+                "incorrect_feedback": "정답은 1입니다. lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-04-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "정적분과 급수의 합: 구간을 잘게 나눈 직사각형 넓이의 합이 정적분으로 가까워진다. 극한을 리만 합으로 표현한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "곡선으로 둘러싸인 넓이",
+      "pages": [
+        {
+          "id": "calc15-03-05-001",
+          "template": "opening",
+          "title": "곡선으로 둘러싸인 넓이 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-05-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "곡선으로 둘러싸인 넓이"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-05-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "곡선으로 둘러싸인 넓이",
+              "text": "교점과 위아래 관계를 확인한 뒤 위쪽 함수에서 아래쪽 함수를 뺀 정적분으로 넓이를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-05-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-05-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0305-quiz",
+                "kind": "quiz",
+                "prompt": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요.",
+                "options": [
+                  "2",
+                  "4",
+                  "1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 2",
+                "incorrect_feedback": "정답은 2입니다. 0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-05-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "곡선으로 둘러싸인 넓이: 교점과 위아래 관계를 확인한 뒤 위쪽 함수에서 아래쪽 함수를 뺀 정적분으로 넓이를 구한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "회전체의 부피",
+      "pages": [
+        {
+          "id": "calc15-03-06-001",
+          "template": "opening",
+          "title": "회전체의 부피 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-06-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "회전체의 부피"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-06-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "회전체의 부피",
+              "text": "곡선과 축으로 둘러싸인 영역을 회전한 입체의 부피는 단면적을 적분해 구할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-06-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-06-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12π"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0306-quiz",
+                "kind": "quiz",
+                "prompt": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?",
+                "options": [
+                  "12π",
+                  "6π",
+                  "4π"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 12π",
+                "incorrect_feedback": "정답은 12π입니다. y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-06-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "회전체의 부피: 곡선과 축으로 둘러싸인 영역을 회전한 입체의 부피는 단면적을 적분해 구할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    },
+    {
+      "title": "속도와 거리의 적분",
+      "pages": [
+        {
+          "id": "calc15-03-07-001",
+          "template": "opening",
+          "title": "속도와 거리의 적분 · 출처와 범위",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "미적분 · 2015 개정 · 추가 원고 후보 · 가상 예시 · 12미적01-01 · 12미적01-02 · 12미적01-03 · 12미적01-04 · 12미적01-05 · 12미적01-06 · 12미적02-01 · 12미적02-02 · 12미적02-03 · 12미적02-04 · 12미적02-05 · 12미적02-06 · 12미적02-07 · 12미적02-08 · 12미적02-09 · 12미적02-10 · 12미적02-11 · 12미적02-12 · 12미적02-13 · 12미적02-14 · 12미적03-01 · 12미적03-02 · 12미적03-03 · 12미적03-04 · 12미적03-05 · 12미적03-06 · 12미적03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 후보이며 범위·내용 검토가 남아 있습니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-07-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "속도와 거리의 적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-07-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "속도와 거리의 적분",
+              "text": "속도 적분은 변위이고, 이동거리는 속도의 절댓값을 적분한다. 속도 부호가 바뀌면 구간을 나눠 계산한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-07-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-07-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0307-quiz",
+                "kind": "quiz",
+                "prompt": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?",
+                "options": [
+                  "4",
+                  "2",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 4",
+                "incorrect_feedback": "정답은 4입니다. v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-03-07-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "속도와 거리의 적분: 속도 적분은 변위이고, 이동거리는 속도의 절댓값을 적분한다. 속도 부호가 바뀌면 구간을 나눠 계산한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": []
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json"
+    ]
+  }
+}

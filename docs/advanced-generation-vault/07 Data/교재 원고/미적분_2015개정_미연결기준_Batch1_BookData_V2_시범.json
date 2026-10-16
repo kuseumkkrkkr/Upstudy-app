@@ -1,0 +1,3716 @@
+{
+  "schema_version": 2,
+  "title": "미적분 · 2015 개정 미연결 기준 보완 후보",
+  "subtitle": "수열의 극한·급수, 미분법, 적분법",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "tags": [
+    "미적분",
+    "2015 개정",
+    "추가 원고 후보",
+    "가상 예시",
+    "12미적01-01",
+    "12미적01-02",
+    "12미적01-03",
+    "12미적01-04",
+    "12미적01-05",
+    "12미적01-06",
+    "12미적02-01",
+    "12미적02-02",
+    "12미적02-03",
+    "12미적02-04",
+    "12미적02-05",
+    "12미적02-06",
+    "12미적02-07",
+    "12미적02-08",
+    "12미적02-09",
+    "12미적02-10",
+    "12미적02-11",
+    "12미적02-12",
+    "12미적02-13",
+    "12미적02-14",
+    "12미적03-01",
+    "12미적03-02",
+    "12미적03-03",
+    "12미적03-04",
+    "12미적03-05",
+    "12미적03-06",
+    "12미적03-07"
+  ],
+  "standard_codes": [
+    "12미적01-01",
+    "12미적01-02",
+    "12미적01-03",
+    "12미적01-04",
+    "12미적01-05",
+    "12미적01-06",
+    "12미적02-01",
+    "12미적02-02",
+    "12미적02-03",
+    "12미적02-04",
+    "12미적02-05",
+    "12미적02-06",
+    "12미적02-07",
+    "12미적02-08",
+    "12미적02-09",
+    "12미적02-10",
+    "12미적02-11",
+    "12미적02-12",
+    "12미적02-13",
+    "12미적02-14",
+    "12미적03-01",
+    "12미적03-02",
+    "12미적03-03",
+    "12미적03-04",
+    "12미적03-05",
+    "12미적03-06",
+    "12미적03-07"
+  ],
+  "chapters": [
+    {
+      "title": "수열의 수렴과 발산",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-01에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0101-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "수열의 수렴과 발산"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0101-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "수열의 수렴과 발산",
+              "text": "수열의 항이 한 실수에 가까워지면 수렴하고, 일정한 값에 가까워지지 않으면 발산한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0101-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "aₙ=3/n은 어디로 수렴하나요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "aₙ=1/n은 n이 커질수록 0에 가까워져 0으로 수렴한다. (−1)ⁿ은 두 값 사이를 오가므로 수렴하지 않는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0101-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "aₙ=3/n은 어디로 수렴하나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "aₙ=1/n은 n이 커질수록 0에 가까워져 0으로 수렴한다. (−1)ⁿ은 두 값 사이를 오가므로 수렴하지 않는다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0101-quiz",
+                "kind": "quiz",
+                "prompt": "aₙ=3/n은 어디로 수렴하나요?",
+                "options": [
+                  "0",
+                  "1",
+                  "발산"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 0",
+                "incorrect_feedback": "정답은 0입니다. aₙ=1/n은 n이 커질수록 0에 가까워져 0으로 수렴한다. (−1)ⁿ은 두 값 사이를 오가므로 수렴하지 않는다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "aₙ=1/n은 n이 커질수록 0에 가까워져 0으로 수렴한다. (−1)ⁿ은 두 값 사이를 오가므로 수렴하지 않는다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0101-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "수열의 수렴과 발산: 수열의 항이 한 실수에 가까워지면 수렴하고, 일정한 값에 가까워지지 않으면 발산한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "수열 극한의 기본 성질",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-02에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0102-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "수열 극한의 기본 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0102-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "수열 극한의 기본 성질",
+              "text": "수렴하는 수열의 합·차·곱 극한은 각 극한값에 같은 연산을 적용해 구한다. 몫은 분모 극한이 0이 아닐 때 적용한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0102-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "aₙ→4, bₙ→1이면 aₙ+bₙ의 극한은?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "aₙ→2, bₙ→3이면 2aₙ−bₙ→4−3=1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0102-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "aₙ→4, bₙ→1이면 aₙ+bₙ의 극한은?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "aₙ→2, bₙ→3이면 2aₙ−bₙ→4−3=1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0102-quiz",
+                "kind": "quiz",
+                "prompt": "aₙ→4, bₙ→1이면 aₙ+bₙ의 극한은?",
+                "options": [
+                  "5",
+                  "4",
+                  "3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 5",
+                "incorrect_feedback": "정답은 5입니다. aₙ→2, bₙ→3이면 2aₙ−bₙ→4−3=1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "aₙ→2, bₙ→3이면 2aₙ−bₙ→4−3=1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0102-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "수열 극한의 기본 성질: 수렴하는 수열의 합·차·곱 극한은 각 극한값에 같은 연산을 적용해 구한다. 몫은 분모 극한이 0이 아닐 때 적용한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "등비수열의 극한",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-03에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0103-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "등비수열의 극한"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0103-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "등비수열의 극한",
+              "text": "등비수열 arⁿ에서 |r|<1이면 항은 0으로 수렴하고, r=1이면 일정하며, r의 크기와 부호에 따라 그 밖의 경우 발산할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0103-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "aₙ=5(1/2)ⁿ의 극한을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(1/3)ⁿ은 공비의 절댓값이 1보다 작으므로 0으로 수렴한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0103-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "aₙ=5(1/2)ⁿ의 극한을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(1/3)ⁿ은 공비의 절댓값이 1보다 작으므로 0으로 수렴한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0103-quiz",
+                "kind": "quiz",
+                "prompt": "aₙ=5(1/2)ⁿ의 극한을 구하세요.",
+                "options": [
+                  "0",
+                  "5",
+                  "발산"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 0",
+                "incorrect_feedback": "정답은 0입니다. (1/3)ⁿ은 공비의 절댓값이 1보다 작으므로 0으로 수렴한다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "(1/3)ⁿ은 공비의 절댓값이 1보다 작으므로 0으로 수렴한다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0103-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "등비수열의 극한: 등비수열 arⁿ에서 |r|<1이면 항은 0으로 수렴하고, r=1이면 일정하며, r의 크기와 부호에 따라 그 밖의 경우 발산할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "급수의 수렴과 발산",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-04에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0104-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "급수의 수렴과 발산"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0104-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "급수의 수렴과 발산",
+              "text": "급수의 수렴·발산은 부분합이 유한한 값에 가까워지는지로 판단한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0104-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "1+1+⋯+1의 n개 부분합은 수렴하나요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "1+1+⋯+1의 n개 부분합은 n이므로 발산한다. 부분합이 계속 커져 유한한 극한이 없다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0104-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "1+1+⋯+1의 n개 부분합은 수렴하나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "1+1+⋯+1의 n개 부분합은 n이므로 발산한다. 부분합이 계속 커져 유한한 극한이 없다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "발산"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0104-quiz",
+                "kind": "quiz",
+                "prompt": "1+1+⋯+1의 n개 부분합은 수렴하나요?",
+                "options": [
+                  "발산",
+                  "수렴하여 1",
+                  "항상 0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 발산",
+                "incorrect_feedback": "정답은 발산입니다. 1+1+⋯+1의 n개 부분합은 n이므로 발산한다. 부분합이 계속 커져 유한한 극한이 없다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "1+1+⋯+1의 n개 부분합은 n이므로 발산한다. 부분합이 계속 커져 유한한 극한이 없다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0104-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "급수의 수렴과 발산: 급수의 수렴·발산은 부분합이 유한한 값에 가까워지는지로 판단한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "등비급수의 합",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-05에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0105-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "등비급수의 합"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0105-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "등비급수의 합",
+              "text": "첫째항 a, 공비 r인 등비급수는 |r|<1일 때 합 a/(1−r)로 수렴한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0105-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3+1+1/3+⋯의 합을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "1+1/2+1/4+⋯의 합은 1/(1−1/2)=2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0105-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "3+1+1/3+⋯의 합을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "1+1/2+1/4+⋯의 합은 1/(1−1/2)=2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "9/2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0105-quiz",
+                "kind": "quiz",
+                "prompt": "3+1+1/3+⋯의 합을 구하세요.",
+                "options": [
+                  "9/2",
+                  "3",
+                  "4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 9/2",
+                "incorrect_feedback": "정답은 9/2입니다. 1+1/2+1/4+⋯의 합은 1/(1−1/2)=2이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "1+1/2+1/4+⋯의 합은 1/(1−1/2)=2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0105-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "등비급수의 합: 첫째항 a, 공비 r인 등비급수는 |r|<1일 때 합 a/(1−r)로 수렴한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "등비급수의 활용",
+      "unit": "수열의 극한과 급수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적01-06에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0106-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "등비급수의 활용"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0106-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "등비급수의 활용",
+              "text": "일정 비율로 반복되는 양은 등비급수로 모델링할 수 있으며, 각 단계의 양을 합해 전체량을 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적01-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0106-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "처음 6cm, 이후 매번 절반만큼 더하는 반복 길이의 합은?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "가상 점이 처음 8m 올라가고 매번 직전 거리의 절반만큼 더 오르면 총 상승거리는 8+4+2+⋯=16m이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0106-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "처음 6cm, 이후 매번 절반만큼 더하는 반복 길이의 합은?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "가상 점이 처음 8m 올라가고 매번 직전 거리의 절반만큼 더 오르면 총 상승거리는 8+4+2+⋯=16m이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12cm"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0106-quiz",
+                "kind": "quiz",
+                "prompt": "처음 6cm, 이후 매번 절반만큼 더하는 반복 길이의 합은?",
+                "options": [
+                  "12cm",
+                  "6cm",
+                  "9cm"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 12cm",
+                "incorrect_feedback": "정답은 12cm입니다. 가상 점이 처음 8m 올라가고 매번 직전 거리의 절반만큼 더 오르면 총 상승거리는 8+4+2+⋯=16m이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "가상 점이 처음 8m 올라가고 매번 직전 거리의 절반만큼 더 오르면 총 상승거리는 8+4+2+⋯=16m이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0106-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "등비급수의 활용: 일정 비율로 반복되는 양은 등비급수로 모델링할 수 있으며, 각 단계의 양을 합해 전체량을 구한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수·로그함수의 극한",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-01에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0201-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "지수·로그함수의 극한"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0201-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "지수·로그함수의 극한",
+              "text": "지수함수와 로그함수는 정의역 안에서 연속이므로 입력이 가까워질 때 함수값의 극한은 대입으로 구할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0201-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(x→2)3ˣ를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0201-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(x→2)3ˣ를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "9"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0201-quiz",
+                "kind": "quiz",
+                "prompt": "lim(x→2)3ˣ를 구하세요.",
+                "options": [
+                  "9",
+                  "6",
+                  "3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 9",
+                "incorrect_feedback": "정답은 9입니다. lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0201-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "지수·로그함수의 극한: 지수함수와 로그함수는 정의역 안에서 연속이므로 입력이 가까워질 때 함수값의 극한은 대입으로 구할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수·로그함수의 미분",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-02에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0202-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "지수·로그함수의 미분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0202-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "지수·로그함수의 미분",
+              "text": "(aˣ)′=aˣ ln a이고 (logₐx)′=1/(x ln a)이다. 자연로그에서는 (eˣ)′=eˣ, (ln x)′=1/x이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0202-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(ln x)′을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(eˣ+ln x)′=eˣ+1/x (x>0)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0202-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(ln x)′을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(eˣ+ln x)′=eˣ+1/x (x>0)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1/x"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0202-quiz",
+                "kind": "quiz",
+                "prompt": "(ln x)′을 구하세요.",
+                "options": [
+                  "1/x",
+                  "ln x",
+                  "x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1/x",
+                "incorrect_feedback": "정답은 1/x입니다. (eˣ+ln x)′=eˣ+1/x (x>0)이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "(eˣ+ln x)′=eˣ+1/x (x>0)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0202-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "지수·로그함수의 미분: (aˣ)′=aˣ ln a이고 (logₐx)′=1/(x ln a)이다. 자연로그에서는 (eˣ)′=eˣ, (ln x)′=1/x이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼각함수의 덧셈정리",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-03에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0203-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "삼각함수의 덧셈정리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0203-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "삼각함수의 덧셈정리",
+              "text": "sin(α±β)=sinαcosβ±cosαsinβ 등 덧셈정리로 두 각의 삼각함수 값을 연결한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0203-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "sin(45°+30°)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "sin(45°−30°)=√6/4−√2/4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0203-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "sin(45°+30°)를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "sin(45°−30°)=√6/4−√2/4이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(√6+√2)/4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0203-quiz",
+                "kind": "quiz",
+                "prompt": "sin(45°+30°)를 구하세요.",
+                "options": [
+                  "(√6+√2)/4",
+                  "(√6−√2)/4",
+                  "1/2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: (√6+√2)/4",
+                "incorrect_feedback": "정답은 (√6+√2)/4입니다. sin(45°−30°)=√6/4−√2/4이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "sin(45°−30°)=√6/4−√2/4이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0203-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "삼각함수의 덧셈정리: sin(α±β)=sinαcosβ±cosαsinβ 등 덧셈정리로 두 각의 삼각함수 값을 연결한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼각함수의 극한",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-04에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0204-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "삼각함수의 극한"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0204-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "삼각함수의 극한",
+              "text": "각을 라디안으로 둘 때 lim(x→0)sin x/x=1이다. 이 기본 극한을 식의 변형과 함께 사용한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0204-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(x→0)sin(5x)/x를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0204-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(x→0)sin(5x)/x를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0204-quiz",
+                "kind": "quiz",
+                "prompt": "lim(x→0)sin(5x)/x를 구하세요.",
+                "options": [
+                  "5",
+                  "1",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 5",
+                "incorrect_feedback": "정답은 5입니다. lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0204-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "삼각함수의 극한: 각을 라디안으로 둘 때 lim(x→0)sin x/x=1이다. 이 기본 극한을 식의 변형과 함께 사용한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "사인·코사인함수의 미분",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-05에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0205-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "사인·코사인함수의 미분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0205-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "사인·코사인함수의 미분",
+              "text": "(sin x)′=cos x이고 (cos x)′=−sin x이다. 각은 라디안으로 둔다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0205-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(cos x)′을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(2sin x−3cos x)′=2cos x+3sin x이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0205-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(cos x)′을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(2sin x−3cos x)′=2cos x+3sin x이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−sin x"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0205-quiz",
+                "kind": "quiz",
+                "prompt": "(cos x)′을 구하세요.",
+                "options": [
+                  "−sin x",
+                  "sin x",
+                  "cos x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: −sin x",
+                "incorrect_feedback": "정답은 −sin x입니다. (2sin x−3cos x)′=2cos x+3sin x이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "(2sin x−3cos x)′=2cos x+3sin x이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0205-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "사인·코사인함수의 미분: (sin x)′=cos x이고 (cos x)′=−sin x이다. 각은 라디안으로 둔다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "몫의 미분법",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-06에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0206-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "몫의 미분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0206-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "몫의 미분법",
+              "text": "(f/g)′=(f′g−fg′)/g²이며 g≠0인 구간에서 적용한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0206-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(x/(x+1))′을 구하세요. (x≠−1)"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0206-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(x/(x+1))′을 구하세요. (x≠−1)"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1/(x+1)²"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0206-quiz",
+                "kind": "quiz",
+                "prompt": "(x/(x+1))′을 구하세요. (x≠−1)",
+                "options": [
+                  "1/(x+1)²",
+                  "1/(x+1)",
+                  "−1/(x+1)²"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1/(x+1)²",
+                "incorrect_feedback": "정답은 1/(x+1)²입니다. ((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0206-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "몫의 미분법: (f/g)′=(f′g−fg′)/g²이며 g≠0인 구간에서 적용한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "합성함수의 미분법",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-07에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0207-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "합성함수의 미분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0207-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "합성함수의 미분법",
+              "text": "합성함수 y=f(g(x))는 y′=f′(g(x))g′(x)로 미분한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0207-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=e^(3x)의 도함수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=sin(x²)이면 y′=2x cos(x²)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0207-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=e^(3x)의 도함수를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y=sin(x²)이면 y′=2x cos(x²)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3e^(3x)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0207-quiz",
+                "kind": "quiz",
+                "prompt": "y=e^(3x)의 도함수를 구하세요.",
+                "options": [
+                  "3e^(3x)",
+                  "e^(3x)",
+                  "3e^x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 3e^(3x)",
+                "incorrect_feedback": "정답은 3e^(3x)입니다. y=sin(x²)이면 y′=2x cos(x²)이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "y=sin(x²)이면 y′=2x cos(x²)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0207-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "합성함수의 미분법: 합성함수 y=f(g(x))는 y′=f′(g(x))g′(x)로 미분한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "매개변수함수의 미분",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-08에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0208-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "매개변수함수의 미분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0208-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "매개변수함수의 미분",
+              "text": "x=x(t), y=y(t)이고 dx/dt≠0이면 dy/dx=(dy/dt)/(dx/dt)이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-08"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0208-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x=2t, y=t²일 때 dy/dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0208-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x=2t, y=t²일 때 dy/dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "t"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0208-quiz",
+                "kind": "quiz",
+                "prompt": "x=2t, y=t²일 때 dy/dx를 구하세요.",
+                "options": [
+                  "t",
+                  "2t",
+                  "t/2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: t",
+                "incorrect_feedback": "정답은 t입니다. x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0208-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "매개변수함수의 미분: x=x(t), y=y(t)이고 dx/dt≠0이면 dy/dx=(dy/dt)/(dx/dt)이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "음함수·역함수의 미분",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-09에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0209-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "음함수·역함수의 미분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0209-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "음함수·역함수의 미분",
+              "text": "음함수는 양변을 x로 미분해 y′를 구한다. 역함수는 (f⁻¹)′(y)=1/f′(x) 관계를 쓴다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-09"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0209-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x²+y²=25 위 (3,4)에서 dy/dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0209-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x²+y²=25 위 (3,4)에서 dy/dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−3/4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0209-quiz",
+                "kind": "quiz",
+                "prompt": "x²+y²=25 위 (3,4)에서 dy/dx를 구하세요.",
+                "options": [
+                  "−3/4",
+                  "3/4",
+                  "−4/3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: −3/4",
+                "incorrect_feedback": "정답은 −3/4입니다. x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0209-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "음함수·역함수의 미분: 음함수는 양변을 x로 미분해 y′를 구한다. 역함수는 (f⁻¹)′(y)=1/f′(x) 관계를 쓴다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "이계도함수",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-10에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0210-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "이계도함수"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0210-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "이계도함수",
+              "text": "이계도함수 f′′은 도함수 f′을 다시 미분한 값이며 함수의 굽음이나 가속도 해석에 쓸 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-10"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0210-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x⁴의 이계도함수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x³이면 f′=3x², f′′=6x이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0210-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x⁴의 이계도함수를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "f(x)=x³이면 f′=3x², f′′=6x이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12x²"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0210-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x⁴의 이계도함수를 구하세요.",
+                "options": [
+                  "12x²",
+                  "4x³",
+                  "12x³"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 12x²",
+                "incorrect_feedback": "정답은 12x²입니다. f(x)=x³이면 f′=3x², f′′=6x이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "f(x)=x³이면 f′=3x², f′′=6x이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0210-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "이계도함수: 이계도함수 f′′은 도함수 f′을 다시 미분한 값이며 함수의 굽음이나 가속도 해석에 쓸 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "접선의 방정식",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-11에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0211-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "접선의 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0211-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "접선의 방정식",
+              "text": "곡선 y=f(x)의 x=a에서 접선은 y−f(a)=f′(a)(x−a)이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-11"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0211-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=x²의 x=2에서 접선의 방정식을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0211-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x²의 x=2에서 접선의 방정식을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "y=4x−4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0211-quiz",
+                "kind": "quiz",
+                "prompt": "y=x²의 x=2에서 접선의 방정식을 구하세요.",
+                "options": [
+                  "y=4x−4",
+                  "y=2x",
+                  "y=4x+4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: y=4x−4",
+                "incorrect_feedback": "정답은 y=4x−4입니다. y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0211-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "접선의 방정식: 곡선 y=f(x)의 x=a에서 접선은 y−f(a)=f′(a)(x−a)이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "미분으로 그래프 개형 그리기",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-12에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0212-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "미분으로 그래프 개형 그리기"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0212-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "미분으로 그래프 개형 그리기",
+              "text": "도함수의 부호로 증가·감소와 극값을 정하고, 이계도함수와 주요 함숫값을 이용해 그래프 개형을 설명한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-12"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0212-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x²은 x=0에서 극댓값인가 극솟값인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0212-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x²은 x=0에서 극댓값인가 극솟값인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "극솟값"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0212-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x²은 x=0에서 극댓값인가 극솟값인가요?",
+                "options": [
+                  "극솟값",
+                  "극댓값",
+                  "극값이 없다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 극솟값",
+                "incorrect_feedback": "정답은 극솟값입니다. f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0212-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "미분으로 그래프 개형 그리기: 도함수의 부호로 증가·감소와 극값을 정하고, 이계도함수와 주요 함숫값을 이용해 그래프 개형을 설명한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "방정식·부등식의 미분 활용",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-13에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0213-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "방정식·부등식의 미분 활용"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0213-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "방정식·부등식의 미분 활용",
+              "text": "함수의 증가·감소와 최솟값을 사용해 방정식의 근이나 부등식의 참을 설명한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-13"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0213-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "모든 실수 x에 대해 x²+4의 최솟값은?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0213-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "모든 실수 x에 대해 x²+4의 최솟값은?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0213-quiz",
+                "kind": "quiz",
+                "prompt": "모든 실수 x에 대해 x²+4의 최솟값은?",
+                "options": [
+                  "4",
+                  "0",
+                  "없다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 4",
+                "incorrect_feedback": "정답은 4입니다. 모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0213-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "방정식·부등식의 미분 활용: 함수의 증가·감소와 최솟값을 사용해 방정식의 근이나 부등식의 참을 설명한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "속도와 가속도",
+      "unit": "미분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적02-14에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0214-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "속도와 가속도"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0214-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "속도와 가속도",
+              "text": "위치 s(t)의 도함수는 속도 v(t), 속도의 도함수는 가속도 a(t)이다. 이 단원은 직선 운동으로 다룬다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적02-14"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0214-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "s(t)=t³일 때 t=2에서 가속도를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "s(t)=t³−3t이면 v=3t²−3, a=6t이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0214-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "s(t)=t³일 때 t=2에서 가속도를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "s(t)=t³−3t이면 v=3t²−3, a=6t이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0214-quiz",
+                "kind": "quiz",
+                "prompt": "s(t)=t³일 때 t=2에서 가속도를 구하세요.",
+                "options": [
+                  "12",
+                  "6",
+                  "8"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 12",
+                "incorrect_feedback": "정답은 12입니다. s(t)=t³−3t이면 v=3t²−3, a=6t이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "s(t)=t³−3t이면 v=3t²−3, a=6t이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0214-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "속도와 가속도: 위치 s(t)의 도함수는 속도 v(t), 속도의 도함수는 가속도 a(t)이다. 이 단원은 직선 운동으로 다룬다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "치환적분법",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-01에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0301-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "치환적분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0301-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "치환적분법",
+              "text": "합성함수의 안쪽 미분 인수가 함께 있으면 u=g(x)로 치환해 적분을 간단히 한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0301-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫2x e^(x²)dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0301-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫2x e^(x²)dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "e^(x²)+C"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0301-quiz",
+                "kind": "quiz",
+                "prompt": "∫2x e^(x²)dx를 구하세요.",
+                "options": [
+                  "e^(x²)+C",
+                  "2e^(x²)+C",
+                  "x²e^(x²)+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: e^(x²)+C",
+                "incorrect_feedback": "정답은 e^(x²)+C입니다. ∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫2x cos(x²)dx에서 u=x²로 두면 ∫cos u du=sin(x²)+C이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0301-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "치환적분법: 합성함수의 안쪽 미분 인수가 함께 있으면 u=g(x)로 치환해 적분을 간단히 한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "부분적분법",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-02에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0302-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "부분적분법"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0302-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "부분적분법",
+              "text": "∫u dv=uv−∫v du를 사용하면 곱으로 된 함수의 적분을 다른 적분으로 바꿀 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0302-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫x eˣ dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0302-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫x eˣ dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x−1)eˣ+C"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0302-quiz",
+                "kind": "quiz",
+                "prompt": "∫x eˣ dx를 구하세요.",
+                "options": [
+                  "(x−1)eˣ+C",
+                  "xeˣ+C",
+                  "(x+1)eˣ+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: (x−1)eˣ+C",
+                "incorrect_feedback": "정답은 (x−1)eˣ+C입니다. ∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0302-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "부분적분법: ∫u dv=uv−∫v du를 사용하면 곱으로 된 함수의 적분을 다른 적분으로 바꿀 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "여러 함수의 부정·정적분",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-03에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0303-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "여러 함수의 부정·정적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0303-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "여러 함수의 부정·정적분",
+              "text": "기본 함수의 원시함수와 정적분을 구하고 적분상수 또는 구간 끝값을 분명히 표시한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0303-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫₀¹ 2x dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0303-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫₀¹ 2x dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0303-quiz",
+                "kind": "quiz",
+                "prompt": "∫₀¹ 2x dx를 구하세요.",
+                "options": [
+                  "1",
+                  "2",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1",
+                "incorrect_feedback": "정답은 1입니다. ∫₀¹ eˣdx=[eˣ]₀¹=e−1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "∫₀¹ eˣdx=[eˣ]₀¹=e−1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0303-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "여러 함수의 부정·정적분: 기본 함수의 원시함수와 정적분을 구하고 적분상수 또는 구간 끝값을 분명히 표시한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "정적분과 급수의 합",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-04에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0304-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "정적분과 급수의 합"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0304-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정적분과 급수의 합",
+              "text": "구간을 잘게 나눈 직사각형 넓이의 합이 정적분으로 가까워진다. 극한을 리만 합으로 표현한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0304-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0304-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0304-quiz",
+                "kind": "quiz",
+                "prompt": "lim(n→∞)Σ(k=1..n)(1/n)은 얼마인가요?",
+                "options": [
+                  "1",
+                  "0",
+                  "n"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1",
+                "incorrect_feedback": "정답은 1입니다. lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "lim(n→∞)Σ(k=1..n)(k/n)(1/n)=∫₀¹x dx=1/2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0304-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "정적분과 급수의 합: 구간을 잘게 나눈 직사각형 넓이의 합이 정적분으로 가까워진다. 극한을 리만 합으로 표현한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "곡선으로 둘러싸인 넓이",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-05에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0305-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "곡선으로 둘러싸인 넓이"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0305-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "곡선으로 둘러싸인 넓이",
+              "text": "교점과 위아래 관계를 확인한 뒤 위쪽 함수에서 아래쪽 함수를 뺀 정적분으로 넓이를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0305-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0305-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0305-quiz",
+                "kind": "quiz",
+                "prompt": "y=x와 x축 사이, 0≤x≤2의 넓이를 구하세요.",
+                "options": [
+                  "2",
+                  "4",
+                  "1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 2",
+                "incorrect_feedback": "정답은 2입니다. 0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "0≤x≤1에서 x≥x²이므로 두 곡선 사이 넓이는 ∫₀¹(x−x²)dx=1/6이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0305-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "곡선으로 둘러싸인 넓이: 교점과 위아래 관계를 확인한 뒤 위쪽 함수에서 아래쪽 함수를 뺀 정적분으로 넓이를 구한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "회전체의 부피",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-06에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0306-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "회전체의 부피"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0306-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "회전체의 부피",
+              "text": "곡선과 축으로 둘러싸인 영역을 회전한 입체의 부피는 단면적을 적분해 구할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0306-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0306-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12π"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0306-quiz",
+                "kind": "quiz",
+                "prompt": "반지름 2인 원판을 0≤x≤3 구간에서 쌓은 원기둥 부피는?",
+                "options": [
+                  "12π",
+                  "6π",
+                  "4π"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 12π",
+                "incorrect_feedback": "정답은 12π입니다. y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "y=x, 0≤x≤1의 영역을 x축 둘레로 회전하면 V=∫₀¹πx²dx=π/3이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0306-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "회전체의 부피: 곡선과 축으로 둘러싸인 영역을 회전한 입체의 부피는 단면적을 적분해 구할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "속도와 거리의 적분",
+      "unit": "적분법",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8 공식 기준 12미적03-07에 연결한 신규 후보입니다.",
+        "수치와 상황은 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "calc15-0307-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "속도와 거리의 적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0307-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "속도와 거리의 적분",
+              "text": "속도 적분은 변위이고, 이동거리는 속도의 절댓값을 적분한다. 속도 부호가 바뀌면 구간을 나눠 계산한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12미적03-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0307-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과와 사용한 조건을 다시 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc15-0307-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의역과 공식의 적용 조건을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "calc15-0307-quiz",
+                "kind": "quiz",
+                "prompt": "0≤t≤2에서 v(t)=2인 직선 운동의 이동거리는?",
+                "options": [
+                  "4",
+                  "2",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 4",
+                "incorrect_feedback": "정답은 4입니다. v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다.",
+                "hints": [
+                  "조건과 공식을 확인하세요.",
+                  "v(t)=t−1, 0≤t≤2에서 변위는 0이고 이동거리는 ∫₀¹(1−t)dt+∫₁²(t−1)dt=1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "calc15-0307-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "속도와 거리의 적분: 속도 적분은 변위이고, 이동거리는 속도의 절댓값을 적분한다. 속도 부호가 바뀌면 구간을 나눠 계산한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
