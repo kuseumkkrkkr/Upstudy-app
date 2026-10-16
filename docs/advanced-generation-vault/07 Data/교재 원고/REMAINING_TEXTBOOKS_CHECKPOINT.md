@@ -14,6 +14,12 @@
 - 두 V2 생성기는 현재 후보 SHA가 직전 검증 SHA와 같을 때만 `passed_flutter_activity_compatibility_suite` 결과·검증 HEAD·명령을 다음 생성에도 보존하고, 내용 해시가 달라지면 재검증 대기로 되돌린다. 이 결과는 지정된 importer 왕복과 퀴즈 상호작용 범위만 기록하며 전체 BookWidget 과정, 교육과정 내용 적합성, 독립 수학·교사 승인으로 확장하지 않는다.
 - 2015 기하 V2 12모듈의 질문·풀이를 전수 대조해 `12기하02-05`뿐 아니라 여러 모듈에서 문제와 무관한 풀이 예시가 재사용된 것을 확인했다. 생성기에서 12개 풀이를 각 질문에 맞게 수정하고 모든 정답 키가 풀이에 포함되는 assertion을 추가했다. 02-05 직선 매개식과 원 방정식도 별도 조건·검산을 갖추도록 고쳤다. importer 왕복 및 02-05 학생 `BookWidget` 선택·피드백을 포함한 Flutter compatibility test 21/21이 통과했다. manifest 검증은 새 후보 SHA-256 `63F8D7302884E26A76CC76CE2AC44FF35F775AA5B71C288B4E6E00390474A88F`에 고정한다. 이는 자동 assertion과 저자 수준 점검이며 독립 수학·교사 검토, 전체 교재/교사 화면 및 HTML 패리티는 여전히 대기 중이다.
 
+## 2026-10-17 미적분Ⅰ(2022) V2 내용·activity 호환성 재검토
+
+- 미적분Ⅰ 신규 13모듈의 각 질문과 풀이를 대조해 기존 풀이 문장이 다른 예제를 가리키던 불일치를 수정했다. 정답 설명을 보강하고 생성 단계에 13개 해설-정답 일치, 퀴즈 키 구조 및 주요 극한·연속·평균값정리·미분·적분 산술 검사를 추가했다.
+- 기존 `type: quiz` payload를 현재 BookData `type: activity`/`kind: quiz` 계약으로 변경했다. compatibility suite가 13개 payload 왕복 보존을 확인하고, 실제 c1-0101 퀴즈의 학생 `BookWidget` 선택·피드백을 검증했다. 전체 Flutter compatibility suite 23/23 통과. 후보 SHA-256 `B8C48B468A849EB1D775C95309ED19A2BE5A42185CAAF05FA3F582EB5B355851`로 검증 결과를 고정했다.
+- 이는 저자 점검과 선택된 activity 동작 검증이다. 독립 수학·교사 검토, 학기·전체 상품 범위 검토, 기존 HTML 패리티와 권리 확인은 pending이며 출판 부적격이다.
+
 ## 2026-10-17 vectorInnerProduct reader 연결 업데이트
 
 - hotfix의 한정된 `BookActivity` 모델·네이티브 activity renderer를 main에 가져와 `TextbookActivityBlock`이 `vectorOperation`/`vectorInnerProduct`를 안전한 parser 통과 시 실행하도록 연결했다. 알 수 없거나 잘못된 payload는 기존 unsupported fallback에 남는다. 서버/시험 점수 저장은 추가하지 않았다.

@@ -1,6 +1,7 @@
 """Build original candidate modules for currently untagged Calculus I standards."""
 from __future__ import annotations
 import json
+import hashlib
 from pathlib import Path
 from textbook_digest import canonical_file_sha256
 
@@ -8,27 +9,33 @@ ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 OUT = MANUSCRIPTS / "미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json"
 PACKAGE = MANUSCRIPTS / "미적분Ⅰ_2022개정_누락기준_Batch1_원고패키지"
+OFFICIAL = ROOT / "work/official-curriculum/2022_math_standards.json"
 SPECS = [
- ("01-01","함수의 극한의 뜻","x가 a에 가까워질 때 f(x)가 한 값 L에 가까워지면 그 값을 함수의 극한이라 한다.","f(x)=2x+1이면 x가 3에 가까워질 때 f(x)는 7에 가까워진다.","x가 2에 가까워질 때 3x−1의 극한을 구하세요.","5","x 대신 2에 가까운 값을 대입해 보세요.","5",["5","3","6"]),
- ("01-02","극한의 성질","각 극한이 존재하면 합·차·곱의 극한은 극한값의 합·차·곱이고, 분모의 극한이 0이 아니면 몫도 나눌 수 있다.","lim(x→2)(x²+3x)=4+6=10이다.","lim(x→1)(x²+2x)를 구하세요.","3","다항식은 대입으로 극한값을 구할 수 있습니다.","3",["3","2","4"]),
- ("01-03","극한으로 탐구하는 연속","f가 x=a에서 연속이려면 lim(x→a)f(x)=f(a)이어야 한다. 좌극한·우극한·함숫값을 함께 확인한다.","f(x)=x+2는 a=1에서 극한값 3과 함숫값 3이 같아 연속이다.","f(x)=x²가 x=2에서 연속인지 판정하세요.","연속이다. 극한값과 함숫값이 모두 4이다.","극한과 그 점의 실제 함숫값을 각각 구하세요.","연속",["연속","불연속","판정 불가"]),
- ("01-04","연속함수의 성질","닫힌구간에서 연속인 함수는 최댓값과 최솟값을 가지며, 양 끝에서 부호가 바뀌면 구간 안에 영점이 있다.","f(x)=x−2는 [1,3]에서 연속이고 f(1)<0<f(3)이므로 (1,3)에 영점 2가 있다.","g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?","있다. g(0)<0<g(2)이므로 영점 1이 있다.","양 끝 함숫값의 부호를 확인하세요.","있다",["있다","없다","항상 두 개"]),
- ("02-06","평균값 정리","[a,b]에서 연속이고 (a,b)에서 미분가능한 함수는 어떤 c에서 f′(c)=(f(b)−f(a))/(b−a)를 만족한다.","f(x)=x², [1,3]에서 평균 기울기는 4이다. f′(c)=2c=4이므로 c=2이다.","f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요.","c=1","평균 기울기는 2이고 f′(x)=2x입니다.","1",["1","0","2"]),
- ("02-09","미분으로 방정식·부등식 해결","도함수의 부호로 함수의 증가·감소를 분석하면 방정식의 근 개수나 부등식의 참을 설명할 수 있다.","x≥0에서 f(x)=x²+1은 f′(x)=2x≥0이므로 증가하고 f(x)≥f(0)=1이다.","x≥0에서 x²+4의 최솟값을 구하세요.","4","도함수의 부호 또는 제곱의 범위를 이용하세요.","4",["4","0","최솟값 없음"]),
- ("02-10","직선 운동의 속도와 가속도","위치 s(t)의 도함수 v(t)=s′(t)는 속도, 속도의 도함수 a(t)=v′(t)는 가속도다. 여기서는 직선 운동만 다룬다.","s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다.","s(t)=3t²인 물체의 t=2에서 속도를 구하세요.","12","먼저 s(t)를 미분해 v(t)를 구한 뒤 t=2를 대입합니다.","12",["12","6","9"]),
- ("03-01","부정적분의 뜻","F′(x)=f(x)이면 F를 f의 한 부정적분이라 하며, 모든 부정적분은 적분상수 C만큼 차이가 난다.","(x³/3)′=x²이므로 ∫x²dx=x³/3+C이다.","∫2x dx를 구하세요.","x²+C","미분하면 2x가 되는 함수를 찾으세요.","x²+C",["x²+C","2x²+C","x+C"]),
- ("03-02","다항함수의 부정적분","적분은 실수배와 합·차에 대해 항별로 계산하며, xⁿ(n≠−1)은 xⁿ⁺¹/(n+1)+C로 적분한다.","∫(3x²−2)dx=x³−2x+C이다.","∫(2x+4)dx를 구하세요.","x²+4x+C","각 항을 따로 적분하고 상수항을 붙이세요.","x²+4x+C",["x²+4x+C","2x²+4x+C","x²+4+C"]),
- ("03-03","정적분의 개념과 성질","정적분은 구간의 누적량을 나타내며 구간을 나누면 적분값이 더해진다. 그래프가 축 아래에 있으면 부호 있는 넓이로 계산한다.","∫₀² x dx는 삼각형 넓이 2와 같고, ∫₀¹x dx+∫₁²x dx=1/2+3/2=2이다.","∫₀¹ 2 dx를 계산하세요.","2","높이 2인 직사각형의 폭은 1입니다.","2",["2","1","0"]),
- ("03-04","부정적분과 정적분","F′=f이면 ∫ₐᵇ f(x)dx=F(b)−F(a)이다. 다항함수에서는 항별 부정적분을 구해 끝값의 차를 계산한다.","∫₀² 2x dx=[x²]₀²=4이다.","∫₁³ 2x dx를 구하세요.","8","원시함수 x²에 3과 1을 대입해 차를 구합니다.","8",["8","6","10"]),
- ("03-05","곡선 사이의 넓이","위쪽 곡선에서 아래쪽 곡선을 뺀 함수를 적분하면 두 그래프 사이 넓이를 구할 수 있다.","y=2와 y=0 사이, x∈[0,3]의 넓이는 ∫₀³2dx=6이다.","y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요.","2","삼각형의 밑변은 2, 높이는 2입니다.","2",["2","4","1"]),
- ("03-06","직선 운동에서 적분과 거리","속도 v(t)를 적분하면 변위가 된다. 속도가 부호를 바꾸지 않는 구간에서는 이동 거리는 속도의 절댓값을 적분한 값이다.","0≤t≤3에서 v(t)=2이면 변위와 이동 거리는 각각 ∫₀³2dt=6이다.","0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.","12","일정한 속도×시간으로 계산합니다.","12",["12","7","1"]),
+ ("01-01","함수의 극한의 뜻","x가 a에 가까워질 때 f(x)가 한 값 L에 가까워지면 그 값을 함수의 극한이라 한다.","x가 2에 가까워지면 3x−1은 3×2−1=5에 가까워진다. 일차함수는 연속이므로 극한은 대입값 5이다.","x가 2에 가까워질 때 3x−1의 극한을 구하세요.","3×2−1=5이므로 극한값은 5이다.","x 대신 2에 가까운 값을 대입해 보세요.","5",["5","3","6"]),
+ ("01-02","극한의 성질","각 극한이 존재하면 합·차·곱의 극한은 극한값의 합·차·곱이고, 분모의 극한이 0이 아니면 몫도 나눌 수 있다.","x→1에서 x²→1이고 2x→2이므로 합의 극한은 1+2=3이다.","lim(x→1)(x²+2x)를 구하세요.","1²+2×1=3이므로 극한값은 3이다.","다항식은 대입으로 극한값을 구할 수 있습니다.","3",["3","2","4"]),
+ ("01-03","극한으로 탐구하는 연속","f가 x=a에서 연속이려면 lim(x→a)f(x)=f(a)이어야 한다. 좌극한·우극한·함숫값을 함께 확인한다.","f(x)=x²에서 x→2일 때 극한값은 2²=4이고 f(2)=4이다. 두 값이 같으므로 x=2에서 연속이다.","f(x)=x²가 x=2에서 연속인지 판정하세요.","극한값 4와 함숫값 4가 같으므로 연속이다.","극한과 그 점의 실제 함숫값을 각각 구하세요.","연속",["연속","불연속","판정 불가"]),
+ ("01-04","연속함수의 성질","닫힌구간에서 연속인 함수는 최댓값과 최솟값을 가지며, 양 끝에서 부호가 바뀌면 구간 안에 영점이 있다.","g(0)=−1<0, g(2)=1>0이며 g는 [0,2]에서 연속이다. 중간값 정리에 따라 영점이 있고 g(1)=0이므로 영점은 1이다. 따라서 구간 안에 영점이 있다.","g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?","있다. g(0)<0<g(2)이므로 영점 1이 있다.","양 끝 함숫값의 부호를 확인하세요.","있다",["있다","없다","항상 두 개"]),
+ ("02-06","평균값 정리","[a,b]에서 연속이고 (a,b)에서 미분가능한 함수는 어떤 c에서 f′(c)=(f(b)−f(a))/(b−a)를 만족한다.","f(x)=x²의 [0,2] 평균변화율은 (4−0)/(2−0)=2이다. f′(x)=2x이므로 2c=2에서 c=1이다.","f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요.","평균기울기는 2이고 f′(1)=2이므로 c=1이다.","평균 기울기는 2이고 f′(x)=2x입니다.","1",["1","0","2"]),
+ ("02-09","미분으로 방정식·부등식 해결","도함수의 부호로 함수의 증가·감소를 분석하면 방정식의 근 개수나 부등식의 참을 설명할 수 있다.","x≥0이면 x²≥0이다. 따라서 x²+4≥4이고 x=0에서 등호가 성립하므로 최솟값은 4이다.","x≥0에서 x²+4의 최솟값을 구하세요.","x²≥0이고 x=0에서 등호가 성립하므로 최솟값은 4이다.","도함수의 부호 또는 제곱의 범위를 이용하세요.","4",["4","0","최솟값 없음"]),
+ ("02-10","직선 운동의 속도와 가속도","위치 s(t)의 도함수 v(t)=s′(t)는 속도, 속도의 도함수 a(t)=v′(t)는 가속도다. 여기서는 직선 운동만 다룬다.","s(t)=3t²이면 v(t)=s′(t)=6t이다. t=2에서 v(2)=12이므로 속도는 12이다.","s(t)=3t²인 물체의 t=2에서 속도를 구하세요.","v(t)=s′(t)=6t이므로 v(2)=12이다.","먼저 s(t)를 미분해 v(t)를 구한 뒤 t=2를 대입합니다.","12",["12","6","9"]),
+ ("03-01","부정적분의 뜻","F′(x)=f(x)이면 F를 f의 한 부정적분이라 하며, 모든 부정적분은 적분상수 C만큼 차이가 난다.","(x²)′=2x이므로 ∫2x dx=x²+C이다.","∫2x dx를 구하세요.","x²+C를 미분하면 2x이므로 부정적분은 x²+C이다.","미분하면 2x가 되는 함수를 찾으세요.","x²+C",["x²+C","2x²+C","x+C"]),
+ ("03-02","다항함수의 부정적분","적분은 실수배와 합·차에 대해 항별로 계산하며, xⁿ(n≠−1)은 xⁿ⁺¹/(n+1)+C로 적분한다.","∫2x dx=x²+C이고 ∫4 dx=4x이므로 ∫(2x+4)dx=x²+4x+C이다.","∫(2x+4)dx를 구하세요.","∫2x dx=x²이고 ∫4 dx=4x이므로 x²+4x+C이다.","각 항을 따로 적분하고 상수항을 붙이세요.","x²+4x+C",["x²+4x+C","2x²+4x+C","x²+4+C"]),
+ ("03-03","정적분의 개념과 성질","정적분은 구간의 누적량을 나타내며 구간을 나누면 적분값이 더해진다. 그래프가 축 아래에 있으면 부호 있는 넓이로 계산한다.","∫₀¹2dx=[2x]₀¹=2−0=2이다. 높이 2, 폭 1인 직사각형의 넓이와도 같다.","∫₀¹ 2 dx를 계산하세요.","[2x]₀¹=2−0=2이므로 정적분은 2이다.","높이 2인 직사각형의 폭은 1입니다.","2",["2","1","0"]),
+ ("03-04","부정적분과 정적분","F′=f이면 ∫ₐᵇ f(x)dx=F(b)−F(a)이다. 다항함수에서는 항별 부정적분을 구해 끝값의 차를 계산한다.","∫₁³2x dx=[x²]₁³=3²−1²=9−1=8이다.","∫₁³ 2x dx를 구하세요.","F(3)−F(1)=3²−1²=9−1=8이다.","원시함수 x²에 3과 1을 대입해 차를 구합니다.","8",["8","6","10"]),
+ ("03-05","곡선 사이의 넓이","위쪽 곡선에서 아래쪽 곡선을 뺀 함수를 적분하면 두 그래프 사이 넓이를 구할 수 있다.","[0,2]에서 y=x는 x축 위에 있다. 두 그래프 사이 넓이는 ∫₀²x dx=[x²/2]₀²=2이다.","y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요.","∫₀²x dx=[x²/2]₀²=2이므로 넓이는 2이다.","삼각형의 밑변은 2, 높이는 2입니다.","2",["2","4","1"]),
+ ("03-06","직선 운동에서 적분과 거리","속도 v(t)를 적분하면 변위가 된다. 속도가 부호를 바꾸지 않는 구간에서는 이동 거리는 속도의 절댓값을 적분한 값이다.","속도가 3으로 일정하고 0≤t≤4이므로 이동 거리는 ∫₀⁴3dt=3×4=12이다.","0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.","속력×시간=3×4=12이므로 이동 거리는 12이다.","일정한 속도×시간으로 계산합니다.","12",["12","7","1"]),
 ]
 
 def quiz(s, slug):
  code,title,concept,example,question,solution,hint,answer,options=s
- return {"type":"quiz","id":slug+"-quiz","question":question,"options":options,"correctIndex":options.index(answer),"explanation":solution}
+ return {"type":"activity","activity":{"id":slug+"-quiz","kind":"quiz","prompt":question,"options":options,"correct_index":options.index(answer),"correct_feedback":"맞아요. "+solution,"incorrect_feedback":"풀이의 조건과 계산을 확인하세요. "+solution,"hints":[hint]}}
 
 def main():
+ official_data=json.loads(OFFICIAL.read_text(encoding="utf-8"))
+ official_by_code={row["code"]:row["criterion"] for row in official_data["standards"]}
+ missing_codes=["12미적Ⅰ-"+s[0] for s in SPECS if "12미적Ⅰ-"+s[0] not in official_by_code]
+ if missing_codes: raise RuntimeError(f"Codes absent from extracted official 2022 table: {missing_codes}")
+ official_statements=[{"code":"12미적Ⅰ-"+s[0],"criterion":official_by_code["12미적Ⅰ-"+s[0]]} for s in SPECS]
  chapters=[]; codes=[]
  for code,title,concept,example,question,solution,hint,answer,options in SPECS:
   full="12미적Ⅰ-"+code; codes.append(full); slug="c1-"+code.replace("-","")
@@ -43,6 +50,12 @@ def main():
  book={"schema_version":2,"title":"미적분Ⅰ · 미연결 기준 보완 12모듈 후보","subtitle":"극한·연속, 미분 활용, 적분","category":"concept_textbook_prototype","curriculum_version":"2022","tags":["미적분Ⅰ","2022 개정","추가 원고 후보","가상 예시",*codes],"standard_codes":codes,"chapters":chapters}
  ids=[p["id"] for c in chapters for p in c["pages"]]
  assert len(ids)==65 and len(set(ids))==65
+ assert all(s[7] in s[3] and s[7] in s[5] for s in SPECS)
+ assert all(c["pages"][3]["blocks"][-1]["type"]=="activity" and c["pages"][3]["blocks"][-1]["activity"]["kind"]=="quiz" for c in chapters)
+ assert 3*2-1==5 and 1**2+2*1==3 and 2**2==4 and 1**2+2**2==5
+ assert (4-0)/(2-0)==2 and 2/2==1 and 0**2+4==4 and 6*2==12
+ assert 2*2==4 and 2*2+4==8 and 2*(1-0)==2 and 3**2-1**2==8
+ assert (2**2)/2==2 and 3*4==12
  assert 3*2+4==10 and 2*2+4==8 and (2-0)/(2-0)==1 and 2**2+1==5 and 3*2*2==12 and 3*3==9
  OUT.write_text(json.dumps(book,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  PACKAGE.mkdir(parents=True,exist_ok=True)
@@ -50,7 +63,10 @@ def main():
  try: old=json.loads((PACKAGE/"REVIEW_MANIFEST.json").read_text(encoding="utf-8"))
  except (OSError,json.JSONDecodeError): pass
  digest=canonical_file_sha256(OUT)
- manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2022_hwp_criterion_table","module_count":13,"page_count":65,"native_activity_count":13,"native_activity_kinds":["quiz"],"math_arithmetic_check_status":"pass_for_listed_examples_only","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","curriculum_review_status":"official_codes_verified; semester_and_full_scope_pending","math_review_status":"author_spot_checks_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; existing graph HTML remains independent and parity_unreviewed","integration_status":"not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if old.get("bookdata_sha256")==digest else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if old.get("bookdata_sha256")==digest else None}
+ manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2022_hwp_criterion_table","module_count":13,"page_count":65,"native_activity_count":13,"native_activity_kinds":["quiz"],"math_arithmetic_check_status":"pass_for_listed_examples_only","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","curriculum_review_status":"official_code_and_statement_mapped_from_2022_hwp_extract; content_alignment_and_product_scope_pending","math_review_status":"author_spot_checks_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; existing graph HTML remains independent and parity_unreviewed","integration_status":"not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if old.get("bookdata_sha256")==digest else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if old.get("bookdata_sha256")==digest else None}
+ same_candidate=old.get("bookdata_sha256")==digest
+ manifest.update({"official_source_file":"work/official-curriculum/2022_math_standards.json","official_source_sha256":hashlib.sha256(OFFICIAL.read_bytes()).hexdigest().upper(),"official_standards":official_statements})
+ manifest.update({"app_activity_status":old.get("app_activity_status","pending_current_hash_validation") if same_candidate else "pending_current_hash_validation","runtime_validator_command":old.get("runtime_validator_command") if same_candidate else None,"runtime_validator_candidate_sha256":old.get("runtime_validator_candidate_sha256") if same_candidate else None})
  (PACKAGE/"REVIEW_MANIFEST.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  (PACKAGE/"README.md").write_text(f"# {book['title']}\n\n미연결 공식 기준 13개를 보완하는 13모듈·65쪽 V2 원고 후보입니다. 예시는 직접 만든 가상 자료이며, 산술 확인은 저자 점검 범위입니다. 교사 검수·권리 결정 전 출판 부적격입니다. 기존 HTML 상호작용과의 parity는 검증하지 않았습니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n",encoding="utf-8")
  print(f"Built {len(chapters)} modules, {len(ids)} pages, {len(codes)} standard candidates; sha256={digest}")

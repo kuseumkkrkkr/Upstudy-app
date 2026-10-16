@@ -18,6 +18,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의뜻_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_위치벡터와좌표_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -210,6 +211,37 @@ void main() {
     await tester.tap(find.text('정답 확인'));
     await tester.pumpAndSettle();
     expect(find.text('정답입니다: (x,y)=(0,1)+t(3,2)'), findsOneWidget);
+  });
+
+  testWidgets('Calculus I 2022 V2 quiz imports and runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activities = _activities(source);
+    expect(activities, hasLength(13));
+    final activity = activities.singleWhere(
+      (activity) => activity['id'] == 'c1-0101-quiz',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('x가 2에 가까워질 때'), findsOneWidget);
+    await tester.tap(find.text('5'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('맞아요. 3×2−1=5'), findsOneWidget);
   });
 
   testWidgets('vector meaning V2 practice runs in the student reader', (

@@ -98,7 +98,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "f(x)=2x+1이면 x가 3에 가까워질 때 f(x)는 7에 가까워진다. 따라서 답은 5."
+              "text": "x가 2에 가까워지면 3x−1은 3×2−1=5에 가까워진다. 일차함수는 연속이므로 극한은 대입값 5이다. 따라서 답은 3×2−1=5이므로 극한값은 5이다.."
             },
             {
               "type": "verification",
@@ -125,7 +125,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "5"
+              "text": "3×2−1=5이므로 극한값은 5이다."
             },
             {
               "type": "answer",
@@ -133,16 +133,23 @@
               "text": "5"
             },
             {
-              "type": "quiz",
-              "id": "c1-0101-quiz",
-              "question": "x가 2에 가까워질 때 3x−1의 극한을 구하세요.",
-              "options": [
-                "5",
-                "3",
-                "6"
-              ],
-              "correctIndex": 0,
-              "explanation": "5"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0101-quiz",
+                "kind": "quiz",
+                "prompt": "x가 2에 가까워질 때 3x−1의 극한을 구하세요.",
+                "options": [
+                  "5",
+                  "3",
+                  "6"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 3×2−1=5이므로 극한값은 5이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 3×2−1=5이므로 극한값은 5이다.",
+                "hints": [
+                  "x 대신 2에 가까운 값을 대입해 보세요."
+                ]
+              }
             }
           ]
         },
@@ -224,7 +231,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "lim(x→2)(x²+3x)=4+6=10이다. 따라서 답은 3."
+              "text": "x→1에서 x²→1이고 2x→2이므로 합의 극한은 1+2=3이다. 따라서 답은 1²+2×1=3이므로 극한값은 3이다.."
             },
             {
               "type": "verification",
@@ -251,7 +258,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "3"
+              "text": "1²+2×1=3이므로 극한값은 3이다."
             },
             {
               "type": "answer",
@@ -259,16 +266,23 @@
               "text": "3"
             },
             {
-              "type": "quiz",
-              "id": "c1-0102-quiz",
-              "question": "lim(x→1)(x²+2x)를 구하세요.",
-              "options": [
-                "3",
-                "2",
-                "4"
-              ],
-              "correctIndex": 0,
-              "explanation": "3"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0102-quiz",
+                "kind": "quiz",
+                "prompt": "lim(x→1)(x²+2x)를 구하세요.",
+                "options": [
+                  "3",
+                  "2",
+                  "4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 1²+2×1=3이므로 극한값은 3이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 1²+2×1=3이므로 극한값은 3이다.",
+                "hints": [
+                  "다항식은 대입으로 극한값을 구할 수 있습니다."
+                ]
+              }
             }
           ]
         },
@@ -350,7 +364,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "f(x)=x+2는 a=1에서 극한값 3과 함숫값 3이 같아 연속이다. 따라서 답은 연속이다. 극한값과 함숫값이 모두 4이다.."
+              "text": "f(x)=x²에서 x→2일 때 극한값은 2²=4이고 f(2)=4이다. 두 값이 같으므로 x=2에서 연속이다. 따라서 답은 극한값 4와 함숫값 4가 같으므로 연속이다.."
             },
             {
               "type": "verification",
@@ -377,7 +391,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "연속이다. 극한값과 함숫값이 모두 4이다."
+              "text": "극한값 4와 함숫값 4가 같으므로 연속이다."
             },
             {
               "type": "answer",
@@ -385,16 +399,23 @@
               "text": "연속"
             },
             {
-              "type": "quiz",
-              "id": "c1-0103-quiz",
-              "question": "f(x)=x²가 x=2에서 연속인지 판정하세요.",
-              "options": [
-                "연속",
-                "불연속",
-                "판정 불가"
-              ],
-              "correctIndex": 0,
-              "explanation": "연속이다. 극한값과 함숫값이 모두 4이다."
+              "type": "activity",
+              "activity": {
+                "id": "c1-0103-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x²가 x=2에서 연속인지 판정하세요.",
+                "options": [
+                  "연속",
+                  "불연속",
+                  "판정 불가"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 극한값 4와 함숫값 4가 같으므로 연속이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 극한값 4와 함숫값 4가 같으므로 연속이다.",
+                "hints": [
+                  "극한과 그 점의 실제 함숫값을 각각 구하세요."
+                ]
+              }
             }
           ]
         },
@@ -476,7 +497,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "f(x)=x−2는 [1,3]에서 연속이고 f(1)<0<f(3)이므로 (1,3)에 영점 2가 있다. 따라서 답은 있다. g(0)<0<g(2)이므로 영점 1이 있다.."
+              "text": "g(0)=−1<0, g(2)=1>0이며 g는 [0,2]에서 연속이다. 중간값 정리에 따라 영점이 있고 g(1)=0이므로 영점은 1이다. 따라서 구간 안에 영점이 있다. 따라서 답은 있다. g(0)<0<g(2)이므로 영점 1이 있다.."
             },
             {
               "type": "verification",
@@ -511,16 +532,23 @@
               "text": "있다"
             },
             {
-              "type": "quiz",
-              "id": "c1-0104-quiz",
-              "question": "g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?",
-              "options": [
-                "있다",
-                "없다",
-                "항상 두 개"
-              ],
-              "correctIndex": 0,
-              "explanation": "있다. g(0)<0<g(2)이므로 영점 1이 있다."
+              "type": "activity",
+              "activity": {
+                "id": "c1-0104-quiz",
+                "kind": "quiz",
+                "prompt": "g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?",
+                "options": [
+                  "있다",
+                  "없다",
+                  "항상 두 개"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 있다. g(0)<0<g(2)이므로 영점 1이 있다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 있다. g(0)<0<g(2)이므로 영점 1이 있다.",
+                "hints": [
+                  "양 끝 함숫값의 부호를 확인하세요."
+                ]
+              }
             }
           ]
         },
@@ -602,7 +630,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "f(x)=x², [1,3]에서 평균 기울기는 4이다. f′(c)=2c=4이므로 c=2이다. 따라서 답은 c=1."
+              "text": "f(x)=x²의 [0,2] 평균변화율은 (4−0)/(2−0)=2이다. f′(x)=2x이므로 2c=2에서 c=1이다. 따라서 답은 평균기울기는 2이고 f′(1)=2이므로 c=1이다.."
             },
             {
               "type": "verification",
@@ -629,7 +657,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "c=1"
+              "text": "평균기울기는 2이고 f′(1)=2이므로 c=1이다."
             },
             {
               "type": "answer",
@@ -637,16 +665,23 @@
               "text": "1"
             },
             {
-              "type": "quiz",
-              "id": "c1-0206-quiz",
-              "question": "f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요.",
-              "options": [
-                "1",
-                "0",
-                "2"
-              ],
-              "correctIndex": 0,
-              "explanation": "c=1"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0206-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요.",
+                "options": [
+                  "1",
+                  "0",
+                  "2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 평균기울기는 2이고 f′(1)=2이므로 c=1이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 평균기울기는 2이고 f′(1)=2이므로 c=1이다.",
+                "hints": [
+                  "평균 기울기는 2이고 f′(x)=2x입니다."
+                ]
+              }
             }
           ]
         },
@@ -728,7 +763,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "x≥0에서 f(x)=x²+1은 f′(x)=2x≥0이므로 증가하고 f(x)≥f(0)=1이다. 따라서 답은 4."
+              "text": "x≥0이면 x²≥0이다. 따라서 x²+4≥4이고 x=0에서 등호가 성립하므로 최솟값은 4이다. 따라서 답은 x²≥0이고 x=0에서 등호가 성립하므로 최솟값은 4이다.."
             },
             {
               "type": "verification",
@@ -755,7 +790,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "4"
+              "text": "x²≥0이고 x=0에서 등호가 성립하므로 최솟값은 4이다."
             },
             {
               "type": "answer",
@@ -763,16 +798,23 @@
               "text": "4"
             },
             {
-              "type": "quiz",
-              "id": "c1-0209-quiz",
-              "question": "x≥0에서 x²+4의 최솟값을 구하세요.",
-              "options": [
-                "4",
-                "0",
-                "최솟값 없음"
-              ],
-              "correctIndex": 0,
-              "explanation": "4"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0209-quiz",
+                "kind": "quiz",
+                "prompt": "x≥0에서 x²+4의 최솟값을 구하세요.",
+                "options": [
+                  "4",
+                  "0",
+                  "최솟값 없음"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. x²≥0이고 x=0에서 등호가 성립하므로 최솟값은 4이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. x²≥0이고 x=0에서 등호가 성립하므로 최솟값은 4이다.",
+                "hints": [
+                  "도함수의 부호 또는 제곱의 범위를 이용하세요."
+                ]
+              }
             }
           ]
         },
@@ -854,7 +896,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다. 따라서 답은 12."
+              "text": "s(t)=3t²이면 v(t)=s′(t)=6t이다. t=2에서 v(2)=12이므로 속도는 12이다. 따라서 답은 v(t)=s′(t)=6t이므로 v(2)=12이다.."
             },
             {
               "type": "verification",
@@ -881,7 +923,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "12"
+              "text": "v(t)=s′(t)=6t이므로 v(2)=12이다."
             },
             {
               "type": "answer",
@@ -889,16 +931,23 @@
               "text": "12"
             },
             {
-              "type": "quiz",
-              "id": "c1-0210-quiz",
-              "question": "s(t)=3t²인 물체의 t=2에서 속도를 구하세요.",
-              "options": [
-                "12",
-                "6",
-                "9"
-              ],
-              "correctIndex": 0,
-              "explanation": "12"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0210-quiz",
+                "kind": "quiz",
+                "prompt": "s(t)=3t²인 물체의 t=2에서 속도를 구하세요.",
+                "options": [
+                  "12",
+                  "6",
+                  "9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. v(t)=s′(t)=6t이므로 v(2)=12이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. v(t)=s′(t)=6t이므로 v(2)=12이다.",
+                "hints": [
+                  "먼저 s(t)를 미분해 v(t)를 구한 뒤 t=2를 대입합니다."
+                ]
+              }
             }
           ]
         },
@@ -980,7 +1029,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "(x³/3)′=x²이므로 ∫x²dx=x³/3+C이다. 따라서 답은 x²+C."
+              "text": "(x²)′=2x이므로 ∫2x dx=x²+C이다. 따라서 답은 x²+C를 미분하면 2x이므로 부정적분은 x²+C이다.."
             },
             {
               "type": "verification",
@@ -1007,7 +1056,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "x²+C"
+              "text": "x²+C를 미분하면 2x이므로 부정적분은 x²+C이다."
             },
             {
               "type": "answer",
@@ -1015,16 +1064,23 @@
               "text": "x²+C"
             },
             {
-              "type": "quiz",
-              "id": "c1-0301-quiz",
-              "question": "∫2x dx를 구하세요.",
-              "options": [
-                "x²+C",
-                "2x²+C",
-                "x+C"
-              ],
-              "correctIndex": 0,
-              "explanation": "x²+C"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0301-quiz",
+                "kind": "quiz",
+                "prompt": "∫2x dx를 구하세요.",
+                "options": [
+                  "x²+C",
+                  "2x²+C",
+                  "x+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. x²+C를 미분하면 2x이므로 부정적분은 x²+C이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. x²+C를 미분하면 2x이므로 부정적분은 x²+C이다.",
+                "hints": [
+                  "미분하면 2x가 되는 함수를 찾으세요."
+                ]
+              }
             }
           ]
         },
@@ -1106,7 +1162,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "∫(3x²−2)dx=x³−2x+C이다. 따라서 답은 x²+4x+C."
+              "text": "∫2x dx=x²+C이고 ∫4 dx=4x이므로 ∫(2x+4)dx=x²+4x+C이다. 따라서 답은 ∫2x dx=x²이고 ∫4 dx=4x이므로 x²+4x+C이다.."
             },
             {
               "type": "verification",
@@ -1133,7 +1189,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "x²+4x+C"
+              "text": "∫2x dx=x²이고 ∫4 dx=4x이므로 x²+4x+C이다."
             },
             {
               "type": "answer",
@@ -1141,16 +1197,23 @@
               "text": "x²+4x+C"
             },
             {
-              "type": "quiz",
-              "id": "c1-0302-quiz",
-              "question": "∫(2x+4)dx를 구하세요.",
-              "options": [
-                "x²+4x+C",
-                "2x²+4x+C",
-                "x²+4+C"
-              ],
-              "correctIndex": 0,
-              "explanation": "x²+4x+C"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0302-quiz",
+                "kind": "quiz",
+                "prompt": "∫(2x+4)dx를 구하세요.",
+                "options": [
+                  "x²+4x+C",
+                  "2x²+4x+C",
+                  "x²+4+C"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. ∫2x dx=x²이고 ∫4 dx=4x이므로 x²+4x+C이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. ∫2x dx=x²이고 ∫4 dx=4x이므로 x²+4x+C이다.",
+                "hints": [
+                  "각 항을 따로 적분하고 상수항을 붙이세요."
+                ]
+              }
             }
           ]
         },
@@ -1232,7 +1295,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "∫₀² x dx는 삼각형 넓이 2와 같고, ∫₀¹x dx+∫₁²x dx=1/2+3/2=2이다. 따라서 답은 2."
+              "text": "∫₀¹2dx=[2x]₀¹=2−0=2이다. 높이 2, 폭 1인 직사각형의 넓이와도 같다. 따라서 답은 [2x]₀¹=2−0=2이므로 정적분은 2이다.."
             },
             {
               "type": "verification",
@@ -1259,7 +1322,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "2"
+              "text": "[2x]₀¹=2−0=2이므로 정적분은 2이다."
             },
             {
               "type": "answer",
@@ -1267,16 +1330,23 @@
               "text": "2"
             },
             {
-              "type": "quiz",
-              "id": "c1-0303-quiz",
-              "question": "∫₀¹ 2 dx를 계산하세요.",
-              "options": [
-                "2",
-                "1",
-                "0"
-              ],
-              "correctIndex": 0,
-              "explanation": "2"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0303-quiz",
+                "kind": "quiz",
+                "prompt": "∫₀¹ 2 dx를 계산하세요.",
+                "options": [
+                  "2",
+                  "1",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. [2x]₀¹=2−0=2이므로 정적분은 2이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. [2x]₀¹=2−0=2이므로 정적분은 2이다.",
+                "hints": [
+                  "높이 2인 직사각형의 폭은 1입니다."
+                ]
+              }
             }
           ]
         },
@@ -1358,7 +1428,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "∫₀² 2x dx=[x²]₀²=4이다. 따라서 답은 8."
+              "text": "∫₁³2x dx=[x²]₁³=3²−1²=9−1=8이다. 따라서 답은 F(3)−F(1)=3²−1²=9−1=8이다.."
             },
             {
               "type": "verification",
@@ -1385,7 +1455,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "8"
+              "text": "F(3)−F(1)=3²−1²=9−1=8이다."
             },
             {
               "type": "answer",
@@ -1393,16 +1463,23 @@
               "text": "8"
             },
             {
-              "type": "quiz",
-              "id": "c1-0304-quiz",
-              "question": "∫₁³ 2x dx를 구하세요.",
-              "options": [
-                "8",
-                "6",
-                "10"
-              ],
-              "correctIndex": 0,
-              "explanation": "8"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0304-quiz",
+                "kind": "quiz",
+                "prompt": "∫₁³ 2x dx를 구하세요.",
+                "options": [
+                  "8",
+                  "6",
+                  "10"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. F(3)−F(1)=3²−1²=9−1=8이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. F(3)−F(1)=3²−1²=9−1=8이다.",
+                "hints": [
+                  "원시함수 x²에 3과 1을 대입해 차를 구합니다."
+                ]
+              }
             }
           ]
         },
@@ -1484,7 +1561,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "y=2와 y=0 사이, x∈[0,3]의 넓이는 ∫₀³2dx=6이다. 따라서 답은 2."
+              "text": "[0,2]에서 y=x는 x축 위에 있다. 두 그래프 사이 넓이는 ∫₀²x dx=[x²/2]₀²=2이다. 따라서 답은 ∫₀²x dx=[x²/2]₀²=2이므로 넓이는 2이다.."
             },
             {
               "type": "verification",
@@ -1511,7 +1588,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "2"
+              "text": "∫₀²x dx=[x²/2]₀²=2이므로 넓이는 2이다."
             },
             {
               "type": "answer",
@@ -1519,16 +1596,23 @@
               "text": "2"
             },
             {
-              "type": "quiz",
-              "id": "c1-0305-quiz",
-              "question": "y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요.",
-              "options": [
-                "2",
-                "4",
-                "1"
-              ],
-              "correctIndex": 0,
-              "explanation": "2"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0305-quiz",
+                "kind": "quiz",
+                "prompt": "y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요.",
+                "options": [
+                  "2",
+                  "4",
+                  "1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. ∫₀²x dx=[x²/2]₀²=2이므로 넓이는 2이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. ∫₀²x dx=[x²/2]₀²=2이므로 넓이는 2이다.",
+                "hints": [
+                  "삼각형의 밑변은 2, 높이는 2입니다."
+                ]
+              }
             }
           ]
         },
@@ -1610,7 +1694,7 @@
             {
               "type": "solutionStep",
               "title": "풀이",
-              "text": "0≤t≤3에서 v(t)=2이면 변위와 이동 거리는 각각 ∫₀³2dt=6이다. 따라서 답은 12."
+              "text": "속도가 3으로 일정하고 0≤t≤4이므로 이동 거리는 ∫₀⁴3dt=3×4=12이다. 따라서 답은 속력×시간=3×4=12이므로 이동 거리는 12이다.."
             },
             {
               "type": "verification",
@@ -1637,7 +1721,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "12"
+              "text": "속력×시간=3×4=12이므로 이동 거리는 12이다."
             },
             {
               "type": "answer",
@@ -1645,16 +1729,23 @@
               "text": "12"
             },
             {
-              "type": "quiz",
-              "id": "c1-0306-quiz",
-              "question": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.",
-              "options": [
-                "12",
-                "7",
-                "1"
-              ],
-              "correctIndex": 0,
-              "explanation": "12"
+              "type": "activity",
+              "activity": {
+                "id": "c1-0306-quiz",
+                "kind": "quiz",
+                "prompt": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.",
+                "options": [
+                  "12",
+                  "7",
+                  "1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞아요. 속력×시간=3×4=12이므로 이동 거리는 12이다.",
+                "incorrect_feedback": "풀이의 조건과 계산을 확인하세요. 속력×시간=3×4=12이므로 이동 거리는 12이다.",
+                "hints": [
+                  "일정한 속도×시간으로 계산합니다."
+                ]
+              }
             }
           ]
         },
