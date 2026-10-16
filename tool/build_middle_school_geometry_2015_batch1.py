@@ -1,0 +1,46 @@
+"""Build resumable 2015 middle-school geometry drafts for standards 9수04-01..10."""
+from __future__ import annotations
+import json,re
+from math import isclose,pi
+from pathlib import Path
+ROOT=Path(__file__).resolve().parents[1]
+OUT=ROOT/"docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_도형_배치1"
+BOOK_FILE="중등수학_2015개정_도형_배치1_BookData_V2_시범.json"
+DATA=[
+("9수04-01","점·직선·평면의 위치 관계","점은 위치, 직선은 양쪽으로 끝없이 뻗는 선, 평면은 모든 방향으로 펼쳐진 면을 나타낸다. 공간에서 두 직선은 만나거나 평행하거나 꼬인 위치에 있을 수 있으며, 꼬인 위치의 두 직선은 만나지 않고 평행하지도 않으며 한 평면 위에 있지 않다.","직육면체에서 서로 만나지 않고 평행하지 않은 두 모서리의 위치 관계는 무엇인가요?","같은 평면에 있지 않고 만나지 않으므로 꼬인 위치입니다.","서로 다른 두 직선이 한 점에서 만나면 몇 개의 교점을 가지나요?","한 점에서 만난다는 조건에 따라 교점은 하나입니다.",["꼬인 위치","평행","한 점에서 만남"],0),
+("9수04-02","평행선과 동위각·엇각","두 평행선을 한 직선이 가로지를 때 동위각과 엇각은 각각 크기가 같다. 한 쌍의 동위각 또는 엇각이 같으면 두 직선이 평행함을 판단할 수 있다. 이웃한 각은 한 직선 위에서 합이 180°다.","평행선에서 한 각이 72°라면 그 엇각과 이웃한 내각은 얼마인가요?","엇각은 72°이고, 이웃한 내각은 180°−72°=108°입니다.","한 동위각이 115°일 때 다른 동위각과 같은 쪽 내각을 구하세요.","동위각은 115°, 같은 쪽 내각은 180°−115°=65°입니다.",["72°, 108°","108°, 72°","72°, 72°"],0),
+("9수04-03","삼각형 작도","삼각형은 세 변의 길이가 주어지면 세 변의 합이 두 배의 가장 긴 변보다 커야 작도할 수 있다. 두 변과 그 끼인각, 한 변과 양 끝각 조건도 작도의 유일성을 결정한다. 조건을 자와 컴퍼스로 옮겨 교점을 찾는다.","세 변의 길이가 3, 4, 5인 삼각형은 작도할 수 있나요?","가장 긴 변 5에 대해 3+4>5이므로 작도할 수 있습니다.","세 변의 길이가 2, 3, 6이면 삼각형을 작도할 수 있나요?","2+3=5<6이므로 두 짧은 변의 합이 가장 긴 변보다 작아 작도할 수 없습니다.",["가능, 3+4>5","불가능, 2+3<6","가능, 세 길이가 양수"],1),
+("9수04-04","삼각형의 합동 조건","삼각형에서 대응하는 세 변이 각각 같으면 SSS, 두 변과 그 끼인각이 각각 같으면 SAS, 한 변과 그 양 끝각이 각각 같으면 ASA 합동이다. 세 각만 같다는 조건은 크기가 다른 삼각형도 허용하므로 합동을 보장하지 않는다.","두 삼각형의 두 변과 그 끼인각이 각각 같다면 어떤 조건으로 합동인가요?","두 변과 끼인각이 각각 같으므로 SAS 합동입니다.","세 각이 각각 같은 두 삼각형은 반드시 합동인가요?","아닙니다. 모양은 같아도 크기가 다를 수 있어 닮음만 보장됩니다.",["SAS 합동","세 각이 같으므로 항상 합동","한 각이 같으므로 합동"],0),
+("9수04-05","다각형의 성질","n각형의 내각의 합은 (n−2)×180°이고, 한 꼭짓점에서 그을 수 있는 대각선은 n−3개다. 볼록 n각형의 대각선 수는 n(n−3)/2다. 정다각형은 변과 각이 각각 모두 같다.","오각형의 내각의 합과 대각선 수를 구하세요.","내각의 합은 (5−2)×180°=540°, 대각선 수는 5×(5−3)/2=5개입니다.","정육각형의 한 내각의 크기를 구하세요.","내각의 합은 4×180°=720°이고 여섯 각이 같으므로 한 내각은 120°입니다.",["540°, 대각선 5개","360°, 대각선 5개","540°, 대각선 10개"],0),
+("9수04-06","부채꼴의 호와 넓이","반지름 r, 중심각 θ인 부채꼴에서 호의 길이는 2πr×θ/360, 넓이는 πr²×θ/360이다. 중심각이 전체 원의 몇 분의 몇인지 이용해 계산하고 단위를 구별한다.","반지름 6 cm, 중심각 60°인 부채꼴의 호의 길이와 넓이를 구하세요.","전체 원의 1/6이므로 호의 길이는 2π cm, 넓이는 6π cm²입니다.","반지름 4 cm, 중심각 90°일 때 부채꼴의 넓이를 구하세요.","전체 원의 1/4이므로 넓이는 π×16÷4=4π cm²입니다.",["호 2π cm, 넓이 6π cm²","호 6π cm, 넓이 2π cm²","호 2π cm, 넓이 12π cm²"],0),
+("9수04-07","다면체의 성질","다면체는 다각형인 면으로 둘러싸인 입체도형이다. 각기둥과 각뿔은 밑면의 모양과 면·모서리·꼭짓점의 수로 구분한다. 볼록다면체에서는 꼭짓점 수 V, 모서리 수 E, 면의 수 F가 V−E+F=2를 만족한다.","정육면체의 꼭짓점·모서리·면의 수가 8, 12, 6일 때 오일러 관계를 확인하세요.","V−E+F=8−12+6=2이므로 관계를 만족합니다.","오각뿔의 꼭짓점, 모서리, 면의 수를 구하세요.","꼭짓점은 밑면 5개와 꼭짓점 1개로 6개, 모서리는 밑면 5개와 옆모서리 5개로 10개, 면은 5개 옆면과 밑면으로 6개입니다.",["6, 10, 6","5, 10, 5","6, 5, 10"],0),
+("9수04-08","회전체의 성질","평면도형을 한 직선을 축으로 한 바퀴 돌리면 회전체가 만들어진다. 직사각형을 한 변을 축으로 돌리면 원기둥, 직각삼각형을 한 직각변을 축으로 돌리면 원뿔, 반원을 지름을 축으로 돌리면 구가 된다.","직각삼각형을 한 직각변을 축으로 한 바퀴 돌리면 어떤 회전체가 생기나요?","다른 직각변이 반지름을 만들고 빗변이 옆면을 만들어 원뿔이 생깁니다.","반원을 지름을 축으로 회전시키면 어떤 입체도형이 생기나요?","반원의 모든 점이 지름 주위를 돌아 구를 만듭니다.",["원뿔","원기둥","각뿔"],0),
+("9수04-09","입체도형의 겉넓이와 부피","기둥과 원기둥의 부피는 밑넓이×높이다. 원기둥의 겉넓이는 두 밑면 넓이와 옆넓이의 합 2πr²+2πrh다. 원뿔 부피는 같은 밑넓이와 높이를 가진 원기둥 부피의 1/3이다.","반지름 3 cm, 높이 5 cm인 원기둥의 부피를 구하세요.","밑넓이 9π에 높이 5를 곱해 45π cm³입니다.","반지름 2 cm, 높이 6 cm인 원뿔의 부피를 구하세요.","π×2²×6÷3=8π cm³입니다.",["45π cm³","15π cm³","90π cm³"],0),
+("9수04-10","이등변삼각형의 성질","두 변의 길이가 같은 삼각형에서 같은 두 변에 마주 보는 두 밑각은 같다. 꼭짓각의 이등분선은 밑변을 수직이등분하고, 밑각의 이등분선을 이용해 합동인 두 삼각형을 만들 수 있다.","이등변삼각형의 밑각 하나가 48°일 때 다른 밑각과 꼭짓각을 구하세요.","다른 밑각도 48°이고 꼭짓각은 180°−48°−48°=84°입니다.","이등변삼각형의 꼭짓각이 40°이면 각 밑각은 얼마인가요?","밑각은 서로 같고 합이 140°이므로 각각 70°입니다.",["48°, 84°","48°, 96°","84°, 48°"],0),
+]
+
+def main():
+    official=(ROOT/"work/official-curriculum/2015_appendix8_math.txt").read_text(encoding="utf-8")
+    standards={c:t.strip() for c,t in re.findall(r"\[(9수\d{2}-\d{2})\]\s*([^\r\n]+)",official)}
+    codes=[r[0] for r in DATA]
+    if len(codes)!=10 or len(set(codes))!=10 or any(c not in standards for c in codes): raise ValueError("Candidate codes differ from official index")
+    assert 3+4>5 and 2+3<6 and (5-2)*180==540 and 5*(5-3)//2==5
+    assert isclose(2*pi*6*60/360,2*pi) and isclose(pi*6**2*60/360,6*pi)
+    assert 8-12+6==2 and isclose(pi*2**2*6/3,8*pi) and 180-2*48==84
+    chapters=[]; quiz_ids=[]
+    for code,title,concept,example,solution,practice,answer,options,correct in DATA:
+        slug="ms15-geometry-"+code[-2:]
+        quiz={"id":slug+"-quiz","kind":"quiz","prompt":example,"options":options,"correct_index":correct,"correct_feedback":solution,"incorrect_feedback":"도형의 조건을 표시하고 정리나 성질을 적용해 다시 확인하세요.","hints":["주어진 조건과 도형의 구성 요소를 먼저 표시하세요."]}
+        chapter={"title":title,"intro":[f"{title}의 조건과 성질을 익힙니다.",f"2015 개정 중학교 학년군 기준 후보 {code}; 학기 귀속은 별도 대조가 필요합니다."],"sections":[{"title":"기준과 검토 상태","paragraphs":[f"공식 기준 후보: {code} {standards[code]}","새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."]}],"pages":[
+          {"id":slug+"-opening","template":"opening","title":"생각 열기","blocks":[{"type":"lead","title":title,"text":concept},{"type":"thinking","title":"질문","text":"결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"}]},
+          {"id":slug+"-concept","template":"concept","title":"핵심 개념","blocks":[{"type":"definition","title":"정의와 성질","text":concept},{"type":"formula","title":"공식 기준","text":standards[code]}]},
+          {"id":slug+"-example","template":"example","title":"예제와 풀이","blocks":[{"type":"question","title":"예제","text":example},{"type":"solutionStep","title":"풀이","text":solution}]},
+          {"id":slug+"-practice","template":"practice","title":"연습","blocks":[{"type":"question","title":"연습문제","text":practice},{"type":"solutionStep","title":"해설","text":answer},{"type":"activity","activity":quiz}]},
+          {"id":slug+"-summary","template":"summary","title":"정리","blocks":[{"type":"summary","title":"핵심","text":concept}]}]}
+        chapters.append(chapter); quiz_ids.append(quiz["id"])
+    book={"schema_version":2,"title":"중학교 수학 2015 개정 · 도형 부분 후보 배치 1","subtitle":"공식 기준별 개념·예제·연습·native quiz","category":"concept_textbook_prototype","curriculum_version":"2015","standard_codes":codes,"standard_coverage":"partial","grade_semester_status":"not_assigned","tags":["중학교 수학","2015 개정","학년군 기준","학기 미배정","부분 원고 후보","교사·수학 검수 대기","권리 검토 대기",*[f"성취기준 후보: {c}" for c in codes]],"chapters":chapters,"metadata":{"status":"candidate_partial_draft","teacher_review_status":"pending","math_review_status":"author_checks_recorded_independent_review_pending","rights_status":"pending","publication_eligibility":"not_eligible","standard_source":"2015 개정 수학과 교육과정 별책8 공식 추출 텍스트","content_rights":"newly authored candidate; independent rights decision pending","semester_assignment":"grade-band only; semester not assigned","interactive_compatibility_status":"native quiz activities; external interactive-source parity not claimed"}}
+    OUT.mkdir(parents=True,exist_ok=True); (OUT/BOOK_FILE).write_text(json.dumps(book,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    manifest={"status":"candidate_partial_draft","standard_codes":codes,"official_criteria":{c:standards[c] for c in codes},"module_count":10,"page_count":50,"native_quiz_ids":quiz_ids,"author_arithmetic_checks":"passed","teacher_review":"pending","independent_math_review":"pending","rights_review":"pending","publication_eligibility":"not_eligible","semester_assignment":"not assigned"}
+    (OUT/"원고매니페스트.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    print("Built 10 modules, 50 pages and 10 native quizzes; review and rights pending.")
+if __name__=="__main__": main()

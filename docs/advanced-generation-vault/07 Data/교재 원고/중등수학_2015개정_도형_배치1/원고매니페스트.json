@@ -1,0 +1,47 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수04-01",
+    "9수04-02",
+    "9수04-03",
+    "9수04-04",
+    "9수04-05",
+    "9수04-06",
+    "9수04-07",
+    "9수04-08",
+    "9수04-09",
+    "9수04-10"
+  ],
+  "official_criteria": {
+    "9수04-01": "점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다.",
+    "9수04-02": "평행선에서 동위각과 엇각의 성질을 이해한다.",
+    "9수04-03": "삼각형을 작도할 수 있다.",
+    "9수04-04": "삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다.",
+    "9수04-05": "다각형의 성질을 이해한다.",
+    "9수04-06": "부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할",
+    "9수04-07": "다면체의 성질을 이해한다.",
+    "9수04-08": "회전체의 성질을 이해한다.",
+    "9수04-09": "입체도형의 겉넓이와 부피를 구할 수 있다.",
+    "9수04-10": "이등변삼각형의 성질을 이해하고 설명할 수 있다."
+  },
+  "module_count": 10,
+  "page_count": 50,
+  "native_quiz_ids": [
+    "ms15-geometry-01-quiz",
+    "ms15-geometry-02-quiz",
+    "ms15-geometry-03-quiz",
+    "ms15-geometry-04-quiz",
+    "ms15-geometry-05-quiz",
+    "ms15-geometry-06-quiz",
+    "ms15-geometry-07-quiz",
+    "ms15-geometry-08-quiz",
+    "ms15-geometry-09-quiz",
+    "ms15-geometry-10-quiz"
+  ],
+  "author_arithmetic_checks": "passed",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}

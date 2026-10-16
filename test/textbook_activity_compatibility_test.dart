@@ -11,6 +11,7 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json',

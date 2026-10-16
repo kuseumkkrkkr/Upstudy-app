@@ -23,6 +23,7 @@ GENERATORS = [
     ("build_middle_school_real_numbers_2022_candidate.py", "main"),
     ("build_middle_school_geometry_statistics_2022_candidate.py", "main"),
     ("build_middle_school_linear_functions_2015_candidate.py", "main"),
+    ("build_middle_school_geometry_2015_batch1.py", "main"),
     ("build_middle_school_2_1_2022_candidate.py", "main"),
     ("build_middle_school_2_2_2022_candidate.py", "main"),
     ("build_middle_school_3_1_2022_candidate.py", "main"),
