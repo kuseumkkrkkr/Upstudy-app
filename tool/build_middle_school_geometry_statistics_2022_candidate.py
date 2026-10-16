@@ -41,6 +41,7 @@ def main():
     for i,(code,title,concept,example,solution,practice,answer,options,correct) in enumerate(DATA,1):
         slug=f"ms22-rem-{code.replace('수','m')}"
         ch=helper.make_chapter(code,slug,title,standards[code],"내장형 연습 활동",f"{title}: 조건을 표시하고 관계를 그림이나 식으로 설명해 보세요.",concept,example,solution,practice,answer,[title+"의 정의와 조건을 말한다.","계산 결과를 조건과 단위로 확인한다."])
+        ch["standard_codes"]=[code]
         quiz={"id":slug+"-quiz","kind":"quiz","prompt":example,"options":options,"correct_index":correct,"correct_feedback":solution,"incorrect_feedback":"정의와 대응 조건을 확인한 뒤 다시 계산하세요.","hints":["문제의 조건과 대응하는 대상을 먼저 표시하세요."]}
         ch["pages"][1]["blocks"]=[{"type":"lead","title":"native 확인 활동","text":"아래 확인 문항을 풀고 조건과 계산을 함께 점검하세요."},{"type":"activity","activity":quiz},{"type":"thinking","title":"확장 질문","text":"조건 하나가 달라지면 결론은 어떻게 바뀌나요?"}]
         chapters.append(ch); activities.append(quiz)

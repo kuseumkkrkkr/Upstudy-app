@@ -57,7 +57,7 @@ def main() -> None:
             {"id":slug+"-practice","template":"practice","title":"연습과 설명","blocks":[{"type":"question","title":"연습","text":spec["practice"]},{"type":"hint","title":"힌트","text":spec["hints"][0]},{"type":"solutionStep","title":"해설","text":spec["answer"]},{"type":"answer","title":"정답","text":spec["answer"]},quiz(spec,slug+"-quiz")]},
             {"id":slug+"-summary","template":"summary","title":"핵심 정리","blocks":[{"type":"summary","title":"기억할 점","text":spec["title"]},{"type":"checklist","title":"스스로 확인","text":"공식의 조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"}]},
         ]
-        chapters.append({"title":spec["title"],"intro":[f"2022 교육과정 공식 기준 {code}에 연결한 신규 후보입니다.","수치와 상황은 직접 만든 가상 예시입니다."],"pages":pages})
+        chapters.append({"title":spec["title"],"standard_codes":[code],"intro":[f"2022 교육과정 공식 기준 {code}에 연결한 신규 후보입니다.","수치와 상황은 직접 만든 가상 예시입니다."],"pages":pages})
     book={"schema_version":2,"title":"공통수학1 · 2022 개정 미연결 기준 보완 16모듈 후보","subtitle":"다항식·방정식·부등식·경우의 수·행렬","category":"concept_textbook_prototype","curriculum_version":"2022","tags":["공통수학1","2022 개정","추가 원고 후보","가상 예시","학기 배정 미확정",*codes],"standard_codes":codes,"chapters":chapters}
     ids=[p["id"] for c in chapters for p in c["pages"]]
     if len(ids)!=80 or len(set(ids))!=80: raise RuntimeError("Expected 80 unique pages")

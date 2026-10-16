@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "1A6E6D152EE643F8AD7FD50CC0664615878F94E4E414E2BDC5F0BFEA00B9D7EA",
+  "bookdata_sha256": "95D437A81DB714E04D52F08B9D78D693B9E45BE921FB5654CCB25D6073C6F26C",
   "candidate_code_references": [
     "12확통02-05",
     "12확통03-03"
@@ -21,6 +21,6 @@
   "source_interaction_status": "existing independent HTML retained; native UI parity not claimed",
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
 }

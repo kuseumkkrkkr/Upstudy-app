@@ -64,7 +64,7 @@ def main() -> None:
             {"id": slug+"-practice", "template": "practice", "title": "연습과 설명", "blocks": [{"type": "question", "title": "연습", "text": spec["practice"]}, {"type": "hint", "title": "힌트", "text": spec["hints"][0]}, {"type": "solutionStep", "title": "해설", "text": spec["answer"]}, {"type": "answer", "title": "정답", "text": spec["answer"]}, make_quiz(spec, slug)]},
             {"id": slug+"-summary", "template": "summary", "title": "핵심 정리", "blocks": [{"type": "summary", "title": "기억할 점", "text": spec["title"]}, {"type": "checklist", "title": "스스로 확인", "text": "공식의 조건과 결과의 의미를 설명할 수 있나요?"}]},
         ]
-        chapters.append({"title": spec["title"], "intro": [f"2015 교육과정 공식 기준 {spec['code']}에 연결한 신규 후보입니다.", "수치와 상황은 학습을 위해 직접 만든 가상 예시입니다."], "pages": pages})
+        chapters.append({"title": spec["title"], "standard_codes": [spec["code"]], "intro": [f"2015 교육과정 공식 기준 {spec['code']}에 연결한 신규 후보입니다.", "수치와 상황은 학습을 위해 직접 만든 가상 예시입니다."], "pages": pages})
     codes = [spec["code"] for spec in SPECS]
     book = {"schema_version": 2, "title": "확률과 통계 · 2015 조건부확률·이항분포 보완 2모듈", "subtitle": "조건부확률의 계산과 이항분포의 평균·표준편차", "category": "concept_textbook_prototype", "curriculum_version": "2015", "tags": ["확률과 통계", "2015 개정", "보완 원고 후보", "가상 예시", "상품 범위 미완"], "standard_codes": codes, "chapters": chapters}
     ids, activities = set(), []

@@ -75,7 +75,9 @@ def main() -> None:
                 ids.add(page["id"])
                 if page_index > 1:
                     copied[signature(page)] += 1
-            chapters.append({"title": title, "pages": pages, "source_file": module["file"], "source_tags": module["tags"]})
+            source_chapter = module["book"]["chapters"][0]
+            chapter_codes = source_chapter.get("standard_codes", [])
+            chapters.append({"title": title, "pages": pages, "source_file": module["file"], "source_tags": module["tags"], "standard_codes": chapter_codes})
         filename = f"확률과통계_2015개정_{unit}_통합초안.json"
         result = {"title": f"확률과 통계 2015 개정 · {unit} 단원 초안", "tags": ["확률과 통계", "2015 개정", unit, "태그 기반 초안"], "chapters": chapters, "metadata": {"status": "partial_draft", "source_files": [m["file"] for m in modules]}}
         (OUTPUT / filename).write_text(json.dumps(result, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")

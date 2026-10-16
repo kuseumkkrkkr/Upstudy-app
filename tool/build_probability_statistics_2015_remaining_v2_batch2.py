@@ -274,7 +274,7 @@ def main() -> None:
                 {"type": "checklist", "title": "스스로 확인", "text": "공식의 조건을 확인하고 계산과 결과의 의미를 설명할 수 있나요?"},
             ]},
         ]
-        chapters.append({"title": item["title"], "intro": [
+        chapters.append({"title": item["title"], "standard_codes": [code], "intro": [
             f"2015 교육과정 공식 기준 {code}에 연결한 신규 후보입니다.",
             "상황과 수치는 직접 만든 가상 예시입니다.",
         ], "pages": pages})

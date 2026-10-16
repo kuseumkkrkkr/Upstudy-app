@@ -1,6 +1,6 @@
 {
   "bookdata_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "701E24B38624C1F9EB1B8C1F42B4E80880A7101B783C6CFEDA74659AFC405321",
+  "bookdata_sha256": "987029E72BC3D795C01E0275208F2D73A093A323DDF1DA93153E639EB345BFBA",
   "candidate_code_references": [
     "10공수1-01-01",
     "10공수1-01-02",
@@ -35,6 +35,6 @@
   "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
 }
