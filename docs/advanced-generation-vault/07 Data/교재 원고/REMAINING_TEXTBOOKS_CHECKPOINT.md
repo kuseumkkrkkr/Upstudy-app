@@ -5,24 +5,24 @@
 
 ### 2026-10-17 태그 인벤토리 재검증
 
-- Root 교재 원고 폴더를 비재귀 집계해 Markdown 110개, BookData JSON 115개, HTML 86개, 전체 JSON 120개를 확인했다. 전체 JSON의 첫 태그는 17종이며 대시보드 표 합계도 120으로 동기화했다.
+- Root 교재 원고 폴더를 비재귀 집계해 Markdown 110개, BookData JSON 124개, HTML 86개, 전체 JSON 129개를 확인했다. 전체 JSON의 첫 태그는 17종이며 대시보드 표 합계도 129로 동기화했다.
 
 - `flutter test --no-pub --reporter compact test/concept_textbook_html_motion_test.dart test/concept_textbook_prototype_json_test.dart test/perfect_square_textbook_data_test.dart`: 209개 통과. 여기에는 사용자 작업트리의 dashboard inventory assertion 수정이 포함된다.
 ### 다음 제작 세션 handoff
 
-- 다음 한정 배치는 2022 대수 1단원(`12대수01-01`–`12대수01-08`)의 기존 Batch1 8개 후보를 공식 HWP 기준·본문·풀이·퀴즈 기준으로 대조하는 것이다. 공식 기준 원천은 `work/official-curriculum/2022_math_standards.json`; 현재 생성 후보는 `tool/build_algebra_2022_remaining_v2_batch1.py`에 이미 있으므로 검토 없이 재생성하지 않는다.
+- 과거의 2022 대수 `12대수01-01`–`12대수01-08` handoff는 이전 스냅샷이다. 현재 확정된 다음 생성 대상은 없으며, 공식 기준과 기존 장의 실제 본문·예제·퀴즈를 먼저 대조해 누락을 확인한 뒤 좁게 선정한다.
+- 현재 태그 생성기는 104개 stage를 등록한다. 최근 생성 배치는 수학Ⅱ Batch2–Batch7과 2015 기하 Batch2–Batch4이며, stage 등록이나 태그만으로 내용 충족을 승인하지 않는다.
 
-- 95단계 파이프라인은 stage 95까지 완료했고, 전체 392개 판본-기준 쌍 모두 구조 신호가 있다. 75개 chapter 연결은 후보 상태라 태그만으로 새 원고 부족을 단정하지 않는다. 8개 기준 대조 후 실질 공백이 확인될 때만 좁은 보충 생성기를 추가하고, `python tool/build_tagged_textbook_drafts.py --from-stage <new_generator_filename.py>`로 새 stage부터 재개한다.
 
+## 2026-10-17 현재 작업트리 재검증 — `faf555b`
 
-## 2026-10-17 현재 작업트리 재검증
-
-- 현재 앱 테스트를 다시 실행했다: BookData 인벤토리 왕복과 activity compatibility 합계 127 tests passed. Upstudy-hotfix 공개/가져오기/저자 호환/그래프 보안 회귀도 51 passed, Starlette/httpx deprecation warning 1개다. 이는 전체 standalone HTML의 화면·동작 parity 검증이 아니다.
-- 현재 BookData로 범위 원장을 재생성했다: 26개 상품, 1,038 product-standard 행, 115 root source BookData. 재귀 원고는 178 BookData이며 이전 분류 기준으로 33 `not_eligible`, 145 eligibility 미지정이다. 106 HTML의 전체 앱 패리티도 미확인이다. 원장 출력은 작업 산출물 폴더의 `REMAINING_TEXTBOOKS_CURRENT_SCOPE_COVERAGE.md`에 보관했다.
-- 공식 판본-코드 392쌍 모두 코드/태그 신호가 있다. 이 중 342쌍은 chapter exact code, 21쌍은 단일 코드·단일 chapter 연결, 75쌍은 candidate chapter mapping이다. exact 또는 candidate 구조 신호가 전혀 없는 쌍은 0이지만, candidate 75쌍의 대조와 모든 실질 내용 충족 검토는 승인되지 않았다.
-- 재귀 `REVIEW_MANIFEST.json` 30개는 모두 `publication_eligibility=not_eligible`다. `bookdata_file`, `source_bookdata_files`, `source_files`에 선언된 원본 38개를 CRLF→LF 정규화 SHA로 재대조해 34개 일치, 4개 불일치를 확인했다. 다중 원본 매니페스트 5개의 13개 원본은 모두 일치한다. 불일치 4개는 `수학Ⅰ_2015개정_지수로그누락기준_Batch2`, `수학상_2015개정_다항식곱셈나눗셈`, `공통수학2_2022개정_유리함수그래프탐구_Batch1`, `공통수학2_2022개정_무리함수그래프탐구_Batch1`이다. 원본 또는 manifest digest 재동기화 전까지 runtime status를 현재 후보 SHA의 증거로 간주하지 않는다.
-- 인벤토리·체크포인트 커밋 뒤 저장소 `HEAD`와 `origin/main`은 일치한다. 작업트리에는 별도 로컬 변경이 남아 있으므로 이 검증을 배포물 검증으로 표현하지 않는다.
-- 모든 검수 manifest가 출판 부적격이고 권리·교사·독립 수학·교육과정 검토가 완료되지 않아 배포하지 않았다. 교육부 첨부별 권리 근거, 4개 SHA 불일치 원인, 5개 다중 원본 hash map, 75개 후보 매핑 및 내용의 실질 범위 대조가 후속 차단 항목이다.
+- 현재 `HEAD == origin/main == faf555bf64db3c696d689762fadb6682f948f5d5`. 재귀 BookData 187개(그중 V2 66), 선언형 activity 340개, root BookData 124개, root JSON 129개, root/재귀 HTML 86/106개다. 전체 태그 생성 파이프라인은 재실행하지 않았다.
+- 왕복·활동 호환성 묶음은 127개 통과로 보고됐다. 왕복 검사 대상은 재귀 BookData 187개이며 activity 검사는 선택된 native activity/reader 동작에 한정된다. 독립 HTML 106개의 전체 화면·동작 패리티는 검증하지 않았다. Dashboard 계약의 first-tag 집계 테스트는 합계 행 숫자 굵게 표시를 수정한 뒤 단독 재실행해 통과했다. 별도 세트의 152 pass + 1 fail 기록은 해당 집계표 계약 실패였으며, 이후 그 한 테스트만 통과시켰다.
+- 최신 원장은 26개 상품·1,038 product-standard 행·root source BookData 124개다. package index와 재귀 참조 verifier는 각각 187개를 확인했다. 392 공식 판본-코드 쌍에 field/tag 신호, exact chapter anchor 342, 단일 코드·단일 chapter 연결 28, 검토 대기 candidate chapter mapping 75, exact/candidate 구조 신호 누락 0개다. 이 신호는 내용 충족이나 승인을 뜻하지 않는다.
+- 재귀 BookData metadata 집계: publication `not_eligible` 42 / `unspecified` 145; rights `pending` 33 / `publication_decision_pending` 9 / `unspecified` 145; teacher review `pending` 42 / `unspecified` 145; math review `author_checks_recorded_independent_review_pending` 32 / `independent_review_pending` 9 / `pending` 1 / `unspecified` 145. 재귀 manifest 39개는 모두 `not_eligible`; 독립 승인 자료 0개다. 과거 38개 manifest SHA 대조(34 match/4 mismatch)는 이전 snapshot 감사이므로 새 manifest를 포함한 최신 전체 SHA 감사로 읽지 않는다.
+- 디자이너 앱 통합의 보존 검사 187개 중 182개 통과, 5개 차단 원인은 전달 내용과 대조했다: 두 건은 실제 target에 등록된 `radicalFunctionExplorer`/`logarithmPowerExplorer`를 호환성 allowlist가 미지원으로 오판한 경우, 세 건은 `source_html_reference`(chapter extra) 및 `candidate_standard_codes`(book/chapter extra) 메타데이터가 직렬화에서 보존되지 않는 경우다. 앞의 둘은 정확한 positive/negative 검증으로 처리하고, 뒤의 셋은 lossless migration/명시적 metadata 모델 전까지 차단 유지가 맞다.
+- 디자이너 검수에서는 정적 그래프가 현재 Dart reader에서 표시되지 않는 결함과 좌표 활동 hint가 page context에서 빠지는 누락도 발견됐다. hint 누락은 보완된 것으로 보고됐지만, 최신 Preview 재검증은 별도이며 정적 그래프 문제는 남아 있다. 기존 HTML 106개 전체 parity도 아직 검증하지 않았다.
+- `REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md`와 package index의 latest refresh는 187개 기준이다. 이 체크포인트 갱신은 해당 문서들 및 대시보드 범위로 한정하며, 다른 변경 파일은 staging하지 않는다. 모든 후보의 승인/권리 게이트가 미해결이고 공개 적격 BookData가 0개이므로 배포하지 않았다.
 
 ## 2026-10-17 공식 권리·게시 승인 경로 재확인
 

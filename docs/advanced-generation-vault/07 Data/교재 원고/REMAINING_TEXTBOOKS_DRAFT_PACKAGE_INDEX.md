@@ -1,6 +1,6 @@
 # 재귀 BookData 초안 패키지 색인
 
-재귀 BookData `178`개를 파일 경로와 선언된 구조·검토 상태로 색인했다. 태그·구조·검토 metadata는 내용 충족이나 독립 승인을 증명하지 않는다.
+재귀 BookData `187`개를 파일 경로와 선언된 구조·검토 상태로 색인했다. 태그·구조·검토 metadata는 내용 충족이나 독립 승인을 증명하지 않는다.
 
 | BookData | 판본 | 기준 코드 수 | 챕터 | 페이지 | activity block | 외부 HTML 참조 | 게시 적격성 | 교사 검토 | 수학 검토 | 권리 |
 |---|---|---:|---:|---:|---:|---:|---|---|---|---|
@@ -32,7 +32,10 @@
 | [공통수학2 개념서 · 유리함수와 점근선](<공통수학2_유리함수_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [공통수학2 개념서 · 집합 연산과 포함관계](<공통수학2_집합과명제_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [공통수학2 개념서 · 함수의 대응 관계](<공통수학2_함수의대응_BookData_시범.json>) | 2022 | 1 | 1 | 4 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
+| [기하 · 공간의 위치 관계·삼수선·정사영 보충 Batch4](<기하_2015개정_공간관계삼수선정사영_보충_Batch4_BookData_V2_시범.json>) | 2015 | 3 | 3 | 15 | 3 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
+| [기하 · 벡터로 직선과 원의 방정식 만들기 보충 Batch3](<기하_2015개정_벡터직선원_보충_Batch3_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
 | [기하 · 2015 개정 미연결 기준 보완 12모듈 후보](<기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json>) | 2015 | 12 | 12 | 60 | 12 | 0 | unspecified | unspecified | unspecified | unspecified |
+| [기하 · 이차곡선과 직선의 위치 관계 보충 Batch2](<기하_2015개정_이차곡선접선_보충_Batch2_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
 | [기하 · 2022 개정 공간도형 추가 4모듈 후보](<기하_2022개정_space_BookData_시범.json>) | 2022 | 4 | 4 | 20 | 4 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [기하 · 2022 개정 벡터 추가 5모듈 후보](<기하_2022개정_vector_BookData_시범.json>) | 2022 | 5 | 5 | 25 | 5 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [기하 개념서 · 공간좌표에서 거리와 내분점](<기하_공간좌표_두점사이거리_BookData_시범.json>) | 2022 | 1 | 1 | 5 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
@@ -62,8 +65,14 @@
 | [수학Ⅰ 개념서 · 삼각함수 시범](<수학Ⅰ_삼각함수_BookData_시범.json>) | 2015 | 2 | 1 | 7 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [수학Ⅰ 개념서 · 사인법칙과 코사인법칙](<수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json>) | 2015 | 1 | 1 | 6 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [수학Ⅰ 개념서 · 수열](<수학Ⅰ_수열_BookData_시범.json>) | 2015 | 5 | 1 | 7 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
+| [수학Ⅱ · 극한과 연속 보충 Batch2](<수학Ⅱ_2015개정_극한연속_보충_Batch2_BookData_V2_시범.json>) | 2015 | 3 | 3 | 15 | 3 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
+| [수학Ⅱ · 도함수로 함수 그래프 개형 그리기 보충 Batch6](<수학Ⅱ_2015개정_도함수그래프개형_보충_Batch6_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
+| [수학Ⅱ · 도함수로 방정식·부등식 풀기 보충 Batch7](<수학Ⅱ_2015개정_미분방정식부등식_보충_Batch7_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
 | [수학Ⅱ · 미연결 기준 보완 18모듈 후보](<수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json>) | 2015 | 18 | 18 | 90 | 18 | 0 | unspecified | unspecified | unspecified | unspecified |
+| [수학Ⅱ · 속도 부호와 이동거리 보충 Batch4](<수학Ⅱ_2015개정_속도거리_보충_Batch4_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
+| [수학Ⅱ · 연속함수의 최댓값·최솟값 보충 Batch5](<수학Ⅱ_2015개정_연속함수최대최소_보충_Batch5_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
 | [2015 개정 수학Ⅱ 개념서 · 정적분으로 넓이 살펴보기](<수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
+| [수학Ⅱ · 정적분으로 곡선 넓이 구하기 보충 Batch3](<수학Ⅱ_2015개정_정적분넓이_보충_Batch3_BookData_V2_시범.json>) | 2015 | 1 | 1 | 5 | 1 | 0 | not_eligible | pending | independent_review_pending | publication_decision_pending |
 | [수학Ⅱ 개념서 · 기울기의 부호와 함수의 증감](<수학Ⅱ_도함수부호와증감_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [수학Ⅱ 개념서 · 함수의 극한](<수학Ⅱ_함수의극한_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
 | [수학Ⅱ 개념서 · 함수의 연속](<수학Ⅱ_함수의연속_BookData_시범.json>) | 미기록 | 0 | 1 | 3 | 0 | 0 | unspecified | unspecified | unspecified | unspecified |
