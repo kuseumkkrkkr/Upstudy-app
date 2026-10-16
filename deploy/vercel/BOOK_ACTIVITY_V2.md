@@ -179,6 +179,8 @@ Each activity occupies one indivisible `pages[].blocks[]` entry:
 | `rightTriangle` (bounded native extension; no production manuscript) | Required integer `a`,`b` in1..12 | Keyboard sliders, live sqrt(a²+b²), proportional diagram, local hints/reset; contract `BOOK_RIGHT_TRIANGLE.md`; broader derived-metric scenes unsupported |
 | `coordinatePoint` (bounded native extension; no production manuscript) | Required integer `x`,`y` in-5..5 | Direct point pointer/touch drag, arrow-key movement, sliders, quadrant/axis/origin, three movement stages; `BOOK_COORDINATE_POINT.md`; not arbitrary JSX |
 | `coordinateWalk` (separate bounded kind; no production manuscript) | Integer `x`,`y` in-5..5 and exact `duration_ms:1500` | Swap, horizontal/vertical walk, pause/resume/reset, reduced-motion and paused reader restore; `BOOK_COORDINATE_WALK.md` |
+| `vectorOperation` (bounded plane operations; no production manuscript) | `operation` add/subtract/scalar; components -4..4; `alpha` half steps -2..2 | Interactive arrows, guided stages, formula and hints; `BOOK_VECTOR_OPERATIONS.md` |
+| `vectorInnerProduct` (bounded plane activity; no production manuscript) | Magnitudes 1..5; included angle 0..180 in 15-degree steps | Projection diagram, sign prediction, guided derivation and hints; `BOOK_VECTOR_INNER_PRODUCT.md` |
 
 Common: `id` nonempty max80, unique in book; `prompt` nonempty max2000;
 optional `hints` at most8 strings max2000. No asset IDs, author JavaScript,

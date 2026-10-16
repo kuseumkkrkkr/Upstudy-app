@@ -106,6 +106,14 @@ def validate_activity(value):
         number(alpha)
         if not -2 <= alpha <= 2 or not math.isclose(alpha * 2, round(alpha * 2), rel_tol=0, abs_tol=1e-9):
             raise ValueError('activity: scalar coefficient requires half steps in -2..2')
+    elif kind == 'vectorInnerProduct':
+        fields(value, common + ' u_length v_length angle_deg')
+        for name in ('u_length', 'v_length'):
+            if type(value.get(name)) is not int or not 1 <= value[name] <= 5:
+                raise ValueError('activity: vector magnitudes require integers 1..5')
+        angle = value.get('angle_deg')
+        if type(angle) is not int or not 0 <= angle <= 180 or angle % 15:
+            raise ValueError('activity: included angle requires 15-degree steps in 0..180')
     elif kind == 'rightTriangle':
         fields(value, common + ' a b')
         for name in ('a', 'b'):

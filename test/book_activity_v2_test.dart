@@ -6,6 +6,7 @@ import 'package:s11/shared/data/models/book_activity.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
 import 'package:s11/sessions/textbook/ui/widgets/book_vector_operations_view.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_vector_inner_product_view.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -33,6 +34,47 @@ Widget app(Map<String, dynamic> value, {bool reduced = false}) => MaterialApp(
 );
 
 void main() {
+  final innerProduct = {
+    'id': 'inner-product',
+    'kind': 'vectorInnerProduct',
+    'prompt': '예상하고 내적을 확인하세요.',
+    'u_length': 3,
+    'v_length': 4,
+    'angle_deg': 60,
+    'hints': ['각도가 90도보다 작으면 cos 값은 양수입니다.'],
+  };
+  test('bounded vector inner product survives BookData JSON round trip', () {
+    final activity = BookActivity.fromJson(innerProduct);
+    expect(activity.toJson(), innerProduct);
+    for (final bad in [
+      {...innerProduct, 'angle_deg': 91},
+      {...innerProduct, 'u_length': 0},
+      {...innerProduct, 'script': 'alert(1)'},
+    ]) {
+      expect(() => BookActivity.fromJson(bad), throwsFormatException);
+    }
+  });
+  testWidgets(
+    'inner product displays projection, sign quiz, stages and hints',
+    (tester) async {
+      await tester.pumpWidget(app(innerProduct));
+      expect(find.byType(BookVectorInnerProductView), findsOneWidget);
+      expect(find.textContaining('내적 u·v = 6.00'), findsOneWidget);
+      await tester.ensureVisible(find.text('양수'));
+      await tester.tap(find.text('양수'));
+      await tester.pump();
+      expect(find.textContaining('맞아요.'), findsOneWidget);
+      await tester.ensureVisible(find.text('다음 단계'));
+      await tester.tap(find.text('다음 단계'));
+      await tester.pump();
+      expect(find.textContaining('부호 있는 길이'), findsOneWidget);
+      await tester.ensureVisible(find.text('힌트 한 단계'));
+      await tester.tap(find.text('힌트 한 단계'));
+      await tester.pump();
+      expect(find.textContaining('90도보다 작으면'), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    },
+  );
   final vector = {
     'id': 'vector',
     'kind': 'vectorOperation',

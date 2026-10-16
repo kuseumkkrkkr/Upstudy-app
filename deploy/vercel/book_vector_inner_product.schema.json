@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiflow-web-canary.vercel.app/schemas/book_vector_inner_product.schema.json",
+  "title": "BookData V2 plane vector inner product",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "prompt", "u_length", "v_length", "angle_deg"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 80},
+    "kind": {"const": "vectorInnerProduct"},
+    "prompt": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "hints": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 2000}},
+    "u_length": {"type": "integer", "minimum": 1, "maximum": 5},
+    "v_length": {"type": "integer", "minimum": 1, "maximum": 5},
+    "angle_deg": {"type": "integer", "minimum": 0, "maximum": 180, "multipleOf": 15}
+  }
+}

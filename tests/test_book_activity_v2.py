@@ -20,7 +20,9 @@ def test_registered_activities_and_lossless_migration():
                   dict(id='s', kind='steps', prompt='Reason', steps=['First', 'Next', 'Last']),
                   dict(id='p', kind='parabolaDistance', prompt='Compare', p=2, x=4),
                   dict(id='v', kind='vectorOperation', prompt='Explore', operation='scalar',
-                       ux=1, uy=-1, vx=2, vy=1, alpha=.5)]:
+                       ux=1, uy=-1, vx=2, vy=1, alpha=.5),
+                  dict(id='ip', kind='vectorInnerProduct', prompt='Explore',
+                       u_length=3, v_length=4, angle_deg=60)]:
         assert validate_book(book(value)) == book(value)
     original = dict(title='V1', chapters=[dict(title='Keep', sections=[dict(title='Original', paragraphs=['Preserved'])])])
     frozen = copy.deepcopy(original)
@@ -58,5 +60,14 @@ def test_geometry_is_bounded(p, x):
 def test_vector_operation_is_registered_and_bounded(change):
     value = dict(id='v', kind='vectorOperation', prompt='Explore', operation='scalar',
                  ux=1, uy=-1, vx=2, vy=1, alpha=.5)
+    with pytest.raises(ValueError):
+        validate_activity(dict(value, **change))
+
+
+@pytest.mark.parametrize('change', [dict(u_length=0), dict(v_length=6), dict(angle_deg=91),
+                                    dict(angle_deg=True), dict(script='alert(1)')])
+def test_vector_inner_product_is_registered_and_bounded(change):
+    value = dict(id='ip', kind='vectorInnerProduct', prompt='Explore',
+                 u_length=3, v_length=4, angle_deg=60)
     with pytest.raises(ValueError):
         validate_activity(dict(value, **change))

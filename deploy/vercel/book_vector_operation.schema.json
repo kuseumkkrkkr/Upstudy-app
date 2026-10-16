@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://aiflow-web-canary.vercel.app/schemas/book_vector_operation.schema.json",
+  "title": "BookData V2 plane vector operation",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "prompt", "operation", "ux", "uy", "vx", "vy", "alpha"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 80},
+    "kind": {"const": "vectorOperation"},
+    "prompt": {"type": "string", "minLength": 1, "maxLength": 2000},
+    "hints": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 2000}},
+    "operation": {"enum": ["add", "subtract", "scalar"]},
+    "ux": {"type": "integer", "minimum": -4, "maximum": 4},
+    "uy": {"type": "integer", "minimum": -4, "maximum": 4},
+    "vx": {"type": "integer", "minimum": -4, "maximum": 4},
+    "vy": {"type": "integer", "minimum": -4, "maximum": 4},
+    "alpha": {"type": "number", "minimum": -2, "maximum": 2, "multipleOf": 0.5}
+  }
+}

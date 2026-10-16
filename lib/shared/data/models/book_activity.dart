@@ -2,6 +2,7 @@ import 'book_discrete_experiment.dart';
 import 'book_statistics_estimator.dart';
 import 'book_coordinate_point.dart';
 import 'book_vector_operation.dart';
+import 'book_vector_inner_product.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -25,6 +26,7 @@ class BookActivity {
     this.legB,
     this.point,
     this.vectorOperation,
+    this.vectorInnerProduct,
     this.walkDurationMs,
   );
 
@@ -38,6 +40,7 @@ class BookActivity {
   final int legA, legB;
   final BookCoordinatePoint? point;
   final BookVectorOperation? vectorOperation;
+  final BookVectorInnerProduct? vectorInnerProduct;
   final int walkDurationMs;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
@@ -73,6 +76,7 @@ class BookActivity {
     var legA = 6, legB = 8;
     BookCoordinatePoint? point;
     BookVectorOperation? vectorOperation;
+    BookVectorInnerProduct? vectorInnerProduct;
     var walkDurationMs = 0;
     switch (kind) {
       case 'quiz':
@@ -129,6 +133,9 @@ class BookActivity {
       case 'vectorOperation':
         allowed.addAll({'operation', 'ux', 'uy', 'vx', 'vy', 'alpha'});
         vectorOperation = BookVectorOperation.fromJson(json);
+      case 'vectorInnerProduct':
+        allowed.addAll({'u_length', 'v_length', 'angle_deg'});
+        vectorInnerProduct = BookVectorInnerProduct.fromJson(json);
       case 'rightTriangle':
         allowed.addAll({'a', 'b'});
         int leg(dynamic value) {
@@ -169,6 +176,7 @@ class BookActivity {
       legB,
       point,
       vectorOperation,
+      vectorInnerProduct,
       walkDurationMs,
     );
   }
@@ -196,6 +204,7 @@ class BookActivity {
     if (kind == 'rightTriangle') ...{'a': legA, 'b': legB},
     if (point != null) ...point!.toJson(),
     if (vectorOperation != null) ...vectorOperation!.toJson(),
+    if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
   };
 
