@@ -295,3 +295,12 @@
 - 공통수학Ⅰ 2022 누락 기준 V2 3모듈·18쪽과 미연결 기준 Batch2 16모듈·80쪽 생성기를 재실행했다. 통합기는 26개 모듈을 4개 단원으로 분류하고 135개 원본 쪽을 보존했으며 page ID 검사를 통과했다.
 - BookData 왕복, 전체 activity compatibility 124/124, 26상품 범위/106 HTML 원장, 115 root BookData 패키지 참조 검증이 통과했다. 이 단계 산출물은 현재 커밋과 동일해 새 파일 변경은 없다.
 - 재귀 BookData 178개 가운데 출판 eligibility not_eligible 33, unspecified 145; 교사/권리 pending 33·unspecified 145; 수학 검토 author checks with independent review pending 32·pending 1·unspecified 145다. 따라서 배포하지 않았다.
+
+
+## 2026-10-17 2015 수학 상·하 보완 및 전체 재개 파이프라인 검증
+
+- Stage 73–89의 17개 수학(상) 태그 샘플을 재실행했다. Stage 90의 2015 기준 10개 신규 후보, stage 91의 부분 충족 기준 8개 보완 후보, stage 92의 상·하 단원 통합기를 각각 실행했다. 통합 결과는 수학(상) 3개 단원·23개 소단원·92쪽, 수학(하) 3개 단원·16개 소단원·64쪽이다.
+- Stage 93–95를 pipeline resume로 연속 실행했다. 공식 기준 지도는 26개 상품, 범위 원장은 26개 상품·1,038 product-standard 행·115 root BookData, HTML 인벤토리는 106 HTML·178 recursive BookData를 기록했다. 패키지 참조 검증은 root BookData 115개 전체에서 통과했다.
+- BookData 왕복 및 전체 activity compatibility 124/124 통과. 동일 원장 기준 392 공식 판본-코드 쌍 중 same-edition tag 370, exact chapter anchor 328, 단일 코드·단일 chapter anchor 21, 구조 신호 없음 47이다. 이 수치는 내용 충족이나 승인 수가 아니다.
+- 검수 inventory: 33 BookData `not_eligible`, eligibility·권리·교사 검토 미지정 145, 권리 및 교사 pending 33, author math checks with independent review pending 32, math pending 1. 47 구조 미연결 쌍과 수학·교사·권리 gate가 남아 있어 배포하지 않았다.
+- 전체 생성기 95단계는 기존 체크포인트의 1–47단계와 이번 재개의 48–95단계를 합쳐 완료했다. 다음 작업은 구조 미연결 기준을 코드별로 대조해 실제 공백과 불확실 매핑을 구분하고, 검수 게이트를 해소하는 것이다.
