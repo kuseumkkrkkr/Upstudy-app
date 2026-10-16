@@ -1,0 +1,11 @@
+{
+  "deploymentId": "dpl_DwXpZmr6UD59MRfjbQhdASYQpd3u",
+  "sourceCommit": "201691d639e1a17f0a0de64f22526b39c0f60e43",
+  "url": "https://aiflow-web-canary-4tyy1vtn9-cw20208021-9200s-projects.vercel.app/main.dart.js",
+  "status": 200,
+  "mimeType": "application/javascript",
+  "bytes": 5763257,
+  "sha256": "8a4133008703444f1375d5bb176bb4c1fc30026bda8c0fb3adce71816f73f0e0",
+  "fromDiskCache": false,
+  "fromServiceWorker": false
+}

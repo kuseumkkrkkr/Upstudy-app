@@ -1,5 +1,7 @@
 # Interactive textbook family ledger
 
+Current checkpoint after corrected setOperations verification: **2/106** explicitly mapped private reader candidates; **104/106** unreviewed/unresolved; **0/106** public/production-verified. Older 1/106 paragraphs below are historical polynomialArea checkpoints. Nine broader families remain open. Latest set report: [corrected Preview evidence](2026-10-17-set-operations-preview.md).
+
 Starting source: D: hotfix `ad4a763`; `origin/hotfix` matched at inspection. The 106-HTML inventory is a historical static inventory, **not** 106 verified ports or the current author-folder count. Current author files may have changed; verify exact hashes before each port. No original author files are edited here.
 
 | Priority | Family | Current bounded support | Remaining status / next evidence |
@@ -10,7 +12,7 @@ Starting source: D: hotfix `ad4a763`; `origin/hotfix` matched at inspection. The
 | P2 | algebra_area_partitions | New polynomialArea: a,b integer 1..8, expansion, source-static partition | Private candidate and local reader verified for one hash only. Other partition HTML and any piece dragging are not covered. |
 | P2 | vector_transformations | Add/subtract/scalar and inner product/projection | Matrices, basis/affine changes and 3D remain unsupported. |
 | P2 | conics_3d_distance | Existing bounded parabolaDistance | Other conics and 3D distance scenes need explicit source review/contracts. |
-| P2 | set_relation_diagrams | No verified native family port | Select/hash one actual HTML and compare controls, set membership and rendering before implementation. |
+| P2 | set_relation_diagrams | setOperations: U=1..6, two sets, four operations, independent source quiz | One corrected private candidate and synthetic Preview verified; general universes, relations and mappings remain open. |
 | P2 | calculus_scenes | Function graphs/cursor only, not complete scenes | Tangent/area/limit scene behaviors remain open; no static-text substitution permitted. |
 | P2 | timed_statistical_trajectories | discreteExperiment, statisticsEstimator | Timed trajectories/confidence/hypothesis-test behavior not covered by those kinds. |
 | P2 | adaptive_socratic_sequences | Local quiz and steps, not adaptive pedagogy | Adaptive branch rules/history/feedback remain unsupported; avoid claiming that sequential hints are Socratic adaptation. |
@@ -38,5 +40,7 @@ Inventory checkpoint: **1/106** explicitly mapped to a private, locally verified
 - Next release gate: deploy only a fixed synthetic Preview first; verify its own source/hash/controls/pages at 390 and 1280, separately from production. Evaluate promotion only after the live-source/UI baseline is reconciled. Keep publication approvals and prices unchanged.
 
 ## Synthetic Preview checkpoint
+
+Next bounded work order after the corrected set gate: `html-3050dd8407807a29`, exact HTML SHA `4235767CFF3D3BBBEA8585712BE8B3F35FAA791D4DC74E7594A3EA1AED568D9E`; companion `중등수학_좌표와순서쌍_BookData_시범.json`, SHA `BEC3409AFBDA2F556D8CB9E1B3B782173914FBD945E2BA06C8D19D70F3D4AAF6`, page `ms1-coordinate-experiment`. Complete HTML and companion read; native drag/arrow/manual stages already exist. Add explicit hash-checked candidate migration retaining original scatter reference/blocks/sections and an independent source quiz. Then verify actual private reader versus source, current synthetic Preview, drag/key/reset/axis/origin/state and hashes. Do not treat old synthetic-only coordinate proof as this source mapping.
 
 Preview `dpl_Dsonb44LLYcr94YVF4iJP4VKQc83` now has matching local/browser JS hash and actual 390/1280 activity, quiz, graph cursor and root regression evidence. Python 156 / Flutter 12 passed on the repeated focused checks. Actual private manuscript TOC overlap was rechecked fixed. See [Preview report](2026-10-17-polynomial-area-preview.md). Production alias is unchanged; 105 sources, nine broader families, clean full-app release and real persistence/concurrency remain open. Synthetic Preview success does not change those verdicts.

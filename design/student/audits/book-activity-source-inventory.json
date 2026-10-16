@@ -1771,8 +1771,18 @@
         "render",
         "shape"
       ],
-      "manuscript_mapping": "unresolved_until_explicit_source_index",
-      "status": "source_review_required_not_ported"
+      "manuscript_mapping": "공통수학2_집합과명제_BookData_시범.json#common-math-2-sets-experiment",
+      "status": "private_candidate_local_reader_verified_not_published",
+      "verification_evidence": {
+        "contract": "deploy/vercel/BOOK_SET_OPERATIONS.md",
+        "ledger": "design/student/audits/2026-10-17-set-operations-preview.md",
+        "source_book_sha256": "b612420ab6ad328fc8dd083aa835e5848c4e3ff0216c6c9f5a9f8bbd53333c9d",
+        "candidate_sha256": "1e4f96e769b479edfac23fbf36e8ef4ac6254f07c4d679665d12c0e8acfa67d1",
+        "publication_approved": false,
+        "production_reader_verified": false,
+        "synthetic_preview_deployment": "dpl_DwXpZmr6UD59MRfjbQhdASYQpd3u",
+        "synthetic_preview_js_sha256": "8a4133008703444f1375d5bb176bb4c1fc30026bda8c0fb3adce71816f73f0e0"
+      }
     },
     {
       "asset_id": "html-fc190852f55e2c75",
