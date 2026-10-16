@@ -1,0 +1,431 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅱ · 극한과 연속 보충 Batch2",
+  "subtitle": "2015 개정 기준 01-01~03의 기존 원고 공백 보완",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12수학Ⅱ01-01",
+    "12수학Ⅱ01-02",
+    "12수학Ⅱ01-03"
+  ],
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정",
+    "보충 후보",
+    "12수학Ⅱ01-01",
+    "12수학Ⅱ01-02",
+    "12수학Ⅱ01-03"
+  ],
+  "chapters": [
+    {
+      "title": "함수의 극한의 뜻",
+      "intro": [
+        "2015 개정 교육과정 기준 12수학Ⅱ01-01에 연결한 보충 후보입니다.",
+        "기존 그래프·HTML 시범과 별도 원고이며, 기존 자료의 대체나 화면 동등성을 주장하지 않습니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-lc-0101-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "함수의 극한의 뜻"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 점의 함수값과 가까이에서의 함수값을 구분해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0101-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "함수의 극한의 뜻",
+              "text": "lim(x→a) f(x)=L은 x가 a의 왼쪽과 오른쪽에서 다가갈 때 함수값이 같은 L에 가까워진다는 뜻이다. f(a)의 값은 극한과 별도로 정한다."
+            },
+            {
+              "type": "formula",
+              "title": "기준 코드",
+              "text": "12수학Ⅱ01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "확인",
+              "text": "좌우 접근이나 연속의 조건을 빠뜨리지 않았는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0101-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x≠1에서 f(x)=(x²−1)/(x−1), f(1)=5이다. lim(x→1)f(x)와 f(1)을 비교하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x≠1에서 (x²−1)/(x−1)=x+1이므로 좌극한과 우극한은 모두 2이다. 따라서 lim(x→1)f(x)=2이고 f(1)=5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "인수분해한 식은 접근점과 다른 x에서만 사용했는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0101-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x≠2에서 g(x)=|x−2|/(x−2)이다. 좌극한과 우극한을 구하고 양쪽 극한의 존재를 판단하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "접근점의 왼쪽과 오른쪽을 나누어 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x<2이면 |x−2|=−(x−2)이므로 값은 −1이다. x>2이면 |x−2|=x−2이므로 값은 1이다. 좌우 극한이 달라 양쪽 극한은 없다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "좌 −1, 우 1; 양쪽 극한 없음"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-lc-0101-quiz",
+                "kind": "quiz",
+                "prompt": "x≠2에서 g(x)=|x−2|/(x−2)이다. 좌극한과 우극한을 구하고 양쪽 극한의 존재를 판단하라.",
+                "options": [
+                  "좌 −1, 우 1; 양쪽 극한 없음",
+                  "좌 1, 우 1",
+                  "좌 −1, 우 −1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌 −1, 우 1; 양쪽 극한 없음",
+                "incorrect_feedback": "정답은 좌 −1, 우 1; 양쪽 극한 없음입니다. x<2이면 |x−2|=−(x−2)이므로 값은 −1이다. x>2이면 |x−2|=x−2이므로 값은 1이다. 좌우 극한이 달라 양쪽 극한은 없다.",
+                "hints": [
+                  "좌우에서 따로 접근값을 확인합니다.",
+                  "x<2이면 |x−2|=−(x−2)이므로 값은 −1이다. x>2이면 |x−2|=x−2이므로 값은 1이다. 좌우 극한이 달라 양쪽 극한은 없다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0101-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "lim(x→a) f(x)=L은 x가 a의 왼쪽과 오른쪽에서 다가갈 때 함수값이 같은 L에 가까워진다는 뜻이다. f(a)의 값은 극한과 별도로 정한다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "text": "정의와 풀이의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "극한의 성질과 극한값 계산",
+      "intro": [
+        "2015 개정 교육과정 기준 12수학Ⅱ01-02에 연결한 보충 후보입니다.",
+        "기존 그래프·HTML 시범과 별도 원고이며, 기존 자료의 대체나 화면 동등성을 주장하지 않습니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-lc-0102-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "극한의 성질과 극한값 계산"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 점의 함수값과 가까이에서의 함수값을 구분해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0102-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "극한의 성질과 극한값 계산",
+              "text": "극한이 존재하는 두 함수의 합·차·곱의 극한은 각 극한의 합·차·곱이다. 몫의 극한은 분모의 극한이 0이 아닐 때 분자와 분모의 극한의 몫이다."
+            },
+            {
+              "type": "formula",
+              "title": "기준 코드",
+              "text": "12수학Ⅱ01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "확인",
+              "text": "좌우 접근이나 연속의 조건을 빠뜨리지 않았는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0102-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(x→2) (x²−4)/(x−2)를 구하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x≠2에서 x²−4=(x−2)(x+2)이므로 식은 x+2와 같다. 따라서 극한은 4이다. 약분은 x≠2인 근방에서 한 것이며 x=2의 식값을 주장하지 않는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "인수분해한 식은 접근점과 다른 x에서만 사용했는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0102-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(x→3) (x²−9)/(x−3)를 구하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "접근점의 왼쪽과 오른쪽을 나누어 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²−9=(x−3)(x+3)이고 x≠3에서 식은 x+3이다. x가 3에 가까워지면 x+3은 6에 가까워진다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-lc-0102-quiz",
+                "kind": "quiz",
+                "prompt": "lim(x→3) (x²−9)/(x−3)를 구하라.",
+                "options": [
+                  "6",
+                  "3",
+                  "9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 6",
+                "incorrect_feedback": "정답은 6입니다. x²−9=(x−3)(x+3)이고 x≠3에서 식은 x+3이다. x가 3에 가까워지면 x+3은 6에 가까워진다.",
+                "hints": [
+                  "좌우에서 따로 접근값을 확인합니다.",
+                  "x²−9=(x−3)(x+3)이고 x≠3에서 식은 x+3이다. x가 3에 가까워지면 x+3은 6에 가까워진다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0102-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "극한이 존재하는 두 함수의 합·차·곱의 극한은 각 극한의 합·차·곱이다. 몫의 극한은 분모의 극한이 0이 아닐 때 분자와 분모의 극한의 몫이다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "text": "정의와 풀이의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "함수의 연속의 뜻",
+      "intro": [
+        "2015 개정 교육과정 기준 12수학Ⅱ01-03에 연결한 보충 후보입니다.",
+        "기존 그래프·HTML 시범과 별도 원고이며, 기존 자료의 대체나 화면 동등성을 주장하지 않습니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-lc-0103-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "함수의 연속의 뜻"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 점의 함수값과 가까이에서의 함수값을 구분해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0103-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "함수의 연속의 뜻",
+              "text": "함수 f가 x=a에서 연속이려면 f(a)가 정의되고, lim(x→a)f(x)가 존재하며, 그 극한이 f(a)와 같아야 한다."
+            },
+            {
+              "type": "formula",
+              "title": "기준 코드",
+              "text": "12수학Ⅱ01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "확인",
+              "text": "좌우 접근이나 연속의 조건을 빠뜨리지 않았는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0103-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x≠1에서 f(x)=(x²−1)/(x−1), f(1)=k이다. f가 x=1에서 연속일 조건을 구하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x≠1에서 식은 x+1이므로 lim(x→1)f(x)=2이다. 연속의 세 조건 중 함수값은 이미 정의되어 있으므로 k=2여야 극한과 함수값이 같다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "인수분해한 식은 접근점과 다른 x에서만 사용했는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0103-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x≠3에서 f(x)=(x²−9)/(x−3), f(3)=k이다. x=3에서 연속일 k를 구하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "접근점의 왼쪽과 오른쪽을 나누어 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x≠3에서 식은 x+3이므로 극한은 6이다. 연속이려면 f(3)=k가 이 극한과 같아야 하므로 k=6이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-lc-0103-quiz",
+                "kind": "quiz",
+                "prompt": "x≠3에서 f(x)=(x²−9)/(x−3), f(3)=k이다. x=3에서 연속일 k를 구하라.",
+                "options": [
+                  "6",
+                  "3",
+                  "9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 6",
+                "incorrect_feedback": "정답은 6입니다. x≠3에서 식은 x+3이므로 극한은 6이다. 연속이려면 f(3)=k가 이 극한과 같아야 하므로 k=6이다.",
+                "hints": [
+                  "좌우에서 따로 접근값을 확인합니다.",
+                  "x≠3에서 식은 x+3이므로 극한은 6이다. 연속이려면 f(3)=k가 이 극한과 같아야 하므로 k=6이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-lc-0103-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "함수 f가 x=a에서 연속이려면 f(a)가 정의되고, lim(x→a)f(x)가 존재하며, 그 극한이 f(a)와 같아야 한다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "text": "정의와 풀이의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "supplement_only": true,
+    "publication_eligibility": "not_eligible",
+    "teacher_review_status": "pending",
+    "math_review_status": "independent_review_pending",
+    "rights_status": "publication_decision_pending"
+  }
+}

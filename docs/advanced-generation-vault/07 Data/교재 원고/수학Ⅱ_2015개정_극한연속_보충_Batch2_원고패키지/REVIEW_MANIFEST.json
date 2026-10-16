@@ -1,0 +1,22 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_극한연속_보충_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "027B191816287C7732322623A2714CEE77AF2696F8A16DEE12418E0D56E67D87",
+  "candidate_code_references": [
+    "12수학Ⅱ01-01",
+    "12수학Ⅱ01-02",
+    "12수학Ⅱ01-03"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 3,
+  "page_count": 15,
+  "native_activity_count": 3,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "content_assertion_status": "generator_assertions_passed; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; existing_graph_html_assets_separate"
+}

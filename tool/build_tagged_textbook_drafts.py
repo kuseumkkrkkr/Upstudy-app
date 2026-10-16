@@ -107,6 +107,7 @@ GENERATORS = [
     ("build_curriculum_code_inventory.py", "main"),
     ("build_textbook_scope_coverage.py", "main"),
     ("build_html_asset_inventory.py", "main"),
+    ("build_math2_2015_limits_continuity_v2_batch2.py", "main"),
 ]
 
 
@@ -214,6 +215,11 @@ def main(argv: Sequence[str] | None = None) -> None:
         metavar="GENERATOR.py",
         help="resume at this exact generator filename; earlier outputs must already be valid",
     )
+    parser.add_argument(
+        "--skip-derived-indexes",
+        action="store_true",
+        help="skip shared package-index regeneration while still checking BookData references",
+    )
     stage_options.add_argument(
         "--list-stages",
         action="store_true",
@@ -253,9 +259,11 @@ def main(argv: Sequence[str] | None = None) -> None:
             raise RuntimeError(f"Generator entrypoint missing: {filename}:{function_name}")
         print(f"Running {filename}")
         function()
-    indexed_count = build_draft_package_index()
+    indexed_count = None if args.skip_derived_indexes else build_draft_package_index()
     source_count = verify_bookdata_references()
-    print(f"Indexed {indexed_count} recursive BookData files and verified package references for all {source_count} files.")
+    if indexed_count is not None:
+        print(f"Indexed {indexed_count} recursive BookData files.")
+    print(f"Verified package references for all {source_count} BookData files.")
     print(f"Completed {len(selected_generators)} textbook generation steps.")
 
 
