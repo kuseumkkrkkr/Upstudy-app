@@ -30,6 +30,7 @@ from api.question_bank import (
 from api import content_admin
 from api import public_textbooks
 from api.tutor_history import TutorHistory
+from api.tutor_graph_context import GraphContext
 from api.textbook_import import parse_import, validate_book
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
@@ -709,6 +710,7 @@ class ServerChatMessageRequest(BaseModel):
     flow: str | None = Field(default=None, max_length=4000)
     ocr: str | None = Field(default=None, max_length=4000)
     history: TutorHistory = Field(default_factory=list)
+    graph_context: GraphContext = Field(default_factory=list)
 
 
 class SolveHistoryCreateRequest(BaseModel):
@@ -5557,6 +5559,9 @@ def _request_tutor_reply(payload: ServerChatMessageRequest) -> tuple[str, str]:
             f"문제: {payload.quest_title}" if payload.quest_title else "",
             f"풀이 맥락: {payload.flow}" if payload.flow else "",
             f"인식 내용: {payload.ocr}" if payload.ocr else "",
+            ("현재 페이지에서 학생이 조작해 관찰한 그래프 값(학생 제공 참고값, 권한·채점 증명 아님): "
+             + json.dumps([item.model_dump() for item in payload.graph_context], ensure_ascii=False))
+            if payload.graph_context else "",
         )
         if part
     )
