@@ -22,8 +22,8 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | `공통수학2_유리함수_BookData_시범.json` | Unresolved | — | Tag explicitly says edition comparison pending. |
 | `공통수학2_집합과명제_BookData_시범.json` | Unresolved | — | Edition is not established; product/topic title alone is insufficient. |
 | `대수_등비수열_BookData_시범.json` | Unresolved | — | Standard mapping and edition are both pending. |
-| `미적분_2015개정_수열의극한_BookData_시범.json` | 2015 candidate; page/course review pending | 12미적01-01 | 2015 tag + sequence-limit topic. Do not extend to 01-02 without page evidence. |
-| `수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json` | 2015 candidate; page/course review pending | 12수학Ⅱ03-05 | 2015 tag and area-under-curve activity; official 2015 Math II criterion for area enclosed by curves; page-level coverage remains unreviewed. |
+| `미적분_2015개정_수열의극한_BookData_시범.json` | Partial topic candidate; review pending | 12미적01-01 | 2015 tag + sequence-limit topic. Only one convergent-sequence example; divergence and broader determination are not evidenced. |
+| `수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json` | Partial topic candidate; review pending | 12수학Ⅱ03-05 | Left Riemann sum is shown for one linear graph; breadth of area-between-curves problems is not evidenced. |
 | `수학Ⅱ_도함수부호와증감_BookData_시범.json` | Unresolved | — | Tag says 2015 candidate, not confirmed edition; code not compared. |
 | `수학상_2015개정_초안/수학상_2015개정_거리와중점_BookData_초안.json` | 2015 상·하 topic candidate | 10수학02-01; 10수학02-02 | 02-02 is partial: current source title only covers distance/midpoint, not internal/external division points. |
 | `수학상_2015개정_초안/수학상_2015개정_근과계수의관계_BookData_초안.json` | 2015 상·하 topic candidate | 10수학01-08 | Topic/title match; still needs page-level and math review. |
@@ -58,9 +58,20 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | `중등수학_정수의덧셈과뺄셈_BookData_시범.json` | Unresolved | — | Edition comparison pending. |
 | `중등수학_제곱근과제곱_개념서_BookData_시범.json` | Unresolved | — | Edition comparison pending. |
 | `중등수학_좌표와순서쌍_BookData_시범.json` | Unresolved | — | Edition comparison pending. |
-| `확률과통계_2015개정_이항분포_BookData_시범.json` | 2015 candidate; page/course review pending | 12확통03-03 | 2015 tag + binomial-distribution topic. Candidate only. |
+| `확률과통계_2015개정_이항분포_BookData_시범.json` | Partial topic candidate; review pending | 12확통03-03 | Binomial probabilities and mean are shown; the official criterion also names standard deviation, which is absent. |
 | `확률과통계_2015개정_조건부확률_BookData_시범.json` | 2015 candidate; page/course review pending | 12확통02-05 | 2015 tag + conditional-probability topic. Candidate only. |
 
+## Five explicit 2015 candidates: arithmetic and scope spot check
+
+| Source / candidate | Arithmetic or boundary checked | Scope / app compatibility |
+|---|---|---|
+| Geometry inner product · `12기하02-04` | `2×5×cos120°=−5`; `(3,0)·(2,2)=6` | Topic aligns. It is the only one of these five with a native `vectorInnerProduct` activity; the student-reader widget test passed. Independent math review remains pending. |
+| Calculus sequence limit · `12미적01-01` | `1+2/n→1`; doubling `n` halves the distance; `3+4/n→3` | Arithmetic is consistent, but convergence/divergence meanings and broader determination are not covered by this single convergent example. HTML is a separate asset. |
+| Math II area · `12수학Ⅱ03-05` | Left sum `2(0+2+4)=12`; exact triangle area `6×6/2=18` | Both values are consistent. The lesson samples one linear graph; broader area-between-curves scope is not evidenced. Animation is standalone HTML; only the static `y=x` graph block is represented in BookData. |
+| Probability binomial · `12확통03-03` | `C(4,2)(1/2)^4=3/8`; `np=2` | Values are consistent. The official criterion also includes standard deviation, absent from this sample. Interaction remains standalone HTML. |
+| Probability conditional · `12확통02-05` | `(5−1)/(5+2−1)=2/3`; the general red-first denominator is nonzero for the stated `R,B≥1` controls | One without-replacement case and the conditional formula are shown. Interaction remains standalone HTML; no app execution or full HTML parity is established. |
+
+These are source-level arithmetic and scope checks, not independent teacher review or release approval. For the four standalone HTML samples, BookData does not automatically execute the HTML controls; visual/interaction parity remains unverified.
 ## Next review steps
 
 1. Inspect each linked source page and decide whether the candidate is full-topic, partial-topic, or a false match.
