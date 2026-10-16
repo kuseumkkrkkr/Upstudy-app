@@ -85,3 +85,31 @@ configuration was reused, so this is not a full clean product build. Test loadin
 initially instantiated HTTP outside test zone; moved singleton initialization
 into setUp and reran successfully. Existing Flutter auth concurrency work remains
 unreviewed and is not certified by these focused tests.
+
+### Exact committed HEAD recheck
+
+Session compatibility commit `16719565cf8d98b79d59d11580b6662c1e6ece15` was pushed
+and remote hotfix SHA read back equal. Initial remote push was rejected without
+ref movement; one normal retry succeeded, no force push or branch switch.
+
+Fresh HEAD lib/test archive plus the package URI override reran session tests2
+successfully. `bookdata_import_preservation_test.dart` failed at compilation:
+
+- BookWidget.bookLoader test seam is absent from committed reader.
+- Exam mixins reference undeclared `_focusedQuestionIndex`,
+  `_focusedExamQuestionKey`, `_examQuestionsMarkedForReview`, `_timerVisible`
+  and `_CompactExamViewAction`. Their dirty working declarations were not added.
+- HEAD arena/social source imports web_socket_channel, but current reused dirty
+  package configuration omits it. This is a dependency-configuration mismatch,
+  not proof HEAD pubspec lacks the dependency. No dependency files overwritten.
+
+`flutter --help --verbose` and `flutter build web --help --verbose` expose
+`--packages`, `--target` (entry file) and `--output` (output directory), but no
+`--project-dir`, `-C` or equivalent project-directory option. Earlier SDK source
+inspection demonstrated web Dart2JS uses the root package configuration despite
+the global override; an archive entry filename is not source-closure proof.
+Under the required root shell cwd, no clean full product web build was performed
+or deployed. No SDK edit, package-config overwrite, alternate branch/worktree or
+new dirty-source product build was used to bypass that limitation. Next work is
+to reconcile those minimal reader/exam prerequisites and an approved reproducible
+full-product build path; the backend Preview remains intermediate only.
