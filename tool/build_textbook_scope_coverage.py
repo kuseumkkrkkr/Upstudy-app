@@ -93,6 +93,9 @@ def main() -> None:
     }
 
     tagged: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    chapter_signals: dict[tuple[str, str], dict[str, object]] = {}
+    explicit_chapter_anchors: set[tuple[str, str]] = set()
+    single_code_chapter_anchors: set[tuple[str, str]] = set()
     module_alignment: dict[str, str] = {}
     untagged_by_prefix: dict[str, list[str]] = defaultdict(list)
     source_bookdata_files = sorted(MANUSCRIPTS.glob("*BookData*.json"))
@@ -104,6 +107,7 @@ def main() -> None:
     code_tagged_files: set[str] = set()
     for path in candidate_bookdata_files:
         data = json.loads(path.read_text(encoding="utf-8"))
+        relative_path = path.relative_to(MANUSCRIPTS).as_posix()
         raw = data.get("standard_codes", [])
         codes = raw if isinstance(raw, list) else [raw]
         if data.get("standard_code"):
@@ -111,12 +115,41 @@ def main() -> None:
         codes += exact_codes_from_tags(data.get("tags", []), valid_codes)
         codes = sorted({str(code).strip() for code in codes if str(code).strip()})
         if codes:
-            code_tagged_files.add(path.name)
+            code_tagged_files.add(relative_path)
         if not codes:
-            untagged_by_prefix[str(data.get("curriculum_version") or "판본 미기록")].append(path.name)
+            untagged_by_prefix[str(data.get("curriculum_version") or "판본 미기록")].append(relative_path)
         edition = edition_from_bookdata(data)
+        chapters = data.get("chapters", [])
         for code in codes:
-            tagged[code].append((path.name, edition))
+            tagged[code].append((relative_path, edition))
+            key = (edition, code)
+            signal = chapter_signals.setdefault(key, {"files": set(), "chapters": 0, "pages": 0, "blocks": set()})
+            matched_chapters = []
+            for chapter in chapters if isinstance(chapters, list) else []:
+                chapter_text = json.dumps(chapter, ensure_ascii=False)
+                if not re.search(rf"(?<![\w-]){re.escape(code)}(?![\w-])", chapter_text):
+                    continue
+                matched_chapters.append(chapter)
+            # A one-code, one-chapter BookData has an unambiguous module link even
+            # when the legacy chapter prose omitted the code token itself.
+            if not matched_chapters and len(codes) == 1 and isinstance(chapters, list) and len(chapters) == 1:
+                matched_chapters = chapters
+                single_code_chapter_anchors.add(key)
+            elif matched_chapters:
+                explicit_chapter_anchors.add(key)
+            for chapter in matched_chapters:
+                signal["files"].add(relative_path)
+                signal["chapters"] += 1
+                pages = chapter.get("pages", [])
+                signal["pages"] += len(pages) if isinstance(pages, list) else 0
+                if isinstance(pages, list):
+                    for page in pages:
+                        for block in page.get("blocks", []) if isinstance(page, dict) else []:
+                            if isinstance(block, dict):
+                                signal["blocks"].add(str(block.get("type", "unknown")))
+                                activity = block.get("activity")
+                                if isinstance(activity, dict):
+                                    signal["blocks"].add(f"activity:{activity.get('kind', 'unknown')}")
 
     lines = [
         "# 26종 교재 성취기준·콘텐츠 적용 범위 원장",
@@ -158,10 +191,20 @@ def main() -> None:
     for number, (filename, prefix, boundary) in PRODUCTS.items():
         edition = "2015" if filename.startswith("2015") else "2022"
         lines += [f"### {number}. {catalog[number]}", "", f"원문: `{filename}`, prefix `{prefix}`. {boundary}.", "",
-                  f"| {edition} 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |", "|---|---|---|---|"]
+                  f"| {edition} 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |", "|---|---|---|---|---|"]
         for code, description in per_product[number]:
             sources = [name for name, tag_edition in tagged.get(code, []) if tag_edition == edition]
             evidence = ", ".join(f"`{name}`" for name in sources) if sources else "—"
+            signal = chapter_signals.get((edition, code), {})
+            chapter_count = int(signal.get("chapters", 0))
+            page_count = int(signal.get("pages", 0))
+            block_types = sorted(signal.get("blocks", set()))
+            chapter_evidence = (
+                f"{len(signal.get('files', set()))} files · {chapter_count} chapters · {page_count} pages · "
+                + (", ".join(f"`{kind}`" for kind in block_types) or "no typed blocks")
+                if chapter_count
+                else "no exact-code chapter anchor"
+            )
             alignment = module_alignment.get(code)
             if alignment == "pending_first_class_statistics_tool":
                 status = "태그 있음 · 전용 공학 도구 상호작용 미구현; 연동 후보"
@@ -179,8 +222,37 @@ def main() -> None:
             if equation_scripts:
                 description += " [복구 EqEdit: " + "; ".join(equation_scripts) + "]"
             excerpt = description.replace("|", "\\|")[:260]
-            lines.append(f"| `{code}` | {excerpt} | {evidence} | {status} |")
+            lines.append(f"| `{code}` | {excerpt} | {evidence} | {chapter_evidence} | {status} |")
         lines.append("")
+
+    official_pairs = {
+        ("2015" if filename.startswith("2015") else "2022", code)
+        for filename, prefix, _ in PRODUCTS.values()
+        for code in standards[filename]
+        if code.startswith(prefix)
+    }
+    tagged_pairs = {
+        (edition, code)
+        for code, entries in tagged.items()
+        for edition in {tag_edition for _, tag_edition in entries}
+        if (edition, code) in official_pairs
+    }
+    linked_pairs = (explicit_chapter_anchors | single_code_chapter_anchors) & official_pairs
+    lines += [
+        "## 기준-챕터 매핑 신호 감사",
+        "",
+        f"고유 공식 판본-코드 쌍 `{len(official_pairs)}`개 중 같은 판본 태그가 있는 쌍은 `{len(tagged_pairs)}`개, exact code가 chapter 안에 있는 쌍은 `{len(explicit_chapter_anchors & official_pairs)}`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `{len(single_code_chapter_anchors & official_pairs)}`개, 어느 구조 신호도 없는 쌍은 `{len(official_pairs - linked_pairs)}`개다.",
+        "아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.",
+        "",
+        "| # | 상품 | 기준 수 | chapter 연결 신호 없음 |",
+        "|---:|---|---:|---:|",
+    ]
+    for number, (filename, prefix, _) in PRODUCTS.items():
+        edition = "2015" if filename.startswith("2015") else "2022"
+        product_codes = [code for code in standards[filename] if code.startswith(prefix)]
+        unlinked = sum((edition, code) not in linked_pairs for code in product_codes)
+        lines.append(f"| {number} | {catalog[number]} | {len(product_codes)} | {unlinked} |")
+    lines.append("")
 
     lines += [
         "## 2022 원문 수식 추출 한계",
@@ -253,6 +325,7 @@ def main() -> None:
         "태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.",
         "",
         "자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.",
+        "`chapter 구조 신호`는 chapter 텍스트의 exact code를 우선 찾고, 코드 하나만 가진 단일 chapter BookData에는 그 하나의 chapter를 연결해 페이지 수와 block type을 집계한다. 다중 코드 자료에 임의 분배하지 않는다. 이 구조 신호는 원고 충족이나 계산 정확성을 승인하지 않는다.",
         "",
         "재생성: `python tool/build_textbook_scope_coverage.py` (공식 추출물과 원본 BookData 필요)",
         "",

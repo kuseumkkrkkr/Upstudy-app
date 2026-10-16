@@ -50,1221 +50,1255 @@
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 2. 중학수학 1-2 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 3. 중학수학 2-1 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 4. 중학수학 2-2 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 5. 중학수학 3-1 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 6. 중학수학 3-2 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해할 수 있다. | `중학교수학_2015개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 최대공약수와 최소공배수의 성질을 이해하고, 이를 구할 수 있다. | `중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 양수와 음수, 정수와 유리수의 개념을 이해한다. | `중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 이해한다. | `중학교수학_2015개정_유리수와순환소수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻을 알고, 그 성질을 이해한다. | `중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해한다. | `중학교수학_2015개정_무리수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단할 수 있다. | `중학교수학_2015개정_실수의대소관계_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산을 할 수 있다. | `중학교수학_2015개정_근호식의사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타낼 수 있다. | `중학교수학_2015개정_문자를사용한식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 식의 값을 구할 수 있다. | `중학교수학_2015개정_식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 방정식과 그 해의 의미를 알고, 등식의 성질을 이해한다. | `중학교수학_2015개정_방정식과등식의성질_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 지수법칙을 이해한다. | `중학교수학_2015개정_지수법칙_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다. | `중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | ʻ(단항식)×(다항식)ʼ, ʻ(다항식)÷(단항식)ʼ과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산 | `중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 부등식과 그 해의 의미를 알고, 부등식의 성질을 이해한다. | `중학교수학_2015개정_부등식과그해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. [복구 EqEdit: times; div] | `중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_연립일차방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 다항식의 곱셈과 인수분해를 할 수 있다. | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. | `중학교수학_2015개정_이차방정식_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 순서쌍과 좌표를 이해한다. | `중학교수학_2015개정_순서쌍과좌표_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다. | `중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `derivation`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다. | `중학교수학_2015개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 함수의 개념을 이해한다. | `중학교수학_2015개정_함수의개념_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 이차함수의 그래프의 성질을 이해한다. | `중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `definition`, `formula`, `graph`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 점, 선, 면, 각을 이해하고, 점, 직선, 평면의 위치 관계를 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 평행선에서 동위각과 엇각의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 삼각형을 작도할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 다각형의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 넓이와 호의 길이를 구할 | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 다면체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 회전체의 성질을 이해한다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 입체도형의 겉넓이와 부피를 구할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-10` | 이등변삼각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-11` | 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-12` | 사각형의 성질을 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-13` | 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-14` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-15` | 평행선 사이의 선분의 길이의 비를 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-16` | 피타고라스 정리를 이해하고 설명할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-17` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-18` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-19` | 원의 현에 관한 성질과 접선에 관한 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수04-20` | 원주각의 성질을 이해한다. | `중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-01` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-02` | 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-03` | 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할 | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-04` | 경우의 수를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-05` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-06` | 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-07` | 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수05-08` | 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다. | `중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `definition`, `formula`, `lead`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 
 ### 7. 중학수학 1-1 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 8. 중학수학 1-2 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 9. 중학수학 2-1 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 10. 중학수학 2-2 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 11. 중학수학 3-1 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 12. 중학수학 3-2 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `9수`. 학년군 코드; 학기 배정 미확인.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `9수01-01` | 소인수분해의 뜻을 알고, 자연수를 소인수분해 할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-02` | 소인수분해를 이용하여 최대공약수와 최소공배수를 구할 수 있다 | `중학수학1-1_2022개정_소인수분해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-03` | 다양한 상황을 이용하여 음수의 필요성을 인식하고, 양수와 음수, 정수와 유리수의 개념을 이해한다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-04` | 정수와 유리수의 대소 관계를 판단할 수 있다 | `중학수학1-1_2022개정_정수와유리수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-05` | 정수와 유리수의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수01-06` | 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-07` | 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `activity:squareRootNumberLine`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-08` | 무리수의 개념을 이해하고, 무리수의 유용성을 인식할 수 있다 | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-09` | 실수의 대소 관계를 판단하고 설명할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수01-10` | 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-01` | 다양한 상황을 문자를 사용한 식으로 나타내어 그 유용성을 인식하고, 식의 값을 구할 수 있다 | `중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-02` | 일차식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json`, `중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-03` | 방정식과 그 해의 뜻을 알고, 등식의 성질을 설명할 수 있다 | `중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-04` | 일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `9수02-05` | 순서쌍과 좌표를 이해하고, 그 편리함을 인식할 수 있다 | `중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-06` | 다양한 상황을 그래프로 나타내고, 주어진 그래프를 해석할 수 있다 | `중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-07` | 정비례, 반비례 관계를 이해하고, 그 관계를 표, 식, 그래프로 나타낼 수 있다 | `중학수학1-1_2022개정_정비례와반비례_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-08` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-09` | 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-10` | ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다 [복구 EqEdit: times; div] | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-11` | 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-12` | 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-13` | 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-14` | 함수의 개념을 이해하고, 함숫값을 구할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-15` | 일차함수의 개념을 이해하고, 그 그래프를 그릴 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-16` | 일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `중등수학_일차함수_BookData_시범.json` | 1 files · 1 chapters · 7 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `9수02-17` | 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-18` | 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다 | `중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-19` | 다항식의 곱셈과 인수분해를 할 수 있다. 이차방정식 [복구 EqEdit: m(a+b)`=`ma+mb; (a+b)  ^{2} =a  ^{2} +2ab+b  ^{2}; (a-b)  ^{2} =a  ^{2} -2ab+b  ^{2}; (a+b)(a-b)=a  ^{2} -b  ^{2}; (x+a)(x+b)=x  ^{2} +(a+b)x+ab; (ax+b)(cx+d)=acx  ^{2} +(ad+bc)x+bd] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-20` | 이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-21` | 이차함수의 개념을 이해한다 | `중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수02-22` | 이차함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 [복구 EqEdit: y=f(x); x] | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-01` | 점, 선, 면, 각을 이해하고, 실생활 상황과 연결하여 점, 직선, 평면의 위치 관계를 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-02` | 평행선에서 동위각과 엇각의 성질을 이해하고 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-03` | 삼각형을 작도하고, 그 과정을 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-04` | 삼각형의 합동 조건을 이해하고, 이를 이용하여 두 삼각형이 합동인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-05` | 다각형의 성질을 이해하고 설명할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-06` | 부채꼴의 중심각과 호의 관계를 이해하고, 이를 이용하여 부채꼴의 호의 길이와 넓이를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-07` | 구체적인 모형이나 공학 도구를 이용하여 다면체와 회전체의 성질을 탐구하고, 이를 설명할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-08` | 입체도형의 겉넓이와 부피를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-09` | 이등변삼각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-10` | 삼각형의 외심과 내심의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-11` | 사각형의 성질을 이해하고 정당화할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-12` | 도형의 닮음의 뜻과 닮은 도형의 성질을 이해하고, 닮음비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-13` | 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-14` | 평행선 사이의 선분의 길이의 비를 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-15` | 피타고라스 정리를 이해하고 정당화할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-16` | 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-17` | 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수03-18` | 원의 현에 관한 성질과 접선에 관한 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수03-19` | 원주각의 성질을 이해하고 정당화할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-01` | 중앙값, 최빈값의 뜻을 알고, 자료의 특성에 따라 적절한 대푯값을 선택하여 구할 수 있다 | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json`, `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 2 files · 2 chapters · 12 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-02` | 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-03` | 상대도수를 구하고, 상대도수의 분포를 표나 그래프로 나타내고 해석할 수 있다 | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-04` | 통계적 탐구 문제를 설정하고, 공학 도구를 이용하여 자료를 수집하여 분석하고, 그 결과를 해석할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-05` | 경우의 수를 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-06` | 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다 | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:discreteExperiment`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-07` | 분산과 표준편차를 구하고 자료의 분포를 설명할 수 있다 | `중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `9수04-08` | 공학 도구를 이용하여 자료를 상자그림으로 나타내고 분포를 비교할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `9수04-09` | 자료를 산점도로 나타내고 상관관계를 말할 수 있다 | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 13. 수학(상) 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `10수학`. 상권 분권 경계 미승인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-02` | 항등식의 성질을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-08` | 평행이동의 의미를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-03` | 집합의 연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-05` | 무리함수    | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-02` | 순열의 의미를 이해하고, 순열의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-03` | 조합의 의미를 이해하고, 조합의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-02` | 항등식의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-08` | 평행이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-03` | 집합의 연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-05` | 무리함수    | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-02` | 순열의 의미를 이해하고, 순열의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-03` | 조합의 의미를 이해하고, 조합의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 
 ### 14. 수학(하) 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `10수학`. 하권 분권 경계 미승인.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-02` | 항등식의 성질을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-08` | 평행이동의 의미를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-03` | 집합의 연산을 할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-05` | 무리함수    | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-02` | 순열의 의미를 이해하고, 순열의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학05-03` | 조합의 의미를 이해하고, 조합의 수를 구할 수 있다. | — | same-edition tag 없음 · 원고 대조 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-02` | 항등식의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-08` | 평행이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-03` | 집합의 연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-05` | 무리함수    | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-02` | 순열의 의미를 이해하고, 순열의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학05-03` | 조합의 의미를 이해하고, 조합의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 
 ### 15. 수학Ⅰ 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `12수학Ⅰ`. 과목 연결; 상품 범위 대조 필요.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12수학Ⅰ01-01` | 거듭제곱과 거듭제곱근의 뜻을 알고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-02` | 지수가 유리수, 실수까지 확장될 수 있음을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-03` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 나타낼 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-04` | 로그의 뜻을 알고, 그 성질을 이해한다. | `대수_지수와로그_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-05` | 상용로그를 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-06` | 지수함수와 로그함수의 뜻을 안다. | `대수_지수와로그_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-07` | 지수함수와 로그함수의 그래프를 그릴 수 있고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-08` | 지수함수와 로그함수를 활용하여 문제를 해결할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ02-01` | 일반각과 호도법의 뜻을 안다. | `수학Ⅰ_삼각함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ02-02` | 삼각함수의 뜻을 알고, 사인함수, 코사인함수, 탄젠트함수의 그래프를 그릴 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json`, `수학Ⅰ_삼각함수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ02-03` | 사인법칙과 코사인법칙을 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-01` | 수열의 뜻을 안다. | `수학Ⅰ_수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-02` | 등차수열의 뜻을 알고, 일반항, 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-04` | ∑의 뜻을 알고, 그 성질을 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-05` | 여러 가지 수열의 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-06` | 수열의 귀납적 정의를 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-07` | 수학적 귀납법의 원리를 이해한다. | `수학Ⅰ_수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ03-08` | 수학적 귀납법을 이용하여 명제를 증명할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12수학Ⅰ01-01` | 거듭제곱과 거듭제곱근의 뜻을 알고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-02` | 지수가 유리수, 실수까지 확장될 수 있음을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-03` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 나타낼 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-04` | 로그의 뜻을 알고, 그 성질을 이해한다. | `대수_지수와로그_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-05` | 상용로그를 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-06` | 지수함수와 로그함수의 뜻을 안다. | `대수_지수와로그_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-07` | 지수함수와 로그함수의 그래프를 그릴 수 있고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-08` | 지수함수와 로그함수를 활용하여 문제를 해결할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ02-01` | 일반각과 호도법의 뜻을 안다. | `수학Ⅰ_삼각함수_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ02-02` | 삼각함수의 뜻을 알고, 사인함수, 코사인함수, 탄젠트함수의 그래프를 그릴 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json`, `수학Ⅰ_삼각함수_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ02-03` | 사인법칙과 코사인법칙을 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json` | 1 files · 1 chapters · 6 pages · `answer`, `checklist`, `definition`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-01` | 수열의 뜻을 안다. | `수학Ⅰ_수열_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-02` | 등차수열의 뜻을 알고, 일반항, 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-04` | ∑의 뜻을 알고, 그 성질을 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-05` | 여러 가지 수열의 첫째항부터 제항까지의 합을 구할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-06` | 수열의 귀납적 정의를 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-07` | 수학적 귀납법의 원리를 이해한다. | `수학Ⅰ_수열_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ03-08` | 수학적 귀납법을 이용하여 명제를 증명할 수 있다. | `수학Ⅰ_수열_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
 
 ### 16. 수학Ⅱ 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `12수학Ⅱ`. 과목 연결; 상품 범위 대조 필요.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12수학Ⅱ01-01` | 함수의 극한의 뜻을 안다. | `수학Ⅱ_함수의극한_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ01-02` | 함수의 극한에 대한 성질을 이해하고, 함수의 극한값을 구할 수 있다. | `수학Ⅱ_함수의극한_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ01-03` | 함수의 연속의 뜻을 안다. | `수학Ⅱ_함수의연속_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ01-04` | 연속함수의 성질을 이해하고, 이를 활용할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-01` | 미분계수의 뜻을 알고, 그 값을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-02` | 미분계수의 기하적 의미를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-03` | 미분가능성과 연속성의 관계를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-04` | 함수    ( 은 양의 정수)의 도함수를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-05` | 함수의 실수배, 합, 차, 곱의 미분법을 알고, 다항함수의 도함수를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-06` | 접선의 방정식을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-07` | 함수에 대한 평균값 정리를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-08` | 함수의 증가와 감소, 극대와 극소를 판정하고 설명할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-09` | 함수의 그래프의 개형을 그릴 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-10` | 방정식과 부등식에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ02-11` | 속도와 가속도에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-01` | 부정적분의 뜻을 안다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-02` | 함수의 실수배, 합, 차의 부정적분을 알고, 다항함수의 부정적분을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-03` | 정적분의 뜻을 안다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-04` | 다항함수의 정적분을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-05` | 곡선으로 둘러싸인 도형의 넓이를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅱ03-06` | 속도와 거리에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12수학Ⅱ01-01` | 함수의 극한의 뜻을 안다. | `수학Ⅱ_함수의극한_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ01-02` | 함수의 극한에 대한 성질을 이해하고, 함수의 극한값을 구할 수 있다. | `수학Ⅱ_함수의극한_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ01-03` | 함수의 연속의 뜻을 안다. | `수학Ⅱ_함수의연속_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ01-04` | 연속함수의 성질을 이해하고, 이를 활용할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-01` | 미분계수의 뜻을 알고, 그 값을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-02` | 미분계수의 기하적 의미를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-03` | 미분가능성과 연속성의 관계를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-04` | 함수    ( 은 양의 정수)의 도함수를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-05` | 함수의 실수배, 합, 차, 곱의 미분법을 알고, 다항함수의 도함수를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-06` | 접선의 방정식을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-07` | 함수에 대한 평균값 정리를 이해한다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-08` | 함수의 증가와 감소, 극대와 극소를 판정하고 설명할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-09` | 함수의 그래프의 개형을 그릴 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-10` | 방정식과 부등식에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ02-11` | 속도와 가속도에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-01` | 부정적분의 뜻을 안다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-02` | 함수의 실수배, 합, 차의 부정적분을 알고, 다항함수의 부정적분을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-03` | 정적분의 뜻을 안다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-04` | 다항함수의 정적분을 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-05` | 곡선으로 둘러싸인 도형의 넓이를 구할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅱ03-06` | 속도와 거리에 대한 문제를 해결할 수 있다. | `수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 17. 확률과 통계 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `12확통`. 과목 연결; 상품 범위 대조 필요.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12확통01-01` | 원순열, 중복순열, 같은 것이 있는 순열을 이해하고, 그 순열의 수를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통01-02` | 중복조합을 이해하고, 중복조합의 수를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통01-03` | 이항정리를 이해하고 이를 이용하여 문제를 해결할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-01` | 통계적 확률과 수학적 확률의 의미를 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-02` | 확률의 기본 성질을 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-03` | 확률의 덧셈정리를 이해하고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-04` | 여사건의 확률의 뜻을 알고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-05` | 조건부확률의 의미를 이해하고, 이를 구할 수 있다. | `확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-06` | 사건의 독립과 종속의 의미를 이해하고, 이를 설명할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-07` | 확률의 곱셈정리를 이해하고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-01` | 확률변수와 확률분포의 뜻을 안다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-02` | 이산확률변수의 기댓값(평균)과 표준편차를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-03` | 이항분포의 뜻을 알고, 평균과 표준편차를 구할 수 있다. | `확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-04` | 정규분포의 뜻을 알고, 그 성질을 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-05` | 모집단과 표본의 뜻을 알고 표본추출의 원리를 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-06` | 표본평균과 모평균의 관계를 이해하고 설명할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-07` | 모평균을 추정하고, 그 결과를 해석할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12확통01-01` | 원순열, 중복순열, 같은 것이 있는 순열을 이해하고, 그 순열의 수를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통01-02` | 중복조합을 이해하고, 중복조합의 수를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통01-03` | 이항정리를 이해하고 이를 이용하여 문제를 해결할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-01` | 통계적 확률과 수학적 확률의 의미를 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-02` | 확률의 기본 성질을 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-03` | 확률의 덧셈정리를 이해하고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-04` | 여사건의 확률의 뜻을 알고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-05` | 조건부확률의 의미를 이해하고, 이를 구할 수 있다. | `확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-06` | 사건의 독립과 종속의 의미를 이해하고, 이를 설명할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-07` | 확률의 곱셈정리를 이해하고, 이를 활용할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-01` | 확률변수와 확률분포의 뜻을 안다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-02` | 이산확률변수의 기댓값(평균)과 표준편차를 구할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-03` | 이항분포의 뜻을 알고, 평균과 표준편차를 구할 수 있다. | `확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-04` | 정규분포의 뜻을 알고, 그 성질을 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-05` | 모집단과 표본의 뜻을 알고 표본추출의 원리를 이해한다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-06` | 표본평균과 모평균의 관계를 이해하고 설명할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-07` | 모평균을 추정하고, 그 결과를 해석할 수 있다. | `확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | 태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기 |
 
 ### 18. 미적분 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `12미적`. 과목 연결; 상품 범위 대조 필요.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12미적01-01` | 수열의 수렴, 발산의 뜻을 알고, 이를 판별할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적01-02` | 수열의 극한에 대한 기본 성질을 이해하고, 이를 이용하여 극한값을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적01-03` | 등비수열의 극한값을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적01-04` | 급수의 수렴, 발산의 뜻을 알고, 이를 판별할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적01-05` | 등비급수의 뜻을 알고, 그 합을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적01-06` | 등비급수를 활용하여 여러 가지 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-01` | 지수함수와 로그함수의 극한을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-02` | 지수함수와 로그함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-03` | 삼각함수의 덧셈정리를 이해한다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-04` | 삼각함수의 극한을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-05` | 사인함수와 코사인함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-06` | 함수의 몫을 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-07` | 합성함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-08` | 매개변수로 나타낸 함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-09` | 음함수와 역함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-10` | 이계도함수를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-11` | 접선의 방정식을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-12` | 함수의 그래프의 개형을 그릴 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-13` | 방정식과 부등식에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적02-14` | 속도와 가속도에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-01` | 치환적분법을 이해하고, 이를 활용할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-02` | 부분적분법을 이해하고, 이를 활용할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-03` | 여러 가지 함수의 부정적분과 정적분을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-04` | 정적분과 급수의 합 사이의 관계를 이해한다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-05` | 곡선으로 둘러싸인 도형의 넓이를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-06` | 입체도형의 부피를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적03-07` | 속도와 거리에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12미적01-01` | 수열의 수렴, 발산의 뜻을 알고, 이를 판별할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적01-02` | 수열의 극한에 대한 기본 성질을 이해하고, 이를 이용하여 극한값을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적01-03` | 등비수열의 극한값을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적01-04` | 급수의 수렴, 발산의 뜻을 알고, 이를 판별할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적01-05` | 등비급수의 뜻을 알고, 그 합을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적01-06` | 등비급수를 활용하여 여러 가지 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-01` | 지수함수와 로그함수의 극한을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-02` | 지수함수와 로그함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-03` | 삼각함수의 덧셈정리를 이해한다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-04` | 삼각함수의 극한을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-05` | 사인함수와 코사인함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-06` | 함수의 몫을 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-07` | 합성함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-08` | 매개변수로 나타낸 함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-09` | 음함수와 역함수를 미분할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-10` | 이계도함수를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-11` | 접선의 방정식을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-12` | 함수의 그래프의 개형을 그릴 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-13` | 방정식과 부등식에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적02-14` | 속도와 가속도에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-01` | 치환적분법을 이해하고, 이를 활용할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-02` | 부분적분법을 이해하고, 이를 활용할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-03` | 여러 가지 함수의 부정적분과 정적분을 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-04` | 정적분과 급수의 합 사이의 관계를 이해한다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-05` | 곡선으로 둘러싸인 도형의 넓이를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-06` | 입체도형의 부피를 구할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적03-07` | 속도와 거리에 대한 문제를 해결할 수 있다. | `미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 19. 기하 개념서 · 2015 개정
 
 원문: `2015_appendix8_math.txt`, prefix `12기하`. 과목 연결; 상품 범위 대조 필요.
 
-| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12기하01-01` | 포물선의 뜻을 알고, 포물선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-02` | 타원의 뜻을 알고, 타원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-03` | 쌍곡선의 뜻을 알고, 쌍곡선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-04` | 이차곡선과 직선의 위치 관계를 이해하고, 접선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-01` | 벡터의 뜻을 안다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json`, `고등수학_기하_벡터의뜻_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-02` | 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-03` | 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_위치벡터와좌표_BookData_V2_시범.json`, `고등수학_기하_위치벡터와좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-04` | 두 평면벡터의 내적의 뜻을 알고, 이를 구할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_평면벡터내적_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-05` | 좌표평면에서 벡터를 이용하여 직선과 원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-01` | 직선과 직선, 직선과 평면, 평면과 평면의 위치 관계에 대한 간단한 증명을 할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-02` | 삼수선의 정리를 이해하고, 이를 활용할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-03` | 정사영의 뜻을 알고, 이를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-04` | 좌표공간에서 점의 좌표를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-05` | 좌표공간에서 두 점 사이의 거리를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-06` | 좌표공간에서 선분의 내분점과 외분점의 좌표를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-07` | 구의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12기하01-01` | 포물선의 뜻을 알고, 포물선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하01-02` | 타원의 뜻을 알고, 타원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하01-03` | 쌍곡선의 뜻을 알고, 쌍곡선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하01-04` | 이차곡선과 직선의 위치 관계를 이해하고, 접선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하02-01` | 벡터의 뜻을 안다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json`, `고등수학_기하_벡터의뜻_BookData_V2_시범.json` | 4 files · 4 chapters · 14 pages · `activity`, `activity:quiz`, `activity:vectorOperation`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `paragraph`, `question`, `solutionStep`, `symbols`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하02-02` | 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | 3 files · 3 chapters · 9 pages · `activity`, `activity:quiz`, `activity:vectorOperation`, `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하02-03` | 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_위치벡터와좌표_BookData_V2_시범.json`, `고등수학_기하_위치벡터와좌표_BookData_시범.json` | 3 files · 3 chapters · 10 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `symbols`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하02-04` | 두 평면벡터의 내적의 뜻을 알고, 이를 구할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_평면벡터내적_BookData_시범.json` | 2 files · 2 chapters · 6 pages · `answer`, `checklist`, `hint`, `lead`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하02-05` | 좌표평면에서 벡터를 이용하여 직선과 원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-01` | 직선과 직선, 직선과 평면, 평면과 평면의 위치 관계에 대한 간단한 증명을 할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-02` | 삼수선의 정리를 이해하고, 이를 활용할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-03` | 정사영의 뜻을 알고, 이를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-04` | 좌표공간에서 점의 좌표를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-05` | 좌표공간에서 두 점 사이의 거리를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-06` | 좌표공간에서 선분의 내분점과 외분점의 좌표를 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-07` | 구의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 20. 공통수학1 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `10공수1`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `10공수1-01-01` | 다항식의 사칙연산의 원리를 설명하고, 그 계산을 할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-01-02` | 항등식의 성질과 나머지정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-01-03` | 다항식의 인수분해를 할 수 있다 [복구 EqEdit: a^ 2 + b^2 + c^2 + 2 ab + 2 bc + 2ca = ( a + b + c )^2; a^3 + 3a^2 b + 3 a b^2 + b^3 = (a + b )^3; a^3 - 3a^2 b + 3 a b^2 - b^3 =  (a - b )^3; a^3 + b^3 = ( a + b ) ( a^2 - ab + b^2 ); a^3 - b^3 = ( a - b ) ( a^2 + ab + b^2 )] | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-01` | 복소수의 뜻과 성질을 설명하고, 사칙연산을 수행할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-02` | 이차방정식의 실근과 허근을 이해하고, 판별식을 이용하여 이차방정식의 근을 판별할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-03` | 이차방정식의 근과 계수의 관계를 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-04` | 이차방정식과 이차함수를 연결하여 그 관계를 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-05` | 이차함수의 그래프와 직선의 위치 관계를 판단할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-06` | 이차함수의 최대, 최소를 탐구하고, 이를 실생활과 연결하여 유용성을 인식할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-07` | 간단한 삼차방정식과 사차방정식을 풀 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-08` | 미지수가 2개인 연립이차방정식을 풀 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-09` | 미지수가 1개인 연립일차부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-10` | 절댓값을 포함한 일차부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-02-11` | 이차부등식과 이차함수를 연결하여 그 관계를 설명하고, 이차부등식과 연립이차 부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-03-01` | 합의 법칙과 곱의 법칙을 이해하고, 적절한 전략을 사용하여 경우의 수와 관련된 문제를 해결할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-03-02` | 순열의 개념을 이해하고, 순열의 수를 구하는 방법을 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-03-03` | 조합의 개념을 이해하고, 조합의 수를 구하는 방법을 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-04-01` | 행렬의 뜻을 알고, 실생활 상황을 행렬로 표현할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수1-04-02` | 행렬의 연산을 수행하고, 관련된 문제를 해결할 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `10공수1-01-01` | 다항식의 사칙연산의 원리를 설명하고, 그 계산을 할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-01-02` | 항등식의 성질과 나머지정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-01-03` | 다항식의 인수분해를 할 수 있다 [복구 EqEdit: a^ 2 + b^2 + c^2 + 2 ab + 2 bc + 2ca = ( a + b + c )^2; a^3 + 3a^2 b + 3 a b^2 + b^3 = (a + b )^3; a^3 - 3a^2 b + 3 a b^2 - b^3 =  (a - b )^3; a^3 + b^3 = ( a + b ) ( a^2 - ab + b^2 ); a^3 - b^3 = ( a - b ) ( a^2 + ab + b^2 )] | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-01` | 복소수의 뜻과 성질을 설명하고, 사칙연산을 수행할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-02` | 이차방정식의 실근과 허근을 이해하고, 판별식을 이용하여 이차방정식의 근을 판별할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-03` | 이차방정식의 근과 계수의 관계를 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-04` | 이차방정식과 이차함수를 연결하여 그 관계를 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-05` | 이차함수의 그래프와 직선의 위치 관계를 판단할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-06` | 이차함수의 최대, 최소를 탐구하고, 이를 실생활과 연결하여 유용성을 인식할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-07` | 간단한 삼차방정식과 사차방정식을 풀 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-08` | 미지수가 2개인 연립이차방정식을 풀 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-09` | 미지수가 1개인 연립일차부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-10` | 절댓값을 포함한 일차부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-02-11` | 이차부등식과 이차함수를 연결하여 그 관계를 설명하고, 이차부등식과 연립이차 부등식을 풀 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-03-01` | 합의 법칙과 곱의 법칙을 이해하고, 적절한 전략을 사용하여 경우의 수와 관련된 문제를 해결할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-03-02` | 순열의 개념을 이해하고, 순열의 수를 구하는 방법을 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-03-03` | 조합의 개념을 이해하고, 조합의 수를 구하는 방법을 설명할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-04-01` | 행렬의 뜻을 알고, 실생활 상황을 행렬로 표현할 수 있다 | `공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수1-04-02` | 행렬의 연산을 수행하고, 관련된 문제를 해결할 수 있다 | `공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
 
 ### 21. 공통수학2 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `10공수2`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `10공수2-01-01` | 선분의 내분을 이해하고, 내분점의 좌표를 계산할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-02` | 두 직선의 평행 조건과 수직 조건을 탐구하고 이해한다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-03` | 점과 직선 사이의 거리를 구하고, 관련된 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-04` | 원의 방정식을 구하고, 그래프를 그릴 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-05` | 좌표평면에서 원과 직선의 위치 관계를 판단하고, 이를 활용하여 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-06` | 평행이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-01-07` | 원점, 축, 축, 직선 에 대한 대칭이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다 [복구 EqEdit: x; y; y=x] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-02` | 두 집합 사이의 포함관계를 판단할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-03` | 집합의 연산을 수행하고, 벤 다이어그램을 이용하여 나타낼 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-04` | 명제와 조건의 뜻을 알고, ‘ 모든 ’, ‘ 어떤 ’ 을 포함한 명제를 이해하고 설명할 수 있다 | `공통수학2_명제와조건_BookData_시범.json` | 후보 연결 기록 있음 · 교사·내용 검수 필요 |
-| `10공수2-02-05` | 명제의 역과 대우를 이해하고 설명할 수 있다 | `공통수학2_명제와조건_BookData_시범.json` | 후보 연결 기록 있음 · 교사·내용 검수 필요 |
-| `10공수2-02-06` | 충분조건과 필요조건을 이해하고 판단할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-07` | 대우를 이용한 증명법과 귀류법을 이해하고 관련된 명제를 증명할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-02-08` | 절대부등식의 뜻을 알고, 간단한 절대부등식을 증명할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-03-01` | 함수의 개념을 설명하고, 그 그래프를 이해한다 | `공통수학2_함수의대응_BookData_시범.json` | 부분 후보 태그 있음 · 일반 함수 그래프 이해 미완료; 내용 검수 필요 |
-| `10공수2-03-02` | 함수의 합성을 설명하고, 합성함수를 구할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-03-03` | 역함수의 개념을 설명하고, 역함수를 구할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-03-04` | 유리함수 의 그래프를 그릴 수 있고, 그 그래프의 성질을 탐구할 수 있다 [복구 EqEdit: y= {ax+b} over {cx+d}] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `10공수2-03-05` | 무리함수 의 그래프를 그릴 수 있고, 그 그래프의 성질을 탐구할 수 있다 [복구 EqEdit: y= sqrt {ax+b} +c; y= sqrt {ax+b~} +c`] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `10공수2-01-01` | 선분의 내분을 이해하고, 내분점의 좌표를 계산할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-02` | 두 직선의 평행 조건과 수직 조건을 탐구하고 이해한다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-03` | 점과 직선 사이의 거리를 구하고, 관련된 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-04` | 원의 방정식을 구하고, 그래프를 그릴 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-05` | 좌표평면에서 원과 직선의 위치 관계를 판단하고, 이를 활용하여 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-06` | 평행이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-01-07` | 원점, 축, 축, 직선 에 대한 대칭이동을 탐구하고, 실생활과 연결하여 문제를 해결할 수 있다 [복구 EqEdit: x; y; y=x] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-02` | 두 집합 사이의 포함관계를 판단할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-03` | 집합의 연산을 수행하고, 벤 다이어그램을 이용하여 나타낼 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-04` | 명제와 조건의 뜻을 알고, ‘ 모든 ’, ‘ 어떤 ’ 을 포함한 명제를 이해하고 설명할 수 있다 | `공통수학2_명제와조건_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | 후보 연결 기록 있음 · 교사·내용 검수 필요 |
+| `10공수2-02-05` | 명제의 역과 대우를 이해하고 설명할 수 있다 | `공통수학2_명제와조건_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | 후보 연결 기록 있음 · 교사·내용 검수 필요 |
+| `10공수2-02-06` | 충분조건과 필요조건을 이해하고 판단할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-07` | 대우를 이용한 증명법과 귀류법을 이해하고 관련된 명제를 증명할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-02-08` | 절대부등식의 뜻을 알고, 간단한 절대부등식을 증명할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-03-01` | 함수의 개념을 설명하고, 그 그래프를 이해한다 | `공통수학2_함수의대응_BookData_시범.json` | 1 files · 1 chapters · 4 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking` | 부분 후보 태그 있음 · 일반 함수 그래프 이해 미완료; 내용 검수 필요 |
+| `10공수2-03-02` | 함수의 합성을 설명하고, 합성함수를 구할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-03-03` | 역함수의 개념을 설명하고, 역함수를 구할 수 있다 | `공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `10공수2-03-04` | 유리함수 의 그래프를 그릴 수 있고, 그 그래프의 성질을 탐구할 수 있다 [복구 EqEdit: y= {ax+b} over {cx+d}] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `10공수2-03-05` | 무리함수 의 그래프를 그릴 수 있고, 그 그래프의 성질을 탐구할 수 있다 [복구 EqEdit: y= sqrt {ax+b} +c; y= sqrt {ax+b~} +c`] | `공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
 
 ### 22. 대수 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `12대수`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12대수01-01` | 거듭제곱과 거듭제곱근의 뜻을 알고, 그 성질을 이용하여 계산할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-02` | 지수가 유리수, 실수까지 확장될 수 있음을 이해하고, 이를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-03` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 나타낼 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-04` | 로그의 뜻을 알고, 그 성질을 이용하여 계산할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-05` | 상용로그를 이해하고, 이를 실생활과 연결하여 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-06` | 지수함수와 로그함수의 뜻을 알고, 이를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-07` | 지수함수와 로그함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수01-08` | 지수함수, 로그함수를 활용하여 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수02-01` | 일반각과 호도법의 뜻을 알고, 그 관계를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수02-02` | 삼각함수의 개념을 이해하여 사인함수, 코사인함수, 탄젠트함수의 그래프를 그리고, 그 성질을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수02-03` | 사인법칙과 코사인법칙을 이해하고, 실생활 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-01` | 수열의 뜻을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-02` | 등차수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_등차수열_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-04` | 의 뜻과 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 [복구 EqEdit: SMALLSUM] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-05` | 여러 가지 수열의 첫째항부터 제 항까지의 합을 구하는 방법을 설명할 수 있다 [복구 EqEdit: n; sum _{k=1} ^{n} k; sum _{k=1} ^{n} k  ^{2}; sum _{k=1} ^{n} `k  ^{3} `] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-06` | 수열의 귀납적 정의를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12대수03-07` | 수학적 귀납법의 원리를 이해하고, 이를 이용하여 명제를 증명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12대수01-01` | 거듭제곱과 거듭제곱근의 뜻을 알고, 그 성질을 이용하여 계산할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-02` | 지수가 유리수, 실수까지 확장될 수 있음을 이해하고, 이를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-03` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 나타낼 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-04` | 로그의 뜻을 알고, 그 성질을 이용하여 계산할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-05` | 상용로그를 이해하고, 이를 실생활과 연결하여 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-06` | 지수함수와 로그함수의 뜻을 알고, 이를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-07` | 지수함수와 로그함수의 그래프를 그릴 수 있고, 그 성질을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수01-08` | 지수함수, 로그함수를 활용하여 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수02-01` | 일반각과 호도법의 뜻을 알고, 그 관계를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수02-02` | 삼각함수의 개념을 이해하여 사인함수, 코사인함수, 탄젠트함수의 그래프를 그리고, 그 성질을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수02-03` | 사인법칙과 코사인법칙을 이해하고, 실생활 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-01` | 수열의 뜻을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-02` | 등차수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_등차수열_BookData_시범.json` | 1 files · 1 chapters · 4 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12대수03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-04` | 의 뜻과 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 [복구 EqEdit: SMALLSUM] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-05` | 여러 가지 수열의 첫째항부터 제 항까지의 합을 구하는 방법을 설명할 수 있다 [복구 EqEdit: n; sum _{k=1} ^{n} k; sum _{k=1} ^{n} k  ^{2}; sum _{k=1} ^{n} `k  ^{3} `] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-06` | 수열의 귀납적 정의를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12대수03-07` | 수학적 귀납법의 원리를 이해하고, 이를 이용하여 명제를 증명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 23. 미적분Ⅰ 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `12미적Ⅰ`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12미적Ⅰ-01-01` | 함수의 극한의 뜻을 알고, 이를 설명할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-01-02` | 함수의 극한에 대한 성질을 이해하고, 함수의 극한값을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-01-03` | 함수의 연속을 극한으로 탐구하고 이해한다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-01-04` | 연속함수의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-01` | 미분계수를 이해하고, 이를 구할 수 있다 | `미적분Ⅰ_미분계수_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-02` | 함수의 미분가능성과 연속성의 관계를 설명하고, 이를 활용할 수 있다 | `미적분Ⅰ_미분가능성과연속성_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-03` | 함수 ( 은 양의 정수)의 도함수를 구할 수 있다 [복구 EqEdit: y=x^n; n] | `미적분Ⅰ_x의n제곱_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-04` | 함수의 실수배, 합, 차, 곱의 미분법을 알고, 다항함수의 도함수를 구할 수 있다 | `미적분Ⅰ_합과곱의미분법_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-05` | 미분계수와 접선의 기울기의 관계를 이해하고, 접선의 방정식을 구할 수 있다 | `미적분Ⅰ_접선방정식_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-06` | 함수에 대한 평균값 정리를 설명하고, 이를 활용할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-07` | 함수의 증가와 감소, 극대와 극소를 판정하고 설명할 수 있다 | `미적분Ⅰ_극대극소와그래프개형_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-08` | 함수의 그래프의 개형을 그릴 수 있다 | `미적분Ⅰ_극대극소와그래프개형_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-09` | 방정식과 부등식에 대한 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-02-10` | 미분을 속도와 가속도에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-01` | 부정적분의 뜻을 알고, 이를 설명할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-02` | 함수의 실수배, 합, 차의 부정적분을 알고, 다항함수의 부정적분을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-03` | 정적분의 개념을 탐구하고, 그 성질을 이해한다 [복구 EqEdit: left[ a,``b right]`; f(x)`; x`; a`; b`] | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-04` | 부정적분과 정적분의 관계를 이해하고, 다항함수의 정적분을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-05` | 곡선으로 둘러싸인 도형의 넓이에 대한 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅰ-03-06` | 적분을 속도와 거리에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12미적Ⅰ-01-01` | 함수의 극한의 뜻을 알고, 이를 설명할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-01-02` | 함수의 극한에 대한 성질을 이해하고, 함수의 극한값을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-01-03` | 함수의 연속을 극한으로 탐구하고 이해한다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-01-04` | 연속함수의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-01` | 미분계수를 이해하고, 이를 구할 수 있다 | `미적분Ⅰ_미분계수_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-02` | 함수의 미분가능성과 연속성의 관계를 설명하고, 이를 활용할 수 있다 | `미적분Ⅰ_미분가능성과연속성_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-03` | 함수 ( 은 양의 정수)의 도함수를 구할 수 있다 [복구 EqEdit: y=x^n; n] | `미적분Ⅰ_x의n제곱_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-04` | 함수의 실수배, 합, 차, 곱의 미분법을 알고, 다항함수의 도함수를 구할 수 있다 | `미적분Ⅰ_합과곱의미분법_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-05` | 미분계수와 접선의 기울기의 관계를 이해하고, 접선의 방정식을 구할 수 있다 | `미적분Ⅰ_접선방정식_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-06` | 함수에 대한 평균값 정리를 설명하고, 이를 활용할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-07` | 함수의 증가와 감소, 극대와 극소를 판정하고 설명할 수 있다 | `미적분Ⅰ_극대극소와그래프개형_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-08` | 함수의 그래프의 개형을 그릴 수 있다 | `미적분Ⅰ_극대극소와그래프개형_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-09` | 방정식과 부등식에 대한 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-02-10` | 미분을 속도와 가속도에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-01` | 부정적분의 뜻을 알고, 이를 설명할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-02` | 함수의 실수배, 합, 차의 부정적분을 알고, 다항함수의 부정적분을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-03` | 정적분의 개념을 탐구하고, 그 성질을 이해한다 [복구 EqEdit: left[ a,``b right]`; f(x)`; x`; a`; b`] | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-04` | 부정적분과 정적분의 관계를 이해하고, 다항함수의 정적분을 구할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-05` | 곡선으로 둘러싸인 도형의 넓이에 대한 문제를 해결할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅰ-03-06` | 적분을 속도와 거리에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 24. 확률과 통계 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `12확통`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12확통01-01` | 중복순열, 같은 것이 있는 순열을 이해하고, 그 순열의 수를 구하는 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통01-02` | 중복조합을 이해하고, 중복조합의 수를 구하는 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통01-03` | 이항정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-01` | 확률의 개념을 이해하고 기본 성질을 설명할 수 있다 | `고등수학_확률과통계_통계적확률_BookData_시범.json`, `확률과통계_2022개정_기본확률1단원_Batch4_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-02` | 확률의 덧셈정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-03` | 여사건의 확률을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-04` | 조건부확률을 이해하고, 이를 실생활과 연결하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-05` | 사건의 독립과 종속을 이해하고, 이를 판단할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통02-06` | 확률의 곱셈정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-01` | 확률변수와 확률분포의 뜻을 설명할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-02` | 이산확률변수의 기댓값(평균)과 표준편차를 구할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-03` | 이항분포의 뜻과 성질을 이해하고, 평균과 표준편차를 구할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-04` | 정규분포의 뜻과 성질을 이해하고, 이항분포와의 관계를 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-05` | 모집단과 표본의 뜻을 알고, 표본추출의 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-06` | 표본평균과 모평균, 표본비율과 모비율의 관계를 이해하고 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12확통03-07` | 공학 도구를 이용하여 모평균 및 모비율을 추정하고 그 결과를 해석할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12확통01-01` | 중복순열, 같은 것이 있는 순열을 이해하고, 그 순열의 수를 구하는 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통01-02` | 중복조합을 이해하고, 중복조합의 수를 구하는 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통01-03` | 이항정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-01` | 확률의 개념을 이해하고 기본 성질을 설명할 수 있다 | `고등수학_확률과통계_통계적확률_BookData_시범.json`, `확률과통계_2022개정_기본확률1단원_Batch4_BookData_V2_시범.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12확통02-02` | 확률의 덧셈정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-03` | 여사건의 확률을 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-04` | 조건부확률을 이해하고, 이를 실생활과 연결하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-05` | 사건의 독립과 종속을 이해하고, 이를 판단할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통02-06` | 확률의 곱셈정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-01` | 확률변수와 확률분포의 뜻을 설명할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-02` | 이산확률변수의 기댓값(평균)과 표준편차를 구할 수 있다 | `확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-03` | 이항분포의 뜻과 성질을 이해하고, 평균과 표준편차를 구할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-04` | 정규분포의 뜻과 성질을 이해하고, 이항분포와의 관계를 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-05` | 모집단과 표본의 뜻을 알고, 표본추출의 방법을 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-06` | 표본평균과 모평균, 표본비율과 모비율의 관계를 이해하고 설명할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12확통03-07` | 공학 도구를 이용하여 모평균 및 모비율을 추정하고 그 결과를 해석할 수 있다 | `확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `activity:statisticsEstimator`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | 태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기 |
 
 ### 25. 미적분Ⅱ 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `12미적Ⅱ`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12미적Ⅱ-01-01` | 수열의 수렴, 발산의 뜻을 알고, 이를 판정할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-01-02` | 수열의 극한에 대한 성질을 이해하고, 이를 활용하여 극한값을 구하는 방법을 설명할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-01-03` | 등비수열의 수렴, 발산을 판정하고, 수렴하는 경우 그 극한값을 구할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-01-04` | 급수의 수렴, 발산의 뜻을 알고, 이를 판정할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-01-05` | 등비급수의 합을 구하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-01` | 지수함수와 로그함수의 극한을 구하고 미분할 수 있다 [복구 EqEdit: e ^{x}; lnx] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-02` | 삼각함수의 덧셈정리를 설명하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-03` | 삼각함수의 극한을 구하고, 사인함수와 코사인함수를 미분할 수 있다 [복구 EqEdit: sinx; cosx`] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json`, `미적분Ⅱ_사인함수미분_BookData_시범.json`, `미적분Ⅱ_코사인함수미분_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-04` | 함수의 몫을 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-05` | 합성함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-06` | 매개변수로 나타낸 함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-07` | 음함수와 역함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-08` | 다양한 곡선의 접선의 방정식을 구할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-09` | 함수의 그래프의 개형을 그릴 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-10` | 방정식과 부등식에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-02-11` | 미분을 속도와 가속도에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-01` | ( 은 실수), 지수함수, 삼각함수의 부정적분과 정적분을 구할 수 있다 [복구 EqEdit: y=x ^{n} `; n`] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-02` | 치환적분법을 이해하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-03` | 부분적분법을 이해하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-04` | 정적분과 급수의 합 사이의 관계를 탐구하고 이해한다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-05` | 곡선으로 둘러싸인 도형의 넓이에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-06` | 입체도형의 부피에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12미적Ⅱ-03-07` | 적분을 속도와 거리에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12미적Ⅱ-01-01` | 수열의 수렴, 발산의 뜻을 알고, 이를 판정할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-01-02` | 수열의 극한에 대한 성질을 이해하고, 이를 활용하여 극한값을 구하는 방법을 설명할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-01-03` | 등비수열의 수렴, 발산을 판정하고, 수렴하는 경우 그 극한값을 구할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-01-04` | 급수의 수렴, 발산의 뜻을 알고, 이를 판정할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-01-05` | 등비급수의 합을 구하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-01` | 지수함수와 로그함수의 극한을 구하고 미분할 수 있다 [복구 EqEdit: e ^{x}; lnx] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-02` | 삼각함수의 덧셈정리를 설명하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-03` | 삼각함수의 극한을 구하고, 사인함수와 코사인함수를 미분할 수 있다 [복구 EqEdit: sinx; cosx`] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json`, `미적분Ⅱ_사인함수미분_BookData_시범.json`, `미적분Ⅱ_코사인함수미분_BookData_시범.json` | 3 files · 3 chapters · 11 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-04` | 함수의 몫을 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-05` | 합성함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-06` | 매개변수로 나타낸 함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-07` | 음함수와 역함수를 미분할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-08` | 다양한 곡선의 접선의 방정식을 구할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-09` | 함수의 그래프의 개형을 그릴 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-10` | 방정식과 부등식에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-02-11` | 미분을 속도와 가속도에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-01` | ( 은 실수), 지수함수, 삼각함수의 부정적분과 정적분을 구할 수 있다 [복구 EqEdit: y=x ^{n} `; n`] | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-02` | 치환적분법을 이해하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-03` | 부분적분법을 이해하고, 이를 활용할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-04` | 정적분과 급수의 합 사이의 관계를 탐구하고 이해한다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-05` | 곡선으로 둘러싸인 도형의 넓이에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-06` | 입체도형의 부피에 대한 문제를 해결할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12미적Ⅱ-03-07` | 적분을 속도와 거리에 대한 문제에 활용하고, 그 유용성을 인식할 수 있다 | `미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 
 ### 26. 기하 개념서 · 2022 개정
 
 원문: `2022_appendix8_math.txt`, prefix `12기하`. 과목 연결; 상품 범위 대조 필요.
 
-| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |
-|---|---|---|---|
-| `12기하01-01` | 포물선의 뜻을 알고, 포물선을 방정식으로 표현할 수 있다 | `고등수학_기하_포물선_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-02` | 타원의 뜻을 알고, 타원을 방정식으로 표현할 수 있다 | `기하_타원_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-03` | 쌍곡선의 뜻을 알고, 쌍곡선을 방정식으로 표현할 수 있다 | `기하_쌍곡선_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하01-04` | 이차곡선의 접선의 방정식을 구할 수 있다 | `기하_포물선접선_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-01` | 직 선과 직선, 직선과 평면, 평면과 평면의 위치 관계에 대한 간단한 증명을 할 수 있다 | `기하_2022개정_space_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-02` | 삼수선 정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `기하_2022개정_space_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-03` | 도형의 정사영의 뜻을 알고, 도형과 정사영의 관계를 탐구할 수 있다 | `기하_2022개정_space_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-04` | 좌표공간에서 두 점 사이의 거리와 선분의 내분점의 좌표를 구할 수 있다 | `기하_공간좌표_두점사이거리_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-05` | 구를 방정식으로 표현할 수 있다 | `기하_2022개정_space_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-01` | 벡터의 뜻을 알고, 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-02` | 위치벡터의 뜻을 알고, 벡터와 좌표를 대응시켜 표현할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-03` | 내적의 뜻을 알고, 두 벡터의 내적을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-04` | 벡터를 이용하여 직선의 방정식을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하03-05` | 좌표공간에서 벡터를 이용하여 평면의 방정식과 구의 방정식을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
+| 2022 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
+|---|---|---|---|---|
+| `12기하01-01` | 포물선의 뜻을 알고, 포물선을 방정식으로 표현할 수 있다 | `고등수학_기하_포물선_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `misconception`, `question`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하01-02` | 타원의 뜻을 알고, 타원을 방정식으로 표현할 수 있다 | `기하_타원_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하01-03` | 쌍곡선의 뜻을 알고, 쌍곡선을 방정식으로 표현할 수 있다 | `기하_쌍곡선_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하01-04` | 이차곡선의 접선의 방정식을 구할 수 있다 | `기하_포물선접선_BookData_시범.json` | 1 files · 1 chapters · 3 pages · `answer`, `checklist`, `graph`, `hint`, `lead`, `question`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `12기하02-01` | 직 선과 직선, 직선과 평면, 평면과 평면의 위치 관계에 대한 간단한 증명을 할 수 있다 | `기하_2022개정_space_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하02-02` | 삼수선 정리를 이해하고, 이를 활용하여 문제를 해결할 수 있다 | `기하_2022개정_space_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하02-03` | 도형의 정사영의 뜻을 알고, 도형과 정사영의 관계를 탐구할 수 있다 | `기하_2022개정_space_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하02-04` | 좌표공간에서 두 점 사이의 거리와 선분의 내분점의 좌표를 구할 수 있다 | `기하_공간좌표_두점사이거리_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
+| `12기하02-05` | 구를 방정식으로 표현할 수 있다 | `기하_2022개정_space_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-01` | 벡터의 뜻을 알고, 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-02` | 위치벡터의 뜻을 알고, 벡터와 좌표를 대응시켜 표현할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-03` | 내적의 뜻을 알고, 두 벡터의 내적을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-04` | 벡터를 이용하여 직선의 방정식을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+| `12기하03-05` | 좌표공간에서 벡터를 이용하여 평면의 방정식과 구의 방정식을 구할 수 있다 | `기하_2022개정_vector_BookData_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
+
+## 기준-챕터 매핑 신호 감사
+
+고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `351`개, exact code가 chapter 안에 있는 쌍은 `305`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 어느 구조 신호도 없는 쌍은 `70`개다.
+아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.
+
+| # | 상품 | 기준 수 | chapter 연결 신호 없음 |
+|---:|---|---:|---:|
+| 1 | 중학수학 1-1 개념서 · 2015 개정 | 61 | 0 |
+| 2 | 중학수학 1-2 개념서 · 2015 개정 | 61 | 0 |
+| 3 | 중학수학 2-1 개념서 · 2015 개정 | 61 | 0 |
+| 4 | 중학수학 2-2 개념서 · 2015 개정 | 61 | 0 |
+| 5 | 중학수학 3-1 개념서 · 2015 개정 | 61 | 0 |
+| 6 | 중학수학 3-2 개념서 · 2015 개정 | 61 | 0 |
+| 7 | 중학수학 1-1 개념서 · 2022 개정 | 60 | 13 |
+| 8 | 중학수학 1-2 개념서 · 2022 개정 | 60 | 13 |
+| 9 | 중학수학 2-1 개념서 · 2022 개정 | 60 | 13 |
+| 10 | 중학수학 2-2 개념서 · 2022 개정 | 60 | 13 |
+| 11 | 중학수학 3-1 개념서 · 2022 개정 | 60 | 13 |
+| 12 | 중학수학 3-2 개념서 · 2022 개정 | 60 | 13 |
+| 13 | 수학(상) 개념서 · 2015 개정 | 41 | 41 |
+| 14 | 수학(하) 개념서 · 2015 개정 | 41 | 41 |
+| 15 | 수학Ⅰ 개념서 · 2015 개정 | 19 | 8 |
+| 16 | 수학Ⅱ 개념서 · 2015 개정 | 21 | 0 |
+| 17 | 확률과 통계 개념서 · 2015 개정 | 17 | 0 |
+| 18 | 미적분 개념서 · 2015 개정 | 27 | 0 |
+| 19 | 기하 개념서 · 2015 개정 | 16 | 0 |
+| 20 | 공통수학1 개념서 · 2022 개정 | 19 | 3 |
+| 21 | 공통수학2 개념서 · 2022 개정 | 20 | 3 |
+| 22 | 대수 개념서 · 2022 개정 | 18 | 0 |
+| 23 | 미적분Ⅰ 개념서 · 2022 개정 | 20 | 2 |
+| 24 | 확률과 통계 개념서 · 2022 개정 | 16 | 0 |
+| 25 | 미적분Ⅱ 개념서 · 2022 개정 | 23 | 0 |
+| 26 | 기하 개념서 · 2022 개정 | 14 | 0 |
 
 ## 2022 원문 수식 추출 한계
 
@@ -1292,5 +1326,6 @@ V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다
 태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.
 
 자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.
+`chapter 구조 신호`는 chapter 텍스트의 exact code를 우선 찾고, 코드 하나만 가진 단일 chapter BookData에는 그 하나의 chapter를 연결해 페이지 수와 block type을 집계한다. 다중 코드 자료에 임의 분배하지 않는다. 이 구조 신호는 원고 충족이나 계산 정확성을 승인하지 않는다.
 
 재생성: `python tool/build_textbook_scope_coverage.py` (공식 추출물과 원본 BookData 필요)
