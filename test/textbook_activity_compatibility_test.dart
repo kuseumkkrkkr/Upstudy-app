@@ -12,6 +12,8 @@ import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_space_BookData_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_vector_BookData_시범.json',
 ];
 
 void main() {
@@ -139,6 +141,44 @@ void main() {
     await tester.tap(find.text('정답 확인'));
     await tester.pumpAndSettle();
     expect(find.text('정답입니다.'), findsOneWidget);
+  });
+
+  testWidgets('2022 Geometry V2 activity runs in the teacher reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_space_BookData_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final activity = _activities(source).first;
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TeacherCourseTextbookReaderPage(
+          courseId: 'geometry-course',
+          moduleId: 'geometry-module',
+          textbookId: 'geometry-book',
+          pageFrom: 4,
+          pageTo: 4,
+          minMinutes: 0,
+          previewBook: book,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(activity['prompt'] as String), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const ValueKey('quiz-option-0')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const ValueKey('quiz-option-0')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text(activity['correct_feedback'] as String), findsOneWidget);
   });
 }
 
