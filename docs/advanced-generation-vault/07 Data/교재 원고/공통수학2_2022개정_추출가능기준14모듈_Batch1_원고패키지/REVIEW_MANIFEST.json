@@ -1,6 +1,6 @@
 {
   "bookdata_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "27AD96BDDAF10219638FAEB9A1B32FE35E2A85DDA708B9028537BF39D4443E6E",
+  "bookdata_sha256": "3C60AF94A5BD8915D9BD60CEC19BEEC48821B10D53030F2464C1DF57E22EC557",
   "candidate_code_references": [
     "10공수2-01-01",
     "10공수2-01-02",
@@ -31,6 +31,7 @@
     "quiz"
   ],
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "example_question_alignment_status": "explicit_example_question_map_for_all_14_codes; independent review pending",
   "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending",
   "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending",
   "teacher_review_status": "pending",
@@ -38,6 +39,8 @@
   "source_interaction_status": "native_quiz_activity_candidate; source_html_parity_not_reviewed",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "c744b7fddb1c312a7b4bf7d19e543f5d2a222662"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }

@@ -24,6 +24,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json',
 ];
@@ -582,6 +583,72 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('정답입니다. 있다'), findsOneWidget);
     expect(book.chapters, hasLength(18));
+  });
+
+  testWidgets('Common Math 2 V2 examples and quiz load in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final chapters = source['chapters'] as List<dynamic>;
+    expect(chapters, hasLength(14));
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final pages = chapter['pages'] as List<dynamic>;
+      final examplePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'example',
+              )
+              as Map<String, dynamic>;
+      final practicePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'practice',
+              )
+              as Map<String, dynamic>;
+      final exampleBlocks = examplePage['blocks'] as List<dynamic>;
+      final practiceBlocks = practicePage['blocks'] as List<dynamic>;
+      final exampleQuestion =
+          (exampleBlocks.singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      final practiceQuestion =
+          (practiceBlocks.singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      expect(exampleQuestion, isNotEmpty);
+      expect(practiceQuestion, isNotEmpty);
+      expect(exampleQuestion, isNot(practiceQuestion));
+    }
+    final activity = _activities(
+      source,
+    ).singleWhere((activity) => activity['id'] == 'cm20101-quiz');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('A(−2), B(10)'), findsOneWidget);
+    await tester.tap(find.text('1'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('내분점은 A에서 전체 길이의 1/(1+3)'), findsOneWidget);
+    expect(book.chapters, hasLength(14));
   });
 
   testWidgets('vector meaning V2 practice runs in the student reader', (

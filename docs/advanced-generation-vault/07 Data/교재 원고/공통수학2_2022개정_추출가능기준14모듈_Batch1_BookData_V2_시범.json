@@ -96,7 +96,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요."
+              "text": "A(0), B(6)을 AP:PB=1:2로 내분하는 점 P의 좌표를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -128,12 +128,12 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "P(1)"
+              "text": "1"
             },
             {
               "type": "answer",
               "title": "정답",
-              "text": "P(1)"
+              "text": "1"
             },
             {
               "type": "activity",
@@ -230,7 +230,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요."
+              "text": "기울기가 2와 −1/2인 두 직선은 어떤 관계인가요?"
             },
             {
               "type": "solutionStep",
@@ -364,7 +364,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
+              "text": "점 (1,2)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -498,7 +498,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요."
+              "text": "중심 (2,−1), 반지름 3인 원의 방정식을 쓰세요."
             },
             {
               "type": "solutionStep",
@@ -632,7 +632,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?"
+              "text": "원 x²+y²=25와 직선 y=3의 교점 개수를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -766,7 +766,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요."
+              "text": "점 (−1,4)를 벡터 (3,−2)만큼 평행이동한 좌표를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -900,7 +900,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요."
+              "text": "A={x∈Z | 0<x<4}를 원소나열법으로 나타내세요."
             },
             {
               "type": "solutionStep",
@@ -1034,7 +1034,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요."
+              "text": "A={1,2}, B={1,2,3}일 때 참인 포함 관계를 쓰세요."
             },
             {
               "type": "solutionStep",
@@ -1168,7 +1168,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요."
+              "text": "A={1,2,3}, B={3,4}일 때 A∪B와 A∩B를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1302,7 +1302,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?"
+              "text": "n이 4의 배수이면 짝수입니다. ‘4의 배수’는 ‘짝수’이기 위한 어떤 조건인가요?"
             },
             {
               "type": "solutionStep",
@@ -1436,7 +1436,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요."
+              "text": "대우를 이용해 ‘n²이 짝수이면 정수 n은 짝수’임을 보이세요."
             },
             {
               "type": "solutionStep",
@@ -1468,12 +1468,12 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "n이 짝수이면 n²은 짝수이다."
+              "text": "n이 짝수이면 n²은 짝수이다"
             },
             {
               "type": "answer",
               "title": "정답",
-              "text": "n이 짝수이면 n²은 짝수이다."
+              "text": "n이 짝수이면 n²은 짝수이다"
             },
             {
               "type": "activity",
@@ -1570,7 +1570,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요."
+              "text": "모든 실수 x에 대해 x²−6x+9≥0임을 제곱식으로 설명하세요."
             },
             {
               "type": "solutionStep",
@@ -1602,12 +1602,12 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "x²+4x+4=(x+2)²≥0"
+              "text": "(x+2)²≥0"
             },
             {
               "type": "answer",
               "title": "정답",
-              "text": "x²+4x+4=(x+2)²≥0"
+              "text": "(x+2)²≥0"
             },
             {
               "type": "activity",
@@ -1704,7 +1704,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요."
+              "text": "f(x)=x+2, g(x)=3x일 때 (g∘f)(1)과 (f∘g)(1)을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1838,7 +1838,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x+5의 역함수를 구하세요."
+              "text": "f(x)=x²의 정의역을 x≥0으로 제한할 때 역함수를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1884,9 +1884,9 @@
                 "kind": "quiz",
                 "prompt": "f(x)=x+5의 역함수를 구하세요.",
                 "options": [
-                  "x−5",
-                  "x+5",
-                  "5−x"
+                  "f⁻¹(x)=x−5",
+                  "f⁻¹(x)=x+5",
+                  "f⁻¹(x)=5−x"
                 ],
                 "correct_index": 0,
                 "correct_feedback": "y=x+5에서 x와 y를 바꾸고 y를 정리합니다.",
