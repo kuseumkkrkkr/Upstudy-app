@@ -151,6 +151,12 @@ void main() {
         ),
       );
       await tester.pumpWidget(frame(true));
+      final semantics = tester.ensureSemantics();
+      try {
+        expect(find.bySemanticsLabel('점 A 이동'), findsOneWidget);
+      } finally {
+        semantics.dispose();
+      }
       final plot = find.descendant(
         of: find.byType(BookCoordinatePointView),
         matching: find.byType(Stack),

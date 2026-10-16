@@ -151,6 +151,7 @@ class _PointState extends State<BookCoordinatePointView> {
                               onTap: _focus.requestFocus,
                               child: GestureDetector(
                                 key: const ValueKey('coordinate-point-handle'),
+                                excludeFromSemantics: true,
                                 behavior: HitTestBehavior.opaque,
                                 onTap: _focus.requestFocus,
                                 onPanDown: (d) {
