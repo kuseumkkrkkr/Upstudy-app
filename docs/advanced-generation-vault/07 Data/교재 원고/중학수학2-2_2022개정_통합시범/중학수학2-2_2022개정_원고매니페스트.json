@@ -1,0 +1,42 @@
+{
+  "target": "중학수학 2-2 개념서 · 2022 개정 후보 시범",
+  "status": "candidate_partial_draft",
+  "semester_assignment": "editorial_candidate_not_officially_confirmed",
+  "standards": [
+    "9수03-15",
+    "9수03-17",
+    "9수04-05",
+    "9수04-06"
+  ],
+  "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
+  "source_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "source_archive_sha256": "B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146",
+  "content_rights": "newly authored draft; publication rights decision pending",
+  "math_review": "examples checked manually; independent teacher review pending",
+  "features": [
+    {
+      "standard": "9수03-15",
+      "html": "중학수학2-2_2022개정_피타고라스정리_체험형_시범.html",
+      "type": "pythagorean",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수03-17",
+      "html": "중학수학2-2_2022개정_삼각비비율_체험형_시범.html",
+      "type": "trig",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수04-05",
+      "html": "중학수학2-2_2022개정_경우의수세기_체험형_시범.html",
+      "type": "counting",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수04-06",
+      "html": "중학수학2-2_2022개정_확률실험_체험형_시범.html",
+      "type": "probability",
+      "runtime": "standalone source asset; not app-integrated"
+    }
+  ]
+}
