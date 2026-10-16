@@ -11,6 +11,7 @@ import 'book_vector_operations_view.dart';
 import 'book_vector_inner_product_view.dart';
 import 'book_logarithm_power_explorer_view.dart';
 import 'book_rational_function_explorer_view.dart';
+import 'book_radical_function_explorer_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -241,6 +242,12 @@ class _BookActivityViewState extends State<BookActivityView>
         a.rationalFunctionExplorer != null) {
       return BookRationalFunctionExplorerView(
         explorer: a.rationalFunctionExplorer!,
+      );
+    }
+    if (a.kind == 'radicalFunctionExplorer' &&
+        a.radicalFunctionExplorer != null) {
+      return BookRadicalFunctionExplorerView(
+        explorer: a.radicalFunctionExplorer!,
       );
     }
     if (a.kind == 'squareRootNumberLine') {

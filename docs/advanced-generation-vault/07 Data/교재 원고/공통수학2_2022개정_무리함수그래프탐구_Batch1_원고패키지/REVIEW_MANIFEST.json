@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "공통수학2_2022개정_무리함수그래프탐구_Batch1_BookData_V2_시범.json",
+  "bookdata_sha256": "eba97bc17118d64186cb5b1a1f4c2ac1d8a4c1fcd8b92383cd806ed806419139",
+  "candidate_code_references": [
+    "10공수2-03-05"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_standard",
+  "module_count": 1,
+  "page_count": 7,
+  "native_activity_count": 2,
+  "native_activity_kinds": [
+    "radicalFunctionExplorer",
+    "quiz"
+  ],
+  "curriculum_review_status": "pending",
+  "math_review_status": "pending_independent_review",
+  "teacher_review_status": "pending",
+  "rights_status": "pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_not_merged"
+}

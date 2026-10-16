@@ -238,3 +238,11 @@
 - 새 activity는 수치 payload만 허용하고 `y=a/(x-h)+k`를 안전하게 렌더한다. BookData 왕복 3/3, 전체 activity compatibility 121/121 통과; 개별 매개변수·단계·힌트·초기화 widget test 포함. 생성기 두 번 실행 SHA-256 동일.
 - Pipeline stage 46/94. 원장: 26 상품/1,038 기준 행/114 root source/177 recursive BookData/325 activities/106 HTML; official edition-code 392 중 same-edition tags 370, chapter anchor 327, unlinked structural pairs 48. metadata 상태는 publication `not_eligible` 32, rights/teacher pending 32, author math checks with independent review pending 31, math pending 1, unspecified 145.
 - 권리·독립 수학·교사 검토 및 시각 대조는 남아 출판/배포하지 않는다.
+
+## 2026-10-17 2022 공통수학Ⅱ 무리함수 그래프 보완
+
+- 2022 기준 `10공수2-03-05`의 기존 V2 장을 대조했다. 정의역과 시작점 예는 있지만 그래프 데이터나 그래프 작도·성질 탐구가 없어 해당 기준을 부분 충족으로 판정했다. 이름이 맞는 별도 HTML 인터랙션은 현재 106개 asset 색인에서 확인되지 않아, 출처 없는 외부 parity를 주장하지 않는다.
+- native `radicalFunctionExplorer` 및 quiz를 포함한 별도 7쪽 보충 생성. a/b/c 수치 제어, 그래프, 정의역, 시작점, 치역 안내, 단계별 설명, 힌트, 초기화를 구현했다. 입력은 범위가 제한된 숫자만 받는다.
+- 생성기 공식 기준·식·시작점 계산 assert 통과. BookData round-trip 3/3, 전체 activity compatibility 124/124 통과. 위젯 테스트에서 a/b/c 변경, 정의역 변화, 단계 안내, 초기화 검증. Pipeline stage 47/95.
+- 원장: 26개 상품/1,038 기준 행/115 root source/178 recursive BookData/327 activities/106 HTML; official edition-code 392 중 same-edition tag 370, chapter anchor 328, 구조 신호 없음 47. metadata 집계: publication not_eligible 33, rights/teacher pending 33, author math checks with independent review pending 32, math pending 1, unspecified 145.
+- 사람의 독립 수학·교사 검토와 권리 확인 전 출판하지 않는다.

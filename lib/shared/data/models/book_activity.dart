@@ -5,6 +5,7 @@ import 'book_vector_operation.dart';
 import 'book_vector_inner_product.dart';
 import 'book_logarithm_power_explorer.dart';
 import 'book_rational_function_explorer.dart';
+import 'book_radical_function_explorer.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -31,6 +32,7 @@ class BookActivity {
     this.vectorInnerProduct,
     this.logarithmPowerExplorer,
     this.rationalFunctionExplorer,
+    this.radicalFunctionExplorer,
     this.walkDurationMs,
     this.numberLineMin,
     this.numberLineMax,
@@ -49,6 +51,7 @@ class BookActivity {
   final BookVectorInnerProduct? vectorInnerProduct;
   final BookLogarithmPowerExplorer? logarithmPowerExplorer;
   final BookRationalFunctionExplorer? rationalFunctionExplorer;
+  final BookRadicalFunctionExplorer? radicalFunctionExplorer;
   final int walkDurationMs;
   final int numberLineMin, numberLineMax;
 
@@ -88,6 +91,7 @@ class BookActivity {
     BookVectorInnerProduct? vectorInnerProduct;
     BookLogarithmPowerExplorer? logarithmPowerExplorer;
     BookRationalFunctionExplorer? rationalFunctionExplorer;
+    BookRadicalFunctionExplorer? radicalFunctionExplorer;
     var walkDurationMs = 0;
     var numberLineMin = 1, numberLineMax = 25;
     switch (kind) {
@@ -162,6 +166,13 @@ class BookActivity {
         rationalFunctionExplorer = BookRationalFunctionExplorer.fromJson(
           Map<String, dynamic>.from(payload),
         );
+      case 'radicalFunctionExplorer':
+        allowed.add('explorer');
+        final payload = json['explorer'];
+        if (payload is! Map) fail();
+        radicalFunctionExplorer = BookRadicalFunctionExplorer.fromJson(
+          Map<String, dynamic>.from(payload),
+        );
       case 'rightTriangle':
         allowed.addAll({'a', 'b'});
         int leg(dynamic value) {
@@ -210,6 +221,7 @@ class BookActivity {
       vectorInnerProduct,
       logarithmPowerExplorer,
       rationalFunctionExplorer,
+      radicalFunctionExplorer,
       walkDurationMs,
       numberLineMin,
       numberLineMax,
@@ -244,6 +256,8 @@ class BookActivity {
       'explorer': logarithmPowerExplorer!.toJson(),
     if (rationalFunctionExplorer != null)
       'explorer': rationalFunctionExplorer!.toJson(),
+    if (radicalFunctionExplorer != null)
+      'explorer': radicalFunctionExplorer!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
     if (kind == 'squareRootNumberLine') ...{
       'min': numberLineMin,
