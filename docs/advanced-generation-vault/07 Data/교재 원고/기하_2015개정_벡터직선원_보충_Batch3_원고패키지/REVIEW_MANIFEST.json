@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "기하_2015개정_벡터직선원_보충_Batch3_BookData_V2_시범.json",
+  "bookdata_sha256": "E3BE49FBCD0ABBF09FC70AE386E914AF232E5017A0E836B267C60EE2989F7985",
+  "candidate_code_references": [
+    "12기하02-05"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "vector_line_and_circle_distance_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; prior_line_example_preserved"
+}
