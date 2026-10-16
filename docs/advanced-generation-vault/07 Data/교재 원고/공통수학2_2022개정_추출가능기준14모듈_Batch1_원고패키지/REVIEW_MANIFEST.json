@@ -18,11 +18,12 @@
     "10공수2-03-03"
   ],
   "candidate_code_reference_type": "official_2022_hwp_criterion_table",
-  "excluded_formula_loss_codes": [
+  "deferred_eqedit_batch2_codes": [
     "10공수2-01-07",
     "10공수2-03-04",
     "10공수2-03-05"
   ],
+  "eqedit_recovery_status": "verified_from_original_hwp_raw_records",
   "module_count": 14,
   "page_count": 70,
   "native_activity_count": 14,

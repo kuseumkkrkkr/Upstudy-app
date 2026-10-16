@@ -1,5 +1,13 @@
 {
   "title": "공통수학2 2022 개정 · 단원 코드 03 부분 통합 초안",
+  "curriculum_version": "2022",
+  "standard_codes": [
+    "10공수2-03-01",
+    "10공수2-03-02",
+    "10공수2-03-03",
+    "10공수2-03-04",
+    "10공수2-03-05"
+  ],
   "tags": [
     "공통수학2",
     "2022 개정",
@@ -7,6 +15,302 @@
     "부분 통합 초안"
   ],
   "chapters": [
+    {
+      "title": "유리함수의 그래프와 점근선",
+      "pages": [
+        {
+          "title": "유리함수의 그래프와 점근선 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · HWP EqEdit 복구 기준 · 신규 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-07 · 10공수2-03-04 · 10공수2-03-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-03-04. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--03-01-001"
+        },
+        {
+          "id": "other22-10공수2--03-01-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "유리함수의 그래프와 점근선"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 살펴보기",
+              "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "유리함수의 그래프와 점근선",
+              "text": "공식 HWP의 기본 형태는 y=(ax+b)/(cx+d)다. 분모가 0인 x는 정의역에서 제외한다. 예를 들어 f(x)=2/(x−1)+3=(3x−1)/(x−1)은 x=1에서 정의되지 않고, x가 1에 가까워질 때 함수값의 크기가 커진다. 이 예의 그래프는 x=1과 y=3에 가까워진다."
+            },
+            {
+              "type": "formula",
+              "title": "교육부 HWP EqEdit 원문 스크립트",
+              "text": "y= {ax+b} over {cx+d}"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예시",
+              "text": "f(x)=2/(x−1)+3에서 x=0이면 f(0)=1, x=2이면 f(2)=5다. 두 점은 수직선 x=1의 서로 다른 쪽에 있다. 식을 (3x−1)/(x−1)로 정리해도 같은 함수이며, 분모가 0인 x=1은 허용되지 않는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "분모 x−2가 0이 되는 x를 찾고 그 값은 정의역에서 제외합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x=2이며 수직점근선은 x=2다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x=2이며 수직점근선은 x=2다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20304-quiz",
+                "kind": "quiz",
+                "prompt": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요.",
+                "options": [
+                  "x=2",
+                  "x=−2",
+                  "y=4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.",
+                "incorrect_feedback": "기준이 되는 직선이나 식의 조건을 다시 확인하세요.",
+                "hints": [
+                  "분모 x−2가 0이 되는 x를 찾고 그 값은 정의역에서 제외합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공식 HWP의 기본 형태는 y=(ax+b)/(cx+d)다. 분모가 0인 x는 정의역에서 제외한다. 예를 들어 f(x)=2/(x−1)+3=(3x−1)/(x−1)은 x=1에서 정의되지 않고, x가 1에 가까워질 때 함수값의 크기가 커진다. 이 예의 그래프는 x=1과 y=3에 가까워진다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-03-04"
+      ]
+    },
+    {
+      "title": "무리함수의 정의역과 그래프",
+      "pages": [
+        {
+          "title": "무리함수의 정의역과 그래프 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · HWP EqEdit 복구 기준 · 신규 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-07 · 10공수2-03-04 · 10공수2-03-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-03-05. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--03-02-001"
+        },
+        {
+          "id": "other22-10공수2--03-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "무리함수의 정의역과 그래프"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 살펴보기",
+              "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "무리함수의 정의역과 그래프",
+              "text": "공식 HWP의 기본 형태는 y=√(ax+b)+c다. 제곱근 안의 값은 0 이상이어야 하므로 ax+b≥0인 x만 정의역에 포함된다. 예시를 그릴 때 정의역의 시작점과 함수값 변화를 함께 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "교육부 HWP EqEdit 원문 스크립트",
+              "text": "y= sqrt {ax+b} +c"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예시",
+              "text": "g(x)=√(2x+2)+1은 2x+2≥0인 x≥−1에서 정의된다. 시작점은 (−1,1)이고, x=0이면 g(0)=1+√2다. 제곱근 값은 음수가 아니므로 이 함수는 y=0이 되는 점이 없다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제곱근 안의 식을 0 이상으로 놓고 부등식을 풉니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3x−6≥0이므로 x≥2, 정의역은 [2,∞)다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3x−6≥0이므로 x≥2, 정의역은 [2,∞)다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20305-quiz",
+                "kind": "quiz",
+                "prompt": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요.",
+                "options": [
+                  "[2,∞)",
+                  "(−∞,2]",
+                  "[−2,∞)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.",
+                "incorrect_feedback": "기준이 되는 직선이나 식의 조건을 다시 확인하세요.",
+                "hints": [
+                  "제곱근 안의 식을 0 이상으로 놓고 부등식을 풉니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공식 HWP의 기본 형태는 y=√(ax+b)+c다. 제곱근 안의 값은 0 이상이어야 하므로 ax+b≥0인 x만 정의역에 포함된다. 예시를 그릴 때 정의역의 시작점과 함수값 변화를 함께 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-03-05"
+      ]
+    },
     {
       "title": "합성함수의 뜻과 계산",
       "pages": [
@@ -23,10 +327,10 @@
               "text": "성취기준 코드 후보: 10공수2-03-02. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-10공수2--03-01-001"
+          "id": "other22-10공수2--03-03-001"
         },
         {
-          "id": "other22-10공수2--03-01-002",
+          "id": "other22-10공수2--03-03-002",
           "template": "opening",
           "title": "상황과 질문",
           "blocks": [
@@ -43,7 +347,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-003",
+          "id": "other22-10공수2--03-03-003",
           "template": "concept",
           "title": "정의와 성질",
           "blocks": [
@@ -65,7 +369,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-004",
+          "id": "other22-10공수2--03-03-004",
           "template": "example",
           "title": "예제와 풀이",
           "blocks": [
@@ -87,7 +391,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-005",
+          "id": "other22-10공수2--03-03-005",
           "template": "practice",
           "title": "연습과 설명",
           "blocks": [
@@ -134,7 +438,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-006",
+          "id": "other22-10공수2--03-03-006",
           "template": "summary",
           "title": "핵심 정리",
           "blocks": [
@@ -172,10 +476,10 @@
               "text": "성취기준 코드 후보: 10공수2-03-03. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-10공수2--03-02-001"
+          "id": "other22-10공수2--03-04-001"
         },
         {
-          "id": "other22-10공수2--03-02-002",
+          "id": "other22-10공수2--03-04-002",
           "template": "opening",
           "title": "상황과 질문",
           "blocks": [
@@ -192,7 +496,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-02-003",
+          "id": "other22-10공수2--03-04-003",
           "template": "concept",
           "title": "정의와 성질",
           "blocks": [
@@ -214,7 +518,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-02-004",
+          "id": "other22-10공수2--03-04-004",
           "template": "example",
           "title": "예제와 풀이",
           "blocks": [
@@ -236,7 +540,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-02-005",
+          "id": "other22-10공수2--03-04-005",
           "template": "practice",
           "title": "연습과 설명",
           "blocks": [
@@ -283,7 +587,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-02-006",
+          "id": "other22-10공수2--03-04-006",
           "template": "summary",
           "title": "핵심 정리",
           "blocks": [
@@ -321,10 +625,10 @@
               "text": "성취기준 코드 후보: 10공수2-03-01. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-10공수2--03-03-001"
+          "id": "other22-10공수2--03-05-001"
         },
         {
-          "id": "other22-10공수2--03-03-002",
+          "id": "other22-10공수2--03-05-002",
           "template": "opening",
           "title": "함수일지 먼저 예측하기",
           "kicker": "입력과 출력",
@@ -342,7 +646,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-03-003",
+          "id": "other22-10공수2--03-05-003",
           "template": "experiment",
           "title": "대응 화살표를 바꾸기",
           "kicker": "하나씩 바꾸고 비교",
@@ -395,7 +699,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-03-004",
+          "id": "other22-10공수2--03-05-004",
           "template": "experiment",
           "title": "대응표를 좌표 그래프로 읽기",
           "kicker": "다른 함수의 세 표현 연결",
@@ -480,7 +784,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-03-005",
+          "id": "other22-10공수2--03-05-005",
           "template": "practice",
           "title": "정의역·치역·공역 구별하기",
           "kicker": "새 대응에서 설명",
@@ -525,6 +829,8 @@
   "metadata": {
     "status": "partial_draft",
     "source_files": [
+      "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
+      "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
       "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
       "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
       "공통수학2_함수의대응_BookData_시범.json"

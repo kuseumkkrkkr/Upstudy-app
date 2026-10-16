@@ -1,0 +1,40 @@
+{
+  "bookdata_file": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "F136B1DCEA4857C3D7C21F25814A590CBCEEDD0BC01ABC28042D6FCE5AA62673",
+  "candidate_code_references": [
+    "10공수2-01-07",
+    "10공수2-03-04",
+    "10공수2-03-05"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_criterion_table_and_raw_eqedit_records",
+  "official_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "recovered_eqedit_source_scripts": {
+    "10공수2-01-07": [
+      "x",
+      "y",
+      "y=x"
+    ],
+    "10공수2-03-04": [
+      "y= {ax+b} over {cx+d}"
+    ],
+    "10공수2-03-05": [
+      "y= sqrt {ax+b} +c"
+    ]
+  },
+  "module_count": 3,
+  "page_count": 15,
+  "native_activity_count": 3,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "arithmetic_and_domain_checks": "pass_for_listed_examples_only",
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "official_codes_and_raw_eqedit_scripts_verified; semester_and_full_scope_pending",
+  "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored; publication_rights_decision_pending",
+  "integration_status": "candidate_for_unit_grouping; master_not_app_integrated",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
+}

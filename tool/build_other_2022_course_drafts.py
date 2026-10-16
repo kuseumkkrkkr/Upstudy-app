@@ -47,7 +47,12 @@ def build_course(config: dict) -> dict | None:
         edition = config.get("edition")
         if edition and book.get("curriculum_version") != edition and f"{edition} 개정" not in book.get("tags", []):
             continue
-        book_codes = sorted({(match.group(1), match.group(2)) for match in config["code"].finditer(" ".join(book.get("tags", [])))})
+        book_code_text = " ".join([
+            *book.get("tags", []),
+            *book.get("standard_codes", []),
+            book.get("standard_code", ""),
+        ])
+        book_codes = sorted({(match.group(1), match.group(2)) for match in config["code"].finditer(book_code_text)})
         if not book_codes:
             continue
         for chapter in book.get("chapters", []):
@@ -96,7 +101,7 @@ def build_course(config: dict) -> dict | None:
                     actual[signature(page)] += 1
             chapters.append({"title": title, "pages": page_list, "source_file": module["file"], "candidate_standard_codes": [f"{config['code_prefix']}{u}-{s}" for u, s in module["codes"]]})
         filename = f"{config['name']}_2022개정_{unit}_부분통합초안.json"
-        data = {"title": f"{config['name']} 2022 개정 · 단원 코드 {unit} 부분 통합 초안", "tags": [config["name"], "2022 개정", f"{config['code_prefix']}{unit}", "부분 통합 초안"], "chapters": chapters, "metadata": {"status": "partial_draft", "source_files": [m["file"] for m in modules]}}
+        data = {"title": f"{config['name']} 2022 개정 · 단원 코드 {unit} 부분 통합 초안", "curriculum_version": "2022", "standard_codes": sorted({code for module in modules for code in (f"{config['code_prefix']}{u}-{s}" for u, s in module["codes"])}), "tags": [config["name"], "2022 개정", f"{config['code_prefix']}{unit}", "부분 통합 초안"], "chapters": chapters, "metadata": {"status": "partial_draft", "source_files": [m["file"] for m in modules]}}
         (output / filename).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
         rows.append((filename, unit, modules))
     if actual != expected:

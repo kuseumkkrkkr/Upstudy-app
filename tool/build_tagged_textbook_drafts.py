@@ -25,6 +25,7 @@ GENERATORS = [
     ("build_probability_2022_basic_probability_v2_batch4.py", "main"),
     ("build_common_math2_existing_candidate_tags.py", "main"),
     ("build_common_math2_missing_v2_batch1.py", "main"),
+    ("build_common_math2_eqedit_v2_batch2.py", "main"),
     ("build_algebra_2022_remaining_v2_batch1.py", "main"),
     ("build_other_2022_course_drafts.py", "main"),
     ("build_calculus1_2022_remaining_v2_batch1.py", "main"),

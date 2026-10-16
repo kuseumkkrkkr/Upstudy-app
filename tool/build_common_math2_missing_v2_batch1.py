@@ -12,8 +12,8 @@ STANDARDS = ROOT / "work/official-curriculum/2022_math_standards.json"
 OUT = MANUSCRIPTS / "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json"
 PACKAGE = MANUSCRIPTS / "공통수학2_2022개정_추출가능기준14모듈_Batch1_원고패키지"
 
-# The three standards whose source equations were lost in conversion are
-# intentionally excluded. Examples are newly authored, not copied from sources.
+# Three standards are held for Batch2, which uses raw EqEdit scripts recovered
+# from the official HWP. Examples are newly authored, not copied from sources.
 SPECS = [
     ("10공수2-01-01", "선분의 내분과 좌표", "수직선에서 A(0), B(6)을 1:2로 내분하는 점은 P(2)이다.", "AP:PB=1:2이면 P는 A에서 B까지 거리의 1/3 지점이므로 좌표는 0+(6−0)/3=2이다.", "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요.", "P(1)", "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다.", ["1", "4", "7"], 0),
     ("10공수2-01-02", "두 직선의 평행과 수직", "기울기가 같은 두 직선은 평행하고, 기울기의 곱이 −1인 두 직선은 수직이다(수직선 예외 포함).", "기울기 2인 직선과 기울기 −1/2인 직선은 기울기의 곱이 −1이므로 서로 수직이다.", "기울기 3인 직선에 수직인 직선의 기울기를 구하세요.", "−1/3", "두 기울기의 곱이 −1이 되도록 합니다.", ["−1/3", "1/3", "−3"], 0),
@@ -40,12 +40,20 @@ def main() -> None:
     official_rows = [row for row in json.loads(STANDARDS.read_text(encoding="utf-8"))["standards"] if row["code"].startswith("10공수2-")]
     official = {row["code"]: row["criterion"] for row in official_rows}
     codes = [spec[0] for spec in SPECS]
-    blocked = {"10공수2-01-07", "10공수2-03-04", "10공수2-03-05"}
+    batch2 = {"10공수2-01-07", "10공수2-03-04", "10공수2-03-05"}
     existing = {"10공수2-02-04", "10공수2-02-05", "10공수2-03-01"}
+    eqedit = {row["code"]: set(row.get("equation_scripts", [])) for row in official_rows}
+    recovered = {
+        "10공수2-01-07": {"x", "y", "y=x"},
+        "10공수2-03-04": {"y= {ax+b} over {cx+d}"},
+        "10공수2-03-05": {"y= sqrt {ax+b} +c"},
+    }
+    if any(not expected.issubset(eqedit.get(code, set())) for code, expected in recovered.items()):
+        raise RuntimeError("Batch2 source equations are not recovered from official HWP EqEdit records")
     if len(codes) != 14 or len(set(codes)) != 14 or any(code not in official for code in codes):
         raise RuntimeError("Expected 14 distinct official, extractable Common Math 2 standards")
-    if set(codes) & (blocked | existing) or set(codes) | blocked | existing != set(official):
-        raise RuntimeError("Formula-loss standards must remain excluded")
+    if set(codes) & (batch2 | existing) or set(codes) | batch2 | existing != set(official):
+        raise RuntimeError("Batch1, Batch2, and existing standards do not partition Common Math 2")
     if any(not official[code].strip() for code in codes):
         raise RuntimeError("Official criterion text missing for a candidate standard")
 
@@ -87,10 +95,10 @@ def main() -> None:
         old = {}
     digest = canonical_file_sha256(OUT)
     same = old.get("bookdata_sha256") == digest
-    manifest = {"bookdata_file": OUT.name, "bookdata_sha256": digest, "candidate_code_references": codes, "candidate_code_reference_type": "official_2022_hwp_criterion_table", "excluded_formula_loss_codes": sorted(blocked), "module_count": 14, "page_count": 70, "native_activity_count": 14, "native_activity_kinds": ["quiz"], "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied", "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending", "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending", "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending", "source_interaction_status": "native_quiz_activity_candidate; source_html_parity_not_reviewed", "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book", "publication_eligibility": "not_eligible", "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation", "runtime_validator_head": old.get("runtime_validator_head") if same else None}
+    manifest = {"bookdata_file": OUT.name, "bookdata_sha256": digest, "candidate_code_references": codes, "candidate_code_reference_type": "official_2022_hwp_criterion_table", "deferred_eqedit_batch2_codes": sorted(batch2), "eqedit_recovery_status": "verified_from_original_hwp_raw_records", "module_count": 14, "page_count": 70, "native_activity_count": 14, "native_activity_kinds": ["quiz"], "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied", "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending", "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending", "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending", "source_interaction_status": "native_quiz_activity_candidate; source_html_parity_not_reviewed", "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book", "publication_eligibility": "not_eligible", "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation", "runtime_validator_head": old.get("runtime_validator_head") if same else None}
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (PACKAGE / "README.md").write_text(f"# {book['title']}\n\n공식 코드 14개에 연결한 14모듈·70쪽 V2 후보입니다. 세 기준은 공식 HWP XML의 수식 개체가 변환 텍스트에서 누락되어 제외했습니다: {', '.join(sorted(blocked))}. 예시와 퀴즈는 신규 작성이며 독립 교사 검수·권리 결정 전에는 출판 적격이 아닙니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n", encoding="utf-8")
-    print(f"Built {len(chapters)} Common Math 2 modules, {len(page_ids)} pages, {len(chapters)} quizzes; excluded 3 formula-loss standards.")
+    (PACKAGE / "README.md").write_text(f"# {book['title']}\n\n공식 코드 14개에 연결한 14모듈·70쪽 V2 후보입니다. HWP XHTML에서 빠졌던 세 기준의 EqEdit 원문 스크립트가 raw HWP 기록에서 복구되어 Batch2 원고로 분리 제작됩니다: {', '.join(sorted(batch2))}. 예시와 퀴즈는 신규 작성이며 독립 교사 검수·권리 결정 전에는 출판 적격이 아닙니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n", encoding="utf-8")
+    print(f"Built {len(chapters)} Common Math 2 modules, {len(page_ids)} pages, {len(chapters)} quizzes; deferred 3 recovered-EqEdit standards to Batch2.")
 
 
 if __name__ == "__main__":

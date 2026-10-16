@@ -86,6 +86,11 @@ def main() -> None:
         row["code"]: row["criterion"]
         for row in json.loads((SOURCES / "2022_math_standards.json").read_text(encoding="utf-8"))["standards"]
     }
+    recovered_eqedit_scripts = {
+        row["code"]: row["equation_scripts"]
+        for row in json.loads((SOURCES / "2022_math_standards.json").read_text(encoding="utf-8"))["standards"]
+        if row.get("equation_scripts")
+    }
 
     tagged: dict[str, list[tuple[str, str]]] = defaultdict(list)
     module_alignment: dict[str, str] = {}
@@ -170,17 +175,19 @@ def main() -> None:
                 status = "후보 연결 기록 있음 · 교사·내용 검수 필요"
             else:
                 status = "tag 있음 · 내용 검수 필요" if sources else "same-edition tag 없음 · 원고 대조 필요"
-            excerpt = description.replace("|", "\\|")[:180]
+            equation_scripts = recovered_eqedit_scripts.get(code, [])
+            if equation_scripts:
+                description += " [복구 EqEdit: " + "; ".join(equation_scripts) + "]"
+            excerpt = description.replace("|", "\\|")[:260]
             lines.append(f"| `{code}` | {excerpt} | {evidence} | {status} |")
         lines.append("")
 
     lines += [
         "## 2022 원문 수식 추출 한계",
         "",
-        "공식 HWP 원본 XML에는 아래 기준 문단 안에 `EqEdit` 수식 개체가 있으나 XHTML/TXT 추출물에는 수식 내용이 들어 있지 않다. 이 기준 문구는 수식이 복구될 때까지 완전 전사로 보지 않으며, 가려진 수식 형태를 추측해 내용 충족 처리하지 않는다.",
+        "공식 HWP의 `EqEdit` raw record script를 원문 HWP에서 직접 복구해 16개 기준에 별도 인용했다. 아래 목록은 현재 XHTML 변환 텍스트에서 수식 내용이 여전히 빠진 기준만 가리킨다.",
         "",
         "- `9수02-10`",
-        "- `10공수2-01-07`, `10공수2-03-04`, `10공수2-03-05`",
         "- `12대수03-02`, `12대수03-03`, `12대수03-04`, `12대수03-05`",
         "",
     ]

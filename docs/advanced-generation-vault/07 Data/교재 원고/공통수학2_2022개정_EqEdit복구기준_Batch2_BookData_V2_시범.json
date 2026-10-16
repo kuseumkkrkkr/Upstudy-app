@@ -1,0 +1,424 @@
+{
+  "schema_version": 2,
+  "title": "공통수학2 · HWP EqEdit 복구 기준 3모듈 후보",
+  "subtitle": "대칭이동·유리함수·무리함수",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "tags": [
+    "공통수학2",
+    "2022 개정",
+    "HWP EqEdit 복구 기준",
+    "신규 원고 후보",
+    "가상 예시",
+    "학기 배정 미확정",
+    "10공수2-01-07",
+    "10공수2-03-04",
+    "10공수2-03-05"
+  ],
+  "standard_codes": [
+    "10공수2-01-07",
+    "10공수2-03-04",
+    "10공수2-03-05"
+  ],
+  "chapters": [
+    {
+      "title": "좌표평면에서 대칭이동",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-07에 연결한 신규 원고 후보입니다.",
+        "교육부 HWP의 EqEdit 수식 개체 스크립트를 확인해 반영했습니다. 예시·문항은 새로 작성했습니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20107-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "좌표평면에서 대칭이동"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 살펴보기",
+              "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20107-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "좌표평면에서 대칭이동",
+              "text": "원점에 대한 대칭은 (x,y)를 (−x,−y)로 보낸다. x축 대칭은 (x,−y), y축 대칭은 (−x,y), 직선 y=x 대칭은 좌표를 맞바꾼 (y,x)로 보낸다. 점과 대칭 기준을 먼저 확인한 뒤 좌표를 변환한다."
+            },
+            {
+              "type": "formula",
+              "title": "교육부 HWP EqEdit 원문 스크립트",
+              "text": "x; y; y=x"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20107-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 A(1,−4)를 직선 y=x에 대칭이동한 점의 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예시",
+              "text": "P(2,−3)을 원점에 대칭하면 (−2,3), x축에 대칭하면 (2,3), y축에 대칭하면 (−2,−3), y=x에 대칭하면 (−3,2)다. 각 결과를 다시 같은 기준으로 대칭하면 P로 돌아온다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20107-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 A(1,−4)를 직선 y=x에 대칭이동한 점의 좌표를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "y=x에 대한 대칭에서는 점의 두 좌표가 서로 자리를 바꿉니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(−4,1). y=x 대칭은 x좌표와 y좌표를 서로 바꾼다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(−4,1). y=x 대칭은 x좌표와 y좌표를 서로 바꾼다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20107-quiz",
+                "kind": "quiz",
+                "prompt": "점 A(1,−4)를 직선 y=x에 대칭이동한 점의 좌표를 구하세요.",
+                "options": [
+                  "(−4,1)",
+                  "(4,−1)",
+                  "(1,4)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.",
+                "incorrect_feedback": "기준이 되는 직선이나 식의 조건을 다시 확인하세요.",
+                "hints": [
+                  "y=x에 대한 대칭에서는 점의 두 좌표가 서로 자리를 바꿉니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20107-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "원점에 대한 대칭은 (x,y)를 (−x,−y)로 보낸다. x축 대칭은 (x,−y), y축 대칭은 (−x,y), 직선 y=x 대칭은 좌표를 맞바꾼 (y,x)로 보낸다. 점과 대칭 기준을 먼저 확인한 뒤 좌표를 변환한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "유리함수의 그래프와 점근선",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-03-04에 연결한 신규 원고 후보입니다.",
+        "교육부 HWP의 EqEdit 수식 개체 스크립트를 확인해 반영했습니다. 예시·문항은 새로 작성했습니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20304-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "유리함수의 그래프와 점근선"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 살펴보기",
+              "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20304-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "유리함수의 그래프와 점근선",
+              "text": "공식 HWP의 기본 형태는 y=(ax+b)/(cx+d)다. 분모가 0인 x는 정의역에서 제외한다. 예를 들어 f(x)=2/(x−1)+3=(3x−1)/(x−1)은 x=1에서 정의되지 않고, x가 1에 가까워질 때 함수값의 크기가 커진다. 이 예의 그래프는 x=1과 y=3에 가까워진다."
+            },
+            {
+              "type": "formula",
+              "title": "교육부 HWP EqEdit 원문 스크립트",
+              "text": "y= {ax+b} over {cx+d}"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20304-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예시",
+              "text": "f(x)=2/(x−1)+3에서 x=0이면 f(0)=1, x=2이면 f(2)=5다. 두 점은 수직선 x=1의 서로 다른 쪽에 있다. 식을 (3x−1)/(x−1)로 정리해도 같은 함수이며, 분모가 0인 x=1은 허용되지 않는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20304-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "분모 x−2가 0이 되는 x를 찾고 그 값은 정의역에서 제외합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x=2이며 수직점근선은 x=2다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x=2이며 수직점근선은 x=2다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20304-quiz",
+                "kind": "quiz",
+                "prompt": "g(x)=1/(x−2)+4에서 분모가 0이 되는 x와 그래프가 가까워지는 수직선을 쓰세요.",
+                "options": [
+                  "x=2",
+                  "x=−2",
+                  "y=4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.",
+                "incorrect_feedback": "기준이 되는 직선이나 식의 조건을 다시 확인하세요.",
+                "hints": [
+                  "분모 x−2가 0이 되는 x를 찾고 그 값은 정의역에서 제외합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20304-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공식 HWP의 기본 형태는 y=(ax+b)/(cx+d)다. 분모가 0인 x는 정의역에서 제외한다. 예를 들어 f(x)=2/(x−1)+3=(3x−1)/(x−1)은 x=1에서 정의되지 않고, x가 1에 가까워질 때 함수값의 크기가 커진다. 이 예의 그래프는 x=1과 y=3에 가까워진다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "무리함수의 정의역과 그래프",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-03-05에 연결한 신규 원고 후보입니다.",
+        "교육부 HWP의 EqEdit 수식 개체 스크립트를 확인해 반영했습니다. 예시·문항은 새로 작성했습니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20305-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "무리함수의 정의역과 그래프"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 살펴보기",
+              "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20305-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "무리함수의 정의역과 그래프",
+              "text": "공식 HWP의 기본 형태는 y=√(ax+b)+c다. 제곱근 안의 값은 0 이상이어야 하므로 ax+b≥0인 x만 정의역에 포함된다. 예시를 그릴 때 정의역의 시작점과 함수값 변화를 함께 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "교육부 HWP EqEdit 원문 스크립트",
+              "text": "y= sqrt {ax+b} +c"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20305-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예시",
+              "text": "g(x)=√(2x+2)+1은 2x+2≥0인 x≥−1에서 정의된다. 시작점은 (−1,1)이고, x=0이면 g(0)=1+√2다. 제곱근 값은 음수가 아니므로 이 함수는 y=0이 되는 점이 없다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20305-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제곱근 안의 식을 0 이상으로 놓고 부등식을 풉니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3x−6≥0이므로 x≥2, 정의역은 [2,∞)다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3x−6≥0이므로 x≥2, 정의역은 [2,∞)다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20305-quiz",
+                "kind": "quiz",
+                "prompt": "h(x)=√(3x−6)+2의 정의역을 부등식과 구간으로 나타내세요.",
+                "options": [
+                  "[2,∞)",
+                  "(−∞,2]",
+                  "[−2,∞)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.",
+                "incorrect_feedback": "기준이 되는 직선이나 식의 조건을 다시 확인하세요.",
+                "hints": [
+                  "제곱근 안의 식을 0 이상으로 놓고 부등식을 풉니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20305-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공식 HWP의 기본 형태는 y=√(ax+b)+c다. 제곱근 안의 값은 0 이상이어야 하므로 ax+b≥0인 x만 정의역에 포함된다. 예시를 그릴 때 정의역의 시작점과 함수값 변화를 함께 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
