@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
+import 'safe_graph_math.dart';
 
 /// 필요한 변수는 렌더링 대상 그래프 문서·매개변수 조작부·직접 조작 모드다.
 /// 작동 원리는 문서를 JSON payload로 주입해 웹뷰 내부에서 한 번만 초기 렌더링하고,
@@ -10,12 +11,14 @@ String buildAiFlowGraphHtml(
   bool showParameterControls = true,
   bool directManipulationMode = false,
 }) {
-  final payloadJson = jsonEncode(document.toJson());
-  final escapedPayload = payloadJson
-      .replaceAll(r'\\', r'\\\\')
-      .replaceAll(r"'", r"\\'")
-      .replaceAll('\n', r'\\n')
-      .replaceAll('\r', r'\\r');
+  // Embed a JSON object, not JSON wrapped in a second hand-escaped JS string.
+  // Escaping '<' prevents author labels from closing the surrounding script.
+  final escapedPayload = jsonEncode(document.toJson())
+      .replaceAll('<', r'\u003c')
+      .replaceAll('>', r'\u003e')
+      .replaceAll('&', r'\u0026')
+      .replaceAll('\u2028', r'\u2028')
+      .replaceAll('\u2029', r'\u2029');
   return r'''
 <!doctype html>
 <html>
@@ -230,7 +233,7 @@ String buildAiFlowGraphHtml(
 
         let initialPayload = {};
         try {
-          initialPayload = JSON.parse('__AIFLOW_GRAPH_PAYLOAD__');
+          initialPayload = __AIFLOW_GRAPH_PAYLOAD__;
         } catch (_) {
           setStatus('그래프 데이터 파싱 실패');
           initialPayload = {};
@@ -336,51 +339,11 @@ String buildAiFlowGraphHtml(
           return value.replace(/\^/g, '**');
         }
 
+        __AIFLOW_SAFE_MATH__
+
         function safeFunctionFromExpression(expression, degreeMode) {
-          const normalized = normalizeExpression(expression || '');
-          if (!normalized) return null;
-          try {
-            const fnBody = 'with (scope) { return ' + normalized + '; }';
-            const evaluator = new Function('scope', fnBody);
-            return function(x) {
-              const scope = Object.create(null);
-              for (const [key, value] of Object.entries(parameterValues)) {
-                scope[key] = Number(value);
-              }
-              scope.x = Number(x);
-              scope.pi = Math.PI;
-              scope.e = Math.E;
-              scope.abs = Math.abs;
-              scope.max = Math.max;
-              scope.min = Math.min;
-              scope.sqrt = Math.sqrt;
-              scope.pow = Math.pow;
-              scope.exp = Math.exp;
-              scope.ln = Math.log;
-              scope.log = function(v) { return Math.log(v) / Math.LN10; };
-              scope.sin = degreeMode ? function(v) {
-                return Math.sin(v * Math.PI / 180);
-              } : Math.sin;
-              scope.cos = degreeMode ? function(v) {
-                return Math.cos(v * Math.PI / 180);
-              } : Math.cos;
-              scope.tan = degreeMode ? function(v) {
-                return Math.tan(v * Math.PI / 180);
-              } : Math.tan;
-              scope.ceil = Math.ceil;
-              scope.floor = Math.floor;
-              scope.round = Math.round;
-              if (!Number.isFinite(scope.x)) return NaN;
-              try {
-                const value = evaluator(scope);
-                return Number.isFinite(value) ? value : NaN;
-              } catch (_) {
-                return NaN;
-              }
-            };
-          } catch (_) {
-            return null;
-          }
+          const parsed = compileGraphMath(normalizeExpression(expression || ''), Object.keys(parameterValues), degreeMode);
+          return parsed ? x => parsed(x, parameterValues) : null;
         }
 
         function clearElements() {
@@ -984,6 +947,7 @@ String buildAiFlowGraphHtml(
         });
 
         window.addEventListener('message', (event) => {
+          if (event.source !== window.parent) return;
           if (!event || !event.data) return;
           applyGraphPayload(event.data, false);
         });
@@ -992,7 +956,7 @@ String buildAiFlowGraphHtml(
   </body>
 </html>
 '''
-      .replaceAll(r'__AIFLOW_GRAPH_PAYLOAD__', escapedPayload)
+      .replaceAll(r'__AIFLOW_SAFE_MATH__', safeGraphMathJavascript)
       .replaceAll(
         r'__AIFLOW_GRAPH_CONTROLS_DISPLAY__',
         showParameterControls ? 'flex' : 'none',
@@ -1004,5 +968,6 @@ String buildAiFlowGraphHtml(
       .replaceAll(
         r'__AIFLOW_GRAPH_SHOW_NAVIGATION__',
         directManipulationMode ? 'false' : 'true',
-      );
+      )
+      .replaceAll(r'__AIFLOW_GRAPH_PAYLOAD__', escapedPayload);
 }

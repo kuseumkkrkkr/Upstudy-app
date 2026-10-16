@@ -77,3 +77,24 @@ Resume the live build process, inspect its exit/log, then synchronize fresh buil
 - Final local source snapshot `build/temp/bookdata-final-source-snapshot.tar`, SHA `ABF53623AD940DAB26977048E0DF09892D21DD0F18E92B5AE00AB06F60449159`, includes lib/api/web/assets/pubspec and excludes env files. It preserves the full dirty source used for the final build. **HEAD alone still does not reproduce it**; coupled integration source selective review/commit remains.
 - Tutor limitation unchanged: actual response502/upstreamKiln403 despite retry; no successful AI response claimed, no key mutation. Display-only quiz/independent HTML interaction limitation unchanged. Goal remains active, not globally complete.
 - Next task: review and selectively commit import/reader/graph/API/store integration without incorporating unrelated dirty changes; resume actual tutor reply verification after the user resolves Kiln access. No further admin setup is needed for private import.
+
+## Subsequent source review — graph payload encoding
+
+- Reviewed shared auth/storage dependencies read-only. They predate this import and mix with other features; no wholesale staging, reverting or replacement.
+- Security-only graph hunks can be isolated independently: arithmetic parser integration, HTML-safe data embedding, renderer parent-message check, iframe sandbox/referrerpolicy. Axis styling, viewport commands and pointer-control changes remain untouched/local-only.
+- Added executable renderer regression with quotes, backslash, newline, closing script tag and template-marker data. It initially failed: prior hand-escaped nested JS string produced `SyntaxError: missing ) after argument list` for a single quote. Plain pilot labels did not expose this defect.
+- Fixed by embedding `jsonEncode(document.toJson())` as a JSON object literal, escaping HTML-significant characters and Unicode line separators. Removed the second JSON.parse/string quoting layer. Payload is still substituted last, so author template markers are not executable substitutions.
+- `flutter test --no-pub test/jsx_graph_html_security_test.dart`: **1 passed**. Test parses embedded JSON back to full graph equality and runs `node --check` on the generated inline script. Focused renderer/test analyze **No issues found**. Other previously recorded tests have not been substituted by this one.
+- Serialization fix requires a fresh D release/candidate/alias/browser check. Existing 4E bundle is still the last verified live bundle until that happens.
+
+### Exact local-only integration checklist
+
+| File | Import-related work still local-only | Why not stage the entire file |
+|---|---|---|
+| `lib/shared/services/api/api_client.dart` | session scope dependency, importTextbookSource, createTextbook connection | Mixed preexisting auth/cache changes with level-test/rating/OCR/group/market changes |
+| `lib/shared/business/repositories/textbook_store.dart` | importSource, remembered book, metadata, scope-safe cache/library persistence | Depends on preexisting ApiSessionScope and scoped LocalDb contracts not present in HEAD |
+| `lib/sessions/textbook/ui/pages/docx_box.dart` | import action, captured account epoch, reader open, import control | Mixed bookbag layout/exam/detail behavior from prior work |
+| `lib/sessions/textbook/ui/pages/book_page.dart` | graph captions, supplementary sections, page restoration, current-page tutor/session guard, graph height | Mixed larger reader/UI/session/annotation changes from prior work |
+| `lib/shared/services/storage/local_db{,_io,_stub,_web}.dart` | required scoped persistence dependency | Preexisting shared/native storage behavior; not newly authored by this import |
+
+- The source snapshot preserves these full working files for the deployed build; it is not a clean-source commit. Ownership/history uncertainty must remain visible. No claim that the import integration is fully committed merely because the static bundle is committed.

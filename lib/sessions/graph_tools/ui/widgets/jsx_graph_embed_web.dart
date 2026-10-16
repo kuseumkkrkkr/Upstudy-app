@@ -54,6 +54,10 @@ class _JsxGraphEmbedWebState extends State<_JsxGraphEmbedWeb> {
       ..style.width = '100%'
       ..style.height = '100%'
       ..style.display = 'block';
+    // No allow-same-origin: a graph can execute only our renderer, not access
+    // the parent app's DOM, cookies or local storage. Messaging is source-bound.
+    _iframe.setAttribute('sandbox', 'allow-scripts');
+    _iframe.setAttribute('referrerpolicy', 'no-referrer');
     _iframe.setAttribute(
       'srcdoc',
       buildAiFlowGraphHtml(
