@@ -13,6 +13,7 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_유리함수그래프탐구_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json',
@@ -228,6 +229,55 @@ void main() {
       await tester.pump();
       expect(find.text('현재 관계  2.0^2 = 4'), findsOneWidget);
       expect(find.text('시작: 밑과 지수를 정하고 결과를 먼저 예측하세요.'), findsOneWidget);
+    },
+  );
+
+  testWidgets(
+    '2022 rational-function HTML controls map to native graph controls',
+    (tester) async {
+      const path =
+          'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_유리함수그래프탐구_Batch1_BookData_V2_시범.json';
+      final source =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final data = _activities(
+        source,
+      ).singleWhere((item) => item['kind'] == 'rationalFunctionExplorer');
+      final activity = BookActivity.fromJson(data);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BookActivityView(activity: activity),
+            ),
+          ),
+        ),
+      );
+      expect(find.text('y=2/(x−1)−3'), findsOneWidget);
+      expect(find.textContaining('정의역: x ≠ 1'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('rational-explorer-next')));
+      await tester.tap(find.byKey(const ValueKey('rational-explorer-next')));
+      await tester.pump();
+      expect(find.textContaining('2단계 · 점근선은 x=1'), findsOneWidget);
+      tester
+          .widget<DropdownButtonFormField<double>>(
+            find.byKey(const ValueKey('rational-explorer-a')),
+          )
+          .onChanged!(-1);
+      tester
+          .widget<Slider>(find.byKey(const ValueKey('rational-explorer-h')))
+          .onChanged!(2);
+      tester
+          .widget<Slider>(find.byKey(const ValueKey('rational-explorer-k')))
+          .onChanged!(2);
+      await tester.pump();
+      expect(find.text('y=-1/(x−2)+2'), findsOneWidget);
+      expect(find.textContaining('정의역: x ≠ 2'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('rational-explorer-hint')));
+      await tester.pump();
+      expect(find.textContaining('분모가 0인 x=h'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('rational-explorer-reset')));
+      await tester.pump();
+      expect(find.text('먼저 분모가 0이 되는 x를 찾아보세요.'), findsOneWidget);
     },
   );
 

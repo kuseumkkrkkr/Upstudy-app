@@ -1,0 +1,36 @@
+{
+  "bookdata_file": "공통수학2_2022개정_유리함수그래프탐구_Batch1_BookData_V2_시범.json",
+  "bookdata_sha256": "3d87e1db8193836a91684ef74315434f1d1a80f9b6af53fdd6fe3f1fe717dedb",
+  "candidate_code_references": [
+    "10공수2-03-04"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_standard",
+  "source_html": "공통수학2_유리함수_체험형_시범.html",
+  "source_interaction_mapping": {
+    "parameters": [
+      "a",
+      "h",
+      "k"
+    ],
+    "controls": [
+      "slider/dropdown",
+      "step",
+      "reset",
+      "quiz",
+      "hint"
+    ]
+  },
+  "module_count": 1,
+  "page_count": 7,
+  "native_activity_count": 2,
+  "native_activity_kinds": [
+    "rationalFunctionExplorer",
+    "quiz"
+  ],
+  "curriculum_review_status": "pending",
+  "math_review_status": "pending_independent_review",
+  "teacher_review_status": "pending",
+  "rights_status": "pending",
+  "publication_eligibility": "not_eligible",
+  "visual_parity_status": "human_review_pending"
+}

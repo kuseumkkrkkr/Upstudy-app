@@ -1,0 +1,204 @@
+{
+  "schema_version": 2,
+  "title": "공통수학2 · 유리함수 그래프 탐구 보충 후보",
+  "subtitle": "기존 점근선 설명을 그래프 작도와 매개변수 탐구로 보완",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "tags": [
+    "공통수학2",
+    "2022 개정",
+    "유리함수",
+    "그래프 탐구",
+    "10공수2-03-04"
+  ],
+  "standard_codes": [
+    "10공수2-03-04"
+  ],
+  "metadata": {
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "external_interactive_assets": [
+      "공통수학2_유리함수_체험형_시범.html"
+    ]
+  },
+  "chapters": [
+    {
+      "title": "유리함수 그래프와 점근선 탐구",
+      "standard_codes": [
+        "10공수2-03-04"
+      ],
+      "source_html_reference": "공통수학2_유리함수_체험형_시범.html",
+      "pages": [
+        {
+          "id": "rational-open",
+          "template": "opening",
+          "title": "그래프와 점근선을 함께 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "기준 연결",
+              "text": "2022 개정 기준 10공수2-03-04: 유리함수 그래프를 그리고 성질을 탐구합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "오늘의 질문",
+              "text": "y=2/(x−1)−3에서 x=1과 y=−3은 그래프에서 어떤 역할을 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "rational-concept",
+          "template": "concept",
+          "title": "이동된 기본 그래프",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기본형",
+              "text": "y=a/(x−h)+k (a≠0)에서 x=h는 분모가 0이 되는 값이므로 정의역에서 제외됩니다. 그래프는 수직점근선 x=h와 수평점근선 y=k에 가까워집니다."
+            },
+            {
+              "type": "formula",
+              "title": "가지의 위치",
+              "text": "a>0이면 중심 (h,k)을 기준으로 오른쪽 위·왼쪽 아래에 가지가 놓이고, a<0이면 왼쪽 위·오른쪽 아래에 놓입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "정의역 확인",
+              "text": "점근선은 그래프가 닿는 직선이라고 단정하지 않습니다. x=h에서는 함수가 정의되지 않습니다."
+            }
+          ]
+        },
+        {
+          "id": "rational-example",
+          "template": "example",
+          "title": "함숫값으로 그래프 위치 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=2/(x−1)−3에서 f(0), f(2)를 구하고 점근선을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "함숫값",
+              "text": "f(0)=2/(−1)−3=−5, f(2)=2/1−3=−1입니다."
+            },
+            {
+              "type": "answer",
+              "title": "그래프 정보",
+              "text": "정의역은 x≠1이고 점근선은 x=1, y=−3입니다. 두 점 (0,−5), (2,−1)은 중심 (1,−3)의 서로 다른 쪽 가지에 놓입니다."
+            }
+          ]
+        },
+        {
+          "id": "rational-explore",
+          "template": "experiment",
+          "title": "매개변수를 움직여 그래프 탐구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작 순서",
+              "text": "a를 바꾸어 가지의 방향을 비교하고, h와 k를 움직여 수직·수평 점근선이 어떻게 이동하는지 관찰하세요."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "rational-function-explorer-2022",
+                "kind": "rationalFunctionExplorer",
+                "prompt": "y=a/(x−h)+k의 매개변수를 바꾸어 정의역과 점근선을 관찰합니다.",
+                "hints": [
+                  "분모를 0으로 만드는 값과 분수식 바깥의 상수를 따로 보세요."
+                ],
+                "explorer": {
+                  "a_values": [
+                    -2,
+                    -1,
+                    1,
+                    2
+                  ],
+                  "initial_a": 2,
+                  "min_h": -2,
+                  "max_h": 2,
+                  "h_step": 0.5,
+                  "initial_h": 1,
+                  "min_k": -3,
+                  "max_k": 3,
+                  "k_step": 0.5,
+                  "initial_k": -3
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "rational-quiz",
+          "template": "practice",
+          "title": "정의역과 점근선 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "퀴즈",
+              "text": "y=2/(x−1)−3의 정의역과 두 점근선은?"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "rational-asymptote-quiz-2022",
+                "kind": "quiz",
+                "prompt": "y=2/(x−1)−3의 정의역과 두 점근선은?",
+                "options": [
+                  "x≠1, x=1과 y=−3",
+                  "x≠−1, x=−1과 y=3",
+                  "모든 실수, x=1과 y=3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "분모가 0인 x=1을 제외하며 점근선은 x=1, y=−3입니다.",
+                "incorrect_feedback": "분모 x−1과 분수식 밖의 −3을 각각 확인하세요.",
+                "hints": [
+                  "분모가 0인 x는 정의역에서 제외합니다.",
+                  "식의 바깥 상수 −3이 수평 점근선입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "rational-independent",
+          "template": "practice",
+          "title": "독립 연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "문제",
+              "text": "y=−1/(x+2)+4의 정의역에서 제외되는 값과 점근선을 구하세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답과 해설",
+              "text": "x=−2에서 정의되지 않습니다. 수직점근선은 x=−2, 수평점근선은 y=4입니다."
+            }
+          ]
+        },
+        {
+          "id": "rational-summary",
+          "template": "summary",
+          "title": "그래프 성질 점검",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심 정리",
+              "text": "y=a/(x−h)+k에서는 x=h를 정의역에서 제외하고 x=h, y=k를 점근선으로 읽습니다. a의 부호는 두 가지의 위치를 정합니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "text": "정의역, 점근선, a의 부호에 따른 두 가지 위치를 그래프와 연결했나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

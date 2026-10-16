@@ -16,10 +16,12 @@
   "standard_codes": [
     "10수학01-01"
   ],
-  "publication_eligibility": "not_eligible",
-  "rights_status": "pending",
-  "teacher_review_status": "pending",
-  "math_review_status": "author_checks_recorded_independent_review_pending",
+  "metadata": {
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending"
+  },
   "chapters": [
     {
       "title": "다항식의 곱셈과 나눗셈",

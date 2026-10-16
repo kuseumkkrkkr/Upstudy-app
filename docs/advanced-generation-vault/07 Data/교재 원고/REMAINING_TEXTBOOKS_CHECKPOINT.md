@@ -230,3 +230,11 @@
 - 2015 기준 `10수학01-01`의 기존 챕터 본문을 확인했다. 해당 후보는 동류항 덧셈·뺄셈만 다루고, 공식 기준의 곱셈·나눗셈을 다루지 않아 실질 공백으로 판정했다. 비슷한 2022 후보는 판본 연결을 대체하지 않는다.
 - 보충 V2 1개 장/6쪽을 추가해 분배법칙, 나눗셈의 몫·나머지, 곱셈 퀴즈를 다룬다. 공식 2015 기준 문구와 chapter code를 검증하고 계산 assert를 둔다. 새 원고는 별도 파일이며 기존 후보를 덮어쓰지 않는다.
 - Pipeline 45/93에 등록. 최신 재귀 inventory 176 BookData, 113 root source BookData, 106 HTML. 교사·독립 수학·권리 검토 대기 및 출판 부적격.
+
+## 2026-10-17 2022 공통수학Ⅱ 유리함수 그래프 보완
+
+- 2022 기준 `10공수2-03-04`의 기존 V2 챕터를 본문 단위로 대조했다. 정의역과 점근선 설명은 있으나 실제 그래프 작도·그래프 성질 탐구가 없어 부분 충족으로 판정했다. 공식 기준은 그래프와 성질 탐구를 요구한다.
+- 연결된 `공통수학2_유리함수_체험형_시범.html`의 a 선택, h/k 슬라이더, 단계 안내, 초기화, 정의역/점근선 퀴즈, 힌트 동작을 확인하고 native `rationalFunctionExplorer`·quiz로 대응했다. 7쪽 보충은 정의역, 두 점근선, 두 점의 함수값, a 부호에 따른 가지 위치를 설명한다. 시각 parity는 사람 검토 전이다.
+- 새 activity는 수치 payload만 허용하고 `y=a/(x-h)+k`를 안전하게 렌더한다. BookData 왕복 3/3, 전체 activity compatibility 121/121 통과; 개별 매개변수·단계·힌트·초기화 widget test 포함. 생성기 두 번 실행 SHA-256 동일.
+- Pipeline stage 46/94. 원장: 26 상품/1,038 기준 행/114 root source/177 recursive BookData/325 activities/106 HTML; official edition-code 392 중 same-edition tags 370, chapter anchor 327, unlinked structural pairs 48. metadata 상태는 publication `not_eligible` 32, rights/teacher pending 32, author math checks with independent review pending 31, math pending 1, unspecified 145.
+- 권리·독립 수학·교사 검토 및 시각 대조는 남아 출판/배포하지 않는다.

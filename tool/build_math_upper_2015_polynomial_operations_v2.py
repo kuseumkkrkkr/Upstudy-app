@@ -64,10 +64,8 @@ def make_book() -> dict[str, object]:
         "curriculum_version": "2015",
         "tags": ["수학(상)", "2015 개정", "다항식", "곱셈", "나눗셈", CODE, "보충 후보"],
         "standard_codes": [CODE],
-        "publication_eligibility": "not_eligible",
-        "rights_status": "pending",
-        "teacher_review_status": "pending",
-        "math_review_status": "author_checks_recorded_independent_review_pending",
+        "metadata": {"publication_eligibility": "not_eligible", "rights_status": "pending",
+            "teacher_review_status": "pending", "math_review_status": "author_checks_recorded_independent_review_pending"},
         "chapters": [{"title": "다항식의 곱셈과 나눗셈", "standard_codes": [CODE], "pages": pages}],
     }
 
