@@ -14,17 +14,17 @@
 - 현재 태그 생성기는 104개 stage를 등록한다. 최근 생성 배치는 수학Ⅱ Batch2–Batch7과 2015 기하 Batch2–Batch4이며, stage 등록이나 태그만으로 내용 충족을 승인하지 않는다.
 
 
-## 2026-10-17 현재 작업트리 재검증 — `a443978`
+## 2026-10-17 현재 작업트리 재검증 — `adbfdf0`
 
-- 현재 `HEAD == origin/main == a443978ecb81350666e051ea837ada02ec347cd2`. 재귀 BookData 187개(그중 V2 66), 선언형 activity 340개, root BookData 124개, root JSON 129개, root/재귀 HTML 86/106개다. 전체 태그 생성 파이프라인은 재실행하지 않았다; registry는 104 stage다.
+- 현재 `HEAD == origin/main == adbfdf08dc82a3de782b205d821bbe920b743792`. 재귀 BookData 187개(그중 V2 66), 선언형 activity 340개, root BookData 124개, root JSON 129개, root/재귀 HTML 86/106개다. 전체 태그 생성 파이프라인은 재실행하지 않았다; registry는 104 stage다.
 - `flutter test --no-pub --reporter compact test/concept_textbook_prototype_json_test.dart`: 153 tests passed. 앞선 실행의 152 pass + 1 fail은 합계 행 파싱 오류였다. 합계 숫자를 굵게 고친 뒤 전체 suite를 다시 실행해 통과를 확인했다.
 - `flutter test --no-pub --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart test/textbook_activity_compatibility_test.dart`: 129 tests passed. 이 실행은 재귀 BookData 187개 왕복, 신규 candidate/source metadata 왕복, 선택된 native activity와 reader 동작을 포함한다. `dart analyze lib/shared/data/models/textbook.dart test/textbook_bookdata_inventory_roundtrip_test.dart`도 `No issues found`다. 독립 HTML 106개 전체 화면·동작 parity나 실제 공개 API/DB 저장은 검증하지 않았다.
 - 최신 원장은 26개 상품·1,038 product-standard 행·root source BookData 124개다. package index와 재귀 참조 verifier는 각각 187개를 확인했다. 392 공식 판본-코드 쌍에 field/tag 신호, exact chapter anchor 342, 단일 코드·단일 chapter 연결 28, 검토 대기 candidate chapter mapping 75, exact/candidate 구조 신호 누락 0개다. 이 신호는 내용 충족이나 승인을 뜻하지 않는다.
 - 재귀 BookData metadata 집계: publication `not_eligible` 42 / `unspecified` 145; rights `pending` 33 / `publication_decision_pending` 9 / `unspecified` 145; teacher review `pending` 42 / `unspecified` 145; math review `author_checks_recorded_independent_review_pending` 32 / `independent_review_pending` 9 / `pending` 1 / `unspecified` 145. 재귀 manifest 39개는 모두 `not_eligible`; 독립 승인 자료 0개다. 과거 38개 manifest SHA 대조(34 match/4 mismatch)는 이전 snapshot 감사다.
-- 디자이너 앱 통합의 이전 보존 검사 187개 중 182개 통과, 5개 차단을 확인했다. 두 activity kind(`radicalFunctionExplorer`, `logarithmPowerExplorer`)는 앱 모델/reader에 등록돼 있지만 호환성 allowlist가 미지원으로 처리한다. 세 metadata 차단은 `a443978`에서 BookData/book chapter의 `candidate_standard_codes`와 chapter의 `source_html_reference`를 파싱·직렬화하는 모델 필드로 보완했고, `Upstudy-hotfix`의 `c83cdb0` strict import allowlist도 동일한 명시 필드를 크기 제한과 filename-only 검증으로 보존한다. 해당 API 테스트 40개가 통과했고 알 수 없는 필드 거부 및 공개 gate 검사를 포함한다. 디자이너 측 전체 importer audit 재실행 전까지 5개 차단의 해소를 산정하지 않는다. 앱의 `ApiClient.createTextbook()`은 여전히 stub이므로 원격 저장은 검증되지 않았다.
-- 단일점 scatter 렌더 누락은 `d29fc57`에서 수정됐고 Flutter 회귀 테스트가 추가됐다. 디자이너 Preview의 좌표 조작·quiz·접기 해설은 별도 작업에서 검증됐지만 Upstudy-app reader 통합은 아직 확인되지 않았다. 기존 HTML 106개 전체 parity도 미완료다.
+- 디자이너 앱 통합의 이전 보존 검사 187개 중 182개 통과, 5개 차단이 기준 측정값이다. 두 activity kind(`radicalFunctionExplorer`, `logarithmPowerExplorer`)의 allowlist 판정과 metadata 차단을 포함한 전체 importer audit은 재실행 전이라 차단 감소를 산정하지 않는다. 모델 metadata는 `a443978`에서 보존하고, `Upstudy-hotfix` `c83cdb0` importer와 `2d41372` create API가 명시된 `candidate_standard_codes`와 chapter `source_html_reference`를 제한 검증한다. 해당 API/import/public-gate suite는 40 passed, deprecation warning 1건이다. 앱의 `ApiClient.createTextbook()`은 여전히 stub이므로 원격 저장은 검증되지 않았다.
+- 단일점 scatter 렌더 누락은 `d29fc57`에서 수정됐다. 앱 커밋 `adbfdf0`은 disclosure content의 BookData/학생 reader 통합을 추가했다. 최신 checkout에서 disclosure, 전체 BookData round-trip, activity compatibility suite를 다시 실행해 131 tests passed를 확인했다. 이는 선택된 native 활동 검증이며 HTML 106개 전체 parity는 미완료다.
 - `2e0216e`에서 2015 확률과 통계 이항분포 연습의 복사된 quiz hint를 문제 조건에 맞춰 수정했다. 표준편차는 이미 정의·예제·연습에 포함돼 있었고, 전용 회귀 테스트와 재생성 manifest SHA를 확인했다. 출판은 계속 `not_eligible`이며 교사·수학·권리 검토가 대기 중이다.
-- 별도 `Upstudy-hotfix`는 `HEAD == origin/hotfix == c83cdb07150ab0867997d98487123a5071895135`로 동기화됐다. `python -m pytest tests/test_textbook_import.py tests/test_public_textbooks.py tests/test_textbook_create_contract.py -q` 결과는 40 passed, deprecation warning 1건이다. 공개 gate suite도 포함했으며 textbook content는 배포하지 않았다.
+- 별도 `Upstudy-hotfix`는 `HEAD == origin/hotfix == 2d41372ff6ffdd28168b5e51c11bbc88df71373b`로 동기화됐다. `python -m pytest tests/test_textbook_import.py tests/test_public_textbooks.py tests/test_textbook_create_contract.py -q` 결과는 40 passed, deprecation warning 1건이다. 공개 gate suite도 포함했으며 textbook content는 배포하지 않았다.
 - `REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md`와 package index는 187개 기준이다. 후보의 공개 적격성은 0개이므로 교재 배포를 하지 않았다. 미커밋 사용자 작업은 이번 코드 커밋에 포함하지 않았다.
 
 ## 2026-10-17 공식 권리·게시 승인 경로 재확인
