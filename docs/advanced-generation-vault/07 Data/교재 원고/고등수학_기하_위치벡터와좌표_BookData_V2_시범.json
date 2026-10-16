@@ -1,0 +1,164 @@
+{
+  "title": "2015 개정 기하 · 위치벡터와 좌표 (V2 개념·예제·연습 시범)",
+  "subtitle": "[12기하02-03] 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다. · 부분 원고 · 독립 검토·교사 검수·권리 확인 전",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12기하02-03"
+  ],
+  "tags": [
+    "기하",
+    "2015 개정",
+    "위치벡터",
+    "좌표",
+    "12기하02-03",
+    "독립 검토 전",
+    "rights review pending"
+  ],
+  "chapters": [
+    {
+      "title": "위치벡터와 평면좌표",
+      "intro": [
+        "공식 교육과정 기준 12기하02-03의 문구는 ‘위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다.’이다. 이 원고는 기준 일부의 학습 후보이며 전체 성취 판정은 검수 전이다."
+      ],
+      "sections": [
+        {
+          "title": "기준점에서 점까지",
+          "paragraphs": [
+            "한 점 O를 기준으로 정하면 점 P의 위치를 O에서 P로 향하는 벡터 OP로 나타낼 수 있다. 이 벡터를 점 P의 위치벡터라고 한다.",
+            "좌표평면에서 O를 원점으로 두고 P=(x,y)라 하면 위치벡터 OP는 성분 (x,y)에 대응한다. 평면벡터의 두 성분을 점의 좌표로 읽고, 점의 좌표를 위치벡터의 성분으로 읽을 수 있다.",
+            "위치벡터는 기준점 O를 정했을 때 점의 위치를 벡터로 나타낸 것이다. 일반 벡터의 시작점이 언제나 원점인 것은 아니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "position-vector-opening",
+          "template": "opening",
+          "title": "점의 위치를 화살표로 나타내기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "생각 열기",
+              "text": "원점에서 오른쪽으로 3, 위로 2만큼 간 점 P는 어떤 벡터로 나타낼 수 있을까요?"
+            }
+          ]
+        },
+        {
+          "id": "position-vector-definition",
+          "template": "concept",
+          "title": "위치벡터와 좌표의 대응",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "위치벡터",
+              "text": "기준점 O에서 점 P를 향하는 벡터 OP를 P의 위치벡터라고 한다."
+            },
+            {
+              "type": "symbols",
+              "title": "좌표로 나타내기",
+              "text": "O를 좌표평면의 원점, P=(x,y)라 하면 위치벡터 OP의 성분은 (x,y)이다. 첫째 성분은 x축 방향 이동, 둘째 성분은 y축 방향 이동을 나타낸다."
+            },
+            {
+              "type": "misconception",
+              "title": "기준점 확인",
+              "text": "점의 좌표가 위치벡터의 성분과 같다는 대응은 기준점 O가 원점일 때다. 원점이 아닌 기준점에서는 먼저 기준점에서 점까지의 좌표 차를 구해야 한다."
+            }
+          ]
+        },
+        {
+          "id": "position-vector-example",
+          "template": "example",
+          "title": "두 점의 좌표 차로 벡터 구하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A=(1,2), B=(5,-1)일 때 벡터 AB의 성분과 점 B의 위치벡터 성분을 각각 구하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "벡터 AB",
+              "text": "도착점 좌표에서 시작점 좌표를 뺀다. AB=(5−1, −1−2)=(4,−3)."
+            },
+            {
+              "type": "solutionStep",
+              "title": "위치벡터 OB",
+              "text": "O=(0,0)이므로 OB=(5−0, −1−0)=(5,−1). 이는 점 B의 좌표와 같다."
+            },
+            {
+              "type": "answer",
+              "title": "구별",
+              "text": "AB=(4,−3), OB=(5,−1)이다. AB는 두 점 사이의 이동을, OB는 원점에서 B까지의 위치를 나타낸다."
+            }
+          ]
+        },
+        {
+          "id": "position-vector-practice",
+          "template": "practice",
+          "title": "좌표와 벡터 성분 연결하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습 1",
+              "text": "점 P=(-2,3)의 위치벡터 OP의 성분을 구하라."
+            },
+            {
+              "type": "answer",
+              "title": "연습 1 풀이",
+              "text": "O=(0,0)이므로 OP=(-2−0,3−0)=(-2,3). 점 좌표와 위치벡터 성분이 같다."
+            },
+            {
+              "type": "question",
+              "title": "연습 2",
+              "text": "A=(-1,2), B=(3,5)일 때 AB의 성분을 구하라."
+            },
+            {
+              "type": "answer",
+              "title": "연습 2 풀이",
+              "text": "끝점에서 시작점 좌표를 빼서 AB=(3−(-1),5−2)=(4,3)."
+            },
+            {
+              "type": "question",
+              "title": "연습 3",
+              "text": "C=(2,1), D=(6,4)일 때 CD와 OD의 성분을 각각 구하고 의미를 설명하라."
+            },
+            {
+              "type": "answer",
+              "title": "연습 3 풀이",
+              "text": "CD=(6−2,4−1)=(4,3)은 C에서 D로의 이동이다. OD=(6,4)는 원점에서 D의 위치를 나타낸다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "position-vector-check",
+                "kind": "quiz",
+                "prompt": "A=(-2,1), B=(2,4)일 때 AB의 성분은?",
+                "hints": [
+                  "끝점 B의 좌표에서 시작점 A의 좌표를 빼세요."
+                ],
+                "options": [
+                  "(0,5)",
+                  "(4,3)",
+                  "(2,4)"
+                ],
+                "correct_index": 1,
+                "correct_feedback": "맞아요. (2−(-2), 4−1)=(4,3)입니다.",
+                "incorrect_feedback": "각 좌표에서 끝점 성분에서 시작점 성분을 빼 보세요."
+              }
+            },
+            {
+              "type": "checklist",
+              "title": "확인",
+              "items": [
+                "위치벡터를 기준점에서 점까지의 벡터로 설명한다.",
+                "원점을 기준으로 점의 좌표와 위치벡터 성분을 대응한다.",
+                "두 점 사이 벡터와 위치벡터를 구별한다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "source_files": [
+    {
+      "source_file": "고등수학_기하_위치벡터와좌표_BookData_V2_시범.json",
+      "sha256": "1BE622709259A1870D5CDAA0872CCA3AB897B2007F0DA4D3D208F54C5898006C",
+      "curriculum_version": "2015",
+      "standard_codes": [
+        "12기하02-03"
+      ],
+      "page_count": 4,
+      "content_elements": [
+        "concept_explanation",
+        "worked_example",
+        "practice",
+        "answer_explanations",
+        "native_quiz"
+      ],
+      "content_status": "authored_candidate; independent review pending",
+      "math_review_status": "pending_independent_review",
+      "teacher_review_status": "pending",
+      "rights_status": "pending_review"
+    }
+  ],
+  "official_source_file": "work/official-curriculum/2015_appendix8_math.txt",
+  "official_source_sha256": "09E14FA7A5D34E0B1CA586F6768B3F774BDC64040670D8FEEA2345A1FB5BC1B5",
+  "official_standard": {
+    "code": "12기하02-03",
+    "text": "위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다."
+  },
+  "curriculum_review_status": "code_and_statement_checked; content alignment review pending",
+  "math_review_status": "pending_independent_review",
+  "teacher_review_status": "pending",
+  "rights_status": "pending_review",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pending_current_hash_validation"
+}

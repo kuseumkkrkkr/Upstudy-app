@@ -10,6 +10,7 @@
 - 공식 원문 입력이 있는 C: 격리 worktree에서 전체 tag pipeline 78/78 단계를 성공적으로 다시 실행했다. 마지막 검증은 26 products, 1,038 product-standard rows, top-level 109 BookData source files의 package references 통과; HTML index는 standalone HTML 106개와 recursive BookData 145개를 집계했다. 재개 실행도 새 stage 이후 50/50 suffix와 109개 참조 검사를 통과했다.
 - HTML 원장에서는 vectorInnerProduct 및 vectorOperation을 `ported_pending_review`로 표시한다. 이는 선택된 native 동작 검증을 뜻하며 독립 HTML 전체 화면·시간 동작 parity를 뜻하지 않는다. Geometry(2015) 성취기준 본문 매핑은 여전히 partial; 권리, 독립 수학/교사 검수, 배포 승인은 대기 중이다. 26개 상품은 모두 출판 eligible이 아니므로 배포하지 않았다.
 - 다음 미충족 기준 `12기하02-01 벡터의 뜻을 안다`에 대해 정의, 풀이 예제, 거리와 변위 비교, 3개 연습과 해설, native quiz를 담은 5쪽 V2 부분 후보를 생성했다. BookData round-trip과 후보 quiz의 학생 BookWidget 상호작용을 테스트했다. 이 기준의 본문 적합성은 독립 검토 전이며, Geometry(2015) 전체 기준 매핑, 교사·수학 검토와 rights는 pending이다.
+- 이어서 `12기하02-03 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다` 부분 후보 4쪽을 작성했다. 기준점과 위치벡터 정의, 점 좌표↔성분 대응, 두 점 사이 벡터 예제와 연습 3개·해설, native quiz를 포함한다. importer round-trip 및 실제 후보 quiz의 학생 BookWidget 제출·피드백이 통과했다. 전체 파이프라인 80/80 단계와 111개 BookData package-reference 검사가 성공했고 HTML index는 106 standalone HTML/147 recursive BookData를 집계했다. 내용 적합성의 독립 수학·교사 검수와 rights는 pending; 출판 부적격이다.
 
 ## 2026-10-17 vectorInnerProduct reader 연결 업데이트
 
