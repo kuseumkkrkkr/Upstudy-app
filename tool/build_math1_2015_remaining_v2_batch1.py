@@ -28,6 +28,19 @@ SPECS = [
     ("12수학Ⅰ03-06", "수열의 귀납적 정의", "귀납적 정의는 첫 항과 앞 항에서 다음 항을 만드는 규칙을 함께 제시한다. 규칙을 반복해 필요한 항을 순서대로 계산한다.", "a₁=2, aₙ₊₁=aₙ+3이면 항은 2,5,8,11,…이다. 각 항은 바로 앞 항에 3을 더해 얻는다.", "a₁=4, aₙ₊₁=2aₙ일 때 a₄를 구하세요.", "32", "a₂, a₃, a₄를 차례로 앞 항의 두 배로 구합니다.", ["32", "16", "64"], 0),
 ]
 
+EXAMPLE_QUESTIONS = {
+    "12수학Ⅰ01-01": "√81과 ³√(−8)을 각각 구하세요.",
+    "12수학Ⅰ01-02": "8^(2/3)을 거듭제곱근으로 바꾸어 계산하세요.",
+    "12수학Ⅰ01-03": "2³·2⁴/2⁵을 간단히 하세요.",
+    "12수학Ⅰ01-05": "log₁₀(1000)과 log₁₀(0.01)을 구하세요.",
+    "12수학Ⅰ01-07": "y=2^x가 지나는 두 점과 점근선을 말하고, y=log₂x와의 관계를 설명하세요.",
+    "12수학Ⅰ01-08": "처음 100단위인 양이 3일마다 두 배가 됩니다. 6일 뒤의 양을 구하세요.",
+    "12수학Ⅰ02-02": "tan(π/4), tan(0)의 값과 tan(π/2)의 정의 여부를 말하세요.",
+    "12수학Ⅰ03-04": "Σ(k=1부터 4까지)(2k+1)을 전개해 계산하세요.",
+    "12수학Ⅰ03-05": "첫 네 홀수의 합을 구하고 n에 대한 일반식을 추측하세요.",
+    "12수학Ⅰ03-06": "a₁=2, aₙ₊₁=aₙ+3일 때 첫 네 항을 쓰세요.",
+}
+
 
 def quiz(spec: tuple, activity_id: str) -> dict:
     return {"type": "activity", "activity": {"id": activity_id, "kind": "quiz", "prompt": spec[4], "options": spec[7], "correct_index": spec[8], "correct_feedback": spec[6], "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.", "hints": [spec[6], "단위와 범위 또는 항의 순서를 먼저 확인하세요."]}}
@@ -40,14 +53,17 @@ def main() -> None:
     expected_new = {"12수학Ⅰ01-01", "12수학Ⅰ01-02", "12수학Ⅰ01-03", "12수학Ⅰ01-05", "12수학Ⅰ01-07", "12수학Ⅰ01-08", "12수학Ⅰ02-02", "12수학Ⅰ03-04", "12수학Ⅰ03-05", "12수학Ⅰ03-06"}
     if len(codes) != 10 or len(set(codes)) != 10 or set(codes) != expected_new or not set(codes) <= official:
         raise RuntimeError(f"Unexpected official Math I code set: {codes}")
+    if set(EXAMPLE_QUESTIONS) != set(codes):
+        raise RuntimeError("Every worked example must have its own matching question")
 
     chapters = []
     for code, title, concept, example, practice, answer, hint, options, correct in SPECS:
         slug = code.replace("12수학Ⅰ", "m1-").replace("-", "")
+        example_question = EXAMPLE_QUESTIONS[code]
         pages = [
             {"id": slug+"-open", "template": "opening", "title": "상황과 질문", "blocks": [{"type": "lead", "title": "가상 예시", "text": title}, {"type": "thinking", "title": "먼저 생각하기", "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."}]},
             {"id": slug+"-concept", "template": "concept", "title": "정의와 성질", "blocks": [{"type": "definition", "title": "핵심 개념", "text": concept}, {"type": "formula", "title": "공식 기준 후보", "text": code}, {"type": "misconception", "title": "조건 점검", "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."}]},
-            {"id": slug+"-example", "template": "example", "title": "예제와 풀이", "blocks": [{"type": "question", "title": "예제", "text": practice}, {"type": "solutionStep", "title": "풀이", "text": example}, {"type": "verification", "title": "검산", "text": "결과를 처음 조건에 대입해 확인합니다."}]},
+            {"id": slug+"-example", "template": "example", "title": "예제와 풀이", "blocks": [{"type": "question", "title": "예제", "text": example_question}, {"type": "solutionStep", "title": "풀이", "text": example}, {"type": "verification", "title": "검산", "text": "결과를 처음 조건에 대입해 확인합니다."}]},
             {"id": slug+"-practice", "template": "practice", "title": "연습과 설명", "blocks": [{"type": "question", "title": "연습", "text": practice}, {"type": "hint", "title": "힌트", "text": hint}, {"type": "solutionStep", "title": "해설", "text": answer}, {"type": "answer", "title": "정답", "text": answer}, quiz((code,title,concept,example,practice,answer,hint,options,correct), slug+"-quiz")]},
             {"id": slug+"-summary", "template": "summary", "title": "핵심 정리", "blocks": [{"type": "summary", "title": "기억할 점", "text": title}, {"type": "checklist", "title": "스스로 확인", "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"}]},
         ]
@@ -76,9 +92,9 @@ def main() -> None:
         pass
     digest = canonical_file_sha256(OUT)
     same = old.get("bookdata_sha256") == digest
-    manifest = {"bookdata_file": OUT.name, "bookdata_sha256": digest, "candidate_code_references": codes, "candidate_code_reference_type": "2015_moe_appendix8_math_criteria_table", "module_count": 10, "page_count": 50, "native_activity_count": 10, "native_activity_kinds": ["quiz"], "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied", "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending", "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending", "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending", "source_interaction_status": "native_quiz_candidates; existing HTML remains independent and unembedded", "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book", "publication_eligibility": "not_eligible", "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation", "runtime_validator_head": old.get("runtime_validator_head") if same else None, "notes": ["Nine code gaps are drafted; 12수학Ⅰ02-02 is a tangent-graph addendum to the existing partial sine/cosine graph draft.", "No complex exponential/logarithmic calculations or advanced sequence-sum formulas are included."]}
+    manifest = {"bookdata_file": OUT.name, "bookdata_sha256": digest, "candidate_code_references": codes, "candidate_code_reference_type": "2015_moe_appendix8_math_criteria_table", "module_count": 10, "page_count": 50, "native_activity_count": 10, "native_activity_kinds": ["quiz"], "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied", "example_question_alignment_status": "explicit_example_question_map_for_all_10_codes; independent review pending", "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending", "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending", "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending", "source_interaction_status": "native_quiz_candidates; existing HTML remains independent and unembedded", "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book", "publication_eligibility": "not_eligible", "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation", "runtime_validator_head": old.get("runtime_validator_head") if same else None, "runtime_validation_command": old.get("runtime_validation_command") if same else None, "runtime_validator_candidate_sha256": old.get("runtime_validator_candidate_sha256") if same else None, "notes": ["Nine code gaps are drafted; 12수학Ⅰ02-02 is a tangent-graph addendum to the existing partial sine/cosine graph draft.", "No complex exponential/logarithmic calculations or advanced sequence-sum formulas are included."]}
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (PACKAGE / "README.md").write_text(f"# {book['title']}\n\n공식 기준 코드 9개 누락분과 02-02 탄젠트 그래프 보완을 포함한 10모듈·50쪽 V2 후보입니다. 지수·로그의 복잡 계산, 범위 밖 수열 합 공식은 넣지 않았습니다. 기존 HTML 체험은 BookData에 자동 포함되지 않으며 서로 독립 자산으로 보존합니다. 교사 검수·권리 결정 전에는 출판 적격이 아닙니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n", encoding="utf-8")
+    (PACKAGE / "README.md").write_text(f"# {book['title']}\n\n공식 기준 코드 9개 누락분과 02-02 탄젠트 그래프 보완을 포함한 10모듈·50쪽 V2 후보입니다. 각 예제 풀이에 별도 문제 문장을 명시했습니다. 지수·로그의 복잡 계산, 범위 밖 수열 합 공식은 넣지 않았습니다. 기존 HTML 체험은 BookData에 자동 포함되지 않으며 서로 독립 자산으로 보존합니다. 교사 검수·권리 결정 전에는 출판 적격이 아닙니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n", encoding="utf-8")
     print(f"Built {len(chapters)} Math I modules, {len(page_ids)} pages, {len(chapters)} quizzes; candidate tags include 9 missing codes and one tangent addendum.")
 
 

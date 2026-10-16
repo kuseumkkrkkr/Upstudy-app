@@ -1,6 +1,6 @@
 {
   "bookdata_file": "수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "BFAFF24DE6D646A90A44177EA462A46987D03A4A657D77846A25C3DFCCB1CB33",
+  "bookdata_sha256": "326044F1A8B301F87E208A582659F81532771227DC2E618DEE21FDA40AE77150",
   "candidate_code_references": [
     "12수학Ⅰ01-01",
     "12수학Ⅰ01-02",
@@ -21,6 +21,7 @@
     "quiz"
   ],
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "example_question_alignment_status": "explicit_example_question_map_for_all_10_codes; independent review pending",
   "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending",
   "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending",
   "teacher_review_status": "pending",
@@ -28,8 +29,10 @@
   "source_interaction_status": "native_quiz_candidates; existing HTML remains independent and unembedded",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "d64f05551e69bbb1b31f262b91d41f163abad66",
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null,
   "notes": [
     "Nine code gaps are drafted; 12수학Ⅰ02-02 is a tangent-graph addendum to the existing partial sine/cosine graph draft.",
     "No complex exponential/logarithmic calculations or advanced sequence-sum formulas are included."

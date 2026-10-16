@@ -22,6 +22,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json',
 ];
@@ -462,6 +463,66 @@ void main() {
             as Map<String, dynamic>)['text'],
       );
     }
+  });
+
+  testWidgets('2015 Math I V2 examples and quiz load in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final chapters = source['chapters'] as List<dynamic>;
+    expect(chapters, hasLength(10));
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final pages = chapter['pages'] as List<dynamic>;
+      final examplePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'example',
+              )
+              as Map<String, dynamic>;
+      final blocks = examplePage['blocks'] as List<dynamic>;
+      expect(
+        (blocks.singleWhere(
+              (block) => (block as Map<String, dynamic>)['type'] == 'question',
+            )
+            as Map<String, dynamic>)['text'],
+        isNotEmpty,
+      );
+      expect(
+        (blocks.singleWhere(
+              (block) =>
+                  (block as Map<String, dynamic>)['type'] == 'solutionStep',
+            )
+            as Map<String, dynamic>)['text'],
+        isNotEmpty,
+      );
+    }
+    final activity = _activities(
+      source,
+    ).singleWhere((activity) => activity['id'] == 'm10101-quiz');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('√144와 ⁵√32'), findsOneWidget);
+    await tester.tap(find.text('12와 2'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('제곱근의 주값은 음이 아닌 수'), findsOneWidget);
+    expect(BookData.fromJson(source).chapters, isNotEmpty);
+    expect(book.chapters, hasLength(10));
   });
 
   testWidgets('vector meaning V2 practice runs in the student reader', (

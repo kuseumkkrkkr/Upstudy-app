@@ -88,7 +88,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "√144와 ⁵√32를 구하세요."
+              "text": "√81과 ³√(−8)을 각각 구하세요."
             },
             {
               "type": "solutionStep",
@@ -222,7 +222,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "27^(2/3)을 거듭제곱근으로 바꾸어 계산하세요."
+              "text": "8^(2/3)을 거듭제곱근으로 바꾸어 계산하세요."
             },
             {
               "type": "solutionStep",
@@ -356,7 +356,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "3⁵·3²/3⁴을 간단히 하세요."
+              "text": "2³·2⁴/2⁵을 간단히 하세요."
             },
             {
               "type": "solutionStep",
@@ -490,7 +490,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "log₁₀(100000)을 구하고 이를 지수식으로 확인하세요."
+              "text": "log₁₀(1000)과 log₁₀(0.01)을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -624,7 +624,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "y=3^x의 그래프가 반드시 지나는 점과 치역을 쓰세요."
+              "text": "y=2^x가 지나는 두 점과 점근선을 말하고, y=log₂x와의 관계를 설명하세요."
             },
             {
               "type": "solutionStep",
@@ -758,7 +758,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "처음 50단위인 양이 4시간마다 두 배가 된다. 8시간 뒤의 양을 모델로 계산하세요."
+              "text": "처음 100단위인 양이 3일마다 두 배가 됩니다. 6일 뒤의 양을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -892,7 +892,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "tan x의 한 주기 길이와 x=π/2에서의 상태를 쓰세요."
+              "text": "tan(π/4), tan(0)의 값과 tan(π/2)의 정의 여부를 말하세요."
             },
             {
               "type": "solutionStep",
@@ -1026,7 +1026,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "Σ(k=1부터3까지)(k+2)를 전개해 계산하세요."
+              "text": "Σ(k=1부터 4까지)(2k+1)을 전개해 계산하세요."
             },
             {
               "type": "solutionStep",
@@ -1160,7 +1160,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "첫 5개 홀수의 합을 구하고 n에 대한 식으로 나타내세요."
+              "text": "첫 네 홀수의 합을 구하고 n에 대한 일반식을 추측하세요."
             },
             {
               "type": "solutionStep",
@@ -1294,7 +1294,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "a₁=4, aₙ₊₁=2aₙ일 때 a₄를 구하세요."
+              "text": "a₁=2, aₙ₊₁=aₙ+3일 때 첫 네 항을 쓰세요."
             },
             {
               "type": "solutionStep",
