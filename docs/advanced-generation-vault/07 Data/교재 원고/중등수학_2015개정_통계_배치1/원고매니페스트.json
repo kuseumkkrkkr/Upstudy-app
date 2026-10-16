@@ -1,0 +1,41 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수05-01",
+    "9수05-02",
+    "9수05-03",
+    "9수05-04",
+    "9수05-05",
+    "9수05-06",
+    "9수05-07",
+    "9수05-08"
+  ],
+  "official_criteria": {
+    "9수05-01": "자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수",
+    "9수05-02": "상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다.",
+    "9수05-03": "공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할",
+    "9수05-04": "경우의 수를 구할 수 있다.",
+    "9수05-05": "확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다.",
+    "9수05-06": "중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다.",
+    "9수05-07": "분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다.",
+    "9수05-08": "자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다."
+  },
+  "module_count": 8,
+  "page_count": 40,
+  "native_quiz_ids": [
+    "ms15-stat-01-quiz",
+    "ms15-stat-02-quiz",
+    "ms15-stat-03-quiz",
+    "ms15-stat-04-quiz",
+    "ms15-stat-05-quiz",
+    "ms15-stat-06-quiz",
+    "ms15-stat-07-quiz",
+    "ms15-stat-08-quiz"
+  ],
+  "author_arithmetic_checks": "passed",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}

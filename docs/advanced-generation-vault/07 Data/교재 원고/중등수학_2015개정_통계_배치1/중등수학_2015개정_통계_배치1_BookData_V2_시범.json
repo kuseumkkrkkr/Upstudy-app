@@ -1,0 +1,985 @@
+{
+  "schema_version": 2,
+  "title": "중학교 수학 2015 개정 · 통계 부분 후보 배치 1",
+  "subtitle": "공식 기준별 개념·예제·연습·native quiz",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "9수05-01",
+    "9수05-02",
+    "9수05-03",
+    "9수05-04",
+    "9수05-05",
+    "9수05-06",
+    "9수05-07",
+    "9수05-08"
+  ],
+  "standard_coverage": "partial",
+  "grade_semester_status": "not_assigned",
+  "tags": [
+    "중학교 수학",
+    "2015 개정",
+    "학년군 기준",
+    "학기 미배정",
+    "부분 원고 후보",
+    "교사·수학 검수 대기",
+    "권리 검토 대기",
+    "성취기준 후보: 9수05-01",
+    "성취기준 후보: 9수05-02",
+    "성취기준 후보: 9수05-03",
+    "성취기준 후보: 9수05-04",
+    "성취기준 후보: 9수05-05",
+    "성취기준 후보: 9수05-06",
+    "성취기준 후보: 9수05-07",
+    "성취기준 후보: 9수05-08"
+  ],
+  "chapters": [
+    {
+      "title": "자료의 분포 표현",
+      "intro": [
+        "자료의 분포 표현의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-01; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-01 자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-01-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "자료의 분포 표현",
+              "text": "자료의 특징에 따라 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형을 선택한다. 계급의 크기와 도수의 합을 점검하고 축·단위를 표시해 분포의 중심과 퍼짐을 읽는다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-01-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "자료의 특징에 따라 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형을 선택한다. 계급의 크기와 도수의 합을 점검하고 축·단위를 표시해 분포의 중심과 퍼짐을 읽는다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "자료를 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형으로 나타내고 해석할 수"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-01-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "자료 12,14,17,21,22,25,31을 10 이상 20 미만, 20 이상 30 미만, 30 이상 40 미만으로 나눈 도수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "도수는 각각 3, 3, 1이며 합은 7로 자료 수와 같습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-01-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "자료 4,7,11,13,18을 0 이상 10 미만, 10 이상 20 미만으로 나눈 도수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "첫 계급은 4,7로 2개, 둘째는 11,13,18로 3개입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-01-quiz",
+                "kind": "quiz",
+                "prompt": "자료 12,14,17,21,22,25,31을 10 이상 20 미만, 20 이상 30 미만, 30 이상 40 미만으로 나눈 도수를 구하세요.",
+                "options": [
+                  "3, 3, 1",
+                  "2, 2, 1",
+                  "3, 2, 2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "도수는 각각 3, 3, 1이며 합은 7로 자료 수와 같습니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-01-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "자료의 특징에 따라 줄기와 잎 그림, 도수분포표, 히스토그램, 도수분포다각형을 선택한다. 계급의 크기와 도수의 합을 점검하고 축·단위를 표시해 분포의 중심과 퍼짐을 읽는다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "상대도수",
+      "intro": [
+        "상대도수의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-02; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-02 상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-02-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "상대도수",
+              "text": "상대도수는 각 계급의 도수를 전체 자료 수로 나눈 값이다. 모든 계급의 상대도수 합은 1이며, 상대도수의 분포를 표나 그래프로 나타내어 집단의 크기가 달라도 분포를 비교할 수 있다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-02-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "상대도수는 각 계급의 도수를 전체 자료 수로 나눈 값이다. 모든 계급의 상대도수 합은 1이며, 상대도수의 분포를 표나 그래프로 나타내어 집단의 크기가 달라도 분포를 비교할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "상대도수를 구하며, 이를 그래프로 나타내고, 상대도수의 분포를 이해한다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-02-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "전체 40명 중 한 계급의 도수가 10명일 때 상대도수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "10÷40=0.25이므로 상대도수는 0.25, 즉 25%입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-02-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "상대도수가 0.3이고 전체 자료가 50개일 때 해당 계급의 도수는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "0.3×50=15개입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-02-quiz",
+                "kind": "quiz",
+                "prompt": "전체 40명 중 한 계급의 도수가 10명일 때 상대도수를 구하세요.",
+                "options": [
+                  "0.25",
+                  "0.4",
+                  "4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "10÷40=0.25이므로 상대도수는 0.25, 즉 25%입니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-02-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "상대도수는 각 계급의 도수를 전체 자료 수로 나눈 값이다. 모든 계급의 상대도수 합은 1이며, 상대도수의 분포를 표나 그래프로 나타내어 집단의 크기가 달라도 분포를 비교할 수 있다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "자료 수집과 분석",
+      "intro": [
+        "자료 수집과 분석의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-03; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-03 공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-03-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "자료 수집과 분석",
+              "text": "실생활 문제를 조사할 때 질문을 구체화하고 대상과 방법을 정한다. 공학적 도구로 자료를 수집·정리할 수 있지만 표본의 대표성, 응답 누락, 단위와 조사 조건을 점검해야 하며 관찰된 관계를 인과로 단정하지 않는다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-03-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "실생활 문제를 조사할 때 질문을 구체화하고 대상과 방법을 정한다. 공학적 도구로 자료를 수집·정리할 수 있지만 표본의 대표성, 응답 누락, 단위와 조사 조건을 점검해야 하며 관찰된 관계를 인과로 단정하지 않는다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "공학적 도구를 이용하여 실생활과 관련된 자료를 수집하고 표나 그래프로 정리하고 해석할"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-03-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "학교 통학 시간을 조사할 때 결과를 해석하기 전에 확인할 사항 두 가지를 말하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "조사 대상이 전체 학생을 대표하는지, 응답 누락이나 측정 단위·요일 차이가 있는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-03-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "응답한 학생만으로 전교생의 통학 시간을 해석할 때 생길 수 있는 문제는 무엇인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "응답자가 전체 학생을 대표하지 않으면 선택 편향이 생겨 결과를 전교생에게 일반화하기 어렵습니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-03-quiz",
+                "kind": "quiz",
+                "prompt": "학교 통학 시간을 조사할 때 결과를 해석하기 전에 확인할 사항 두 가지를 말하세요.",
+                "options": [
+                  "표본의 대표성과 응답 누락",
+                  "그래프 색상만 확인",
+                  "표본 수만 크면 대표성은 불필요"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "조사 대상이 전체 학생을 대표하는지, 응답 누락이나 측정 단위·요일 차이가 있는지 확인합니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-03-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "실생활 문제를 조사할 때 질문을 구체화하고 대상과 방법을 정한다. 공학적 도구로 자료를 수집·정리할 수 있지만 표본의 대표성, 응답 누락, 단위와 조사 조건을 점검해야 하며 관찰된 관계를 인과로 단정하지 않는다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "경우의 수와 곱의 법칙",
+      "intro": [
+        "경우의 수와 곱의 법칙의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-04; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-04 경우의 수를 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-04-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "경우의 수와 곱의 법칙",
+              "text": "두 단계 선택에서 첫 단계 방법이 m가지, 각 선택 뒤 둘째 단계가 n가지이면 전체 경우는 m×n가지다. 선택 순서와 조건을 확인하고 중복 여부를 따진다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-04-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "두 단계 선택에서 첫 단계 방법이 m가지, 각 선택 뒤 둘째 단계가 n가지이면 전체 경우는 m×n가지다. 선택 순서와 조건을 확인하고 중복 여부를 따진다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "경우의 수를 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-04-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "상의 3벌과 하의 4벌 중 하나씩 고르는 옷차림은 몇 가지인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "각 상의마다 하의 4개를 고를 수 있으므로 3×4=12가지입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-04-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "세 가지 음료와 두 가지 크기 중 하나씩 선택하는 방법은 몇 가지인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3×2=6가지입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-04-quiz",
+                "kind": "quiz",
+                "prompt": "상의 3벌과 하의 4벌 중 하나씩 고르는 옷차림은 몇 가지인가요?",
+                "options": [
+                  "12가지",
+                  "7가지",
+                  "24가지"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "각 상의마다 하의 4개를 고를 수 있으므로 3×4=12가지입니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-04-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 단계 선택에서 첫 단계 방법이 m가지, 각 선택 뒤 둘째 단계가 n가지이면 전체 경우는 m×n가지다. 선택 순서와 조건을 확인하고 중복 여부를 따진다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "확률의 기본 성질",
+      "intro": [
+        "확률의 기본 성질의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-05; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-05 확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-05-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "확률의 기본 성질",
+              "text": "모든 결과가 같은 가능성인 경우 사건의 확률은 사건에 속하는 경우의 수를 전체 경우의 수로 나눈 값이다. 확률은 0 이상 1 이하이고, 여사건의 확률은 1에서 사건의 확률을 뺀 값이다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-05-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "모든 결과가 같은 가능성인 경우 사건의 확률은 사건에 속하는 경우의 수를 전체 경우의 수로 나눈 값이다. 확률은 0 이상 1 이하이고, 여사건의 확률은 1에서 사건의 확률을 뺀 값이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "확률의 개념과 그 기본 성질을 이해하고, 확률을 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-05-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "공정한 주사위를 한 번 던질 때 짝수가 나올 확률을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "짝수는 2,4,6의 세 경우이므로 확률은 3/6=1/2입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-05-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "공정한 주사위를 던져 5보다 큰 수가 나올 확률은 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "가능한 수는 6 하나뿐이므로 확률은 1/6입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-05-quiz",
+                "kind": "quiz",
+                "prompt": "공정한 주사위를 한 번 던질 때 짝수가 나올 확률을 구하세요.",
+                "options": [
+                  "1/2",
+                  "1/3",
+                  "2/3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "짝수는 2,4,6의 세 경우이므로 확률은 3/6=1/2입니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-05-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "모든 결과가 같은 가능성인 경우 사건의 확률은 사건에 속하는 경우의 수를 전체 경우의 수로 나눈 값이다. 확률은 0 이상 1 이하이고, 여사건의 확률은 1에서 사건의 확률을 뺀 값이다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "중앙값·최빈값·평균",
+      "intro": [
+        "중앙값·최빈값·평균의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-06; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-06 중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-06-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "중앙값·최빈값·평균",
+              "text": "평균은 자료의 합을 자료 수로 나눈 값, 중앙값은 크기순 가운데 값, 최빈값은 가장 자주 나타나는 값이다. 극단값은 평균에 크게 영향을 줄 수 있으므로 자료의 분포와 질문에 맞춰 대표값을 고른다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-06-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "평균은 자료의 합을 자료 수로 나눈 값, 중앙값은 크기순 가운데 값, 최빈값은 가장 자주 나타나는 값이다. 극단값은 평균에 크게 영향을 줄 수 있으므로 자료의 분포와 질문에 맞춰 대표값을 고른다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "중앙값, 최빈값, 평균의 의미를 이해하고, 이를 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-06-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "자료 2,3,3,4,8의 평균·중앙값·최빈값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "평균은 20÷5=4, 중앙값은 3, 최빈값은 3입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-06-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "자료 4,5,5,6,30에서 평균과 중앙값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "평균은 50÷5=10이고 중앙값은 5입니다. 큰 값 30이 평균을 높입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-06-quiz",
+                "kind": "quiz",
+                "prompt": "자료 2,3,3,4,8의 평균·중앙값·최빈값을 구하세요.",
+                "options": [
+                  "4, 3, 3",
+                  "3, 4, 3",
+                  "4, 4, 3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "평균은 20÷5=4, 중앙값은 3, 최빈값은 3입니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-06-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "평균은 자료의 합을 자료 수로 나눈 값, 중앙값은 크기순 가운데 값, 최빈값은 가장 자주 나타나는 값이다. 극단값은 평균에 크게 영향을 줄 수 있으므로 자료의 분포와 질문에 맞춰 대표값을 고른다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "분산과 표준편차",
+      "intro": [
+        "분산과 표준편차의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-07; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-07 분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-07-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "분산과 표준편차",
+              "text": "분산은 각 자료와 평균의 차이를 제곱한 값들의 평균이며, 표준편차는 분산의 양의 제곱근이다. 표준편차가 작을수록 자료가 평균 주위에 모여 있다. 분산은 제곱 단위, 표준편차는 원래 단위다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-07-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "분산은 각 자료와 평균의 차이를 제곱한 값들의 평균이며, 표준편차는 분산의 양의 제곱근이다. 표준편차가 작을수록 자료가 평균 주위에 모여 있다. 분산은 제곱 단위, 표준편차는 원래 단위다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "분산과 표준편차의 의미를 이해하고, 이를 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-07-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "자료 3,3,7,7의 평균, 분산, 표준편차를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "평균은 5, 편차 제곱은 각각 4이므로 분산은 4, 표준편차는 2입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-07-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "모든 자료가 6으로 같을 때 분산과 표준편차는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "모든 편차가 0이므로 분산과 표준편차는 모두 0입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-07-quiz",
+                "kind": "quiz",
+                "prompt": "자료 3,3,7,7의 평균, 분산, 표준편차를 구하세요.",
+                "options": [
+                  "평균 5, 분산 4, 표준편차 2",
+                  "평균 5, 분산 2, 표준편차 4",
+                  "평균 4, 분산 5, 표준편차 2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "평균은 5, 편차 제곱은 각각 4이므로 분산은 4, 표준편차는 2입니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-07-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "분산은 각 자료와 평균의 차이를 제곱한 값들의 평균이며, 표준편차는 분산의 양의 제곱근이다. 표준편차가 작을수록 자료가 평균 주위에 모여 있다. 분산은 제곱 단위, 표준편차는 원래 단위다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "산점도와 상관관계",
+      "intro": [
+        "산점도와 상관관계의 자료를 표·수 또는 그래프로 분석합니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수05-08; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수05-08 자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-stat-08-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "산점도와 상관관계",
+              "text": "산점도는 두 변량의 순서쌍을 좌표평면에 나타낸다. 점들이 오른쪽 위로 모이면 양의 상관, 오른쪽 아래로 모이면 음의 상관, 뚜렷한 방향이 없으면 상관이 약하다. 상관관계만으로 인과관계를 결론내릴 수 없다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "자료의 어떤 특징이 질문에 답하는 데 중요한가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-08-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 방법",
+              "text": "산점도는 두 변량의 순서쌍을 좌표평면에 나타낸다. 점들이 오른쪽 위로 모이면 양의 상관, 오른쪽 아래로 모이면 음의 상관, 뚜렷한 방향이 없으면 상관이 약하다. 상관관계만으로 인과관계를 결론내릴 수 없다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "자료를 산점도로 나타내고, 이를 이용하여 상관관계를 말할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-08-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "공부 시간이 늘수록 성취도가 대체로 높아지는 산점도는 어떤 상관을 보이나요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "두 변량이 함께 증가하는 경향이므로 양의 상관입니다. 이것만으로 공부 시간이 원인이라고 단정할 수는 없습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-08-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "기온이 높을수록 난방 사용량이 낮아지는 경향은 어떤 상관인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "한 변량이 증가할수록 다른 변량이 감소하므로 음의 상관입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-stat-08-quiz",
+                "kind": "quiz",
+                "prompt": "공부 시간이 늘수록 성취도가 대체로 높아지는 산점도는 어떤 상관을 보이나요?",
+                "options": [
+                  "양의 상관",
+                  "음의 상관",
+                  "상관 없음"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 변량이 함께 증가하는 경향이므로 양의 상관입니다. 이것만으로 공부 시간이 원인이라고 단정할 수는 없습니다.",
+                "incorrect_feedback": "자료의 조건과 계산 결과를 확인해 다시 풀어 보세요.",
+                "hints": [
+                  "자료 수, 대표값 또는 비교 방향을 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-stat-08-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "산점도는 두 변량의 순서쌍을 좌표평면에 나타낸다. 점들이 오른쪽 위로 모이면 양의 상관, 오른쪽 아래로 모이면 음의 상관, 뚜렷한 방향이 없으면 상관이 약하다. 상관관계만으로 인과관계를 결론내릴 수 없다."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "candidate_partial_draft",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "rights_status": "pending",
+    "publication_eligibility": "not_eligible",
+    "standard_source": "2015 개정 수학과 교육과정 별책8 공식 추출 텍스트",
+    "content_rights": "newly authored candidate; independent rights decision pending",
+    "semester_assignment": "grade-band only; semester not assigned",
+    "interactive_compatibility_status": "native quiz activities; no external HTML behavior parity claimed"
+  }
+}
