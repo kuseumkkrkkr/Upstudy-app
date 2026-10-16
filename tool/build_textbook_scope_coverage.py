@@ -94,6 +94,7 @@ def main() -> None:
 
     tagged: dict[str, list[tuple[str, str]]] = defaultdict(list)
     chapter_signals: dict[tuple[str, str], dict[str, object]] = {}
+    candidate_chapter_signals: dict[tuple[str, str], dict[str, object]] = {}
     explicit_chapter_anchors: set[tuple[str, str]] = set()
     single_code_chapter_anchors: set[tuple[str, str]] = set()
     module_alignment: dict[str, str] = {}
@@ -150,6 +151,19 @@ def main() -> None:
                                 activity = block.get("activity")
                                 if isinstance(activity, dict):
                                     signal["blocks"].add(f"activity:{activity.get('kind', 'unknown')}")
+        candidate_codes = data.get("candidate_standard_codes", [])
+        if isinstance(candidate_codes, list):
+            for code in set(map(str, candidate_codes)) & valid_codes:
+                key = (edition, code)
+                for chapter in chapters if isinstance(chapters, list) else []:
+                    chapter_codes = chapter.get("candidate_standard_codes", []) if isinstance(chapter, dict) else []
+                    if not isinstance(chapter_codes, list) or code not in chapter_codes:
+                        continue
+                    candidate_signal = candidate_chapter_signals.setdefault(key, {"files": set(), "chapters": 0, "pages": 0})
+                    candidate_signal["files"].add(relative_path)
+                    candidate_signal["chapters"] += 1
+                    pages = chapter.get("pages", [])
+                    candidate_signal["pages"] += len(pages) if isinstance(pages, list) else 0
 
     lines = [
         "# 26종 교재 성취기준·콘텐츠 적용 범위 원장",
@@ -199,11 +213,16 @@ def main() -> None:
             chapter_count = int(signal.get("chapters", 0))
             page_count = int(signal.get("pages", 0))
             block_types = sorted(signal.get("blocks", set()))
+            candidate_signal = candidate_chapter_signals.get((edition, code), {})
             chapter_evidence = (
                 f"{len(signal.get('files', set()))} files · {chapter_count} chapters · {page_count} pages · "
                 + (", ".join(f"`{kind}`" for kind in block_types) or "no typed blocks")
                 if chapter_count
-                else "no exact-code chapter anchor"
+                else (
+                    f"candidate mapping: {len(candidate_signal.get('files', set()))} files · "
+                    f"{candidate_signal.get('chapters', 0)} chapters · {candidate_signal.get('pages', 0)} pages · review pending"
+                    if candidate_signal else "no exact-code or candidate chapter anchor"
+                )
             )
             alignment = module_alignment.get(code)
             if alignment == "pending_first_class_statistics_tool":
@@ -241,7 +260,7 @@ def main() -> None:
     lines += [
         "## 기준-챕터 매핑 신호 감사",
         "",
-        f"고유 공식 판본-코드 쌍 `{len(official_pairs)}`개 중 같은 판본 태그가 있는 쌍은 `{len(tagged_pairs)}`개, exact code가 chapter 안에 있는 쌍은 `{len(explicit_chapter_anchors & official_pairs)}`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `{len(single_code_chapter_anchors & official_pairs)}`개, 어느 구조 신호도 없는 쌍은 `{len(official_pairs - linked_pairs)}`개다.",
+        f"고유 공식 판본-코드 쌍 `{len(official_pairs)}`개 중 같은 판본 태그가 있는 쌍은 `{len(tagged_pairs)}`개, exact code가 chapter 안에 있는 쌍은 `{len(explicit_chapter_anchors & official_pairs)}`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `{len(single_code_chapter_anchors & official_pairs)}`개, 검토 대기 candidate chapter mapping은 `{len(set(candidate_chapter_signals) & official_pairs)}`개, exact 또는 candidate 구조 신호가 없는 쌍은 `{len(official_pairs - linked_pairs - set(candidate_chapter_signals))}`개다.",
         "아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.",
         "",
         "| # | 상품 | 기준 수 | chapter 연결 신호 없음 |",
@@ -250,7 +269,8 @@ def main() -> None:
     for number, (filename, prefix, _) in PRODUCTS.items():
         edition = "2015" if filename.startswith("2015") else "2022"
         product_codes = [code for code in standards[filename] if code.startswith(prefix)]
-        unlinked = sum((edition, code) not in linked_pairs for code in product_codes)
+        candidate_pairs = set(candidate_chapter_signals)
+        unlinked = sum((edition, code) not in linked_pairs and (edition, code) not in candidate_pairs for code in product_codes)
         lines.append(f"| {number} | {catalog[number]} | {len(product_codes)} | {unlinked} |")
     lines.append("")
 

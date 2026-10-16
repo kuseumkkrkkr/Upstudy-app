@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+from audit_2015_upper_lower_scope import MAPPING
+
 ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 
@@ -73,6 +75,7 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
     unit_records = []
     tags = set()
     standard_codes = set()
+    candidate_standard_codes = set()
     page_ids = []
     page_count = 0
     for unit_title, filenames in units:
@@ -89,6 +92,10 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
             for chapter in source.get("chapters", []):
                 chapter_copy = dict(chapter)
                 chapter_copy["unitTitle"] = unit_title
+                chapter_codes = [code for code, (title, _) in MAPPING.items() if title == chapter_copy.get("title")]
+                if chapter_codes:
+                    chapter_copy["candidate_standard_codes"] = chapter_codes
+                    candidate_standard_codes.update(chapter_codes)
                 chapters.append(chapter_copy)
                 chapter_titles.append(chapter_copy["title"])
                 pages = chapter_copy.get("pages", [])
@@ -100,6 +107,12 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
         raise RuntimeError(f"Duplicate page IDs in combined volume: {folder_name}")
     if len(chapters) != sum(len(files) for _, files in units):
         raise RuntimeError(f"Unexpected chapter count in combined volume: {folder_name}")
+    expected_volume_codes = {
+        code for code, (title, _) in MAPPING.items()
+        if any(title == chapter.get("title") for chapter in chapters)
+    }
+    if candidate_standard_codes != expected_volume_codes:
+        raise RuntimeError(f"Candidate standard mapping mismatch in combined volume: {folder_name}")
     volume_label = "수학(상)" if folder_name.startswith("수학상") else "수학(하)"
     book = {
         "title": f"{volume_label} 2015 개정 · 태그별 분권 통합 초안",
@@ -108,6 +121,7 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
         "tags": sorted(tags),
         "curriculum_version": "2015",
         "standard_codes": sorted(standard_codes),
+        "candidate_standard_codes": sorted(candidate_standard_codes),
         "units": unit_records,
         "chapters": chapters,
         "metadata": {
