@@ -1,0 +1,23 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수02-20",
+    "9수02-21"
+  ],
+  "official_criteria": {
+    "9수02-20": "이차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다. 이차함수와 그 그래프",
+    "9수02-21": "이차함수의 개념을 이해한다"
+  },
+  "module_count": 2,
+  "page_count": 12,
+  "native_quiz_ids": [
+    "ms22-0220-quiz",
+    "ms22-0221-quiz"
+  ],
+  "arithmetic_checks": "passed",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}
