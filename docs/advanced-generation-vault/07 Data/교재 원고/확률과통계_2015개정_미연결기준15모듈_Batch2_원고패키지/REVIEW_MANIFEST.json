@@ -35,8 +35,8 @@
   "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null,
-  "runtime_validation_command": null,
-  "runtime_validator_candidate_sha256": null
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "d879b8e",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (32 tests passed)",
+  "runtime_validator_candidate_sha256": "9D57121CBEC97658D49179BD058AC55B648253B3915EA89A9B8C170BAE251972"
 }
