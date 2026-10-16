@@ -22,7 +22,7 @@ function run(fallback) {
     createElement: element};
   const board = {attr: {pan: {}, zoom: {}}, grids: [], defaultAxes: {},
     renderer: {container: {style: {}}},
-    create(type, values) { const value = {type, values}; created.push(value); return value; },
+    create(type, values, attributes) { const value = {type, values, attributes}; created.push(value); return value; },
     removeObject() {}, fullUpdate() {}, update() {}, on() {}, resizeContainer() {},
     getBoundingBox: () => [-8, 8, 8, -8]};
   const JXG = fallback ? undefined : {JSXGraph: {initBoard: () => board}};
@@ -44,6 +44,7 @@ function run(fallback) {
   assert.match(after, /y=1.25/);
   assert.match(after, /y=-3/);
   if (!fallback) {
+    assert.ok(created.filter(e => e.type === 'functiongraph').every(e => e.attributes.withLabel === false));
     const points = created.filter(e => e.type === 'point').slice(-3).map(e => [...e.values]);
     assert.deepEqual(points, [[.5, -1.375], [.5, 1.25], [.5, -3]]);
     const curvesAfter = created.filter(e => e.type === 'functiongraph').slice(-3)

@@ -209,6 +209,7 @@ String buildAiFlowGraphHtml(
         line-height: 1.5;
         color: #234535;
         overflow-wrap: anywhere;
+        white-space: pre-line;
       }
     </style>
   </head>
@@ -372,16 +373,21 @@ String buildAiFlowGraphHtml(
         function updateObservationReadout(payload) {
           const settings = payload.settings || {};
           const hasCursor = (settings.parameters || []).some(p => p.role === 'observationX');
-          observationReadout.hidden = !hasCursor;
           const descriptions = [];
-          if (hasCursor) for (const item of payload.items || []) {
+          for (const item of payload.items || []) {
             if (item.enabled === false || item.type !== 'function') continue;
+            const label = item.label || item.expression || item.id || '함수';
+            if (!hasCursor) {
+              descriptions.push(label);
+              continue;
+            }
             const evaluator = safeFunctionFromExpression(item.expression, settings.degreeMode === true);
             const point = evaluator && observationPoint(settings, evaluator);
-            descriptions.push((item.label || item.id || '함수') + ': ' +
+            descriptions.push(label + ': ' +
               (point ? 'x=' + formatFixed(point.x) + ', y=' + formatFixed(point.y) : '관찰 위치에서 정의되지 않음'));
           }
-          observationReadout.textContent = descriptions.join(' · ');
+          observationReadout.hidden = descriptions.length === 0;
+          observationReadout.textContent = descriptions.join('\n');
         }
 
         function clearElements() {
@@ -801,7 +807,9 @@ String buildAiFlowGraphHtml(
                   strokeColor: color,
                   strokeWidth: 2.2,
                   name: label,
-                  withLabel: Boolean(label),
+                  // Function names/readouts live outside the plot, avoiding
+                  // overlapping labels where several curves meet.
+                  withLabel: false,
                   // Author labels are text, never HTML or JessieCode.
                   label: { display: 'internal', parse: false, useMathJax: false, useKatex: false },
                 },

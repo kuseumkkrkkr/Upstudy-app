@@ -16,6 +16,8 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: SizedBox(width: 390,
       child: BookActivityView(activity: BookActivity.fromJson(json))))));
     final slider = tester.widget<Slider>(find.byType(Slider));
+    expect(slider.semanticFormatterCallback!(9), '9');
+    expect(slider.label, isNull); // The permanent readout replaces an overlapping tooltip.
     final before = tester.getTopLeft(find.byKey(const ValueKey('square-root-position')));
     expect(find.text('n = 1 · √1 = 1'), findsOneWidget);
     slider.onChanged!(9);

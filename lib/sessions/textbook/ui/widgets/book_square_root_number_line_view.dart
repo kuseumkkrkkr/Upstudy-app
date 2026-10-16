@@ -28,8 +28,8 @@ class _SquareRootState extends State<BookSquareRootNumberLineView> {
         Text('n = $_n · $label', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
         Slider(
           min: 1, max: 25, divisions: 24, value: _n.toDouble(),
-          label: 'n = $_n',
-          semanticFormatterCallback: (value) => 'n은 ${value.round()}',
+          // Numeric values are required by Flutter web's range semantics.
+          semanticFormatterCallback: (value) => '${value.round()}',
           onChanged: (value) => setState(() => _n = value.round()),
         ),
         Semantics(label: '$label, 0부터 5까지 수직선 위의 위치', child: LayoutBuilder(
