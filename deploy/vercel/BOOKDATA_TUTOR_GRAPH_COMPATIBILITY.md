@@ -124,3 +124,11 @@
 - 첫 widget 컴파일의 nullable index/조건식 구문 오류는 명시적 getter 블록으로 고쳤다. 검사 삭제나 기대값 완화는 없다.
 - 백엔드·순수 serializer와 그 테스트는 독립 체크포인트다. Chat UI/API adapter의 새 연결은 기존 미검토 dirty 세션 기반에 의존하므로 그 전체 변경을 묶어 커밋한 것으로 표시하지 않는다. `tutor_history_delivery_test.dart`도 이 작업본 통합 검사이며 clean HEAD 제품 검증이 아니다.
 - 실제 제공자 호출·교재 게시·DB 쓰기는0이다. 합성 Preview는 후속 증거이며 실제 AI 또는 운영 배포로 취급하지 않는다.
+
+### 합성 Preview 실사용 증거
+
+- 별도 Preview `dpl_EX9ZV1b7TXj5Rkvg2JPNSro3U17Y`에서 실제 입력·보내기로 후속 질문의 이력2턴 전달과 계정 전환 뒤0턴을 확인했다. 응답은 명시적으로 표시한 합성 응답이다. 실제 AI 품질 검증이 아니다.
+- HTML/운영 Dart 이전/Preview Dart 이후의 초기 화면을390×844로 각각 저장했다. 대화 이력 기능 검사이며 전체 시각 일치 판정은 아니다.
+- 브라우저 HTTP200의 JS3,549,427bytes와 로컬 산출물 SHA-256이 일치한다. 소스에는 기존 dirty 변경이 포함돼 clean HEAD 빌드라고 표현하지 않는다.
+- 기계 증거: `design/student/audits/tutor-history-preview-proof.json`. 운영 alias는 기존 `dpl_HTYscDjA8dNT521Pjf91UeqJsaF2`로 유지된다. 이 static 합성 Preview는 제품 API가 없어 운영 alias로 승격하면 안 된다.
+- 다음 미구현 단위는 검증된 그래프 slider 관찰값 전달이다. 임의 JSX 실행이나 BookData 원문 임의 확장이 아니라 기존 안전한 그래프 모델을 유지하는 별도 런타임 문맥으로 제한해야 한다.

@@ -1,0 +1,32 @@
+{
+  "kind": "synthetic-preview-not-production",
+  "featureCommit": "0e2fe877e1b041a99e3cb4474507608199d5bcb4",
+  "deploymentId": "dpl_EX9ZV1b7TXj5Rkvg2JPNSro3U17Y",
+  "url": "https://aiflow-web-canary-cvjqe54vj-cw20208021-9200s-projects.vercel.app/",
+  "sourceArchive": "build/temp/tutor-history-preview-source.tar",
+  "sourceArchiveSha256": "D5D0C3695709728376BFEB3B662F83D245AF8B2FF8D8C5AF9BAD3674BA1B857A",
+  "sourceIsDirty": true,
+  "mainDartJs": {
+    "browserHttpStatus": 200,
+    "bytes": 3549427,
+    "localAndBrowserSha256": "1D63D6260B6BD4356180CF9285CAAFC76EBED0C256113E8CA00BB4B28161CF5B"
+  },
+  "verified": [
+    "Initial HTML, canonical Dart before, synthetic Dart after captured at 390x844",
+    "Second question carried two previous successful turns and synthetic reply referenced first question",
+    "Account switch removed conversation and next request carried zero history turns",
+    "Canonical alias still resolves to dpl_HTYscDjA8dNT521Pjf91UeqJsaF2"
+  ],
+  "evidenceDirectory": "design/student/audits/evidence/2026-10-17-tutor-history",
+  "actualProviderCalls": 0,
+  "databaseWrites": 0,
+  "publishedTextbooks": 0,
+  "limitations": [
+    "Static synthetic client only: product backend is not deployed here",
+    "Not a clean HEAD build: UI/API integration relies on existing dirty session code",
+    "No genuine model quality, production authentication, load or full design parity claim",
+    "Graph current parameter state is not yet carried to tutor",
+    "Actual textbook publication requires explicit source manifest and rights/teacher review evidence",
+    "Do not promote this synthetic static Preview to canonical alias"
+  ]
+}
