@@ -145,28 +145,39 @@ class BookLibraryPage extends StatelessWidget {
         child: Column(
           children: [
             Container(
-              height: 80,
-              color: Colors.white,
+              height: 72,
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                border: Border(bottom: BorderSide(color: Color(0xFFE5ECE7))),
+              ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   IconButton(
-                    iconSize: 36,
+                    iconSize: 26,
                     icon: const Icon(
                       Icons.arrow_back,
-                      color: Color(0xFF3B3B3B),
+                      color: Color(0xFF315D45),
                     ),
                     onPressed: () => Navigator.maybePop(context),
                   ),
                   Text(
                     'AIFlow',
                     style: TextStyle(
-                      color: primary,
-                      fontSize: 36,
-                      fontWeight: FontWeight.bold,
+                      color: const Color(0xFF234C36),
+                      fontSize: 24,
+                      fontWeight: FontWeight.w800,
+                      letterSpacing: -0.6,
                     ),
                   ),
-                  const SizedBox(width: 48),
+                  const SizedBox(
+                    width: 48,
+                    child: Icon(
+                      Icons.auto_stories_rounded,
+                      size: 21,
+                      color: Color(0xFF3DBE68),
+                    ),
+                  ),
                 ],
               ),
             ),
