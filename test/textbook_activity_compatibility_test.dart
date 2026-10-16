@@ -616,6 +616,33 @@ void main() {
     );
   });
 
+  test('2015 binomial practice hint matches its own n and p', () {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final module = (source['chapters'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .singleWhere(
+          (chapter) =>
+              (chapter['standard_codes'] as List<dynamic>).contains(
+                '12확통03-03',
+              ),
+        );
+    final practice = (module['pages'] as List<dynamic>)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((page) => page['id'] == 'prob150303-practice');
+    final blocks = (practice['blocks'] as List<dynamic>)
+        .cast<Map<String, dynamic>>();
+    final question = blocks.singleWhere((block) => block['type'] == 'question');
+    final hint = blocks.singleWhere((block) => block['type'] == 'hint');
+
+    expect(question['text'], contains('5회'));
+    expect(question['text'], contains('0.2'));
+    expect(hint['text'], contains('n=5, p=0.2'));
+    expect(hint['text'], isNot(contains('n=4, p=1/2')));
+  });
+
   testWidgets('2022 Probability estimators run in the student reader', (
     tester,
   ) async {

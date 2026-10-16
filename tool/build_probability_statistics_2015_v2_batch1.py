@@ -27,6 +27,7 @@ SPECS = [
         "example": "A를 두 번째 공이 빨간 사건, B를 첫 번째 공이 빨간 사건으로 두면 P(B)=4/7, P(A∩B)=(4/7)(3/6)=2/7이다. 따라서 P(A|B)=(2/7)/(4/7)=1/2이다. 조건을 반영하면 빨간 공 3개, 전체 공 6개가 남는다.",
         "practice": "빨간 공 5개와 파란 공 2개에서 첫 공이 빨간색이다. 되돌려 놓지 않을 때 두 번째도 빨간색일 조건부확률을 구하세요.",
         "answer": "첫 빨간 공이 빠져 빨간 공 4개, 전체 6개가 남으므로 확률은 4/6=2/3입니다.",
+        "practice_hint": "첫 공이 빨간색이라는 조건으로 빨간 공 하나를 제외해 보세요.",
         "prompt": "빨간 공 4개, 파란 공 3개에서 첫 공이 빨간색일 때 두 번째도 빨간색일 확률은?", "options": ["1/2", "3/7", "4/7"], "correct": 0,
         "feedback": "조건으로 빨간 공 하나가 빠져 3/6=1/2입니다.", "wrong": "첫 번째가 빨간색이라는 조건을 표본공간에 반영하세요.",
         "hints": ["남은 전체 공은 6개입니다.", "남은 빨간 공은 3개이므로 3/6을 계산합니다."],
@@ -38,6 +39,7 @@ SPECS = [
         "example": "X~B(4,1/2)이므로 평균은 4×1/2=2, 표준편차는 √(4×1/2×1/2)=1이다. 정확히 두 번 성공할 확률은 C(4,2)(1/2)⁴=6/16=3/8이다.",
         "practice": "성공확률 0.2인 독립 시행을 5회 할 때 성공 횟수의 평균과 표준편차를 구하세요.",
         "answer": "평균은 np=5×0.2=1, 표준편차는 √(5×0.2×0.8)=√0.8≈0.894입니다.",
+        "practice_hint": "n=5, p=0.2를 사용해 평균과 표준편차 식에 각각 대입하세요.",
         "prompt": "X~B(4,1/2)일 때 평균과 표준편차는?", "options": ["평균 2, 표준편차 1", "평균 1, 표준편차 2", "평균 2, 표준편차 2"], "correct": 0,
         "feedback": "np=2이고 √(np(1−p))=1입니다.", "wrong": "평균과 표준편차 공식을 구분해 각각 대입하세요.",
         "hints": ["n=4, p=1/2입니다.", "평균=np, 표준편차=√(np(1−p))입니다."],
@@ -56,12 +58,14 @@ def main() -> None:
         raise RuntimeError({code: (official.get(code), text) for code, text in EXPECTED.items() if official.get(code) != text})
     chapters = []
     for spec in SPECS:
+        if not spec.get("practice_hint") or spec["practice_hint"] in spec["hints"]:
+            raise RuntimeError(f"Practice hint must be tailored separately from the quiz hints: {spec['code']}")
         slug = spec["code"].replace("12확통", "prob15-").replace("-", "")
         pages = [
             {"id": slug+"-open", "template": "opening", "title": "상황과 조건 살피기", "blocks": [{"type": "lead", "title": "가상 예시", "text": spec["lead"]}, {"type": "thinking", "title": "먼저 생각하기", "text": "무엇이 조건으로 주어졌는지 표시하고, 사건과 표본공간을 구분합니다."}]},
             {"id": slug+"-concept", "template": "concept", "title": "정의와 성질", "blocks": [{"type": "definition", "title": "핵심 개념", "text": spec["concept"]}, {"type": "formula", "title": "연결한 공식 기준", "text": spec["code"]}, {"type": "misconception", "title": "확인할 점", "text": "조건 또는 시행의 독립 여부를 확인한 다음 공식을 적용합니다."}]},
             {"id": slug+"-example", "template": "example", "title": "예제와 풀이", "blocks": [{"type": "question", "title": "예제", "text": spec["lead"]}, {"type": "solutionStep", "title": "풀이", "text": spec["example"]}, {"type": "verification", "title": "검산", "text": "가정한 조건과 계산한 사건의 결과가 일치하는지 확인합니다."}]},
-            {"id": slug+"-practice", "template": "practice", "title": "연습과 설명", "blocks": [{"type": "question", "title": "연습", "text": spec["practice"]}, {"type": "hint", "title": "힌트", "text": spec["hints"][0]}, {"type": "solutionStep", "title": "해설", "text": spec["answer"]}, {"type": "answer", "title": "정답", "text": spec["answer"]}, make_quiz(spec, slug)]},
+            {"id": slug+"-practice", "template": "practice", "title": "연습과 설명", "blocks": [{"type": "question", "title": "연습", "text": spec["practice"]}, {"type": "hint", "title": "힌트", "text": spec["practice_hint"]}, {"type": "solutionStep", "title": "해설", "text": spec["answer"]}, {"type": "answer", "title": "정답", "text": spec["answer"]}, make_quiz(spec, slug)]},
             {"id": slug+"-summary", "template": "summary", "title": "핵심 정리", "blocks": [{"type": "summary", "title": "기억할 점", "text": spec["title"]}, {"type": "checklist", "title": "스스로 확인", "text": "공식의 조건과 결과의 의미를 설명할 수 있나요?"}]},
         ]
         chapters.append({"title": spec["title"], "standard_codes": [spec["code"]], "intro": [f"2015 교육과정 공식 기준 {spec['code']}에 연결한 신규 후보입니다.", "수치와 상황은 학습을 위해 직접 만든 가상 예시입니다."], "pages": pages})
