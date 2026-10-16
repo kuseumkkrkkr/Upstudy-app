@@ -68,6 +68,18 @@ Status: implemented locally; candidate/browser verification required before rele
 - Temporary browser viewport override, QA tab and local9133 server cleaned up.
   No further deployment or alias promotion after candidate1 hold.
 
+Final code checkpoint: `55fdbb616ae4fba7b8048aee0ecac1892aa5d51d`.
+Local `public/main.dart.js`7149884 bytes, SHA256
+`A31C64AE83873141DCE1942F969C2A4CAA75D001A05A33B9D77B0CE38D96F2BD`.
+This final bundle has NOT been deployed. Local source snapshot
+`build/temp/activity-v2-final-source.tar`, SHA256
+`357230D5218E32F5DEFC20149805BA0417927E2DE5032A63F2B17E4023C31AE0`.
+It includes existing dirty integration dependencies and excludes env/credential
+files; source checkpoint alone does not reproduce the full working-tree build.
+Next: review preview-only deployment settings before another candidate; then
+test candidate backend V2 storage with an authorized test account. Do not promote
+candidate1 or substitute local synthetic UI evidence for that server check.
+
 V1 is the default when `schema_version` is absent. V2 explicitly sets
 `schema_version: 2`. Unknown future versions, unregistered kinds, duplicate
 activity IDs and executable/unknown fields are rejected at the import boundary.

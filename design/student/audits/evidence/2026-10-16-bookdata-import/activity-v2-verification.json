@@ -1,0 +1,24 @@
+{
+  "scope": "BookData V2 registered native activities; local QA only",
+  "codeCheckpoint": "55fdbb616ae4fba7b8048aee0ecac1892aa5d51d",
+  "worktree": "D:/AIFlow-Workspace/Projects/Aiflow/Upstudy-hotfix",
+  "branch": "hotfix",
+  "flutter": "3.44.6",
+  "dart": "3.12.2",
+  "buildFlags": {"API_BASE_URL":"https://aiflow-web-canary.vercel.app","STUDENT_SERVICES_DEMO":true,"STUDENT_STORE_DEMO":true},
+  "finalLocalBundle": {"bytes":7149884,"sha256":"A31C64AE83873141DCE1942F969C2A4CAA75D001A05A33B9D77B0CE38D96F2BD","deployed":false},
+  "fullDirtySourceSnapshot": {"path":"build/temp/activity-v2-final-source.tar","sha256":"357230D5218E32F5DEFC20149805BA0417927E2DE5032A63F2B17E4023C31AE0","localOnly":true},
+  "supersededCandidate": {"id":"dpl_GA9cePH1LrCu1iNmykjx4RTnj8cD","sha256":"D97079B45A265D43A80F3F9CEF82D0BBF7E6344F6F3D042D7B318F0FF7C4EF96","promote":false},
+  "unchangedCanary": {"id":"dpl_HTYscDjA8dNT521Pjf91UeqJsaF2","sha256":"7F54EE1424F0982D6C2F461C4744EAADD7954602487576F9C08ECA2E9DB340B8"},
+  "checks": {"pythonPassed":43,"flutterV2Passed":7,"scopedAnalyzeIssues":0,"releaseBuildSeconds":255.1},
+  "browserQa": {
+    "source":"synthetic local native-widget harness, not production",
+    "viewports":[[390,844],[1280,900],[844,390]],
+    "verified":["point drag changes distances together","ArrowRight p2 to2.5","choice feedback","hint reveal","fraction1/2 feedback","step1 to2","answer/hint/step survives desktop resize"],
+    "images":["activity-v2-final-answers-390.png","activity-v2-final-answers-1280.png","activity-v2-final-landscape-844.png"]
+  },
+  "externalManuscript": {"sha256":"85EB8724D4095D2BB0E41D3CA143183DC32E831ABB0983CF28F8E53486AA51C3","activities":4,"nativeModelRoundTrip":true,"uploaded":false},
+  "pending":["live candidate V2 owner persistence","real DB concurrency","full app analysis/tests","actual manuscript rendered review","teacher and rights gates"],
+  "contentDeletionCount":0,
+  "studentRecordsPreserved":true
+}
