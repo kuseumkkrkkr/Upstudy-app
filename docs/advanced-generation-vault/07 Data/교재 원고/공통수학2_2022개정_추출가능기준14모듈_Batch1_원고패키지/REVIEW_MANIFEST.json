@@ -39,8 +39,8 @@
   "source_interaction_status": "native_quiz_activity_candidate; source_html_parity_not_reviewed",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null,
-  "runtime_validation_command": null,
-  "runtime_validator_candidate_sha256": null
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "99786a5",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (41 tests passed; Common Math 2 V2 round-trip and student quiz verified)",
+  "runtime_validator_candidate_sha256": "3C60AF94A5BD8915D9BD60CEC19BEEC48821B10D53030F2464C1DF57E22EC557"
 }
