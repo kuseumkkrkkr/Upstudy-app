@@ -10,6 +10,7 @@ import 'book_coordinate_point_view.dart';
 import 'book_vector_operations_view.dart';
 import 'book_vector_inner_product_view.dart';
 import 'book_square_root_number_line_view.dart';
+import 'book_polynomial_area_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -126,6 +127,7 @@ class _BookActivityViewState extends State<BookActivityView>
           'vectorOperation',
           'vectorInnerProduct',
           'squareRootNumberLine',
+          'polynomialArea',
         }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
@@ -231,6 +233,9 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'squareRootNumberLine') {
       return BookSquareRootNumberLineView(activity: a);
+    }
+    if (a.kind == 'polynomialArea') {
+      return BookPolynomialAreaView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,

@@ -3094,10 +3094,13 @@ class _BookWidgetState extends State<BookWidget> {
               return InkWell(
                 onTap: () => _handleTocTap(entry),
                 child: Container(
-                  height: isChapter ? 58 : 44,
+                  key: ValueKey('book-toc-entry-${entry.entryIndex}'),
+                  constraints: BoxConstraints(minHeight: isChapter ? 58 : 44),
                   padding: EdgeInsets.only(
                     left: isChapter ? 18 : 34,
                     right: 14,
+                    top: 10,
+                    bottom: 10,
                   ),
                   decoration: BoxDecoration(
                     color: isChapter

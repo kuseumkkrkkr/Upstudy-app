@@ -8738,8 +8738,16 @@
       "declared_function_names": [
         "draw"
       ],
-      "manuscript_mapping": "unresolved_until_explicit_source_index",
-      "status": "source_review_required_not_ported"
+      "manuscript_mapping": "explicit_private_candidate: 중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json#ms31-22-polynomial-product-experiment",
+      "status": "private_candidate_local_reader_verified_not_published",
+      "verification_evidence": {
+        "contract": "deploy/vercel/BOOK_POLYNOMIAL_AREA.md",
+        "ledger": "design/student/audits/2026-10-17-interaction-family-backlog.md",
+        "source_book_sha256": "2ad04504ae5171561d84d933012393a04e03da09f30c156ff47b0ace514714f5",
+        "candidate_sha256": "a60a3c4328946098b0b02b079d08535a906a0d74bb084928263e642b45c310c7",
+        "publication_approved": false,
+        "production_reader_verified": false
+      }
     },
     {
       "asset_id": "html-44c391e3cae805f7",

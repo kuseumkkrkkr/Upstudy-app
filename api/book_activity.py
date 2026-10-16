@@ -114,12 +114,13 @@ def validate_activity(value):
         angle = value.get('angle_deg')
         if type(angle) is not int or not 0 <= angle <= 180 or angle % 15:
             raise ValueError('activity: included angle requires 15-degree steps in 0..180')
-    elif kind == 'rightTriangle':
+    elif kind in ('rightTriangle', 'polynomialArea'):
         fields(value, common + ' a b')
+        maximum = 8 if kind == 'polynomialArea' else 12
         for name in ('a', 'b'):
             number(value.get(name))
-            if type(value[name]) is not int or not 1 <= value[name] <= 12:
-                raise ValueError('activity: triangle legs require integers 1..12')
+            if type(value[name]) is not int or not 1 <= value[name] <= maximum:
+                raise ValueError(f'activity: a,b require integers 1..{maximum}')
     elif kind == 'squareRootNumberLine':
         fields(value, common + ' min max')
         if type(value.get('min')) is not int or value['min'] != 1 or type(value.get('max')) is not int or value['max'] != 25:

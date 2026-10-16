@@ -137,9 +137,13 @@ class BookActivity {
         allowed.addAll({'u_length', 'v_length', 'angle_deg'});
         vectorInnerProduct = BookVectorInnerProduct.fromJson(json);
       case 'rightTriangle':
+      case 'polynomialArea':
         allowed.addAll({'a', 'b'});
+        final maximum = kind == 'polynomialArea' ? 8 : 12;
         int leg(dynamic value) {
-          if (value is! int || value < 1 || value > 12) fail();
+          if (value is! int || value < 1 || value > maximum) {
+            fail();
+          }
           return value;
         }
         legA = leg(json['a']);
@@ -150,7 +154,9 @@ class BookActivity {
       case 'squareRootNumberLine':
         allowed.addAll({'min', 'max'});
         if (json['min'] is! int || json['min'] != 1 ||
-            json['max'] is! int || json['max'] != 25) fail();
+            json['max'] is! int || json['max'] != 25) {
+          fail();
+        }
       case 'parabolaDistance':
         allowed.addAll({'p', 'x'});
         p = number(json['p']);
@@ -205,7 +211,7 @@ class BookActivity {
     if (kind == 'parabolaDistance') ...{'p': p, 'x': x},
     if (experiment != null) 'experiment': experiment!.toJson(),
     if (statistics != null) 'statistics': statistics!.toJson(),
-    if (kind == 'rightTriangle') ...{'a': legA, 'b': legB},
+    if (kind == 'rightTriangle' || kind == 'polynomialArea') ...{'a': legA, 'b': legB},
     if (point != null) ...point!.toJson(),
     if (vectorOperation != null) ...vectorOperation!.toJson(),
     if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),

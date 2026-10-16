@@ -1,10 +1,11 @@
 import json
+import hashlib
 import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from api.book_activity import validate_activity
 from api import public_textbooks as public
-from tools.build_public_textbooks import prepare
+from tools.build_public_textbooks import build
 from tests.test_public_textbooks import Storage
 
 
@@ -23,7 +24,14 @@ def test_synthetic_public_catalogue_acquisition_and_reader_preserve_activity(tmp
     book = {'schema_version': 2, 'title': 'Synthetic root practice', 'chapters': [
         {'title': 'Root', 'pages': [{'template': 'experiment', 'blocks': [
             {'type': 'activity', 'activity': activity()}]}]}]}
-    entry = prepare(json.dumps(book))
+    source = json.dumps(book)
+    (tmp_path / 'BookData.json').write_text(source, encoding='utf-8')
+    _, entries = build(tmp_path, {'version': 1, 'files': [{
+        'path': 'BookData.json', 'sha256': hashlib.sha256(source.encode()).hexdigest(),
+        'publication_approved': True, 'rights_status': 'cleared',
+        'teacher_review_status': 'approved', 'math_review_status': 'approved',
+        'curriculum_review_status': 'approved'}]})
+    entry = entries[0]  # Synthetic reviewed fixture; never approve real manuscripts here.
     bundle = tmp_path / 'synthetic.json'
     bundle.write_text(json.dumps({'version': 1, 'books': [entry]}), encoding='utf-8')
     monkeypatch.setattr(public, 'BUNDLE', bundle)
