@@ -132,3 +132,22 @@
 - 브라우저 HTTP200의 JS3,549,427bytes와 로컬 산출물 SHA-256이 일치한다. 소스에는 기존 dirty 변경이 포함돼 clean HEAD 빌드라고 표현하지 않는다.
 - 기계 증거: `design/student/audits/tutor-history-preview-proof.json`. 운영 alias는 기존 `dpl_HTYscDjA8dNT521Pjf91UeqJsaF2`로 유지된다. 이 static 합성 Preview는 제품 API가 없어 운영 alias로 승격하면 안 된다.
 - 다음 미구현 단위는 검증된 그래프 slider 관찰값 전달이다. 임의 JSX 실행이나 BookData 원문 임의 확장이 아니라 기존 안전한 그래프 모델을 유지하는 별도 런타임 문맥으로 제한해야 한다.
+
+## 그래프 현재 관찰값 구현 체크포인트
+
+위의 ‘현재값 미전달’은 이전 체크포인트 설명이다. 이번 작업본은 별도 `graph_context`에 현재 페이지에서 실제 입력 이벤트로 관찰한 값만 전달한다. BookData·원고의 초기값 및 가져오기 스키마는 변경하지 않았다. 임의 JSX/JS 실행 기능도 추가하지 않았다.
+
+| 책임 단위 | 입력·결과·수명·실패 처리 |
+|---|---|
+| `validateGraphParameters` / `readGraphParameterEvent` | 현재 문서에 선언된 최대16개 이름·유한값·범위·예약 이름을 검사한다. 반환값은 불변 Map이다. 잘못된 값이나 지난 문서 revision은 무시한다. |
+| web/native embed | 실제 slider input에서만 전체 관찰값을 보낸다. 문서 변경 때 `_observationRevision`을 증가시킨다. web은 iframe 창을 JS `Object.is`로 비교하고 sandbox 격리를 유지한다. Dart 동적 창 비교의 cross-origin SecurityError를 실제 브라우저에서 발견해 수정했다. Native callback도 같은 값 검사를 하지만 실제 기기 검증은 별도다. |
+| renderer | 대체 Canvas 렌더링에서 매번 초기값으로 되돌리던 코드를 제거했다. 원본 기본값 로드는 `applyGraphPayload`가 소유하며 slider 조작값을 문서에 저장하지 않는다. |
+| reader | `_observedGraphs`는 현재 책·load epoch·페이지에 한정된 메모리다. 지난 페이지/계정/책 callback을 무시하고 페이지 변경 때 비운다. 현재 페이지에 실제 존재하는 graph 객체만 최대4개 snapshot으로 선택한다. |
+| chat/API | `graph_context`는 현재 페이지 질문의 snapshot이다. 계정 변경 뒤에는 비운다. 서버는 최대4그래프×16파라미터, 이름·유한수·범위·중복·extra 필드를 검사한다. 학생 제공 참고 자료일 뿐 채점·권한 증명이 아니며 새 DB 저장은 없다. |
+
+- Python graph/history/import/math 검사46개 통과. Flutter 초기 합동10개, 최종 helper/전송5개 통과. 집중 analyze4파일은 이슈0이다. reader/chat을 포함한 넓은 analyze는 기존 info/warning26개가 남아 전체 성공으로 기록하지 않는다.
+- 테스트 harness 괄호 오류로 첫 웹 빌드가 실패했으며 수정 후 최종 검증 빌드는66.2초에 성공했다. 기존 CupertinoIcons font warning은 남았다.
+- 실제 원고 `공통수학1_꼭짓점형_BookData_시범.json`을 로컬 모바일 reader에서 열어 m=1.25/h=0.5 관찰값 전달과 다음 페이지의 빈 관찰값을 확인했다. 원고의 teacher_review_status는 pending이므로 원고 전체를 Preview에 올리지 않았다.
+- 외부 Preview는 합성 교재/응답만 포함한다. 데스크톱은 종이 본문 안을 스크롤해야 아래 slider가 보인다. 브라우저 컨트롤로 실제 조작하고 모바일 응답 캡처도 저장했다. 실제 모델의 소크라틱 품질 검증과 운영 API 호출은0이다.
+- 검증 계약·순수 helper는 `80b8269`로 push했다. UI/API의 연결 파일은 기존 미검토 변경과 혼재하므로 이 커밋이 전체 기능 clean-source 배포를 보증하지 않는다. 해당 파일: `book_page.dart`, `server_chat_page.dart`, `api_client.dart`, `jsx_graph_html_builder.dart`, `jsx_graph_embed*.dart`, `tutor_history_delivery_test.dart`.
+- 기계 증거는 `design/student/audits/graph-observation-preview-proof.json`. 운영 alias는 변경하지 않았다. 시각 디자인 개편이 아닌 상태 전달 변경이며 전체 HTML parity나 수정 전 동일 데이터 캡처가 있다고 주장하지 않는다.
