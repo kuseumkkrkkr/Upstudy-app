@@ -46,6 +46,32 @@ def test_exact_source_and_known_structure_are_preserved():
         validate_book(unsupported)
 
 
+def test_candidate_provenance_metadata_is_preserved_with_a_strict_allowlist():
+    candidate = draft()
+    candidate['candidate_standard_codes'] = ['10공수2-03-05']
+    candidate['chapters'][0]['candidate_standard_codes'] = ['10공수2-03-05']
+    candidate['chapters'][0]['source_html_reference'] = 'source-demo.html'
+    source = json.dumps(candidate, ensure_ascii=False)
+    imported, _ = parse_import(source, hashlib.sha256(source.encode()).hexdigest())
+    assert imported == candidate
+
+    for unsafe_reference in ('../source.html', 'https://example.com/source.html', 'C:\\source.html'):
+        unsupported = copy.deepcopy(candidate)
+        unsupported['chapters'][0]['source_html_reference'] = unsafe_reference
+        with pytest.raises(ValueError, match='filename token'):
+            validate_book(unsupported)
+
+    unsupported = copy.deepcopy(candidate)
+    unsupported['candidate_standard_codes'] = ['10공수2-03-05'] * 33
+    with pytest.raises(ValueError, match='list exceeds'):
+        validate_book(unsupported)
+
+    unsupported = copy.deepcopy(candidate)
+    unsupported['unreviewed_custom_payload'] = {'ignored': True}
+    with pytest.raises(ValueError, match='unsupported fields'):
+        validate_book(unsupported)
+
+
 def test_import_sha256_is_canonical_across_lf_and_crlf():
     source = json.dumps(draft(), ensure_ascii=False, indent=2)
     crlf_source = source.replace("\n", "\r\n")

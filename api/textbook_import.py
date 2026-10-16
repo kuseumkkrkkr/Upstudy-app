@@ -40,6 +40,12 @@ def strings(value, path, limit=100, length=4000):
         text(entry, path, length)
 
 
+def source_html_reference(value, path):
+    text(value, path, 240)
+    if not value.strip() or value in {'.', '..'} or any(char in value for char in '/\\:'):
+        raise ValueError(f'{path}: filename token required')
+
+
 def number(value, path):
     if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value) or abs(value) > 1e9:
         raise ValueError(f'{path}: finite number within +/-1e9 required')
@@ -151,7 +157,7 @@ def validate_image(source):
 
 
 def validate_book(book):
-    object_fields(book, 'schema_version title subtitle category tags cover_color curriculum_version standard_codes chapters', 'book')
+    object_fields(book, 'schema_version title subtitle category tags cover_color curriculum_version standard_codes candidate_standard_codes chapters', 'book')
     version = book.get('schema_version', 1)
     if type(version) is not int or version not in (1, 2):
         raise ValueError('book.schema_version: only V1 and V2 are supported')
@@ -163,6 +169,7 @@ def validate_book(book):
         text(book.get(field, ''), 'book.' + field, limit)
     strings(book.get('tags', []), 'book.tags', 64, 80)
     strings(book.get('standard_codes', []), 'book.standard_codes', 32, 80)
+    strings(book.get('candidate_standard_codes', []), 'book.candidate_standard_codes', 32, 80)
     if 'cover_color' in book and book['cover_color'] is not None:
         value = book['cover_color']
         if type(value) is not int or not 0 <= value <= 4294967295:
@@ -171,10 +178,13 @@ def validate_book(book):
     if not chapters:
         raise ValueError('book.chapters: required')
     for chapter in chapters:
-        object_fields(chapter, 'title intro sections visuals pages tags standard_codes', 'chapter')
+        object_fields(chapter, 'title intro sections visuals pages tags standard_codes candidate_standard_codes source_html_reference', 'chapter')
         text(chapter.get('title'), 'chapter.title', 160)
         strings(chapter.get('tags', []), 'chapter.tags', 64, 80)
         strings(chapter.get('standard_codes', []), 'chapter.standard_codes', 32, 80)
+        strings(chapter.get('candidate_standard_codes', []), 'chapter.candidate_standard_codes', 32, 80)
+        if 'source_html_reference' in chapter:
+            source_html_reference(chapter['source_html_reference'], 'chapter.source_html_reference')
         strings(chapter.get('intro', []), 'chapter.intro')
         for visual in sequence(chapter.get('visuals', []), 'chapter.visuals'):
             validate_visual(visual)
