@@ -18,10 +18,20 @@ def signature(page: dict) -> str:
 def main() -> None:
     grouped: OrderedDict[str, list[dict]] = OrderedDict()
     original: Counter[str] = Counter()
-    for path in sorted(MANUSCRIPTS.glob("수학Ⅱ*_BookData_시범.json")):
+    for path in sorted(MANUSCRIPTS.glob("수학Ⅱ*_BookData*.json")):
         book = json.loads(path.read_text(encoding="utf-8"))
         tags = book.get("tags", [])
         if not tags or tags[0] != "수학Ⅱ" or not any(tag.startswith("2015 개정") for tag in tags[1:3]):
+            continue
+        if book.get("standard_codes"):
+            for chapter in book.get("chapters", []):
+                unit = chapter.get("unit")
+                if unit not in {"함수의 극한과 연속", "미분", "적분"}:
+                    raise RuntimeError(f"No recognized candidate unit in {path.name}: {unit}")
+                pages = chapter.get("pages", [])
+                for page in pages:
+                    original[signature(page)] += 1
+                grouped.setdefault(unit, []).append({"file": path.name, "book": {"chapters": [chapter]}, "pages": pages, "tags": tags})
             continue
         unit = next((tag for tag in tags[2:] if tag in {"함수의 극한", "함수의 연속", "미분", "정적분"}), None)
         if unit is None:

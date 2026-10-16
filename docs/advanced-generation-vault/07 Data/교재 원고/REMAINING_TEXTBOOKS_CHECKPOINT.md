@@ -5,9 +5,10 @@
 
 ## 2026-10-17 최신 재검증
 
-- 태그 생성 파이프라인 71단계 성공, 원본 BookData 101개 참조 확인. 원고 폴더 실측: BookData 137개, JSON 232개, 하위 폴더 45개, HTML 106개. activity: quiz 141, statisticsEstimator 2, discreteExperiment 1.
+- Tag generation pipeline passed 72 steps and referenced 102 source BookData files; asset inventory lists 138 BookData files and 106 HTML files.
 - 커버리지 원장은 이제 `standard_codes`/`standard_code`와 tags의 exact official-code token을 검사한다. 판본은 `curriculum_version` 또는 명시적인 판본 태그에서만 확인하고, 파일명으로 추정하지 않는다. 이에 따라 2015 중학교 학년군 태그 27개, 2022 중학교 학년군 태그 30개가 각각 확인됐지만, 이 기준은 학기별·상품별로 배분하지 않았다.
-- 그 외 확인된 공식-code 후보 수: #15 수학Ⅰ(2015) 19/19, #16 수학Ⅱ(2015) 3/21, #17 확률과 통계(2015) 17/17, #20 공통수학1(2022) 19/19, #21 공통수학2(2022) 17/20, #22 대수(2022) 1/18, #23 미적분Ⅰ(2022) 15/20, #24 확률과 통계(2022) 16/16, #25 미적분Ⅱ(2022) 23/23, #26 기하(2022) 14/14. 이는 태그 후보 수이며 내용 완성 수가 아니다.
+- 그 외 확인된 공식-code 후보 수: #15 수학Ⅰ(2015) 19/19, #16 수학Ⅱ(2015) 21/21, #17 확률과 통계(2015) 17/17, #20 공통수학1(2022) 19/19, #21 공통수학2(2022) 17/20, #22 대수(2022) 1/18, #23 미적분Ⅰ(2022) 15/20, #24 확률과 통계(2022) 16/16, #25 미적분Ⅱ(2022) 23/23, #26 기하(2022) 14/14. 이는 태그 후보 수이며 내용 완성 수가 아니다.
+- Mathematics II (2015): authored 18 original modules/90 pages for the 18 standards without current candidate tags. Existing four tagged modules/12 source pages were retained; the integrated draft contains 22 modules/102 pages. Numeric spot checks, unique page IDs, official code set, the 72-step pipeline, and guarded app `BookData.fromJson` import passed. New content remains pending independent teacher review and rights clearance; publication is ineligible.
 - 공통수학2 신규 후보 14모듈/70쪽/quiz 14개를 작성해 좌표기하 6개, 집합 3개, 조건·증명 3개, 합성·역함수 2개 기준을 추가 연결했다. 공식 20개 중 후보 태그 17개이며 `10공수2-01-07`, `03-04`, `03-05`는 HWP 수식 누락으로 보류했다. 기존 두 BookData의 명시적 후보 태그 3개와 합쳐 그룹 초안은 16모듈·79 원본 지면을 보존했다. guarded importer HEAD `c744b7fddb1c312a7b4bf7d19e543f5d2a222662`에서 SHA-256 `bfaff24de6d646a90a44177ea462a46987d03a4a657d77846a25c3dfccb1cb33`를 검증했다. 독립 교사·수학/권리 검토 대기다.
 - 수학Ⅰ(2015) 기존 4개 BookData의 코드 후보 10개를 예비 연결하고, 누락 9개 공식 코드와 기존 삼각함수 원고의 탄젠트 그래프 보완 1모듈을 신규 V2 10모듈/50쪽/quiz 10개로 작성했다. 2015 원문 지면은 23쪽 보존, 기존+신규 14모듈/73쪽이 3개 단원 통합 초안에 들어갔다. strict importer가 기존 4개와 신규 V2 1개를 모두 통과했고, validator HEAD `d64f05551e69bbb1b31f262b91d41f163abad66`; 신규 SHA-256 `bfaff24de6d646a90a44177ea462a46987d03a4a657d77846a25c3dfccb1cb33`다. 이 19/19는 후보 태그 수이며, 01-04/01-06, 02-02, 03-07/03-08의 본문은 부분 후보라 독립 교사 검수·권리 결정 전 출판 부적격이다. 기존 HTML은 독립 자산으로 남아 앱 parity 미검증이다.
 - 2022 공식 HWP XML에서 기준 문단의 `EqEdit` 수식 개체가 변환 텍스트에서 빠진 코드를 coverage ledger에 표시했다: `9수02-10`, `10공수2-01-07`, `10공수2-03-04/05`, `12대수03-02/03/04/05`. 누락 수식은 임의로 복원하지 않았으며, 해당 텍스트를 완전 전사로 취급하지 않는다.
@@ -80,7 +81,7 @@
 | 13 | 수학(상) · 2015 | partial | 다항식 덧셈·뺄셈 4쪽 시범 및 분권 경계 초안; 공식 `<수학>` 41개 코드의 상·하권 배분표와 나머지 본문 필요 | 별책8 10수학01–05 인덱스; 자체 분권 범위 미승인 | BookData 정적 지면; 체험 자산 미확인 | 권리 미기록; 초안 |
 | 14 | 수학(하) · 2015 | partial | 집합 합집합·교집합 4쪽 등 일부 시범; 공식 `<수학>` 41개 코드 중 하권 배분 및 나머지 집합·명제·함수·경우의 수 필요 | 별책8 10수학01–05 인덱스; 자체 분권 범위 미승인 | BookData 지면; 체험 자산 미확인 | 권리 미기록; 초안 |
 | 15 | 수학Ⅰ · 2015 | partial | 기존 4 BookData/23쪽 + 신규 V2 10모듈/50쪽; 14모듈/73 원본 지면, 19/19 코드 후보 태그 | 별책8 12수학Ⅰ01–03의 19개 코드 대조; 일부 후보 내용은 부분 매핑 | 신규 quiz 10개 importer 통과; 기존 HTML 보존, 앱 parity 미검증 | 교사·수학/권리 검토 대기; 출판 부적격 |
-| 16 | 수학Ⅱ · 2015 | partial | 4모듈/12쪽, 극한·연속·미분·정적분 부분 시범; 21개 공식 코드의 전 범위 필요 | 별책8 12수학Ⅱ01–03 코드 인덱스 | 그래프 시범; HTML 연결 미확인 | 권리 미기록; 초안 |
+| 16 | Mathematics II · 2015 | partial | Existing 4 modules/12 pages + new V2 18 modules/90 pages; integrated 22 modules/102 pages; 21/21 code tag candidates | All 21 standards checked against 2015 Appendix 8; some source mappings remain partial | Guarded BookData.fromJson passed for V2 candidate at `e0bc17074481259c6f8d4c63894da07dd6c2e814`; existing graph/HTML parity unverified | Teacher review and rights decision pending; not publish eligible |
 | 17 | 확률과 통계 · 2015 | partial | 기존 조건부확률·이항분포 2모듈/6쪽 및 신규 V2 후보 17모듈/85쪽; 17개 공식 코드 모두 tag 후보 연결 | `12확통02-05`, `12확통03-03`; 15개 기준과 상품 범위 대조 필요 | V2 quiz 17개 importer 통과; 기존 HTML 자산은 별도이며 parity 미확인 | 교사·권리 검토 대기 |
 | 18 | 미적분 · 2015 | partial | 수열의 극한 1모듈/3쪽; 27개 공식 코드 중 미분·적분 등 나머지 필요 | 별책8 12미적01–03 코드 인덱스 | 그래프/HTML 연결 미확인 | 권리 미기록; 초안 |
 | 19 | 기하 · 2015 | partial | 6모듈/18쪽, 벡터 영역; 16개 공식 코드 중 이차곡선·공간도형 등 나머지 필요 | 별책8 12기하01–03 코드 인덱스 | 그래프/HTML 원본은 있을 수 있으나 상품 링크 미확인 | 권리 미기록; 초안 |
