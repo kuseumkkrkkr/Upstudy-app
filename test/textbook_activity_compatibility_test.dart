@@ -4,12 +4,14 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
 import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_도형과통계_부분초안/중등수학_2022개정_도형과통계_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json',
@@ -90,6 +92,32 @@ void main() {
       expect(find.byType(CustomPaint), findsWidgets);
     },
   );
+
+  test(
+    '2015 middle-school linear and quadratic function graphs build natively',
+    () {
+      const path =
+          'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_함수그래프_부분초안/중등수학_2015개정_함수그래프_BookData_V2_시범.json';
+      final raw =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final book = BookData.fromJson(raw);
+      final graphs = [
+        for (final chapter in book.chapters)
+          for (final page in chapter.pages)
+            for (final block in page.blocks)
+              if (block.graph != null) block.graph!,
+      ];
+      expect(graphs, hasLength(6));
+      expect(
+        graphs.map((graph) => graph.items.length).fold(0, (a, b) => a + b),
+        8,
+      );
+      for (final graph in graphs) {
+        expect(buildAiFlowGraphHtml(graph), contains('renderCurrentGraph()'));
+      }
+    },
+  );
+
   for (final path in _additionalReaderValidationPaths) {
     testWidgets('$path quizzes submit and show feedback', (tester) async {
       final source =

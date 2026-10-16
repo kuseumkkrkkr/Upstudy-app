@@ -1,0 +1,35 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수03-05",
+    "9수03-06",
+    "9수03-07",
+    "9수03-08",
+    "9수03-09",
+    "9수03-10"
+  ],
+  "official_criteria": {
+    "9수03-05": "일차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다.",
+    "9수03-06": "일차함수의 그래프의 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다.",
+    "9수03-07": "일차함수와 미지수가 2개인 일차방정식의 관계를 이해한다.",
+    "9수03-08": "두 일차함수의 그래프와 연립일차방정식의 관계를 이해한다.",
+    "9수03-09": "이차함수의 의미를 이해하고, 그 그래프를 그릴 수 있다.",
+    "9수03-10": "이차함수의 그래프의 성질을 이해한다."
+  },
+  "module_count": 6,
+  "page_count": 36,
+  "native_quiz_ids": [
+    "ms15-function-05-quiz",
+    "ms15-function-06-quiz",
+    "ms15-function-07-quiz",
+    "ms15-function-08-quiz",
+    "ms15-function-09-quiz",
+    "ms15-function-10-quiz"
+  ],
+  "native_graphs": 6,
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}
