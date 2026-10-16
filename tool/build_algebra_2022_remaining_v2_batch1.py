@@ -18,8 +18,8 @@ SPECS = [
         "code":"12대수01-01", "title":"거듭제곱과 거듭제곱근", "lead":"정사각형의 넓이가 49라면 한 변의 길이는 어떻게 찾을까?",
         "concept":"aⁿ은 a를 n번 곱한 거듭제곱이다. n제곱근은 n제곱하여 주어진 수가 되는 수를 뜻한다. 실수 범위에서 짝수 제곱근은 피제곱수가 0 이상일 때 다루며, √49는 주값 7이다. 방정식 x²=49의 해는 ±7이므로 기호 √49와 구별한다.",
         "example":"3⁴=81이므로 81의 네제곱근 중 실수는 ±3이다. √81은 주값 9이며, x²=81의 해는 ±9이다.", "practice":"x²=36의 실수 해와 √36의 값을 각각 구하세요.", "answer":"x²=36의 해는 x=±6이고, √36은 주값 6입니다.",
-        "prompt":"x²=25의 실수 해와 √25를 바르게 구분한 것은?", "options":["해는 ±5, √25=5","해는 5, √25=±5","해와 제곱근 표기는 모두 ±5"], "correct":0,
-        "feedback":"방정식의 해는 ±5이고, √25는 주값 5입니다.", "wrong":"방정식의 해와 근호 기호의 주값을 구분하세요.", "hints":["어떤 수를 제곱하면 25인지 모두 찾습니다.","√ 기호는 음이 아닌 주값을 나타냅니다."],
+        "prompt":"x²=25의 실수 해와 √25를 바르게 구분한 것은?", "options":["±5; √25=5","해는 5, √25=±5","해와 제곱근 표기는 모두 ±5"], "correct":0,
+        "feedback":"x²=25의 해는 ±5; √25=5는 주값입니다.", "wrong":"방정식의 해와 근호 기호의 주값을 구분하세요.", "hints":["어떤 수를 제곱하면 25인지 모두 찾습니다.","√ 기호는 음이 아닌 주값을 나타냅니다."],
     },
     {
         "code":"12대수01-02", "title":"유리수 지수와 실수 지수", "lead":"1/2제곱은 제곱근과 어떤 관계일까? 밑의 부호 조건도 함께 살펴보자.",
@@ -47,7 +47,7 @@ SPECS = [
         "concept":"상용로그는 밑이 10인 로그 log₁₀N이다(N>0). log₁₀(10N)=1+log₁₀N이므로 양을 10배 하면 상용로그 값은 1 커진다. 실제 자료를 해석할 때는 단위와 측정 기준을 함께 확인한다.",
         "example":"log₁₀(1000)=3이고 log₁₀(100000)=5이다. 두 수의 비는 100이므로 상용로그 값 차이는 2이다.", "practice":"log₁₀(10⁶)−log₁₀(10³)을 구하고 두 수의 크기 비를 말하세요.", "answer":"차는 6−3=3이고, 두 수의 비는 10³=1000입니다.",
         "prompt":"N을 100배 하면 log₁₀N은 얼마나 변하나요?", "options":["2만큼 증가","100만큼 증가","변하지 않음"], "correct":0,
-        "feedback":"100=10²이므로 log₁₀(100N)=2+log₁₀N입니다.", "wrong":"100을 10의 거듭제곱으로 나타내세요.", "hints":["100=10²입니다.","곱의 로그 성질을 적용합니다."],
+        "feedback":"100=10²이므로 log₁₀(100N)은 log₁₀N보다 2만큼 증가합니다.", "wrong":"100을 10의 거듭제곱으로 나타내세요.", "hints":["100=10²입니다.","곱의 로그 성질을 적용합니다."],
     },
     {
         "code":"12대수01-06", "title":"지수함수와 로그함수의 뜻", "lead":"입력 x가 한 단위 커질 때 2ˣ와 log₂x는 각각 어떻게 변할까?",
@@ -60,8 +60,8 @@ SPECS = [
         "code":"12대수01-07", "title":"지수함수와 로그함수의 그래프", "lead":"밑이 2일 때와 1/2일 때 그래프의 증가·감소는 어떻게 달라질까?",
         "concept":"a>1이면 y=aˣ는 증가하고 x축을 점근선으로 가지며 (0,1)을 지난다. 0<a<1이면 감소한다. y=log_a x는 (1,0)을 지나고 y축을 점근선으로 가진다. 지수함수와 로그함수의 그래프는 y=x에 대하여 대칭이다.",
         "example":"y=2ˣ은 (−1,1/2),(0,1),(1,2)를 지나며 증가한다. y=log₂x는 (1/2,−1),(1,0),(2,1)을 지나고, 앞 그래프와 좌표가 바뀐 점을 지난다.", "practice":"y=(1/3)ˣ의 증가·감소와 수평점근선을 말하세요.", "answer":"밑이 0과 1 사이이므로 감소하고, x축(y=0)이 수평점근선입니다.",
-        "prompt":"y=log₂x의 점근선은?", "options":["y축 x=0","x축 y=0","직선 y=x"], "correct":0,
-        "feedback":"로그함수의 정의역 경계인 x=0이 수직점근선입니다.", "wrong":"로그함수의 입력은 양수이므로 x=0에 가까워지는 모양을 살펴보세요.", "hints":["로그함수의 정의역은 x>0입니다.","그래프는 y축에 가까워지지만 만나지 않습니다."],
+        "prompt":"y=log₂x의 점근선은?", "options":["x=0 (y축)","x축 y=0","직선 y=x"], "correct":0,
+        "feedback":"로그함수의 정의역 경계인 x=0 (y축)이 수직점근선입니다.", "wrong":"로그함수의 입력은 양수이므로 x=0에 가까워지는 모양을 살펴보세요.", "hints":["로그함수의 정의역은 x>0입니다.","그래프는 y축에 가까워지지만 만나지 않습니다."],
     },
     {
         "code":"12대수01-08", "title":"지수함수·로그함수로 문제 해결", "lead":"매 시간 2배가 되는 양은 몇 시간이 지나면 8배가 될까?",
@@ -116,6 +116,22 @@ SPECS = [
 
 DEFERRED_EQEDIT_CODES = {"12대수03-03", "12대수03-04", "12대수03-05"}
 EXISTING_CODE = "12대수03-02"
+EXAMPLE_QUESTIONS = {
+    "12대수01-01": "81의 네제곱근 중 실수와 √81, x²=81의 실수 해를 각각 구분하세요.",
+    "12대수01-02": "16^(3/4)과 9^(−1/2)의 값을 구하세요.",
+    "12대수01-03": "2³·2⁵/2⁴와 (3²)³을 간단히 하세요.",
+    "12대수01-04": "log₂32와 log₃(27/9)의 값을 성질로 확인하세요.",
+    "12대수01-05": "1000과 100000의 상용로그 값, 두 수의 비를 구하세요.",
+    "12대수01-06": "y=2ˣ에서 x=3일 때의 대응과 역함수 y=log₂x에서 x=8일 때의 대응을 쓰세요.",
+    "12대수01-07": "y=2ˣ의 세 점과 y=log₂x의 대응하는 점을 나타내세요.",
+    "12대수01-08": "매 시간 2배가 되는 양이 8배가 되는 시간과, 시간마다 10% 증가할 때 n시간 뒤의 배율을 쓰세요.",
+    "12대수02-01": "반지름 3, 호의 길이 6인 부채꼴의 중심각과 60°의 라디안 값을 구하세요.",
+    "12대수02-02": "sin x의 0, π/2, π에서의 값과 tan x의 정의되지 않는 값 및 주기를 확인하세요.",
+    "12대수02-03": "a=3, b=4, C=90°인 삼각형에서 코사인법칙으로 c를 구하세요.",
+    "12대수03-01": "2,5,8,11,…의 규칙을 공차 3으로 정했을 때 일반항과, aₙ=n²인 수열을 나타내세요.",
+    "12대수03-06": "a₁=2, aₙ₊₁=aₙ+3일 때 a₂, a₃, a₄를 구하고 초기항의 역할을 설명하세요.",
+    "12대수03-07": "1+…+n=n(n+1)/2를 수학적 귀납법으로 증명하세요.",
+}
 
 
 def quiz(spec: dict, slug: str) -> dict:
@@ -129,6 +145,11 @@ def main() -> None:
     codes = [spec["code"] for spec in SPECS]
     if len(algebra) != 18 or set(codes) != expected or len(codes) != len(set(codes)):
         raise RuntimeError(f"Official Algebra scope mismatch: official={len(algebra)}, draft={len(codes)}, expected={sorted(expected)}")
+    if set(EXAMPLE_QUESTIONS) != set(codes):
+        raise RuntimeError("Every worked example must have a matching explicit question")
+    for spec in SPECS:
+        if spec["options"][spec["correct"]] not in spec["feedback"]:
+            raise RuntimeError(f"Quiz feedback does not affirm the selected answer for {spec['code']}")
     chapters = []
     page_ids = set()
     for spec in SPECS:
@@ -140,7 +161,7 @@ def main() -> None:
         pages = [
             {"id":slug+"-open", "template":"opening", "title":"질문으로 시작하기", "blocks":[{"type":"lead","title":"탐구 상황","text":spec["lead"]},{"type":"thinking","title":"먼저 생각하기","text":"조건과 정의역을 표시하고, 어떤 표현이나 관계를 찾아야 하는지 한 문장으로 적어 보세요."}]},
             {"id":slug+"-concept", "template":"concept", "title":"개념과 조건", "blocks":[{"type":"definition","title":"핵심 개념","text":spec["concept"]},{"type":"standard","title":"공식 기준 문구","text":f"{code}: {criterion}"},{"type":"misconception","title":"확인할 조건","text":"정의역, 부호, 인덱스 조건을 먼저 확인하고 성질을 적용합니다."}]},
-            {"id":slug+"-example", "template":"example", "title":"예제와 풀이", "blocks":[{"type":"question","title":"예제","text":spec["lead"]},{"type":"solutionStep","title":"풀이","text":spec["example"]},{"type":"verification","title":"확인","text":"조건을 만족하는지 대입하거나 그래프·관계식으로 검산합니다."}]},
+            {"id":slug+"-example", "template":"example", "title":"예제와 풀이", "blocks":[{"type":"question","title":"예제","text":EXAMPLE_QUESTIONS[code]},{"type":"solutionStep","title":"풀이","text":spec["example"]},{"type":"verification","title":"확인","text":"조건을 만족하는지 대입하거나 그래프·관계식으로 검산합니다."}]},
             {"id":slug+"-practice", "template":"practice", "title":"연습과 설명", "blocks":[{"type":"question","title":"연습","text":spec["practice"]},{"type":"hint","title":"힌트","text":spec["hints"][0]},{"type":"solutionStep","title":"풀이","text":spec["answer"]},{"type":"answer","title":"정답","text":spec["answer"]},quiz(spec,slug)]},
             {"id":slug+"-summary", "template":"summary", "title":"핵심 정리", "blocks":[{"type":"summary","title":"기준 연결","text":f"{code} · {spec['title']}"},{"type":"checklist","title":"스스로 확인","text":"핵심 개념을 설명하고, 예제의 조건과 계산을 검산할 수 있나요?"}]},
         ]

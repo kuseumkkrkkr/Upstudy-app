@@ -783,6 +783,71 @@ void main() {
     }
   });
 
+  testWidgets('Algebra Batch1 examples and all quizzes run', (tester) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final chapters = source['chapters'] as List<dynamic>;
+    expect(chapters, hasLength(14));
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final pages = chapter['pages'] as List<dynamic>;
+      final examplePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'example',
+              )
+              as Map<String, dynamic>;
+      final practicePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'practice',
+              )
+              as Map<String, dynamic>;
+      final exampleQuestion =
+          ((examplePage['blocks'] as List<dynamic>).singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      final practiceQuestion =
+          ((practicePage['blocks'] as List<dynamic>).singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      expect(exampleQuestion, isNotEmpty);
+      expect(practiceQuestion, isNotEmpty);
+      expect(exampleQuestion, isNot(practiceQuestion));
+    }
+
+    final activities = _activities(source);
+    expect(activities, hasLength(14));
+    for (final activity in activities) {
+      final options = activity['options'] as List<dynamic>;
+      final correctIndex = activity['correct_index'] as int;
+      final correctAnswer = options[correctIndex] as String;
+      final feedback = activity['correct_feedback'] as String;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookWidget(
+            book: _activityBook(activity),
+            initialEntryIndex: 0,
+            persistenceEnabled: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(correctAnswer));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('정답 확인'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+      expect(find.text(feedback), findsOneWidget);
+    }
+  });
+
   testWidgets('vector meaning V2 practice runs in the student reader', (
     tester,
   ) async {
