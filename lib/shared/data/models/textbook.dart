@@ -1,6 +1,7 @@
 import 'dart:convert';
 
 import 'package:flutter/material.dart';
+import 'book_activity.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 
 class BookData {
@@ -20,6 +21,7 @@ class BookData {
     this.curriculumVersion,
     this.standardCodes = const [],
     this.sourceSha256,
+    this.schemaVersion = 1,
   });
 
   final String id;
@@ -39,8 +41,13 @@ class BookData {
 
   /// SHA-256 of the UTF-8 author source, verified by the private import API.
   final String? sourceSha256;
+  final int schemaVersion;
 
   factory BookData.fromJson(Map<String, dynamic> json) {
+    final version = json['schema_version'] ?? 1;
+    if (version is! int || (version != 1 && version != 2)) {
+      throw const FormatException('Unsupported BookData schema version');
+    }
     final id = json['textbook_id']?.toString() ?? json['id']?.toString() ?? '';
     final title = json['title']?.toString() ?? '';
     final subtitle = json['subtitle']?.toString() ?? '';
@@ -52,7 +59,20 @@ class BookData {
     final createdAt = _readDate(json['created_at']);
     final updatedAt = _readDate(json['updated_at']);
     final createdBy = json['created_by']?.toString();
-    final chapters = _readChapters(json['chapters']);
+    final rawChapters = json['chapters'];
+    final chapters = _readChapters(
+      version == 2 && rawChapters is String
+          ? jsonDecode(rawChapters)
+          : rawChapters,
+    );
+    if (version == 1 &&
+        chapters.any(
+          (chapter) => chapter.pages.any(
+            (page) => page.blocks.any((block) => block.activity != null),
+          ),
+        )) {
+      throw const FormatException('Activities require BookData V2');
+    }
     return BookData(
       id: id,
       title: title,
@@ -69,11 +89,13 @@ class BookData {
       curriculumVersion: json['curriculum_version']?.toString(),
       standardCodes: _readStringList(json['standard_codes']),
       sourceSha256: json['source_sha256']?.toString(),
+      schemaVersion: version,
     );
   }
 
   Map<String, dynamic> toCreateJson() {
     return {
+      if (schemaVersion != 1) 'schema_version': schemaVersion,
       'title': title,
       'subtitle': subtitle,
       'category': category,
@@ -87,6 +109,7 @@ class BookData {
 
   Map<String, dynamic> toJson() {
     return {
+      if (schemaVersion != 1) 'schema_version': schemaVersion,
       'textbook_id': id,
       'title': title,
       'subtitle': subtitle,
@@ -107,6 +130,7 @@ class BookData {
 
   Map<String, dynamic> toLibraryJson() {
     return {
+      if (schemaVersion != 1) 'schema_version': schemaVersion,
       'textbook_id': id,
       'title': title,
       'subtitle': subtitle,
@@ -193,6 +217,7 @@ enum BookContentBlockType {
   misconception,
   summary,
   checklist,
+  activity,
 }
 
 /// 실제 교재의 한 지면을 나타낸다.
@@ -241,6 +266,7 @@ class BookContentBlock {
     this.rows = const [],
     this.visual,
     this.graph,
+    this.activity,
   });
 
   final BookContentBlockType type;
@@ -251,6 +277,7 @@ class BookContentBlock {
   final List<List<String>> rows;
   final BookVisual? visual;
   final AiFlowGraphDocument? graph;
+  final BookActivity? activity;
 
   Map<String, dynamic> toJson() => {
     'type': type.name,
@@ -261,6 +288,7 @@ class BookContentBlock {
     'rows': rows,
     if (visual != null) 'visual': visual!.toJson(),
     if (graph != null) 'graph': graph!.toJson(),
+    if (activity != null) 'activity': activity!.toJson(),
   };
 
   factory BookContentBlock.fromJson(Map<String, dynamic> json) =>
@@ -277,6 +305,11 @@ class BookContentBlock {
               )
             : null,
         graph: _readGraph(json['graph']),
+        activity: json['type'] == 'activity'
+            ? BookActivity.fromJson(
+                Map<String, dynamic>.from(json['activity'] as Map),
+              )
+            : null,
       );
 }
 

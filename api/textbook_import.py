@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import ast
+import copy
 import hashlib
 import json
 import math
 import re
+from api.book_activity import validate_activity
 
 MAX_SOURCE_BYTES = 512 * 1024
 TEMPLATES = set('opening concept principle experiment example solution practice summary'.split())
@@ -136,7 +138,11 @@ def validate_image(source):
 
 
 def validate_book(book):
-    object_fields(book, 'title subtitle category tags cover_color curriculum_version standard_codes chapters', 'book')
+    object_fields(book, 'schema_version title subtitle category tags cover_color curriculum_version standard_codes chapters', 'book')
+    version = book.get('schema_version', 1)
+    if type(version) is not int or version not in (1, 2):
+        raise ValueError('book.schema_version: only V1 and V2 are supported')
+    activity_ids = set()
     text(book.get('title'), 'book.title', 120)
     if not book['title'].strip():
         raise ValueError('book.title: required')
@@ -174,9 +180,19 @@ def validate_book(book):
             if page.get('template') not in TEMPLATES:
                 raise ValueError('page: unsupported template')
             for block in sequence(page.get('blocks'), 'page.blocks', 50):
-                object_fields(block, 'type title text formula items rows visual graph', 'block')
-                if block.get('type') not in BLOCKS:
-                    raise ValueError('block: unsupported type (native interactive quizzes are not supported)')
+                object_fields(block, 'type title text formula items rows visual graph activity', 'block')
+                if block.get('type') == 'activity':
+                    if version != 2:
+                        raise ValueError('block.activity: requires schema_version 2')
+                    validate_activity(block.get('activity'))
+                    activity_id = block['activity']['id']
+                    if activity_id in activity_ids:
+                        raise ValueError('block.activity: duplicate id')
+                    activity_ids.add(activity_id)
+                    if set(block) - {'type', 'title', 'text', 'activity', 'formula', 'items', 'rows'} or any(block.get(field) for field in ('formula', 'items', 'rows')):
+                        raise ValueError('block.activity: cannot mix other payloads')
+                elif block.get('type') not in BLOCKS or 'activity' in block:
+                    raise ValueError('block: unsupported type or activity payload')
                 for field in ('title', 'text', 'formula'):
                     text(block.get(field, ''), 'block.' + field)
                 strings(block.get('items', []), 'block.items')
@@ -200,6 +216,14 @@ def parse_import(source, expected_sha256):
     except (json.JSONDecodeError, RecursionError) as error:
         raise ValueError('source: invalid JSON') from error
     return validate_book(book), digest
+
+
+def migrate_v1_to_v2(book):
+    """Explicit lossless copy; never invent quiz answers or mutate author source."""
+    validate_book(book)
+    migrated = copy.deepcopy(book)
+    migrated['schema_version'] = 2
+    return validate_book(migrated)
 
 
 def _reject_constant(_):

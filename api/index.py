@@ -685,6 +685,7 @@ class UserStorageRequest(BaseModel):
 class TextbookCreateRequest(BaseModel):
     """인증된 학생의 개인 교재 초안. 원문 크기·개수 제한은 요청 경계에서 강제한다."""
 
+    schema_version: int = Field(default=1, ge=1, le=2, strict=True)
     title: str = Field(min_length=1, max_length=120)
     subtitle: str = Field(default="", max_length=300)
     tags: list[str] = Field(default_factory=list, max_length=32)
@@ -5170,6 +5171,7 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
     book = {
         "textbook_id": textbook_id,
         "title": title,
+        "schema_version": payload.schema_version,
         "subtitle": payload.subtitle.strip(),
         "category": payload.category,
         "curriculum_version": payload.curriculum_version,

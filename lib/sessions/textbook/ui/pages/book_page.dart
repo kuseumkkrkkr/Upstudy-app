@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
@@ -4035,6 +4036,13 @@ class _BookContentBlockView extends StatelessWidget {
     if (block.type == BookContentBlockType.visual && block.visual != null) {
       return _BookVisualCard(visual: block.visual!);
     }
+    if (block.type == BookContentBlockType.activity && block.activity != null) {
+      return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        if (block.title.isNotEmpty) buildParagraph(block.title),
+        if (block.text.isNotEmpty) buildParagraph(block.text),
+        BookActivityView(key: ValueKey(block.activity!.id), activity: block.activity!),
+      ]);
+    }
     if (block.type == BookContentBlockType.formula) {
       return _formulaCard(context);
     }
@@ -4279,6 +4287,7 @@ class _BookPaperPage extends StatelessWidget {
               (block) =>
                   block.visual != null ||
                   block.graph != null ||
+                  block.activity != null ||
                   block.formula.isNotEmpty ||
                   block.rows.isNotEmpty,
             ) ??
@@ -5059,6 +5068,7 @@ int _estimateEditorialBlockScore(BookContentBlock block) {
   score += block.items.fold<int>(0, (sum, item) => sum + item.length + 12);
 
   if (block.graph != null) score += 800;
+  if (block.activity != null) score += 1400;
   if (block.visual != null) score += 500;
   if (block.type == BookContentBlockType.formula) score += 320;
   return score;
@@ -5072,6 +5082,7 @@ List<BookContentBlock> _splitEditorialBlock(
   required int maxChars,
 }) {
   if (_estimateEditorialBlockScore(block) <= maxChars) return [block];
+  if (block.activity != null) return [block];
 
   if (block.items.isNotEmpty && block.items.length > 1) {
     final result = <BookContentBlock>[];
@@ -5154,6 +5165,8 @@ List<String> _editorialPageSearchText(BookPage page) => [
     if (block.title.isNotEmpty) block.title,
     if (block.text.isNotEmpty) block.text,
     if (block.formula.isNotEmpty) block.formula,
+    if (block.activity != null) block.activity!.prompt,
+    if (block.activity != null) ...block.activity!.options,
     ...block.items,
   ],
 ];

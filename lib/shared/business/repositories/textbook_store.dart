@@ -287,6 +287,7 @@ class TextbookStore {
       createdAt: book.createdAt,
       updatedAt: book.updatedAt,
       createdBy: book.createdBy,
+      schemaVersion: book.schemaVersion,
     );
   }
 

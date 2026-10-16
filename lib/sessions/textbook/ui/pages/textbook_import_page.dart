@@ -150,7 +150,7 @@ class _TextbookImportPageState extends State<TextbookImportPage> {
             ),
             const SizedBox(height: 16),
             const Text(
-              '공개 출판하지 않습니다. BookData의 본문·수식·그래프·슬라이더를 읽으며 임의 HTML/JavaScript는 가져오지 않습니다. 질문·힌트·정답 블록은 표시형이며, 독립 HTML의 점 드래그·거리 측정·입력 채점은 포함되지 않습니다.',
+              '공개 출판하지 않습니다. 본문·수식·그래프와 V2에 등록된 체험·연습 답 확인·단계별 힌트를 지원합니다. 임의 HTML/JavaScript는 실행하지 않으며, 독립 HTML은 V2 데이터로 명시적으로 변환해야 합니다. V1 질문·힌트·정답 블록은 표시형으로 유지됩니다.',
             ),
             const SizedBox(height: 20),
             OutlinedButton.icon(

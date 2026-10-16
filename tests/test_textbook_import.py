@@ -57,7 +57,8 @@ def test_supported_arithmetic_is_accepted(expression):
     validate_expression(expression, ['p'])
 
 
-def test_import_retries_and_owner_scope(monkeypatch):
+@pytest.mark.parametrize('version', [1, 2])
+def test_import_retries_and_owner_scope(monkeypatch, version):
     module = importlib.import_module('api.index')
     secret = 'textbook-import-test-secret-32-chars-minimum'
     monkeypatch.setenv('OMJ_JWT_SECRET', secret)
@@ -85,7 +86,13 @@ def test_import_retries_and_owner_scope(monkeypatch):
     def headers(user):
         return {'Authorization': 'Bearer ' + jwt.encode({'sub': user, 'exp': int(time.time()) + 300}, secret, algorithm='HS256')}
     with TestClient(module.app) as client:
-        payload = body()
+        source_book = draft()
+        if version == 2:
+            source_book['schema_version'] = 2
+            source_book['chapters'][0]['pages'][0]['blocks'].append({
+                'type': 'activity', 'activity': {'id': 'quiz-owner-scope', 'kind': 'quiz',
+                    'prompt': 'Half?', 'answer': .5, 'correct_feedback': 'Yes', 'incorrect_feedback': 'Retry'}})
+        payload = body(source_book)
         with ThreadPoolExecutor(max_workers=8) as pool:
             responses = list(pool.map(lambda _: client.post('/textbooks/import', json=payload, headers=headers('owner')), range(24)))
         assert all(response.status_code == 201 for response in responses)
@@ -93,7 +100,8 @@ def test_import_retries_and_owner_scope(monkeypatch):
         assert all(book == books[0] for book in books)
         assert len(store.rows) == 1
         saved = books[0]
-        assert saved['chapters'] == draft()['chapters']
+        assert saved['chapters'] == source_book['chapters']
+        assert saved.get('schema_version', 1) == version
         assert saved['curriculum_version'] == '2022' and saved['category'] == 'concept_textbook_prototype'
         assert client.get('/textbooks/' + saved['textbook_id'], headers=headers('owner')).json() == saved
         assert client.get('/textbooks/' + saved['textbook_id'], headers=headers('other')).status_code == 404
