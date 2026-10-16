@@ -39,5 +39,7 @@
   "integration_status": "candidate_for_tag_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }
