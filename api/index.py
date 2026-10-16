@@ -698,6 +698,7 @@ class TextbookCreateRequest(BaseModel):
     category: str = Field(default='custom', max_length=64)
     curriculum_version: str = Field(default='', max_length=40)
     standard_codes: list[str] = Field(default_factory=list, max_length=32)
+    candidate_standard_codes: list[str] | None = Field(default=None, max_length=32)
 
 
 class ServerChatMessageRequest(BaseModel):

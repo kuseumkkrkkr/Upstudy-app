@@ -18,7 +18,10 @@ def draft():
              'settings': {'parameters': [{'id': 'p', 'value': 2, 'min': .5, 'max': 3, 'step': .5}]}}
     return {'title': 'Synthetic private prototype', 'category': 'concept_textbook_prototype',
             'curriculum_version': '2022', 'standard_codes': ['12기하01-01'],
-            'chapters': [{'title': 'Chapter', 'sections': [{'title': 'Explanation', 'paragraphs': ['Keep this text'], 'graph': graph}],
+            'candidate_standard_codes': ['10공수2-03-05'],
+            'chapters': [{'title': 'Chapter', 'candidate_standard_codes': ['10공수2-03-05'],
+                          'source_html_reference': 'source-demo.html',
+                          'sections': [{'title': 'Explanation', 'paragraphs': ['Keep this text'], 'graph': graph}],
                           'pages': [{'id': 'experiment', 'template': 'experiment', 'title': 'Experiment', 'blocks': [
                               {'type': 'graph', 'title': 'Plot', 'text': 'Keep graph explanation', 'graph': graph},
                               {'type': 'question', 'text': 'A display-only question'},
