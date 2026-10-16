@@ -169,6 +169,7 @@ enum BookContentBlockType {
   thinking,
   solutionStep,
   verification,
+  activity,
   hint,
   answer,
   misconception,
@@ -222,6 +223,7 @@ class BookContentBlock {
     this.rows = const [],
     this.visual,
     this.graph,
+    this.activity,
   });
 
   final BookContentBlockType type;
@@ -233,6 +235,9 @@ class BookContentBlock {
   final BookVisual? visual;
   final AiFlowGraphDocument? graph;
 
+  /// Original activity payload, kept opaque so new activity kinds survive older readers.
+  final Map<String, dynamic>? activity;
+
   Map<String, dynamic> toJson() => {
     'type': type.name,
     'title': title,
@@ -242,6 +247,7 @@ class BookContentBlock {
     'rows': rows,
     if (visual != null) 'visual': visual!.toJson(),
     if (graph != null) 'graph': graph!.toJson(),
+    if (activity != null) 'activity': activity,
   };
 
   factory BookContentBlock.fromJson(Map<String, dynamic> json) =>
@@ -258,6 +264,7 @@ class BookContentBlock {
               )
             : null,
         graph: _readGraph(json['graph']),
+        activity: _readJsonMap(json['activity']),
       );
 }
 
@@ -465,6 +472,11 @@ BookContentBlockType _readContentBlockType(dynamic value) =>
       (item) => item.name == value?.toString(),
       orElse: () => BookContentBlockType.paragraph,
     );
+
+Map<String, dynamic>? _readJsonMap(dynamic value) {
+  if (value is! Map) return null;
+  return value.map((key, entry) => MapEntry(key.toString(), entry));
+}
 
 List<BookChapter> _readChapters(dynamic value) {
   if (value == null) return const [];

@@ -2,6 +2,8 @@
   "title": "미적분Ⅰ 개념서 · 미분계수",
   "subtitle": "할선의 기울기를 양쪽에서 가까이 보내 접선의 기울기 이해하기",
   "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": ["12미적Ⅰ-02-01"],
   "tags": ["미적분Ⅰ", "미분계수", "평균변화율", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-01"],
   "chapters": [
     {

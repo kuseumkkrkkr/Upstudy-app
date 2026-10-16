@@ -129,9 +129,9 @@ def main() -> None:
         "",
         "## 상품별 집계",
         "",
-        "동일 판본 prefix tag 수는 재귀 BookData에서 확인한 고유 기준 코드 수다. 중학교 9수는 학년군 기준이므로 개별 학기·상품에 배분한 수치가 아니다.",
+        "아래 태그 수는 재귀 원고 인벤토리에서 해당 판본·prefix 코드가 발견된 수다. 중학교 #1–#12는 학년군 후보 전체의 인벤토리 수이며 학기/상품 귀속 수가 아니다. #13–#14는 같은 공식 <수학> 코드 목록을 기준선으로 함께 표시하므로 분권 배정 전까지 두 상품의 완료 수로 해석하지 않는다. 나머지도 상품별 본문 충족은 검수하지 않았다.",
         "",
-        "| # | 상품 | 증거 종류 | 공식 기준 항목 | 동일 판본 prefix tag 코드 수 | 상태 |",
+        "| # | 상품 | 증거 종류 | 공식 기준 항목 | 판본/prefix 태그 인벤토리 코드 수 | 상태 |",
         "|---:|---|---|---:|---:|---:|---|",
     ]
     per_product: dict[int, list[tuple[str, str]]] = {}
@@ -146,7 +146,8 @@ def main() -> None:
             per_product[number] = [(code, standards[filename][code]) for code in codes]
             edition = "2022"
         matched = sum(any(tag_edition == edition for _, tag_edition in tagged.get(code, [])) for code in codes)
-        lines.append(f"| {number} | {catalog[number]} | {edition} 공식 성취기준 | {len(codes)} | {matched} | 미완 · {boundary}; 내용 검수 필요 |")
+        displayed = "분권 미확정" if number in {13, 14} else str(matched)
+        lines.append(f"| {number} | {catalog[number]} | {edition} 공식 성취기준 | {len(codes)} | {displayed} | 미완 · {boundary}; 내용 검수 필요 |")
 
     lines += ["", "## 코드별 연결 근거", ""]
     for number, (filename, prefix, boundary) in PRODUCTS.items():

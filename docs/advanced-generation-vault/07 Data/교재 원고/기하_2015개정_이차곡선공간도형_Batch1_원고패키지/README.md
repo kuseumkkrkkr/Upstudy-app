@@ -4,9 +4,7 @@
 
 ## 앱 호환성 확인
 
-`BookData.fromJson`은 12개 모듈과 60페이지를 파싱하지만, 현재 앱 `BookContentBlock`은 `activity`를 지원하지 않습니다. parse→serialize 왕복에서 신규 퀴즈 activity 12개가 모두 사라져 네이티브 퀴즈 importer 호환성은 실패입니다.
-
-필요한 앱 계약: `activity` 타입과 payload를 모델 왕복에서 보존하고, `quiz`를 학생·교사 읽기 화면에서 선택·피드백까지 렌더링합니다. 미지원 activity를 조용히 버리지 않는 fallback, 왕복 단위 테스트, 두 읽기 화면 상호작용 테스트도 필요합니다.
+`BookData.fromJson`→`toJson` 왕복에서 quiz activity 12개 payload가 모두 보존됩니다. 호환성 테스트는 학생 `BookWidget`과 교사 코스 읽기 화면에서 선택·피드백 상호작용까지 확인했습니다. HTML은 별도 자산이며 앱 실행·화면 동등성은 미검증입니다.
 
 신규 가상 예시는 수학 교사 검수와 권리 결정을 기다리므로 출판 부적격입니다.
 

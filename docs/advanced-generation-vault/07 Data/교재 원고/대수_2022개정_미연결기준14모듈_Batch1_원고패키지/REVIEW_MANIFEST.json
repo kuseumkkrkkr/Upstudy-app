@@ -56,7 +56,7 @@
   "teacher_review_status": "pending",
   "rights_status": "newly authored text pending rights decision; referenced HTML assets pending source review",
   "interactive_status": "HTML files remain separate; app execution and screen parity unverified",
-  "app_model_roundtrip_status": "parser accepts chapters and pages, but BookContentBlock drops activity payloads on serialization; native quiz compatibility failed",
+  "app_model_roundtrip_status": "passed: all 14 quiz payloads preserved exactly; student and teacher course-reader selection/feedback tests passed",
   "integration_status": "tag-driven unit integration output; source BookData page payloads preserved",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "pending_current_hash_validation",

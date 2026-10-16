@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
+import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -3494,6 +3495,9 @@ class _BookContentBlockView extends StatelessWidget {
     if (block.type == BookContentBlockType.visual && block.visual != null) {
       return _BookVisualCard(visual: block.visual!);
     }
+    if (block.type == BookContentBlockType.activity && block.activity != null) {
+      return TextbookActivityBlock(activity: block.activity!);
+    }
     if (block.type == BookContentBlockType.formula) {
       return _formulaCard(context);
     }
@@ -3684,6 +3688,11 @@ class _BookContentBlockView extends StatelessWidget {
           const Color(0xFF4C5D87),
           const Color(0x224C5D87),
         ),
+        BookContentBlockType.activity => (
+          const Color(0xFFEFF7F1),
+          const Color(0xFF286443),
+          const Color(0x22286443),
+        ),
         BookContentBlockType.misconception => (
           const Color(0xFFFFF3F1),
           const Color(0xFFA24738),
@@ -3704,6 +3713,7 @@ class _BookContentBlockView extends StatelessWidget {
     BookContentBlockType.verification => Icons.fact_check_outlined,
     BookContentBlockType.hint => Icons.tips_and_updates_outlined,
     BookContentBlockType.answer => Icons.check_circle_outline_rounded,
+    BookContentBlockType.activity => Icons.quiz_outlined,
     BookContentBlockType.misconception => Icons.warning_amber_rounded,
     BookContentBlockType.definition => Icons.menu_book_outlined,
     _ => Icons.auto_awesome_outlined,

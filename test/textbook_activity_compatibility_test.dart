@@ -1,0 +1,189 @@
+import 'dart:convert';
+import 'dart:io';
+
+import 'package:flutter/material.dart';
+import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
+import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
+import 'package:s11/shared/data/models/textbook.dart';
+import 'package:s11/shared/ui/components/textbook_activity_block.dart';
+
+const _draftPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json',
+];
+
+void main() {
+  for (final path in _draftPaths) {
+    test('$path preserves activity payloads through BookData round-trip', () {
+      final source =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final expected = _activities(source);
+      final parsed = BookData.fromJson(source);
+      final actual = _activities(parsed.toJson());
+
+      expect(expected, isNotEmpty);
+      expect(actual, expected);
+    });
+  }
+
+  testWidgets('quiz supports selection, feedback, hints, and retry', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: SingleChildScrollView(
+            child: TextbookActivityBlock(
+              activity: {
+                'id': 'quiz-round-trip',
+                'kind': 'quiz',
+                'prompt': '2 + 3은?',
+                'options': ['4', '5'],
+                'correct_index': 1,
+                'correct_feedback': '정답입니다.',
+                'incorrect_feedback': '다시 계산해 보세요.',
+                'hints': ['2와 3을 더합니다.'],
+              },
+            ),
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('2 + 3은?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quiz-option-1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다.'), findsOneWidget);
+
+    await tester.tap(find.text('다시 풀기'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다.'), findsNothing);
+
+    await tester.tap(find.text('힌트 보기'));
+    await tester.pumpAndSettle();
+    expect(find.text('1. 2와 3을 더합니다.'), findsOneWidget);
+  });
+
+  testWidgets('unknown activity remains visible as an explicit fallback', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      const MaterialApp(
+        home: Scaffold(
+          body: TextbookActivityBlock(
+            activity: {
+              'kind': 'interactive_graph',
+              'prompt': '원래 prompt는 표시되어야 합니다.',
+            },
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('지원하지 않는 활동: interactive_graph'), findsOneWidget);
+    expect(find.text('원래 prompt는 표시되어야 합니다.'), findsOneWidget);
+  });
+
+  testWidgets('student BookWidget displays and runs page-based quiz blocks', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _quizBook(),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 + 3은?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quiz-option-1')));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다.'), findsOneWidget);
+  });
+
+  testWidgets('teacher course reader displays and runs page-based quizzes', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TeacherCourseTextbookReaderPage(
+          courseId: 'compatibility-course',
+          moduleId: 'compatibility-module',
+          textbookId: 'compatibility-book',
+          pageFrom: 1,
+          pageTo: 1,
+          minMinutes: 0,
+          previewBook: _quizBook(),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text('2 + 3은?'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('quiz-option-1')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다.'), findsOneWidget);
+  });
+}
+
+BookData _quizBook() => BookData(
+  id: 'quiz-book',
+  title: 'Activity 호환성 교재',
+  subtitle: '',
+  chapters: [
+    BookChapter(
+      title: '퀴즈 단원',
+      intro: const [],
+      sections: const [],
+      pages: [
+        BookPage(
+          id: 'quiz-page',
+          template: BookPageTemplate.practice,
+          title: '퀴즈 연습',
+          blocks: [
+            BookContentBlock(
+              type: BookContentBlockType.activity,
+              activity: {
+                'id': 'quiz-reader-integration',
+                'kind': 'quiz',
+                'prompt': '2 + 3은?',
+                'options': ['4', '5'],
+                'correct_index': 1,
+                'correct_feedback': '정답입니다.',
+                'incorrect_feedback': '다시 계산해 보세요.',
+                'hints': ['2와 3을 더합니다.'],
+              },
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+);
+
+List<Map<String, dynamic>> _activities(Map<String, dynamic> book) =>
+    (book['chapters'] as List)
+        .whereType<Map>()
+        .expand((chapter) => (chapter['pages'] as List? ?? const []))
+        .whereType<Map>()
+        .expand((page) => (page['blocks'] as List? ?? const []))
+        .whereType<Map>()
+        .where((block) => block['type'] == 'activity')
+        .map((block) => Map<String, dynamic>.from(block['activity'] as Map))
+        .toList(growable: false);

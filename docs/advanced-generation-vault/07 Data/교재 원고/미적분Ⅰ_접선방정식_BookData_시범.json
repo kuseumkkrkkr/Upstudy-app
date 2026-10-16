@@ -2,6 +2,8 @@
   "title": "미적분Ⅰ 개념서 · 접선의 방정식",
   "subtitle": "접점과 도함수로 접선을 만들고 검산하기",
   "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": ["12미적Ⅰ-02-05"],
   "tags": ["미적분Ⅰ", "미분계수", "접선의 방정식", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-05"],
   "chapters": [
     {

@@ -2,6 +2,8 @@
   "title": "미적분Ⅰ 개념서 · 합과 곱의 미분법",
   "subtitle": "변화량의 합과 곱의 두 변화 경로 비교하기",
   "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": ["12미적Ⅰ-02-04"],
   "tags": ["미적분Ⅰ", "다항함수의 미분", "곱의 미분법", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-04"],
   "chapters": [
     {

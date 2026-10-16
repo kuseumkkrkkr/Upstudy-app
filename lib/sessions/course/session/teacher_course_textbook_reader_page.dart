@@ -10,6 +10,7 @@ import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
+import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 import 'package:s11/sessions/course/session/course_textbook_annotation_canvas.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_example_catalog.dart';
@@ -247,6 +248,30 @@ class _TeacherCourseTextbookReaderPageState
     final pages = <_ReaderPage>[];
     var pageNo = 1;
     for (final chapter in book.chapters) {
+      if (chapter.pages.isNotEmpty) {
+        for (var index = 0; index < chapter.pages.length; index++) {
+          final sourcePage = chapter.pages[index];
+          final kind = _readerKindForTemplate(sourcePage.template);
+          pages.add(
+            _ReaderPage(
+              number: pageNo++,
+              chapter: chapter.title,
+              title: sourcePage.title,
+              sectionTitle: sourcePage.title,
+              paragraphs: _flattenPageBlocks(sourcePage.blocks),
+              kind: kind,
+              kicker: sourcePage.kicker.isEmpty
+                  ? _pageKicker(kind)
+                  : sourcePage.kicker,
+              tags: book.tags,
+              sectionPage: index + 1,
+              sectionPageCount: chapter.pages.length,
+              blocks: sourcePage.blocks,
+            ),
+          );
+        }
+        continue;
+      }
       final intro = _normalizeParagraphs(chapter.intro);
       final generatedIntro =
           intro.length == 1 &&
@@ -303,6 +328,54 @@ class _TeacherCourseTextbookReaderPageState
     }
     return pages;
   }
+
+  _ReaderPageKind _readerKindForTemplate(BookPageTemplate template) =>
+      switch (template) {
+        BookPageTemplate.opening => _ReaderPageKind.opening,
+        BookPageTemplate.concept => _ReaderPageKind.concept,
+        BookPageTemplate.principle ||
+        BookPageTemplate.experiment => _ReaderPageKind.principle,
+        BookPageTemplate.example ||
+        BookPageTemplate.solution ||
+        BookPageTemplate.practice => _ReaderPageKind.example,
+        BookPageTemplate.summary => _ReaderPageKind.summary,
+      };
+
+  List<String> _flattenPageBlocks(List<BookContentBlock> blocks) {
+    final text = <String>[];
+    for (final block in blocks) {
+      text.addAll([block.title, block.text, block.formula]);
+      text.addAll(block.items);
+      for (final row in block.rows) {
+        text.addAll(row);
+      }
+      if (block.visual != null) {
+        text.addAll([
+          block.visual!.title,
+          block.visual!.caption,
+          block.visual!.formula,
+          ...block.visual!.items,
+          ...block.visual!.rows.expand((row) => row),
+        ]);
+      }
+      final activity = block.activity;
+      if (activity != null) {
+        text.add(activity['prompt']?.toString() ?? '');
+        text.addAll(_stringValues(activity['options']));
+        text.addAll(_stringValues(activity['hints']));
+        text.add(activity['correct_feedback']?.toString() ?? '');
+        text.add(activity['incorrect_feedback']?.toString() ?? '');
+      }
+    }
+    return text
+        .map((value) => value.trim())
+        .where((value) => value.isNotEmpty)
+        .toList();
+  }
+
+  List<String> _stringValues(dynamic value) => value is List
+      ? value.map((item) => item?.toString() ?? '').toList(growable: false)
+      : const [];
 
   List<_ReaderPage> _buildFallbackPages(BookData book) {
     return [
@@ -1348,6 +1421,7 @@ class _ReaderPage {
     this.images = const [],
     this.tags = const [],
     this.graph,
+    this.blocks = const [],
   });
 
   final int number;
@@ -1362,6 +1436,7 @@ class _ReaderPage {
   final List<String> images;
   final List<String> tags;
   final AiFlowGraphDocument? graph;
+  final List<BookContentBlock> blocks;
 }
 
 class _PaperPage extends StatelessWidget {
@@ -1521,11 +1596,13 @@ class _PaperPage extends StatelessWidget {
             SizedBox(height: compact ? 11 : 18),
             Expanded(
               child: SingleChildScrollView(
-                child: _buildEditorialBody(
-                  body: body,
-                  formula: formula,
-                  bodySize: bodySize,
-                ),
+                child: page.blocks.isNotEmpty
+                    ? _buildStructuredBody(page.blocks, bodySize)
+                    : _buildEditorialBody(
+                        body: body,
+                        formula: formula,
+                        bodySize: bodySize,
+                      ),
               ),
             ),
             SizedBox(height: compact ? 8 : 14),
@@ -1578,6 +1655,97 @@ class _PaperPage extends StatelessWidget {
       _ReaderPageKind.example => _buildExampleBody(body, formula, bodySize),
       _ReaderPageKind.summary => _buildSummaryBody(body, formula, bodySize),
     };
+  }
+
+  Widget _buildStructuredBody(List<BookContentBlock> blocks, double bodySize) =>
+      Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          for (final block in blocks)
+            if (block.type == BookContentBlockType.activity &&
+                block.activity != null)
+              TextbookActivityBlock(activity: block.activity!)
+            else if (block.type == BookContentBlockType.graph &&
+                block.graph != null &&
+                renderGraph)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 8),
+                child: _TextbookGraph(
+                  document: block.graph!,
+                  pageNumber: page.number,
+                  compact: compact,
+                  caption: block.title.isEmpty ? page.title : block.title,
+                ),
+              )
+            else
+              _buildStructuredBlock(block, bodySize),
+        ],
+      );
+
+  Widget _buildStructuredBlock(BookContentBlock block, double bodySize) {
+    final visual = block.visual;
+    final rows = block.rows.isNotEmpty ? block.rows : visual?.rows ?? const [];
+    final items = block.items.isNotEmpty
+        ? block.items
+        : visual?.items ?? const [];
+    final title = block.title.isNotEmpty ? block.title : visual?.title ?? '';
+    final text = block.text.isNotEmpty ? block.text : visual?.caption ?? '';
+    final formula = block.formula.isNotEmpty
+        ? block.formula
+        : visual?.formula ?? '';
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(vertical: 7),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFFF6F7F3),
+        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: const Color(0xFFDCE3DB)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (title.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8),
+              child: Text(
+                title,
+                style: const TextStyle(fontWeight: FontWeight.w700),
+              ),
+            ),
+          if (text.isNotEmpty)
+            _LatexText(text: text, fontSize: bodySize, height: 1.75),
+          if (formula.isNotEmpty) ...[
+            const SizedBox(height: 8),
+            _FormulaCard(
+              formula: formula,
+              compact: compact,
+              textScale: textScale,
+              label: 'FORMULA',
+            ),
+          ],
+          for (var index = 0; index < items.length; index++)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: _LatexText(
+                text: '${index + 1}. ${items[index]}',
+                fontSize: bodySize,
+                height: 1.65,
+              ),
+            ),
+          for (final row in rows)
+            Padding(
+              padding: const EdgeInsets.only(top: 6),
+              child: Text(row.join(' · ')),
+            ),
+          if (visual?.imageSource.isNotEmpty == true)
+            Padding(
+              padding: const EdgeInsets.only(top: 8),
+              child: Text('자료: ${visual!.imageSource}'),
+            ),
+        ],
+      ),
+    );
   }
 
   /// 필요한 변수는 단원 소개 원문과 본문 크기다.

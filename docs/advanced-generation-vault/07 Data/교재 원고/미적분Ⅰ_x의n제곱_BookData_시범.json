@@ -2,6 +2,8 @@
   "title": "미적분Ⅰ 개념서 · xⁿ의 도함수",
   "subtitle": "차분몫을 전개해 n xⁿ⁻¹이 남는 이유 찾기",
   "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": ["12미적Ⅰ-02-03"],
   "tags": ["미적분Ⅰ", "도함수", "거듭제곱함수", "시범", "판본 대조 전", "성취기준 후보: 12미적Ⅰ-02-03"],
   "chapters": [
     {
