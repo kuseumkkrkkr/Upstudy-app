@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 두 집합 사이의 포함 관계 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-02"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-02",
+    "수와 연산",
+    "두 집합 사이의 포함 관계",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "두 집합 사이의 포함 관계",
+      "standard_codes": [
+        "10수학03-02"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-02",
+        "수와 연산",
+        "두 집합 사이의 포함 관계",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0302-집합포함관계-opening",
+          "template": "opening",
+          "title": "두 집합 사이의 포함 관계",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A={1,2}, B={1,2,3}일 때 포함 관계를 설명하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "A는 B의 진부분집합입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0302-집합포함관계-concept",
+          "template": "concept",
+          "title": "두 집합 사이의 포함 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "집합 A의 모든 원소가 집합 B에도 들어 있으면 A는 B의 부분집합이며 A⊂B 또는 A⊆B로 나타냅니다. A=B인지 판단하려면 A⊆B와 B⊆A가 모두 성립하는지 확인합니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0302-집합포함관계-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={1,2}, B={1,2,3}일 때 포함 관계를 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "A의 원소 1과 2를 각각 확인합니다.",
+                "두 원소가 모두 B에 있으므로 A⊆B입니다.",
+                "3은 A에 없으므로 B⊆A는 성립하지 않습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "A는 B의 진부분집합입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0302-집합포함관계-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A={2,4}, B={1,2,3,4}일 때 참인 포함 관계를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "A의 두 원소가 모두 B에 있습니다.",
+                "B에는 A에 없는 원소 1,3도 있습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "A⊂B"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0302-집합포함관계-quiz",
+                "kind": "quiz",
+                "prompt": "A={a,b}, B={a,b}일 때 옳은 것은 무엇인가요?",
+                "options": [
+                  "A=B이고 A⊆B이다",
+                  "A⊂B만 성립한다",
+                  "A와 B는 서로소이다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 집합의 원소가 같으므로 서로 부분집합이며 같은 집합입니다.",
+                "incorrect_feedback": "양쪽 집합의 원소를 각각 모두 확인하세요.",
+                "hints": [
+                  "양쪽 집합의 원소를 각각 모두 확인하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

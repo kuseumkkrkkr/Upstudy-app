@@ -13,7 +13,7 @@ OUT = MANUSCRIPTS / "2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md"
 # authored prose. Status describes the evidence strength, never completion.
 MAPPING: dict[str, tuple[str | None, str]] = {
     "10수학01-01": ("다항식의 덧셈과 뺄셈", "title candidate"),
-    "10수학01-02": (None, "no chapter candidate"),
+    "10수학01-02": ("항등식의 성질과 계수 비교", "new V2 candidate pending review"),
     "10수학01-03": ("나머지정리와 인수정리", "title candidate"),
     "10수학01-04": ("다항식의 인수분해", "title candidate"),
     "10수학01-05": ("복소수의 뜻과 연산", "title candidate"),
@@ -26,28 +26,28 @@ MAPPING: dict[str, tuple[str | None, str]] = {
     "10수학01-12": ("인수분해를 이용한 삼차방정식", "partial: quartic not evidenced"),
     "10수학01-13": ("대입법으로 푸는 연립이차방정식", "title candidate"),
     "10수학01-14": ("연립일차부등식과 공통 해", "title candidate"),
-    "10수학01-15": (None, "no chapter candidate"),
+    "10수학01-15": ("절댓값을 포함한 일차부등식", "new V2 candidate pending review"),
     "10수학01-16": ("이차부등식의 해", "partial topic candidate"),
     "10수학02-01": ("두 점 사이의 거리와 선분의 중점", "title candidate"),
     "10수학02-02": ("두 점 사이의 거리와 선분의 중점", "partial: division points not evidenced"),
     "10수학02-03": ("기울기와 직선의 방정식", "title candidate"),
     "10수학02-04": ("평행한 직선과 수직인 직선의 방정식", "title candidate"),
-    "10수학02-05": (None, "no chapter candidate"),
+    "10수학02-05": ("점과 직선 사이의 거리", "new V2 candidate pending review"),
     "10수학02-06": ("원의 표준형과 중심·반지름", "title candidate"),
     "10수학02-07": ("직선과 원의 교점 및 접선", "title candidate"),
     "10수학02-08": ("좌표평면에서 평행이동과 대칭이동", "title candidate"),
     "10수학02-09": ("좌표평면에서 평행이동과 대칭이동", "partial topic candidate"),
     "10수학03-01": ("집합의 합집합과 교집합", "partial topic candidate"),
-    "10수학03-02": (None, "no chapter candidate"),
+    "10수학03-02": ("두 집합 사이의 포함 관계", "new V2 candidate pending review"),
     "10수학03-03": ("집합의 합집합과 교집합", "title candidate"),
-    "10수학03-04": ("명제와 조건", "title candidate"),
-    "10수학03-05": (None, "no chapter candidate"),
-    "10수학03-06": (None, "no chapter candidate"),
-    "10수학03-07": (None, "no chapter candidate"),
-    "10수학03-08": (None, "no chapter candidate"),
+    "10수학03-04": ("명제와 조건", "partial: quantifier statements not evidenced"),
+    "10수학03-05": ("명제의 역과 대우", "new V2 candidate pending review"),
+    "10수학03-06": ("충분조건과 필요조건", "new V2 candidate pending review"),
+    "10수학03-07": ("대우를 이용한 증명과 귀류법", "new V2 candidate pending review"),
+    "10수학03-08": ("절대부등식의 뜻과 증명", "new V2 candidate pending review"),
     "10수학04-01": ("함수의 뜻과 대응", "title candidate"),
-    "10수학04-02": (None, "no chapter candidate"),
-    "10수학04-03": (None, "no chapter candidate"),
+    "10수학04-02": ("함수의 합성과 합성함수", "new V2 candidate pending review"),
+    "10수학04-03": ("역함수의 의미와 구하기", "new V2 candidate pending review"),
     "10수학04-04": ("유리함수의 기본 꼴", "title candidate"),
     "10수학04-05": ("무리함수의 정의역과 그래프", "title candidate"),
     "10수학05-01": ("합의 법칙과 곱의 법칙", "title candidate"),
@@ -81,6 +81,7 @@ def main() -> None:
     title_links = 0
     no_candidates = 0
     partial = 0
+    new_v2 = 0
     for code in codes:
         title, status = MAPPING[code]
         if title is None:
@@ -93,8 +94,10 @@ def main() -> None:
             evidence = f"`{folder}/{book_name}` · {title} · {pages}쪽"
             if status == "title candidate":
                 title_links += 1
-            else:
+            elif status.startswith("partial"):
                 partial += 1
+            else:
+                new_v2 += 1
         rows.append(f"| `{code}` | {standards[code]} | {evidence} | {status} |")
 
     lines = [
@@ -102,7 +105,7 @@ def main() -> None:
         "",
         "공식 2015 별책 8의 `<수학>` 기준 41개를 현재 상·하 통합 BookData의 chapter 제목과 대조한 작업 원장이다. 이 문서는 공식 상·하 분권을 확정하지 않는다.",
         "",
-        f"집계: 공식 기준 {len(codes)}개, 제목 후보 {title_links}개, 복합·부분 후보 {partial}개, chapter 후보 없음 {no_candidates}개.",
+        f"집계: 공식 기준 {len(codes)}개, 기존 제목 후보 {title_links}개, 복합·부분 후보 {partial}개, 신규 V2 후보 {new_v2}개, chapter 후보 없음 {no_candidates}개.",
         "모든 원고 파일의 `curriculum_version` 및 기준 코드 태그는 미기록이다. 제목 후보는 범위 신호일 뿐, 페이지 본문 충족·수학 정확성·교사 검토·권리 승인을 뜻하지 않는다. `partial` 표시는 공식 문구의 구성 요소 중 현재 제목만으로 대조할 수 없는 부분이 있거나, 그 기준 전체를 다루지 않는 것이 확인된 경우다.",
         "",
         "| 공식 코드 | 공식 기준 | 원고 chapter 후보 | 대조 상태 |",
@@ -111,8 +114,8 @@ def main() -> None:
         "",
         "## 출판·재개 판단",
         "",
-        "- 두 통합본은 20개 상권 chapter와 9개 하권 chapter로 구성되어 있으나, 공식 기준 코드를 담지 않고 `standard_code_status=not_crosschecked`로 표시한다.",
-        "- `no chapter candidate` 및 `partial` 기준을 우선 원고 범위표에 올리고, 페이지 본문 작성 후 코드별 tag를 추가해야 한다. 공식 교육과정에는 상·하권 경계가 없으므로 코드 연결만으로 각 상품 완료를 계산하지 않는다.",
+        "- 통합본은 상권 23개·하권 16개 chapter다. 신규 10개 코드는 chapter/root에 명시하고 있으나 상·하권은 `editorial_split_candidate`이며 공식 분권이 아니다.",
+        "- 신규 V2 10개는 도입·개념·예제·연습과 native quiz를 갖춘 후보이며, 기준 문구 전체에 대한 내용 충족은 독립 검토 전이다. 공식 교육과정에는 상·하권 경계가 없으므로 코드 연결만으로 각 상품 완료를 계산하지 않는다.",
         "- 기존 소단원 원고는 정의·질문·풀이·오답 점검 block을 포함하는 정적 BookData다. 해당 29개 장에는 선언형 activity가 확인되지 않아 interactive HTML 자산의 동등성이나 앱 동작을 주장하지 않는다.",
         "- 교사·독립 수학검토와 원고 권리 근거가 없으므로 이 대조로 게시 자격을 부여하지 않는다.",
         "",

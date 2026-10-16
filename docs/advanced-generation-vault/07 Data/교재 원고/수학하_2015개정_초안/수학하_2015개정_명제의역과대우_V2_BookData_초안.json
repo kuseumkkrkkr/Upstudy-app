@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 명제의 역과 대우 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-05"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-05",
+    "수와 연산",
+    "명제의 역과 대우",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "명제의 역과 대우",
+      "standard_codes": [
+        "10수학03-05"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-05",
+        "수와 연산",
+        "명제의 역과 대우",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0305-명제의역과대우-opening",
+          "template": "opening",
+          "title": "명제의 역과 대우",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "‘n이 4의 배수이면 n은 짝수이다’의 역과 대우를 쓰세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "역은 거짓일 수 있고(예: n=6), 대우는 참입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0305-명제의역과대우-concept",
+          "template": "concept",
+          "title": "명제의 역과 대우",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "명제 p⇒q의 역은 q⇒p이고, 대우는 ¬q⇒¬p입니다. 명제와 대우는 참·거짓이 같지만, 원래 명제와 역은 일반적으로 참·거짓이 다를 수 있습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0305-명제의역과대우-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "‘n이 4의 배수이면 n은 짝수이다’의 역과 대우를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "p: n은 4의 배수, q: n은 짝수로 둡니다.",
+                "역은 q⇒p이므로 ‘n이 짝수이면 4의 배수이다’입니다.",
+                "대우는 ¬q⇒¬p이므로 ‘n이 짝수가 아니면 4의 배수가 아니다’입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "역은 거짓일 수 있고(예: n=6), 대우는 참입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0305-명제의역과대우-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "‘정수 n이 6의 배수이면 3의 배수이다’의 대우를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "결론 ‘3의 배수이다’를 부정합니다.",
+                "가정 ‘6의 배수이다’를 부정해 조건의 순서를 바꿉니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3의 배수가 아니면 6의 배수가 아니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0305-명제의역과대우-quiz",
+                "kind": "quiz",
+                "prompt": "p⇒q의 대우는 무엇인가요?",
+                "options": [
+                  "¬q⇒¬p",
+                  "q⇒p",
+                  "¬p⇒¬q"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "대우는 결론과 가정을 모두 부정하고 순서를 바꿉니다.",
+                "incorrect_feedback": "먼저 역을 만든 뒤 두 조건을 부정하세요.",
+                "hints": [
+                  "먼저 역을 만든 뒤 두 조건을 부정하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

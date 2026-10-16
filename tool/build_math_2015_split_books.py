@@ -14,6 +14,7 @@ VOLUMES = {
             "수학상_2015개정_다항식의덧셈과뺄셈_BookData_초안.json",
             "수학상_2015개정_나머지정리와인수정리_BookData_초안.json",
             "수학상_2015개정_인수분해_BookData_초안.json",
+            "수학상_2015개정_항등식_V2_BookData_초안.json",
         ]),
         ("방정식과 부등식", [
             "수학상_2015개정_복소수_BookData_초안.json",
@@ -26,9 +27,11 @@ VOLUMES = {
             "수학상_2015개정_연립이차방정식_BookData_초안.json",
             "수학상_2015개정_연립일차부등식_BookData_초안.json",
             "수학상_2015개정_이차부등식_BookData_초안.json",
+            "수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json",
         ]),
         ("도형의 방정식", [
             "수학상_2015개정_거리와중점_BookData_초안.json",
+            "수학상_2015개정_점과직선사이거리_V2_BookData_초안.json",
             "수학상_2015개정_직선의방정식_BookData_초안.json",
             "수학상_2015개정_평행수직직선_BookData_초안.json",
             "수학상_2015개정_원의방정식_BookData_초안.json",
@@ -42,9 +45,16 @@ VOLUMES = {
             "수학하_2015개정_집합의합집합과교집합_BookData_초안.json",
             "수학하_2015개정_여집합과차집합_BookData_초안.json",
             "수학하_2015개정_명제와조건_BookData_초안.json",
+            "수학하_2015개정_집합포함관계_V2_BookData_초안.json",
+            "수학하_2015개정_명제의역과대우_V2_BookData_초안.json",
+            "수학하_2015개정_충분조건필요조건_V2_BookData_초안.json",
+            "수학하_2015개정_대우증명과귀류법_V2_BookData_초안.json",
+            "수학하_2015개정_절대부등식_V2_BookData_초안.json",
         ]),
         ("함수", [
             "수학하_2015개정_함수의뜻_BookData_초안.json",
+            "수학하_2015개정_함수의합성_V2_BookData_초안.json",
+            "수학하_2015개정_역함수_V2_BookData_초안.json",
             "수학하_2015개정_유리함수_BookData_초안.json",
             "수학하_2015개정_무리함수_BookData_초안.json",
         ]),
@@ -62,6 +72,7 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
     chapters = []
     unit_records = []
     tags = set()
+    standard_codes = set()
     page_ids = []
     page_count = 0
     for unit_title, filenames in units:
@@ -72,6 +83,9 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
                 raise FileNotFoundError(f"Missing subunit BookData: {source_path}")
             source = json.loads(source_path.read_text(encoding="utf-8"))
             tags.update(source.get("tags", []))
+            codes = source.get("standard_codes", [])
+            if isinstance(codes, list):
+                standard_codes.update(str(code) for code in codes)
             for chapter in source.get("chapters", []):
                 chapter_copy = dict(chapter)
                 chapter_copy["unitTitle"] = unit_title
@@ -92,12 +106,18 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
         "subtitle": "단원별 챕터와 소단원 페이지를 묶은 부분 원고",
         "category": "concept_textbook",
         "tags": sorted(tags),
+        "curriculum_version": "2015",
+        "standard_codes": sorted(standard_codes),
         "units": unit_records,
         "chapters": chapters,
         "metadata": {
             "status": "authored_partial_draft",
             "edition_status": "editorial_split_candidate",
-            "standard_code_status": "not_crosschecked",
+            "standard_code_status": "partial_candidate_links_pending_teacher_review",
+            "publication_eligibility": "not_eligible",
+            "rights_status": "pending",
+            "teacher_review_status": "pending",
+            "math_review_status": "author_checks_recorded_independent_review_pending",
             "chapter_count": len(chapters),
             "page_count": page_count,
         },

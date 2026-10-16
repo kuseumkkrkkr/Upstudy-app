@@ -11,6 +11,16 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_집합포함관계_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_명제의역과대우_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_충분조건필요조건_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_대우증명과귀류법_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_절대부등식_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_함수의합성_V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_역함수_V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_통계_배치1/중등수학_2015개정_통계_배치1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_도형_배치2/중등수학_2015개정_도형_배치2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_도형_배치1/중등수학_2015개정_도형_배치1_BookData_V2_시범.json',

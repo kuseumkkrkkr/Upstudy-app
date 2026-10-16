@@ -1,0 +1,155 @@
+{
+  "title": "수학(상) 2015 개정 · 점과 직선 사이의 거리 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학02-05"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학02-05",
+    "도형의 방정식",
+    "점과 직선 사이의 거리",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "점과 직선 사이의 거리",
+      "standard_codes": [
+        "10수학02-05"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학02-05",
+        "도형의 방정식",
+        "점과 직선 사이의 거리",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0205-점과직선사이거리-opening",
+          "template": "opening",
+          "title": "점과 직선 사이의 거리",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "점 P(1,2)와 직선 3x+4y−10=0 사이의 거리를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "1/5"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0205-점과직선사이거리-concept",
+          "template": "concept",
+          "title": "점과 직선 사이의 거리",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "점 P(x₀,y₀)와 직선 ax+by+c=0 사이의 거리는 |ax₀+by₀+c|/√(a²+b²)입니다. 분자는 점을 직선식에 대입한 절댓값이고, 분모는 직선의 법선벡터 (a,b)의 길이입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0205-점과직선사이거리-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 P(1,2)와 직선 3x+4y−10=0 사이의 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "점의 좌표를 직선식에 대입하면 3·1+4·2−10=1입니다.",
+                "√(3²+4²)=5이므로 거리는 |1|/5입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "1/5"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0205-점과직선사이거리-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 O(0,0)과 직선 3x+4y−20=0 사이의 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "대입값은 −20이고 절댓값은 20입니다.",
+                "법선벡터 길이는 √(9+16)=5입니다.",
+                "거리는 20/5입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0205-점과직선사이거리-quiz",
+                "kind": "quiz",
+                "prompt": "점 (0,0)과 직선 5x−12y+13=0 사이의 거리는 얼마인가요?",
+                "options": [
+                  "1",
+                  "13",
+                  "5"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "|13|/√(25+144)=13/13=1입니다.",
+                "incorrect_feedback": "원점 대입값의 절댓값을 법선벡터 길이로 나누세요.",
+                "hints": [
+                  "원점 대입값의 절댓값을 법선벡터 길이로 나누세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

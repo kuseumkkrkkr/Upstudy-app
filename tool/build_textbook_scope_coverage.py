@@ -319,6 +319,8 @@ def main() -> None:
         "",
         "## 확인된 매핑 한계",
         "",
+        "2015 고등 수학(상·하) 41개 코드를 원고 chapter 후보별로 대조한 별도 표: [2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md](2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md). 후보·tag는 내용 검수 완료를 뜻하지 않는다.",
+        "",
         "2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.",
         "",
         f"현재 검색 대상은 원본 BookData `{len(source_bookdata_files)}`개, 재귀 후보·패키지 BookData `{len(candidate_bookdata_files)}`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `{len(code_tagged_files)}`개다.",

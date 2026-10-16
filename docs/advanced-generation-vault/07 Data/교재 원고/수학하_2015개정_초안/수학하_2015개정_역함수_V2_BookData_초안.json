@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 역함수의 의미와 구하기 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학04-03"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학04-03",
+    "함수",
+    "역함수의 의미와 구하기",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "역함수의 의미와 구하기",
+      "standard_codes": [
+        "10수학04-03"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학04-03",
+        "함수",
+        "역함수의 의미와 구하기",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0403-역함수-opening",
+          "template": "opening",
+          "title": "역함수의 의미와 구하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=2x+3의 역함수를 구하세요. 정의역과 치역은 실수 전체입니다."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "f⁻¹(x)=(x−3)/2"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0403-역함수-concept",
+          "template": "concept",
+          "title": "역함수의 의미와 구하기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "함수 f가 일대일 대응이면 입력과 출력의 역할을 바꾸는 역함수 f⁻¹를 정의할 수 있습니다. y=f(x)에서 x와 y를 바꾸어 y를 x에 대한 식으로 풀고, 정의역과 치역도 서로 바뀌는지 확인합니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0403-역함수-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=2x+3의 역함수를 구하세요. 정의역과 치역은 실수 전체입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "y=2x+3에서 x와 y를 바꾸면 x=2y+3입니다.",
+                "y에 대해 풀면 y=(x−3)/2입니다.",
+                "실수 전체에서 일대일 대응이므로 역함수가 정의됩니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "f⁻¹(x)=(x−3)/2"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0403-역함수-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "실수 전체에서 f(x)=3x−6의 역함수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "y=3x−6에서 x와 y를 바꿔 x=3y−6으로 둡니다.",
+                "y=(x+6)/3으로 풉니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "f⁻¹(x)=(x+6)/3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0403-역함수-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x−5의 역함수는 무엇인가요?",
+                "options": [
+                  "x+5",
+                  "5−x",
+                  "x−5"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "y=x−5에서 x,y를 바꾸면 x=y−5이므로 y=x+5입니다.",
+                "incorrect_feedback": "입력과 출력을 바꾸어 y에 대해 푸세요.",
+                "hints": [
+                  "입력과 출력을 바꾸어 y에 대해 푸세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

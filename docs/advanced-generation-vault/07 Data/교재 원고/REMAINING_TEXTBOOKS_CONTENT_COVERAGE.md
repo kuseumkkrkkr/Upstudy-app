@@ -863,7 +863,7 @@
 | 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
 |---|---|---|---|---|
 | `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-02` | 항등식의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-02` | 항등식의 성질을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
@@ -876,28 +876,28 @@
 | `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학02-06` | 원의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-08` | 평행이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합포함관계_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-03` | 집합의 연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-05` | 명제의 역과 대우를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_명제의역과대우_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_충분조건필요조건_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_대우증명과귀류법_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_절대부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_함수의합성_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_역함수_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학04-05` | 무리함수    | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
@@ -911,7 +911,7 @@
 | 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
 |---|---|---|---|---|
 | `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-02` | 항등식의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-02` | 항등식의 성질을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
@@ -924,28 +924,28 @@
 | `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학02-06` | 원의 방정식을 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-08` | 평행이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합포함관계_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-03` | 집합의 연산을 할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학03-04` | 명제와 조건의 뜻을 알고, ʻ모든ʼ, ʻ어떤ʼ을 포함한 명제를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-05` | 명제의 역과 대우를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학03-05` | 명제의 역과 대우를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_명제의역과대우_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-06` | 충분조건과 필요조건을 이해하고 구별할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_충분조건필요조건_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-07` | 대우를 이용한 증명법과 귀류법을 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_대우증명과귀류법_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학03-08` | 절대부등식의 의미를 이해하고, 간단한 절대부등식을 증명할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_절대부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학04-01` | 함수의 개념을 이해하고, 그 그래프를 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
-| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학04-02` | 함수의 합성을 이해하고, 합성함수를 구할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_함수의합성_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학04-03` | 역함수의 의미를 이해하고, 주어진 함수의 역함수를 구할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_역함수_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학04-04` | 유리함수    의 그래프를 그릴 수 있고, 그 그래프의 성질을 이해한다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학04-05` | 무리함수    | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학05-01` | 합의 법칙과 곱의 법칙을 이해하고, 이를 이용하여 경우의 수를 구할 수 있다. | — | no exact-code chapter anchor | same-edition tag 없음 · 원고 대조 필요 |
@@ -1268,7 +1268,7 @@
 
 ## 기준-챕터 매핑 신호 감사
 
-고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `351`개, exact code가 chapter 안에 있는 쌍은 `305`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 어느 구조 신호도 없는 쌍은 `70`개다.
+고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `361`개, exact code가 chapter 안에 있는 쌍은 `315`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 어느 구조 신호도 없는 쌍은 `60`개다.
 아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.
 
 | # | 상품 | 기준 수 | chapter 연결 신호 없음 |
@@ -1285,8 +1285,8 @@
 | 10 | 중학수학 2-2 개념서 · 2022 개정 | 60 | 13 |
 | 11 | 중학수학 3-1 개념서 · 2022 개정 | 60 | 13 |
 | 12 | 중학수학 3-2 개념서 · 2022 개정 | 60 | 13 |
-| 13 | 수학(상) 개념서 · 2015 개정 | 41 | 41 |
-| 14 | 수학(하) 개념서 · 2015 개정 | 41 | 41 |
+| 13 | 수학(상) 개념서 · 2015 개정 | 41 | 31 |
+| 14 | 수학(하) 개념서 · 2015 개정 | 41 | 31 |
 | 15 | 수학Ⅰ 개념서 · 2015 개정 | 19 | 8 |
 | 16 | 수학Ⅱ 개념서 · 2015 개정 | 21 | 0 |
 | 17 | 확률과 통계 개념서 · 2015 개정 | 17 | 0 |
@@ -1306,11 +1306,11 @@
 
 ## 앱 인터랙션 호환성 인벤토리
 
-현재 재귀 인벤토리: BookData `156`개(그중 V2 `35`개), 선언형 activity `291`개(`discreteExperiment` 1, `quiz` 285, `squareRootNumberLine` 1, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
+현재 재귀 인벤토리: BookData `166`개(그중 V2 `45`개), 선언형 activity `311`개(`discreteExperiment` 1, `quiz` 305, `squareRootNumberLine` 1, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
 
 ## 게시·권리·사람 검토 게이트 인벤토리
 
-재귀 BookData `156`개 metadata 집계: 게시 적격성 `not_eligible` 9, `unspecified` 147; 권리 상태 `pending` 9, `unspecified` 147; 교사 검토 `pending` 9, `unspecified` 147; 수학 검토 `author_checks_recorded_independent_review_pending` 8, `pending` 1, `unspecified` 147.
+재귀 BookData `166`개 metadata 집계: 게시 적격성 `not_eligible` 21, `unspecified` 145; 권리 상태 `pending` 21, `unspecified` 145; 교사 검토 `pending` 21, `unspecified` 145; 수학 검토 `author_checks_recorded_independent_review_pending` 20, `pending` 1, `unspecified` 145.
 `unspecified`는 승인이나 미승인을 뜻하지 않고 증거가 없는 상태다. `not_eligible` 및 검수 대기 문서만으로는 출판 승인할 수 없다. 이 집계는 원고 metadata 인벤토리이며 권리 문서·교사 서명·독립 수학검토 산출물을 대체하지 않는다.
 
 실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
@@ -1320,9 +1320,11 @@ V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다
 
 ## 확인된 매핑 한계
 
+2015 고등 수학(상·하) 41개 코드를 원고 chapter 후보별로 대조한 별도 표: [2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md](2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md). 후보·tag는 내용 검수 완료를 뜻하지 않는다.
+
 2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.
 
-현재 검색 대상은 원본 BookData `111`개, 재귀 후보·패키지 BookData `156`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `111`개다.
+현재 검색 대상은 원본 BookData `111`개, 재귀 후보·패키지 BookData `166`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `123`개다.
 태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.
 
 자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.

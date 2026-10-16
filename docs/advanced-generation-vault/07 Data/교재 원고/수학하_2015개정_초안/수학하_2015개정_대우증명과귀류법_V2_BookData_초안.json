@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 대우를 이용한 증명과 귀류법 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-07"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-07",
+    "수와 연산",
+    "대우를 이용한 증명과 귀류법",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "대우를 이용한 증명과 귀류법",
+      "standard_codes": [
+        "10수학03-07"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-07",
+        "수와 연산",
+        "대우를 이용한 증명과 귀류법",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0307-대우증명과귀류법-opening",
+          "template": "opening",
+          "title": "대우를 이용한 증명과 귀류법",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "정수 n에 대하여 n²이 짝수이면 n도 짝수임을 대우를 이용해 증명하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "n²이 짝수이면 n은 짝수입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0307-대우증명과귀류법-concept",
+          "template": "concept",
+          "title": "대우를 이용한 증명과 귀류법",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "명제 p⇒q를 직접 증명하기 어려우면 대우 ¬q⇒¬p를 증명할 수 있습니다. 귀류법은 명제가 거짓이라고 가정해 모순을 이끌어 내어 원래 명제가 참임을 보이는 방법입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0307-대우증명과귀류법-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "정수 n에 대하여 n²이 짝수이면 n도 짝수임을 대우를 이용해 증명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "대우는 n이 홀수이면 n²이 홀수라는 명제입니다.",
+                "n=2k+1로 놓으면 n²=4k²+4k+1=2(2k²+2k)+1입니다.",
+                "따라서 n²은 홀수이고 대우가 참이므로 원래 명제도 참입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "n²이 짝수이면 n은 짝수입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0307-대우증명과귀류법-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "‘정수 n의 제곱이 3의 배수이면 n은 3의 배수이다’를 대우로 증명하는 첫 단계를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "대우는 n이 3의 배수가 아니면 n²도 3의 배수가 아니라는 명제입니다.",
+                "n의 나머지가 1 또는 2일 때 제곱의 나머지가 1임을 확인하면 됩니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "n을 3으로 나눈 나머지가 1 또는 2임을 두고 n²의 나머지가 1임을 보인다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0307-대우증명과귀류법-quiz",
+                "kind": "quiz",
+                "prompt": "귀류법의 첫 단계로 알맞은 것은 무엇인가요?",
+                "options": [
+                  "증명할 명제의 부정을 가정한다",
+                  "결론을 먼저 참이라고 둔다",
+                  "반례가 있어도 무시한다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "귀류법은 결론이 거짓이라고 가정해 모순을 찾습니다.",
+                "incorrect_feedback": "참임을 보일 명제의 반대 상황을 가정합니다.",
+                "hints": [
+                  "참임을 보일 명제의 반대 상황을 가정합니다."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

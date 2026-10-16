@@ -1,0 +1,154 @@
+{
+  "title": "수학(하) 2015 개정 · 함수의 합성과 합성함수 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학04-02"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학04-02",
+    "함수",
+    "함수의 합성과 합성함수",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "함수의 합성과 합성함수",
+      "standard_codes": [
+        "10수학04-02"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학04-02",
+        "함수",
+        "함수의 합성과 합성함수",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0402-함수의합성-opening",
+          "template": "opening",
+          "title": "함수의 합성과 합성함수",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x+1, g(x)=2x일 때 (f∘g)(x)와 (g∘f)(x)를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "f∘g=2x+1, g∘f=2x+2로 서로 다릅니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0402-함수의합성-concept",
+          "template": "concept",
+          "title": "함수의 합성과 합성함수",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "함수 f와 g의 합성함수 f∘g는 먼저 g를 적용한 뒤 f를 적용합니다. 즉 (f∘g)(x)=f(g(x))입니다. 일반적으로 f∘g와 g∘f는 서로 같지 않습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0402-함수의합성-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x+1, g(x)=2x일 때 (f∘g)(x)와 (g∘f)(x)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "(f∘g)(x)=f(2x)=2x+1입니다.",
+                "(g∘f)(x)=g(x+1)=2x+2입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "f∘g=2x+1, g∘f=2x+2로 서로 다릅니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0402-함수의합성-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x², g(x)=x−3일 때 (f∘g)(x)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "f의 입력 x를 g(x)=x−3으로 바꿉니다.",
+                "f(g(x))=(x−3)²입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x−3)²"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0402-함수의합성-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=3x, g(x)=x+2일 때 (f∘g)(x)는 무엇인가요?",
+                "options": [
+                  "3x+6",
+                  "3x+2",
+                  "x+6"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "f(g(x))=3(x+2)=3x+6입니다.",
+                "incorrect_feedback": "g(x)를 f의 입력 자리에 넣으세요.",
+                "hints": [
+                  "g(x)를 f의 입력 자리에 넣으세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

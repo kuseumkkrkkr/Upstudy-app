@@ -1,0 +1,154 @@
+{
+  "title": "수학(상) 2015 개정 · 절댓값을 포함한 일차부등식 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학01-15"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학01-15",
+    "방정식과 부등식",
+    "절댓값을 포함한 일차부등식",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "절댓값을 포함한 일차부등식",
+      "standard_codes": [
+        "10수학01-15"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학01-15",
+        "방정식과 부등식",
+        "절댓값을 포함한 일차부등식",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0115-절댓값일차부등식-opening",
+          "template": "opening",
+          "title": "절댓값을 포함한 일차부등식",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "|x−2|<3을 푸세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "−1<x<5"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0115-절댓값일차부등식-concept",
+          "template": "concept",
+          "title": "절댓값을 포함한 일차부등식",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "a>0일 때 |x−m|<a는 m−a<x<m+a와 같고, |x−m|>a는 x<m−a 또는 x>m+a와 같습니다. 절댓값은 수직선에서 두 수 사이의 거리로 해석합니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0115-절댓값일차부등식-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "|x−2|<3을 푸세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x와 2 사이의 거리가 3보다 작다는 뜻입니다.",
+                "2−3<x<2+3으로 바꿉니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "−1<x<5"
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0115-절댓값일차부등식-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "|x+1|≥2를 푸세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "|x−(−1)|≥2로 보고 −1에서 거리가 2 이상인 수를 찾습니다.",
+                "x≤−3 또는 x≥1입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x≤−3 또는 x≥1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0115-절댓값일차부등식-quiz",
+                "kind": "quiz",
+                "prompt": "|x−4|≤1의 해는 무엇인가요?",
+                "options": [
+                  "3≤x≤5",
+                  "x≤3 또는 x≥5",
+                  "−5≤x≤−3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "4에서 거리가 1 이하인 수이므로 3≤x≤5입니다.",
+                "incorrect_feedback": "중심 4에서 왼쪽과 오른쪽으로 1씩 이동하세요.",
+                "hints": [
+                  "중심 4에서 왼쪽과 오른쪽으로 1씩 이동하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

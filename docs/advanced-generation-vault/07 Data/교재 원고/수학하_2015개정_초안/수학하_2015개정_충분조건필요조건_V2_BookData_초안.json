@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 충분조건과 필요조건 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-06"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-06",
+    "수와 연산",
+    "충분조건과 필요조건",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "충분조건과 필요조건",
+      "standard_codes": [
+        "10수학03-06"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-06",
+        "수와 연산",
+        "충분조건과 필요조건",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0306-충분조건필요조건-opening",
+          "template": "opening",
+          "title": "충분조건과 필요조건",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "정수 n에 대하여 ‘n은 4의 배수’와 ‘n은 짝수’의 조건 관계를 판단하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "충분조건·필요조건 관계이며 필요충분조건은 아닙니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0306-충분조건필요조건-concept",
+          "template": "concept",
+          "title": "충분조건과 필요조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "p⇒q가 참이면 p는 q이기 위한 충분조건이고 q는 p이기 위한 필요조건입니다. p⇒q와 q⇒p가 모두 참이면 p와 q는 서로 필요충분조건입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0306-충분조건필요조건-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "정수 n에 대하여 ‘n은 4의 배수’와 ‘n은 짝수’의 조건 관계를 판단하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "4의 배수인 정수는 모두 짝수이므로 p⇒q는 참입니다.",
+                "짝수라고 해서 모두 4의 배수는 아니며 n=6이 반례입니다.",
+                "따라서 p는 q의 충분조건이고 q는 p의 필요조건입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "충분조건·필요조건 관계이며 필요충분조건은 아닙니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0306-충분조건필요조건-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "자연수 n에 대해 p: n은 10의 배수, q: n은 5의 배수일 때 p와 q의 관계를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "10의 배수는 모두 5의 배수입니다.",
+                "5의 배수 중 15는 10의 배수가 아니므로 역은 거짓입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "p는 q의 충분조건이고 q는 p의 필요조건입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0306-충분조건필요조건-quiz",
+                "kind": "quiz",
+                "prompt": "p⇒q만 참일 때 옳은 설명은 무엇인가요?",
+                "options": [
+                  "p는 q의 충분조건이다",
+                  "q는 p의 충분조건이다",
+                  "p와 q는 필요충분조건이다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "p가 성립하면 q가 보장되므로 p는 q의 충분조건입니다.",
+                "incorrect_feedback": "화살표의 출발 조건이 충분조건입니다.",
+                "hints": [
+                  "화살표의 출발 조건이 충분조건입니다."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

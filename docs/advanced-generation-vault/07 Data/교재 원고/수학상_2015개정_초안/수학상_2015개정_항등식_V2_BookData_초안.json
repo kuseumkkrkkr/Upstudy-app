@@ -1,0 +1,154 @@
+{
+  "title": "수학(상) 2015 개정 · 항등식의 성질과 계수 비교 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학01-02"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학01-02",
+    "다항식",
+    "항등식의 성질과 계수 비교",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "항등식의 성질과 계수 비교",
+      "standard_codes": [
+        "10수학01-02"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학01-02",
+        "다항식",
+        "항등식의 성질과 계수 비교",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0102-항등식-opening",
+          "template": "opening",
+          "title": "항등식의 성질과 계수 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "3(x−2)+4와 3x−2가 항등식임을 전개하여 확인하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "항등식입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0102-항등식-concept",
+          "template": "concept",
+          "title": "항등식의 성질과 계수 비교",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "항등식은 문자에 어떤 값을 대입해도 항상 참인 등식입니다. 두 다항식이 항등식이면 같은 차수의 계수가 각각 같습니다. 예를 들어 ax+2=5x+b가 항등식이면 a=5, b=2입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0102-항등식-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3(x−2)+4와 3x−2가 항등식임을 전개하여 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "왼쪽을 전개하면 3x−6+4=3x−2입니다.",
+                "오른쪽 다항식과 모든 x에서 같은 식입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "항등식입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0102-항등식-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(a−2)x+3=4x+b가 항등식일 때 a,b를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "x의 계수를 비교하면 a−2=4이므로 a=6입니다.",
+                "상수항을 비교하면 3=b이므로 b=3입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "a=6, b=3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0102-항등식-quiz",
+                "kind": "quiz",
+                "prompt": "2(x+3)−1과 2x+5의 관계는 무엇인가요?",
+                "options": [
+                  "항등식이다",
+                  "x=0일 때만 참이다",
+                  "항등식이 아니다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "전개하면 2x+6−1=2x+5이므로 모든 x에서 참입니다.",
+                "incorrect_feedback": "왼쪽을 먼저 전개하고 양변을 비교하세요.",
+                "hints": [
+                  "왼쪽을 먼저 전개하고 양변을 비교하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

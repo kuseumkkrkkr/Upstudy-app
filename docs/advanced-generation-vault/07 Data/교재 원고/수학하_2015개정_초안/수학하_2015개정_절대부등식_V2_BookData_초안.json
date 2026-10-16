@@ -1,0 +1,154 @@
+{
+  "title": "수학(하) 2015 개정 · 절대부등식의 뜻과 증명 후보",
+  "subtitle": "성취기준 연결 재개형 부분 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-08"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-08",
+    "수와 연산",
+    "절대부등식의 뜻과 증명",
+    "신규 시범"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "절대부등식의 뜻과 증명",
+      "standard_codes": [
+        "10수학03-08"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-08",
+        "수와 연산",
+        "절대부등식의 뜻과 증명",
+        "신규 시범"
+      ],
+      "pages": [
+        {
+          "id": "math15-10수학0308-절대부등식-opening",
+          "template": "opening",
+          "title": "절대부등식의 뜻과 증명",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "모든 실수 x에 대해 x²+1≥2x임을 증명하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 구하려는 것을 구분해 풀이 계획을 세워 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "(x−1)²≥0이므로 x²+1≥2x입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0308-절대부등식-concept",
+          "template": "concept",
+          "title": "절대부등식의 뜻과 증명",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "절대부등식은 변수가 허용되는 모든 실숫값에서 성립하는 부등식입니다. 제곱은 0 이상이라는 사실이나 (a−b)²≥0과 같은 기본 부등식을 이용해 증명할 수 있습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "조건과 결론의 방향, 식의 정의역 또는 부호 조건을 확인한 뒤 결과를 원래 조건에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0308-절대부등식-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "모든 실수 x에 대해 x²+1≥2x임을 증명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "왼쪽에서 오른쪽을 빼면 x²−2x+1입니다.",
+                "x²−2x+1=(x−1)²이고 제곱은 항상 0 이상입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "(x−1)²≥0이므로 x²+1≥2x입니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-10수학0308-절대부등식-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "모든 실수 x에 대해 x²+4≥4x임을 증명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "차를 정리하면 x²−4x+4입니다.",
+                "x²−4x+4=(x−2)²≥0입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+4−4x=(x−2)²≥0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-10수학0308-절대부등식-quiz",
+                "kind": "quiz",
+                "prompt": "x²+9≥6x가 모든 실수 x에서 성립함을 보이는 식은 무엇인가요?",
+                "options": [
+                  "(x−3)²≥0",
+                  "(x+3)²≤0",
+                  "x²≥9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x²+9−6x=(x−3)²이고 제곱은 0 이상입니다.",
+                "incorrect_feedback": "좌변에서 우변을 빼고 완전제곱식으로 만드세요.",
+                "hints": [
+                  "좌변에서 우변을 빼고 완전제곱식으로 만드세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}
