@@ -55,6 +55,55 @@ BookData syntheticBook() => BookData.fromJson({
 });
 
 void main() {
+  testWidgets('page body and location stay aligned across mobile to desktop', (
+    tester,
+  ) async {
+    SharedPreferences.setMockInitialValues({});
+    ApiClient.instance.setTokenForTest('synthetic-import-owner');
+    addTearDown(ApiClient.instance.clearTokenForTest);
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final book = syntheticBook();
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: book,
+          persistenceEnabled: false,
+          bookLoader: (_) async => book,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byTooltip('다음 페이지'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Section prose survives', findRichText: true),
+      findsWidgets,
+    );
+    tester.view.physicalSize = const Size(1280, 900);
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Section prose survives', findRichText: true),
+      findsWidgets,
+    );
+    await tester.tap(find.byTooltip('이전 페이지'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Graph explanation survives', findRichText: true),
+      findsWidgets,
+    );
+    await tester.tap(find.byTooltip('다음 페이지'));
+    await tester.pumpAndSettle();
+    expect(
+      find.textContaining('Section prose survives', findRichText: true),
+      findsWidgets,
+    );
+    expect(tester.takeException(), isNull);
+    await tester.pumpWidget(const SizedBox.shrink());
+  });
+
   test('source metadata and slider document survive serialization', () {
     final book = syntheticBook();
     final roundTrip = BookData.fromJson(book.toJson());
@@ -141,6 +190,10 @@ void main() {
             ),
           ),
         );
+        ApiClient.instance.setTokenForTest('different-import-owner');
+        await tester.pumpAndSettle();
+        expect(find.byType(ServerChatPage), findsNothing);
+        expect(find.textContaining('로그인 상태가 바뀌었습니다.'), findsOneWidget);
         await tester.pumpWidget(const SizedBox.shrink());
       },
     );

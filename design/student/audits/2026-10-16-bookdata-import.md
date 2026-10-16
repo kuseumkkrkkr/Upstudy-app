@@ -40,3 +40,23 @@
 ## Next action
 
 Resume the live build process, inspect its exit/log, then synchronize fresh build into public and create a unique canary candidate. Verify bundle hash and actual private import from approved original file before alias promotion. Preserve unrelated dirty source; no branch switching or source copying.
+
+## Live verification checkpoint
+
+- First deployment `dpl_2GkUBpSPoYa9vtzwBA82MFUKgQsW`; SHA `38A5A0D9136A4EA5922B2E18BC3F7D133D5FE7C414486FBF56E7FF32F1C74C1E` matched D build. Browser selected the original JSON and typed the expected digest, then used the actual save button.
+- Private import succeeded for the existing test account. Book ID `ad2f7179-c671-55d0-8815-c3fd0f3ad8da`. No administrator/public publish call made.
+- Browser refresh -> server `/user/storage/textbook_library_v1` 200 -> same book in chooser -> body cache GET 200 -> reader reopened. Stored structure: 1 chapter, 3 explicit pages, 1 supplementary section; metadata/digest preserved.
+- Exhaustive source-field projection of the real server-returned cached body matched normalized original SHA `32415ECC0B9C1EDB2546B2567B487213B306BDE511A4E25C8B5C45B9DEA0BADA`. Defaults added by BookData are excluded, **no original fields excluded**. Raw original file SHA is separately recorded above.
+- All 6 rendered segments were visited: opening, graph experiment, verification/misconception, practice/hints/answer/checklist, chapter intro, supplementary derivation/graph.
+- Real `/serverchat/message` request included current page title/text, book ID, graph expression and initial p settings, `mode:socratic`, `ephemeral:true`. It did not attach the whole book. Response **502**, retry also failed. Vercel sanitized logs: upstream HTTP403/application-json/Cloudflare. Official Kiln error documentation says 403 means suspended/revoked key (including archived project). Exact credential state is unverified. No key/permission changes made. **Tutor response NOT passed**.
+- First live graph card was too short (192px), clipping controls. Increased room for graph minimum/toolbar/parameter controls. Second deployment `dpl_9ggB6rYs14xjNYsEcKADB3pZsXdU`, URL `https://aiflow-web-canary-am5b2dl4m-cw20208021-9200s-projects.vercel.app`, alias canonical canary. Local/candidate/alias SHA `B200054F5F68F2CB935F5936B1E33F59DF43BF9739035AAA73BD2658555DC3AB`, 7,132,539 bytes.
+- Actual 390x844 emulation: graph and parameter control visible; keyboard changes p 2 -> 1.5 -> 1 update native slider value and SVG. Sandbox still required; runtime attribute audit pending.
+- Browser viewport capability did not apply requested size (actual 358x668, DPR1.25). Those JPEGs **are not** 390x844 evidence despite provisional filenames. Corrected via CDP Emulation, independently measured innerWidth/innerHeight/DPR, and Page.captureScreenshot exact clip. PNG `reader-graph-after-390.png` and `reader-graph-p1-390.png` are actual 390x844 evidence.
+- Actual 1280x900 revealed page/body mismatch after resize (also observed on subsequent desktop navigation). Added failing regression, then PageController onAttach restoration with keepPage false. Resize + desktop previous/next checks now pass in widgets (4 tests). New build and live retest required; current alias does **not** include this correction yet.
+- Tutor route now also binds to captured reader session/epoch, replacing private context when account changes. Additional session-change check pending execution.
+
+## Source provenance limits
+
+- New files/model/validator checkpoint `6aea3bf89ca8130c98c0a25256e9e209312c0cb8` is committed. API client/store/reader/graph integration overlaps substantial preexisting dirty changes; those are not blindly committed. Therefore **source HEAD alone cannot reproduce the current bundle**.
+- Local-only source snapshot (no manuscript) `build/temp/bookdata-source-snapshot.tar`, SHA `563EA29F0D88EB972491EF9A4CDDD1B03D4B2740D0E518FA6BFD045CA9CFFB01`, captures second build state. Tracked overlay SHA `5752A27EEA39B4B3AE05AEACA0862DEF39E9DADC377D50538FAD6E5B8E6F33BF`. Later viewport/session fix is not in that snapshot.
+- Required remaining work: final session/desktop regression, fresh final build/deploy/hash/actual 390+1280 tests, selective source integration review/commits, live idempotent reimport, runtime sandbox verification. Kiln credential resolution is an external dependency, not a reason to report tutor success.
