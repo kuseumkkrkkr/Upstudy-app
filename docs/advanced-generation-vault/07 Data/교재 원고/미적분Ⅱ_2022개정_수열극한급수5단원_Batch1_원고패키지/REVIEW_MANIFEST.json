@@ -23,6 +23,8 @@
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5"
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "b453204",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (29 tests passed)",
+  "runtime_validator_candidate_sha256": "AD171C5B98CABCD07D3DBDC291C0D1C51AE12693066151D8400C3757D4253E9F"
 }
