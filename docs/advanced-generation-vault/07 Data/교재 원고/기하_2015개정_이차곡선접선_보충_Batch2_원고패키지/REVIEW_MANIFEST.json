@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "기하_2015개정_이차곡선접선_보충_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "6AFB5F594414403DB6AE81C7497C171DA8E9E75AB0C1CF235FEB08C0D3E0CD3D",
+  "candidate_code_references": [
+    "12기하01-04"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "intersection_and_discriminant_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; prior_tangent_example_preserved"
+}
