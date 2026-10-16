@@ -22,7 +22,7 @@ void main() {
                 RegExp(r'BookData.*\.json$').hasMatch(file.path),
           )
           .toList();
-      expect(files, hasLength(175));
+      expect(files, hasLength(176));
 
       var activities = 0;
       for (final file in files) {
@@ -142,7 +142,7 @@ void main() {
         }
       }
     }
-    expect(files, hasLength(175));
+    expect(files, hasLength(176));
     expect(functionItems, 100);
   });
 

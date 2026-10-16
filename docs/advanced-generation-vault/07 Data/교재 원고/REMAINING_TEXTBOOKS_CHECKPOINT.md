@@ -224,3 +224,9 @@
 - 새 activity payload는 제한된 숫자 설정만 허용하며, 학생 뷰에서 밑 선택·지수 조절·단계별 그래프 안내·힌트·초기화를 제공한다. 원 HTML의 구체적인 밑/지수 범위, 퀴즈 및 독립 연습을 대응시켰다. 화면 시각 parity는 승인 검토 전이다.
 - 호환성: BookData round-trip 3/3, 전체 textbook activity compatibility 116/116 통과. Python 생성기 compile, `git diff --check` 통과. scope ledger는 26개 상품/1,038 기준 행, 재귀 BookData 175개/선언형 activity 322개이며 구조 신호 없음 50개다.
 - pipeline stage 44/92에 등록했다. 신규 원고는 publication `not_eligible`, rights·teacher review pending이며 배포하지 않았다. 독립 수학 검토도 남아 있다.
+
+## 2026-10-17 2015 수학(상) 다항식 사칙연산 보완
+
+- 2015 기준 `10수학01-01`의 기존 챕터 본문을 확인했다. 해당 후보는 동류항 덧셈·뺄셈만 다루고, 공식 기준의 곱셈·나눗셈을 다루지 않아 실질 공백으로 판정했다. 비슷한 2022 후보는 판본 연결을 대체하지 않는다.
+- 보충 V2 1개 장/6쪽을 추가해 분배법칙, 나눗셈의 몫·나머지, 곱셈 퀴즈를 다룬다. 공식 2015 기준 문구와 chapter code를 검증하고 계산 assert를 둔다. 새 원고는 별도 파일이며 기존 후보를 덮어쓰지 않는다.
+- Pipeline 45/93에 등록. 최신 재귀 inventory 176 BookData, 113 root source BookData, 106 HTML. 교사·독립 수학·권리 검토 대기 및 출판 부적격.

@@ -13,6 +13,7 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json',

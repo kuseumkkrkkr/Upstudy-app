@@ -1,0 +1,20 @@
+{
+  "bookdata_file": "수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json",
+  "bookdata_sha256": "1f4bbb078688a52842489f7ad4997be1a6d5ddb80bf3b6cfbcedc5acf3be5b03",
+  "candidate_code_references": [
+    "10수학01-01"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_criterion",
+  "module_count": 1,
+  "page_count": 6,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "curriculum_review_status": "pending",
+  "math_review_status": "pending_independent_review",
+  "teacher_review_status": "pending",
+  "rights_status": "pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_not_merged"
+}

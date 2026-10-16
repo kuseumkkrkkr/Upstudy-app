@@ -1,0 +1,180 @@
+{
+  "schema_version": 2,
+  "title": "수학(상) · 다항식의 곱셈과 나눗셈 보충 후보",
+  "subtitle": "2015 개정 다항식 사칙연산 중 기존 본문에서 확인되지 않은 범위",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "다항식",
+    "곱셈",
+    "나눗셈",
+    "10수학01-01",
+    "보충 후보"
+  ],
+  "standard_codes": [
+    "10수학01-01"
+  ],
+  "publication_eligibility": "not_eligible",
+  "rights_status": "pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "author_checks_recorded_independent_review_pending",
+  "chapters": [
+    {
+      "title": "다항식의 곱셈과 나눗셈",
+      "standard_codes": [
+        "10수학01-01"
+      ],
+      "pages": [
+        {
+          "id": "poly-ops-open",
+          "template": "opening",
+          "title": "곱셈과 나눗셈도 다항식으로 정리하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "기준 연결",
+              "text": "2015 개정 기준 10수학01-01: 다항식의 사칙연산 중 곱셈과 나눗셈을 보완합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "오늘의 질문",
+              "text": "(x+2)(x+3)을 전개하고, x²+5x+6을 x+2로 나누면 무엇이 남을까요?"
+            }
+          ]
+        },
+        {
+          "id": "poly-ops-concept",
+          "template": "concept",
+          "title": "곱셈은 분배하고 나눗셈은 거꾸로 검산하기",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "다항식의 곱셈",
+              "text": "한 다항식의 각 항에 다른 다항식의 모든 항을 곱한 뒤 동류항을 정리합니다. 예를 들어 (x+a)(x+b)=x²+(a+b)x+ab입니다."
+            },
+            {
+              "type": "formula",
+              "title": "곱셈의 확인",
+              "text": "전개한 식을 다시 묶거나 적절한 값을 대입해 원래 곱과 같은지 확인합니다."
+            },
+            {
+              "type": "definition",
+              "title": "다항식의 나눗셈",
+              "text": "나누는 다항식이 0이 아닌 범위에서 몫과 나머지를 구합니다. 피제수=제수×몫+나머지로 결과를 검산하며, 나머지의 차수는 제수의 차수보다 작습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "부호와 나머지",
+              "text": "곱셈에서 각 항을 빠뜨리지 않고, 나눗셈에서는 제수×몫만으로 끝났는지 나머지까지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "poly-ops-example",
+          "template": "example",
+          "title": "곱셈을 전개하고 나눗셈으로 되돌리기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(x+2)(x+3)을 전개하고 x²+5x+6을 x+2로 나누세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "곱셈",
+              "text": "분배법칙으로 x·x+x·3+2·x+2·3=x²+3x+2x+6입니다."
+            },
+            {
+              "type": "answer",
+              "title": "곱의 정리",
+              "text": "동류항을 합치면 x²+5x+6입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "나눗셈 검산",
+              "text": "x²+5x+6=(x+2)(x+3)이므로 x+2로 나눈 몫은 x+3, 나머지는 0입니다."
+            }
+          ]
+        },
+        {
+          "id": "poly-ops-practice",
+          "template": "practice",
+          "title": "나머지가 있는 나눗셈 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x²+2x+5를 x+1로 나눈 몫과 나머지를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x²+2x+5=(x+1)(x+1)+4로 다시 써 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(x+1)(x+1)=x²+2x+1이므로 피제수와의 차는 4입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "몫은 x+1, 나머지는 4입니다."
+            }
+          ]
+        },
+        {
+          "id": "poly-ops-quiz",
+          "template": "experiment",
+          "title": "분배법칙으로 곱 계산하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 확인",
+              "text": "두 항씩 곱하고 동류항을 모아 보세요."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "poly-ops-product-quiz",
+                "kind": "quiz",
+                "prompt": "(x+2)(x+3)을 전개했을 때 x의 계수는?",
+                "options": [
+                  "5",
+                  "6",
+                  "2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x·3과 2·x를 더하면 x의 계수는 5입니다.",
+                "incorrect_feedback": "교차항 x·3과 2·x를 모두 적어 보세요.",
+                "hints": [
+                  "네 항 x·x, x·3, 2·x, 2·3을 씁니다.",
+                  "x항은 3x와 2x입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "poly-ops-summary",
+          "template": "summary",
+          "title": "곱한 뒤 나누어 검산하기",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심 정리",
+              "text": "곱셈은 분배법칙을 빠짐없이 적용하고 동류항을 정리합니다. 나눗셈은 피제수=제수×몫+나머지로 확인합니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "text": "곱셈에서 모든 항의 곱을 썼나요? 나눗셈에서 몫과 나머지를 함께 검산했나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

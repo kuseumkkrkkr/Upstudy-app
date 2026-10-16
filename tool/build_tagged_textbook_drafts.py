@@ -55,6 +55,7 @@ GENERATORS = [
     ("build_math1_2015_existing_candidate_tags.py", "main"),
     ("build_math1_2015_remaining_v2_batch1.py", "main"),
     ("build_math1_2015_log_completion_v2.py", "main"),
+    ("build_math_upper_2015_polynomial_operations_v2.py", "main"),
     ("build_math_1_2015_draft.py", "main"),
     ("build_math2_2015_remaining_v2_batch1.py", "main"),
     ("build_math_2_2015_draft.py", "main"),
