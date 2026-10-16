@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:ui' as ui;
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
 import 'package:s11/shared/data/models/book_set_operations.dart';
@@ -15,6 +16,58 @@ Map<String, dynamic> definition() => {
   'hints': [],
 };
 void main() {
+  for (final operation in BookSetOperations.operations) {
+    testWidgets('$operation highlights exactly its selected regions', (
+      tester,
+    ) async {
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BookActivityView(
+                activity: BookActivity.fromJson({
+                  ...definition(),
+                  'operation': operation,
+                }),
+              ),
+            ),
+          ),
+        ),
+      );
+      final painter = tester
+          .widget<CustomPaint>(find.byKey(const ValueKey('set-venn')))
+          .painter!;
+      await tester.runAsync(() async {
+        final recorder = ui.PictureRecorder();
+        painter.paint(Canvas(recorder), const Size(640, 330));
+        final picture = recorder.endRecording();
+        final image = await picture.toImage(640, 330);
+        final bytes = (await image.toByteData(
+          format: ui.ImageByteFormat.rawRgba,
+        ))!;
+        List<int> pixel(int x, int y) => [
+          for (var c = 0; c < 4; c++) bytes.getUint8((y * 640 + x) * 4 + c),
+        ];
+        const selected = {
+          'intersection': [false, false, true, false],
+          'union': [true, true, true, false],
+          'difference': [true, false, false, false],
+          'complement': [false, true, false, true],
+        };
+        // A only, B only, intersection, outside both; away from glyphs and strokes.
+        for (var i = 0; i < 4; i++) {
+          expect(
+            pixel([205, 435, 320, 540][i], 250),
+            selected[operation]![i]
+                ? isNot([255, 255, 255, 255])
+                : [255, 255, 255, 255],
+          );
+        }
+        image.dispose();
+        picture.dispose();
+      });
+    });
+  }
   test('roundtrip and exhaustive two-set truth tables', () {
     expect(BookActivity.fromJson(definition()).toJson(), definition());
     for (final change in [

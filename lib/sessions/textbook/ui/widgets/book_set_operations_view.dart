@@ -120,6 +120,7 @@ class _SetState extends State<BookSetOperationsView> {
               child: AspectRatio(
                 aspectRatio: 640 / 330,
                 child: CustomPaint(
+                  key: const ValueKey('set-venn'),
                   painter: _VennPainter(Set.of(_a), Set.of(_b), _operation),
                 ),
               ),
@@ -186,11 +187,15 @@ class _VennPainter extends CustomPainter {
     final selected = switch (operation) {
       'union' => Path.combine(PathOperation.union, left, right),
       'difference' => Path.combine(PathOperation.difference, left, right),
-      'complement' => Path.combine(PathOperation.difference, u, left),
+      'complement' => u,
       _ => Path.combine(PathOperation.intersect, left, right),
     };
     canvas.drawPath(u, Paint()..color = Colors.white);
     canvas.drawPath(selected, Paint()..color = const Color(0x66f59e0b));
+    // Match the source's explicit white mask; preserve the hole on web backends.
+    if (operation == 'complement') {
+      canvas.drawPath(left, Paint()..color = Colors.white);
+    }
     canvas.drawPath(
       u,
       Paint()
