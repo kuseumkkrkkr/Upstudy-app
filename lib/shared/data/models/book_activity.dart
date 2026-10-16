@@ -3,6 +3,7 @@ import 'book_statistics_estimator.dart';
 import 'book_coordinate_point.dart';
 import 'book_vector_operation.dart';
 import 'book_vector_inner_product.dart';
+import 'book_set_operations.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -28,6 +29,7 @@ class BookActivity {
     this.vectorOperation,
     this.vectorInnerProduct,
     this.walkDurationMs,
+    this.setOperations,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -42,6 +44,7 @@ class BookActivity {
   final BookVectorOperation? vectorOperation;
   final BookVectorInnerProduct? vectorInnerProduct;
   final int walkDurationMs;
+  final BookSetOperations? setOperations;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -78,6 +81,7 @@ class BookActivity {
     BookVectorOperation? vectorOperation;
     BookVectorInnerProduct? vectorInnerProduct;
     var walkDurationMs = 0;
+    BookSetOperations? setOperations;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -136,6 +140,9 @@ class BookActivity {
       case 'vectorInnerProduct':
         allowed.addAll({'u_length', 'v_length', 'angle_deg'});
         vectorInnerProduct = BookVectorInnerProduct.fromJson(json);
+      case 'setOperations':
+        allowed.addAll({'universe', 'set_a', 'set_b', 'operation'});
+        setOperations = BookSetOperations.fromJson(json);
       case 'rightTriangle':
       case 'polynomialArea':
         allowed.addAll({'a', 'b'});
@@ -188,6 +195,7 @@ class BookActivity {
       vectorOperation,
       vectorInnerProduct,
       walkDurationMs,
+      setOperations,
     );
   }
 
@@ -217,6 +225,7 @@ class BookActivity {
     if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
     if (kind == 'squareRootNumberLine') ...{'min': 1, 'max': 25},
+    if (setOperations != null) ...setOperations!.toJson(),
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

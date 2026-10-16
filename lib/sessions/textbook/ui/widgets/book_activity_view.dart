@@ -11,6 +11,7 @@ import 'book_vector_operations_view.dart';
 import 'book_vector_inner_product_view.dart';
 import 'book_square_root_number_line_view.dart';
 import 'book_polynomial_area_view.dart';
+import 'book_set_operations_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -128,6 +129,7 @@ class _BookActivityViewState extends State<BookActivityView>
           'vectorInnerProduct',
           'squareRootNumberLine',
           'polynomialArea',
+          'setOperations',
         }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
@@ -236,6 +238,9 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'polynomialArea') {
       return BookPolynomialAreaView(activity: a);
+    }
+    if (a.kind == 'setOperations') {
+      return BookSetOperationsView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,

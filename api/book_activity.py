@@ -114,6 +114,18 @@ def validate_activity(value):
         angle = value.get('angle_deg')
         if type(angle) is not int or not 0 <= angle <= 180 or angle % 15:
             raise ValueError('activity: included angle requires 15-degree steps in 0..180')
+    elif kind == 'setOperations':
+        fields(value, common + ' universe set_a set_b operation')
+        if value.get('universe') != [1, 2, 3, 4, 5, 6] or any(type(n) is not int for n in value['universe']):
+            raise ValueError('activity: set universe requires integer 1..6')
+        for name in ('set_a', 'set_b'):
+            members = value.get(name)
+            if (not isinstance(members, list) or len(members) > 6
+                    or any(type(n) is not int or n not in range(1, 7) for n in members)
+                    or len(set(members)) != len(members)):
+                raise ValueError('activity: invalid set membership')
+        if value.get('operation') not in ('intersection', 'union', 'difference', 'complement'):
+            raise ValueError('activity: unsupported set operation')
     elif kind in ('rightTriangle', 'polynomialArea'):
         fields(value, common + ' a b')
         maximum = 8 if kind == 'polynomialArea' else 12
