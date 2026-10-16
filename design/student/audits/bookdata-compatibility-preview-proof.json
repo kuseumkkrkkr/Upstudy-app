@@ -1,0 +1,25 @@
+{
+  "scope": "synthetic area-model reader compatibility, not full product or publication",
+  "source_commit": "d62084ebd6c2dbd6eb8b58cd986effaf3b68aac6",
+  "branch": "hotfix",
+  "exported_library_files_verified": 295,
+  "private_author_snapshot": {"files": 150, "roundtrip_passed": 148, "blocked": 2},
+  "tests": {"python_passed": 32, "flutter_passed": 4, "focused_analyze_issues": 0},
+  "deployment_id": "dpl_AjJRV2ktg99kMnx5mTafTKhEZJp1",
+  "preview_url": "https://aiflow-web-canary-je7trn7h5-cw20208021-9200s-projects.vercel.app/",
+  "browser_bundle": {
+    "http_status": 200,
+    "bytes": 5738960,
+    "sha256": "709D7910D84B4F9E32F84251CA01A90DD61974BD80414B913C5D5370D70216B2",
+    "matches_local_build": true
+  },
+  "source_closure_archive_sha256": "0132895E3A534B2063C2A14635C35CD2C892FC93B2B1BE4065A0ED4A2FC5B4C3",
+  "production_alias_unchanged": "dpl_HTYscDjA8dNT521Pjf91UeqJsaF2",
+  "actual_ai_calls": 0,
+  "database_writes": 0,
+  "publication_bundles_created": 0,
+  "author_content_uploaded": false,
+  "viewports": [{"width": 390, "height": 844}, {"width": 1280, "height": 900}],
+  "independent_visual_review": "Final ab term reachable by horizontal scroll on mobile; full formula visible on desktop; all four labels, criterion and captions retained",
+  "remaining": ["two reserved-x author graph collisions", "publication review and rights manifest", "full HTML parity including tutor rail and bottom navigation"]
+}

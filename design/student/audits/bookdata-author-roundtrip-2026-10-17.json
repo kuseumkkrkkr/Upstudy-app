@@ -1,0 +1,908 @@
+{
+  "purpose": "private compatibility audit; not content or rights approval",
+  "files": 150,
+  "passed": 148,
+  "blocked": 2,
+  "records": [
+    {
+      "path": "고등수학_기하_2015개정_개념서_시범_BookData.json",
+      "source_sha256": "86619ffeca999a44cdf8dca4a2a9316d6fe236a409b7e8f20bce57d37d1d919c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "b2a5a0f1a34ddcbd845b81c58bbe9eb5e64c4f5f4c41c72bcc184ba622b48b45"
+    },
+    {
+      "path": "고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json",
+      "source_sha256": "b50a276b659195aca791cd2db7342f3c52711518abc0b338d7f42ca38553be82",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4db4947a129c8ef90f18b03576a6fd3d86c13c9cffc134c99f43951d0009c07e"
+    },
+    {
+      "path": "고등수학_기하_벡터의덧셈과실수배_BookData_시범.json",
+      "source_sha256": "dfdf51d346e3bf4999379b0eed5863af74c08326a24db1781c2d38d601f85aec",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "11ba8e977aef2d11a589d1b05aa3ee6a0eb40ede7aab2b4c7d664c84b0d04845"
+    },
+    {
+      "path": "고등수학_기하_벡터의뜻_BookData_V2_시범.json",
+      "source_sha256": "8fd3c0a10789f55f2a1296b05e659ec77089db3abb5552821f3ed8983c375b13",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "0b4d01a44b9075d1a5dfbe0c8e30d89270d2a31344eeec0722af8f0bbcbe50b1"
+    },
+    {
+      "path": "고등수학_기하_위치벡터와좌표_BookData_V2_시범.json",
+      "source_sha256": "1be622709259a1870d5cdaa0872cca3ab897b2007f0da4d3d208f54c5898006c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "568a868d332577298829de0db8b549632bb30b57304774b4e77ea3dda32d7ea2"
+    },
+    {
+      "path": "고등수학_기하_위치벡터와좌표_BookData_시범.json",
+      "source_sha256": "74facfecc33238c19be02f33e7c7c5b14b3d2360e86b215d09a2c257b417dba8",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "683dd48832025694f1eb9dcafa81e4a6e663f56e7e5a5dafe4c353cb944b19b5"
+    },
+    {
+      "path": "고등수학_기하_평면벡터내적_BookData_V2_시범.json",
+      "source_sha256": "655247c0306cc07be78cc2e59453abe7eef34f00addcc28e3c12521a5037d4ac",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "9e0490542bd6108f3f4fb023d09d8069752512e7d67f24dd352de3b36fab8ef3"
+    },
+    {
+      "path": "고등수학_기하_평면벡터내적_BookData_시범.json",
+      "source_sha256": "d294a9c43ba24bde918e2301498ea695fd2307e113a4540882e5edda65584103",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4bcd796a99c95b9e9d1b5ea5ac3cb44e0fcd589c39cbcdd8e683f3f44aba725a"
+    },
+    {
+      "path": "고등수학_기하_포물선_BookData_시범.json",
+      "source_sha256": "b17ea340037c29de17664082847365f692c4f614bcd874535d7925ad1b5a3823",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "32415ecc0b9c1edb2546b2567b487213b306bde511a4e25c8b5c45b9dea0bada"
+    },
+    {
+      "path": "고등수학_확률과통계_이항분포_BookData_시범.json",
+      "source_sha256": "9bbd73a07b35f3d89b278c3003e6d13dd862b519500a97d3d63b3a986a07ee46",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "0cee324e5eaed9a828e269aa64df82b4b3ea2c618e786477cac5b5e3acb01b33"
+    },
+    {
+      "path": "고등수학_확률과통계_통계적확률_BookData_시범.json",
+      "source_sha256": "ce84c9b9a31e53383366aa82e8440ea7032ba91cb2d2d92942d2434d5a8f2598",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "65e198bc22363f352f5e427e4632791d18aaed1417ab17f4aab1e039f1af4877"
+    },
+    {
+      "path": "공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json",
+      "source_sha256": "c42c14b5b365711ea013e5ccd16bedea21627beb40070b20ca4570e025ae1742",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "719b3f43c12438fc8a9f3bf646b13e4656d889a896b01623e4d6a180b8fe9a18"
+    },
+    {
+      "path": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "source_sha256": "701e24b38624c1f9eb1b8c1f42b4e80880a7101b783c6cfeda74659afc405321",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3ec8f2390d317a4bf5dd6b9381b3a4f5a71b1275c61b86785c6fb07fd4534e35"
+    },
+    {
+      "path": "공통수학1_근과계수_BookData_시범.json",
+      "source_sha256": "cd2b07a8b74ae78ff03ebebbae57be79664236622a5ad41f36856c66b9f3a7ce",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "0f94664780ba200b99c0f603d023b8cf9211edf296bb8c3adc8d79766d4e9231"
+    },
+    {
+      "path": "공통수학1_꼭짓점형_BookData_시범.json",
+      "source_sha256": "8ab13803479714e62773911142f7439f41edbd7f8538c05d323163d6ec7b09a4",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d1d1b7d85bdd12dfc91b3b11fda6ccb4770ef99c849bb894064ae1695a2bec26"
+    },
+    {
+      "path": "공통수학1_나머지정리_BookData_시범.json",
+      "source_sha256": "f5eca789e3767534fd759fa78772e9e4d94741d5b13a0acbbec6e5413b9e30c3",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "72c314c882b8895a857ecea4fa161784db16f85d997db5b30924b6187a515510"
+    },
+    {
+      "path": "공통수학1_다항식_동류항계산_BookData_시범.json",
+      "source_sha256": "6f34fc042d893786adf7c5ce4c0ff6f2ab017cd1ce8973a3f687d1508e972703",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4566a8b0db49d2bbc9fadbce89a1d95e9f5b0a50a6601ab395ec9061893fd9bd"
+    },
+    {
+      "path": "공통수학1_복소수와90도회전_BookData_시범.json",
+      "source_sha256": "95d45bbbe4ed7eb9707d812c033bda1c7d960fd6d47830db42e063040ad875ed",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "03ba2c6b4272bd3dc865cc5eaa65a497f7cd580dade7ce04bda53a0997592b11"
+    },
+    {
+      "path": "공통수학1_인수분해_완전제곱식_BookData_시범.json",
+      "source_sha256": "221785479acb43eec577e4aa54332a4485daa560c1e64da6d4e92ba00979048b",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "fd8185253f14ce2fb7d6b3ecf503f877eab1c1c4a65e7eeb21ffdf7e9517d39b"
+    },
+    {
+      "path": "공통수학1_판별식과그래프교점_BookData_시범.json",
+      "source_sha256": "b7c29926d60db0805cbed3afbada81692592e7f32f5b57cf7896201a8e145020",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d99d6a9af23f190612b4c948da6e2a3fb17c7870080ec504387b25034a438d87"
+    },
+    {
+      "path": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
+      "source_sha256": "4553ff4ed9c69187a348be863eacb4eb343378d5d2ee04de42aa02e8f5a54a6c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c71c95d31ab6488b52c81728ac585c1a9f81ede58c092940bb09d40b1103fea5"
+    },
+    {
+      "path": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "source_sha256": "3c60af94a5bd8915d9bd60cec19beec48821b10d53030f2464c1df57e22ec557",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "0c78245e685f6d03f6954ac90d162fc44631c9ab87bc47d4f8d881a1e7e92ed8"
+    },
+    {
+      "path": "공통수학2_명제와조건_BookData_시범.json",
+      "source_sha256": "1e8d0975ad0304b16c69d6844ac46e3f226eb934fa43904bae0ed4f45c304a28",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "5c441c0cf519cd78a7208a09284ceba1282714927a670740c911b4f5d97c179e"
+    },
+    {
+      "path": "공통수학2_유리함수_BookData_시범.json",
+      "source_sha256": "8ad5f33f6c5560c8aa7e451624baad00580d58634949b63d480ebc83a2838527",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "463916bd2d6f69009c813306f2e7c05aa78cea5deb6de9108ae5e6109933e261"
+    },
+    {
+      "path": "공통수학2_집합과명제_BookData_시범.json",
+      "source_sha256": "b612420ab6ad328fc8dd083aa835e5848c4e3ff0216c6c9f5a9f8bbd53333c9d",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "f221ca5d3bc054d5f16113e1942a724ab2d3fac49d4a4926347777c8d39fc211"
+    },
+    {
+      "path": "공통수학2_함수의대응_BookData_시범.json",
+      "source_sha256": "4bd735c8099b001798baf71389cd0992ed57722f312d3eacf97272a4f23e8f9d",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "469572f8bb2238321178320535a5a8609c47c2bff40910c3ae80c0e74f15b653"
+    },
+    {
+      "path": "기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json",
+      "source_sha256": "63f8d7302884e26a76cc76ce2ac44ff35f775aa5b71c288b4e6e00390474a88f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ff4ae025d3f0ac8fbc0cf1d082fa99a1f5ed911feb651d62df0d5e3a5a867e39"
+    },
+    {
+      "path": "기하_2022개정_space_BookData_시범.json",
+      "source_sha256": "2d5a34b61fa72806feb368ed9d465578a780db8c50898ad7f94c9c9623766e97",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "946d3e5c34c259caa26d734d5850f9a04e34b0001748ad489f59383fc1f6073b"
+    },
+    {
+      "path": "기하_2022개정_vector_BookData_시범.json",
+      "source_sha256": "28ed8851cf1f388b2243bd5457640f092fd27a630bac4e3de12cd14e9872914a",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "567cc341b44940021bfbde2bebc6f42a0eb559f55f21666ada044ca7af14679f"
+    },
+    {
+      "path": "기하_공간좌표_두점사이거리_BookData_시범.json",
+      "source_sha256": "4712f2a4ec20e2c1e1565794edd092bfaec800dbf53d0c8c44641e3b4105f554",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d72f944cf877b796714a3164fc12492905ea8f54931912d0ed880c89122fd8c3"
+    },
+    {
+      "path": "기하_쌍곡선_BookData_시범.json",
+      "source_sha256": "0f554554afd3454f9d09c05c6cc2d62616ab6ccd28803659cda2fe28ee798018",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "26260a5cea587b87a61cd6e4ea05ec8f441bd27af16ecc249e48e04a9733405b"
+    },
+    {
+      "path": "기하_타원_BookData_시범.json",
+      "source_sha256": "a70b29b3a9444f9d13b709ce202748eb0db8ba1ab52de3c8686eac62e93bb601",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "044b67bc7ba8fc22f80cbf6657d568aacbd801e391614d83a5ee074609d4eac9"
+    },
+    {
+      "path": "기하_포물선접선_BookData_시범.json",
+      "source_sha256": "d54922dab2c190190acc9114c2097b982bd00a4c6684e191e8f3758fb3acbd20",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "05b1aae741aed1908e6598aeb507e47cc9b430d25b24ee0e621a8db150b06de5"
+    },
+    {
+      "path": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "source_sha256": "0ebf437d7c47c598fdd8f7bb6eefcf9dcbe761004e24ab62a668d4112de1955f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "a46143e3f4f719d83f1958c9b4e781c4a6e1c065b64071507c7387a8c86a1a12"
+    },
+    {
+      "path": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "source_sha256": "b96dc87267c8d2ff1b072972e16e68273e2235876053af8f0add00840116177e",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "834bb790bf4969a5d106ab62226d7fc628d5ad93da3c1bed78a97f1d9ff8da81"
+    },
+    {
+      "path": "대수_등비수열_BookData_시범.json",
+      "source_sha256": "e58d41ced291adf12b744a4b8cdab2727702bc837847606071f861c623f972c3",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "39d548166070beddc269c9e936e77965ca06a9d8c1cbc3ae9e7868f2635c864a"
+    },
+    {
+      "path": "대수_등차수열_BookData_시범.json",
+      "source_sha256": "5b09f6bb1caaf0a9f6776f83368a00f16cda799fe325aa3332ced22a5b03e872",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d8b906c326bf79dc872376b31a9c686a80ed44be1cf82c616425dec572698ef0"
+    },
+    {
+      "path": "대수_지수와로그_BookData_시범.json",
+      "source_sha256": "3ecb0d9b5378a4bce2277a45f036877acc2d63b0c019a4953606f29626ece0e9",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "91032cbd5b0d1d308800e90d1f84286a3cf78cd541cc09da1439e9d636567e00"
+    },
+    {
+      "path": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "source_sha256": "500e23f61bf295fabc543f955a0ba216b522f26254ddddf43e8dfc593dfad583",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "cb63d12cdee08ae13b8cd6df805fb7e5ac268f1653f9a105a07016e3c059f1d4"
+    },
+    {
+      "path": "미적분_2015개정_수열의극한_BookData_시범.json",
+      "source_sha256": "f557412f8ff932e04a24809b3a0c8f3918c95679234a6b6afc2db7b218a615ab",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "db86310a4b7f9879c5e55556ded469dbb3c985618f42b6aec7e5993987b1f99f"
+    },
+    {
+      "path": "미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json",
+      "source_sha256": "b8c48b468a849eb1d775c95309ed19a2be5a42185caaf05fa3f582eb5b355851",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "8c8bf0daea75b8cb1eb14189235d2ec717c867f951b1b473bcf24a1e569272b4"
+    },
+    {
+      "path": "미적분Ⅰ_x의n제곱_BookData_시범.json",
+      "source_sha256": "e2dff7e6f006ce459dbb41de2d0ea26e3fbc4745c879d4e35945acf18183ab24",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4b1bd2f8faa936524b59df5ba5e6b137f3205c1f79401d584309b08f5956e534"
+    },
+    {
+      "path": "미적분Ⅰ_극대극소와그래프개형_BookData_시범.json",
+      "source_sha256": "894d06811b0929387cd065dd26e457e98cbc9888335b3d5e362cc7013e4b254b",
+      "status": "blocked",
+      "error": "graph.parameter: invalid or duplicate identifier"
+    },
+    {
+      "path": "미적분Ⅰ_미분가능성과연속성_BookData_시범.json",
+      "source_sha256": "3f60ae35595a99a88c30c7eea8ff594049cf6969c5dccfcd265b9154326d0b52",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d6cbc34ac564cbf3767ff5448e4d85a69e8980e91a394b384df134364ac4c32a"
+    },
+    {
+      "path": "미적분Ⅰ_미분계수_BookData_시범.json",
+      "source_sha256": "9ad4a2374b3a8b001cdd7bdcc4000a86554a81787ddd550015a8592ed2047f99",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "21b22723720cb24c6d8afe101a30ea53d2b88ae9181e648d39c37900d084ea9b"
+    },
+    {
+      "path": "미적분Ⅰ_접선방정식_BookData_시범.json",
+      "source_sha256": "00ae4a9b3b98cea49f3ffc20b385bc4c5163f30175a7536e681a127d41a64a28",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "dee4fd377b773ff0d8a7bc7f9525f1bdc0bd298f5d66b192ca11a0d58b9988c6"
+    },
+    {
+      "path": "미적분Ⅰ_합과곱의미분법_BookData_시범.json",
+      "source_sha256": "b0180a95dc0f8bdfdd2c338cf85a5c1744dd42345f4f5f93d71c12d8f39dd26a",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "443554fbdab33a7abdbbb8c78ca16e73b9c93fb0dfd91d5de0801cdc97fab414"
+    },
+    {
+      "path": "미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json",
+      "source_sha256": "5becb4073042af60a04250270c3e10fb9daabc4dab2b38b844a78d6c8ce88efb",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "e642f226c42070f1434e88a8b0a400b71030857a70729fd35c989b0fc452751d"
+    },
+    {
+      "path": "미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json",
+      "source_sha256": "ad171c5b98cabcd07d3dbdc291c0d1c51ae12693066151d8400c3757d4253e9f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "12090506dbb36db05da7cc0c42f99247877e9ac015b75f34429d2288b3d54fa2"
+    },
+    {
+      "path": "미적분Ⅱ_사인함수미분_BookData_시범.json",
+      "source_sha256": "36a4c68c77937bf67032227aac40d8b4092a62af5c0998d49b33a8f4849da421",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "f6029199bc6de81667f6fefc3e5ebdf7ee1101318c64d29f5d8b1c953ea09a88"
+    },
+    {
+      "path": "미적분Ⅱ_코사인함수미분_BookData_시범.json",
+      "source_sha256": "86eaebe47d907921509ef18aa7487cdd1bec1b1d904956f55147b0dd7cb9634f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "cc77ef6ee486741a2d2f02ce6e08aee2d17f6d245e291a7efee38873dffb6a4d"
+    },
+    {
+      "path": "수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json",
+      "source_sha256": "326044f1a8b301f87e208a582659f81532771227dc2e618dee21fda40ae77150",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "90a4a2af85a5cd61cf4a63337d33c5a797e75754dacc385613cb9af76f43dafe"
+    },
+    {
+      "path": "수학Ⅰ_삼각함수_BookData_시범.json",
+      "source_sha256": "088c1115b915eae93cd11b656b24268f4b6df80f57c53ca72289f312d2ade023",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ee307be0ce1ec5dc51d70f5199e046b8f1e9bf778f807bc64bfbdbb2e7a3e165"
+    },
+    {
+      "path": "수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json",
+      "source_sha256": "6f7af0cf7d0a2ddd5c9a55bd69e1e12a63e11cdf461b8519f35709e70d88382c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "26fb24f67d37a9f152ac5c35b21a513e79e3f9250783d172abb5fb30e075e247"
+    },
+    {
+      "path": "수학Ⅰ_수열_BookData_시범.json",
+      "source_sha256": "19b3298ff4c81cd647f34479d36a6bf7ca3c4b1ae95243f20f34e567fb51085d",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "55ed214e845122f06dd1e3b15491cb544db1353f50b71f3020b9242aba5f32c6"
+    },
+    {
+      "path": "수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
+      "source_sha256": "17635b9e58b0a4d706453a2d6ab20a535631c194dfc1ccc136608d5e26e02601",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "87e1fee7ee3c4e868bcab840e0505edcdfcdad6693b1147df2e8f7bbb442b8f4"
+    },
+    {
+      "path": "수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json",
+      "source_sha256": "7ee5f69d61bdbfd13670da0086311cc27c4b2a8a64cb9fb1073bb1f243899892",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3ad0c6201277c1d289f8549709bc4961f5ed3e0880d4a721fef3ede3cc6aeafa"
+    },
+    {
+      "path": "수학Ⅱ_도함수부호와증감_BookData_시범.json",
+      "source_sha256": "98a71488d5499b828228c25ed5a0d0bc1d4b7f374e820e815fb6265046409093",
+      "status": "blocked",
+      "error": "graph.parameter: invalid or duplicate identifier"
+    },
+    {
+      "path": "수학Ⅱ_함수의극한_BookData_시범.json",
+      "source_sha256": "53124c0e5cdd846c13255856c20ac60f69c0fde89694bed7dea628834d5411d5",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4f518804cea8420ea9f44b07ec5295ebe3ac0e34a916d37698f9c8999e313e42"
+    },
+    {
+      "path": "수학Ⅱ_함수의연속_BookData_시범.json",
+      "source_sha256": "a6589727550709973433647ef354b9e7baf4a54341ebae78a165d455d38f67c7",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d15c540237404deeb7b3efaa77e6e2472ea4b6f4d5924e7ee959514405d05f37"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json",
+      "source_sha256": "2818ef81505d88abe74252572f88e420c33c887b17254519a20171fbcdceff1f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "578ed10ffe5844f3a6f908b7e9082f34341f3d32328cae1da5541a64fb244ed0"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_거리와중점_BookData_초안.json",
+      "source_sha256": "a10301d0cd61a16b37db015908c7d0249f8f5c338065308023067e343aca00f2",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "231bb4820f5497658afc1b18136b2d2d313e7e1d91a82f791514cbf62ec421ee"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_근과계수의관계_BookData_초안.json",
+      "source_sha256": "a4c134396299fc2375c74af3550a5014dee02b06ab04bf413b6d2c310331371f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3b3d5812716c6ea531056ba3a64072eeb70a5d6112c642da8df0d760c1be2fee"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_나머지정리와인수정리_BookData_초안.json",
+      "source_sha256": "a4f55d63b0b013966e3183c73d6d0ebb155e4b3245265f816206a4441235991f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3e278794a1a223df86448fcd9f8963f569f748fd3f17e97d2d31f2f38e7fb641"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_다항식의덧셈과뺄셈_BookData_초안.json",
+      "source_sha256": "13403257430a2e979bb4f8001b9fe95812c992a3fc3154bfc87d8a9f1792d8ab",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d0ff04f692aca853798c2a12bdea13f2c3e7f72835fe07e9c260b9da499c8863"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_도형의이동_BookData_초안.json",
+      "source_sha256": "c219a21c113f85f939cd4143f7b87d6648f1d4d2563bcac3d6878a89dec7db1c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "04b106088652272ead0a0a6e2b3584d5b188629560c22d0f5b4329f618988159"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_무리방정식_BookData_초안.json",
+      "source_sha256": "f16b580b76032913089dc0935244ebc7d6c71e1deb05f20e871ebfaffa6bd7c7",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "15e70b365dc33ba970d23e8540e412247f35269b0df20e132111a94a29597944"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_복소수_BookData_초안.json",
+      "source_sha256": "cb68a1b4a6f432d0582edce0706dbbb90dd31383f212d58af13d19023966645f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "9ca080f794ba8e42f346866ee7eda4496c905ec9bb5cf50fbba3fa20018a79de"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_복소수범위의이차방정식_BookData_초안.json",
+      "source_sha256": "5ebf55f90bbc6e553efa9ff8728f7d65228bf4f2f3f0d7f09fe78bb8bb4f56a3",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "1a12564aded3063e24815ad9dbd8d598310801b41b76be470f7f244d18a22280"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_분수방정식_BookData_초안.json",
+      "source_sha256": "27d7bb073050ac7a94e49799aeae039c8589c0ee6fe96598dc02e9e33030f2b5",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "5b4297efa782302e24a5fe8bf5387403e7e89d57cb595bc37cac9190427035a2"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_삼차방정식_BookData_초안.json",
+      "source_sha256": "82c2ababc8814472783a7f4852c8a3c733d265fd63740fe9098149faf82305e8",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3297e290f6442d074f117e432df4af52a45ed688fbc88a574337f661226ad8d6"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_연립이차방정식_BookData_초안.json",
+      "source_sha256": "67af15fdbdff09f1d7e9c9c762607fee1085f09ddbe10ff911bc9d18bb97c1fd",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "fbebd41eeb3be511b4a34bbf860e95c88a40f9d9eca572533e3c041b02240747"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_연립일차부등식_BookData_초안.json",
+      "source_sha256": "13e6c7b7870f8a95257b2e9e2fe49b6681d89f5453aaf8333b02c6949634c79e",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c34fa7be3cdbd3ce983aa93e04b82ac3f5a90cdc4602d5bcb001b34e908f460f"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_원의방정식_BookData_초안.json",
+      "source_sha256": "1ef540807684e14d5614fa7ae5162f7715f092ad5c94e2597096b6df1c8c8c72",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "6723c15b4b277de9f159a05f05b5214ce50d02af76533156a93eda01aa24a473"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_원의접선_BookData_초안.json",
+      "source_sha256": "18b5a56ec8e1e2c9bc15970ace0055b8386bc7f70d12fb5636fe96ba69d020ae",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "139e46d3e0ad618198cdc6bc75d378652ab07b3f4bc71b376bf04844e92e5c44"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_이차방정식과이차함수_BookData_초안.json",
+      "source_sha256": "45f7768a5a89ab8b8e85297fdd86a12fce524e3b9b773703ac3c987c95792330",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "8dafcf459e29283311a041542e64a58f3cf358722de5e3b849bcb0ccd7b2bb5e"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_이차부등식_BookData_초안.json",
+      "source_sha256": "9f990734dc9ea9236a41ee091886c947f2402355376d224d8b1849b033d0fb99",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "73fa7e191f2e9aa8d3136d90a6375376b723d01167816ce39b7d58f4bdf82b77"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_인수분해_BookData_초안.json",
+      "source_sha256": "284f94e9a5f4c6a8b6e9afa959add1da239eeb8679aff40a08604b7d16851d24",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3339966208051285ec7d78c188303e3893f53951f2933ad3afeec4c65663ebd7"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_직선과원의위치관계_BookData_초안.json",
+      "source_sha256": "35872fc084a8f39c4ad9412a40e9b53efcfb0a33e2bbf836b8bbf41dd1435611",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "9efa6b60dff5224e4b84e1f0d8b93000c1dfdc0ddd64961694f8a43efd5341d2"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_직선의방정식_BookData_초안.json",
+      "source_sha256": "698c294f1e689efc7018948db6510b1a8def355fea7757c94c84a148757bce09",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "30a8c1fb8091ffcda1efed82ebb28fe36dbd36dce3542f93303775a517566860"
+    },
+    {
+      "path": "수학상_2015개정_초안/수학상_2015개정_평행수직직선_BookData_초안.json",
+      "source_sha256": "f5cfb4652f8b653e86bf9df4fe04a6d7b16b33943c0ef99ae6545a78a84b75c7",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "503f0d8bb7f13613e0359dffd514cafa2d4f9867d1212e75c78b78a987169de2"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json",
+      "source_sha256": "d38765ac8df9ad579df76380414270f793b86e8dd185aa5d3442e2f06d8591b8",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "7f2ea7a3e601f5c7e2a6ad928121aaf70edf29182db67992a5fb43747a14cff4"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_경우의수기본원리_BookData_초안.json",
+      "source_sha256": "80318904578668ea3e3bbde39a19460f8f6970e9de07875f0035d8f6f6005aad",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "cf739327ecb8e09c3699c247eedb6ffd9ff1c1ce794a8f45825b7d9e4727d682"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_명제와조건_BookData_초안.json",
+      "source_sha256": "2d5c37943df4cd6cc749a87f6c24ddc2941d91ad50e8d8d371edac207b856a2f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "32e62a93efa90f1c9e132d1ec247565258955bbd19d35da20eb2862b8b748732"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_무리함수_BookData_초안.json",
+      "source_sha256": "c644d7f1792f41fead2fddf0495f107b98aa7d4909c43b450df6a6c1cfc86f1b",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "f6202c3cce0b5566c83e7237b362f8bab17a241d1c30ce12d00ada3acf6fc194"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_순열_BookData_초안.json",
+      "source_sha256": "ad987d2407dd36bbf35ce8642a5f264ea216529cec72ac07c859ca297853cef5",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "1eecdac99790a32e4ba7742c78058843e9b53672148be80908d3a406941f3f38"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_여집합과차집합_BookData_초안.json",
+      "source_sha256": "2102eff0356e9367d054ed5e53713b0d54b7f76d567ca1a2a64b4747edee2003",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3dfa792dc0946358aae39dceede857b423114e07b0672aa9845e4fdcb1ed99da"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_유리함수_BookData_초안.json",
+      "source_sha256": "1b633ec3d4ba349d1ddbe95635d6af5dbc9aee75cf49cf13212db8fd10da8529",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "13bb4a5918b57f348899e22f66546327de07ec86e3d1f016315889e94f93bbcf"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_조합_BookData_초안.json",
+      "source_sha256": "5e14634a91af8785c2fe18c27c2636a934793fe1bf27a9c48c80ae42353a054e",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "cde050fbe9eb0fdb3431e925578ae677ba600b7119329e82c8fdf55d430bd130"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_집합의합집합과교집합_BookData_초안.json",
+      "source_sha256": "a4a435592181fc4e0ad566e20bd0d3a6026d4a52ce8c244a6d0527a8e632a0fb",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "fd7196b48d0e99dfe2d98201f7a20887fb6e6c778ff911c693b14f306eabeb73"
+    },
+    {
+      "path": "수학하_2015개정_초안/수학하_2015개정_함수의뜻_BookData_초안.json",
+      "source_sha256": "6d729b7d4ba7ff1d5aea6097771fd4562e494a98d00afd2cc21c23314f39dabc",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "95b1f37943348069b6f07dc1bf3191380968eb467109e122aed633d39e03a87b"
+    },
+    {
+      "path": "중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json",
+      "source_sha256": "674de35eed0dc16e16b04685a0138a4abf40c1dee874e5abda328c4b284466e0",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "724a2941d19af28961c029d31198f794ee17d68c95b422bcb6529658f3f423e3"
+    },
+    {
+      "path": "중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json",
+      "source_sha256": "9b86f461a8438d497b9308075bda02fabd9ec0f5b7710fa705a3f36d6d940313",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "7be7c852768382d278eb54192b41c97dfb44291ad85d434e875e715c77c73ff8"
+    },
+    {
+      "path": "중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json",
+      "source_sha256": "832f76e54b7983f336edbbaa73c31ea4d467ad658fa39755c5791bf692825200",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c71ea44609e071d193906bd8a3a19d1b537f29d1af97c90b8e729529547a2b2f"
+    },
+    {
+      "path": "중등수학_연립일차방정식_BookData_시범.json",
+      "source_sha256": "6cc6c109635938aaa9d4d5041de2d472fa990e1ea87b3e3ffdc7072e4988c4f6",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "e4b8e6afbe851f8aae56c8519aefcff0cbfe0008ed3adda4b028cb2854e526ac"
+    },
+    {
+      "path": "중등수학_일차함수_BookData_시범.json",
+      "source_sha256": "fc7419c0074f1d54b4d7cc3964938084bc49393f48aa0d7599d49a4d2d150947",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d0819a80e1e631c4e65085afb2b9684ca25199c9d92bdea26b3eff1250d2cde1"
+    },
+    {
+      "path": "중등수학_정수의덧셈과뺄셈_BookData_시범.json",
+      "source_sha256": "51a4ee6d6bae5dbb340522a90548637d3de6fe5eb28973007df0b576ebaf7fee",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "42b41311d7e77f73d2d9cd5a3b2912bce4f80b01e8d160bf60ce0056a9e9cce5"
+    },
+    {
+      "path": "중등수학_제곱근과제곱_개념서_BookData_시범.json",
+      "source_sha256": "0cb59c174e17efc9379b36c4b030e995a1b8e951b2d6e8a83137e0f7a2fdf69e",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "14f6d0c1d169ef106c75f43acc6fe7b43797e13722a8fa0bb6694b3f87faa47e"
+    },
+    {
+      "path": "중등수학_좌표와순서쌍_BookData_시범.json",
+      "source_sha256": "bec3409afbda2f556d8cb9e1b3b782173914fbd945e2ba06c8d19d70f3d4aaf6",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "7895c8e001ab4f7d2cf24b9fcf1254cd5c4913aa9bc28222eeb249987570149e"
+    },
+    {
+      "path": "중학교수학_2015개정_근호식의사칙계산_BookData_시범.json",
+      "source_sha256": "2357da7cf4c0978485749f48b71fbe4eb5f350e832b2629b8032793820aee49b",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "0f46df74af21ec176e6652e701a162e193428badd801f6bbc04195fe0df825cc"
+    },
+    {
+      "path": "중학교수학_2015개정_다항식의곱셈과나눗셈_BookData_시범.json",
+      "source_sha256": "ef2e9664dc9365949d73752264c4228d19cdad9dfe79181a013d61d3c164d1d0",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "b85d5244b448becc7233576af3b402c7715c2e2676e8ddd317e2b19efae71ace"
+    },
+    {
+      "path": "중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json",
+      "source_sha256": "cd93f9fdb86595521b4401dcad46516a495dcc7a6feb1826ee169a6d8315cb0a",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "7876963703dd8cc91f8466c9cf60a323bf78c658b55bc2ca04b307d8f6365da4"
+    },
+    {
+      "path": "중학교수학_2015개정_다항식의덧셈과뺄셈_BookData_시범.json",
+      "source_sha256": "4e9014bc70d43337e4ea0eaa36427a6eb04fdcc9f80e83b48339535e0178dd8b",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "f5e9809cf1788bd8d3687a31d52dae5c6707fdf0f052ad965e040e3f8c3ca561"
+    },
+    {
+      "path": "중학교수학_2015개정_무리수의개념_BookData_시범.json",
+      "source_sha256": "df21a342ea5fccce7648404e46500ba8325c5358ceaf09ed230ad51ec6763e8f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "721233ddf764ce3b2b78fcd1a706437451bda676ad0bf6321b963bbb7aa4cab0"
+    },
+    {
+      "path": "중학교수학_2015개정_문자를사용한식_BookData_시범.json",
+      "source_sha256": "095b0e3055be2a5e1ea3ba2c57649ff4c8bffe041eeb247ad4540f59e2c60da7",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "40e757f4fd82149c6b253195c37dea783365665c4b057c43320559e66dcf276e"
+    },
+    {
+      "path": "중학교수학_2015개정_방정식과등식의성질_BookData_시범.json",
+      "source_sha256": "7247ff089530c37821e7b78b59215a9045cfad013a127ff551d3378d422b0d46",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "dca87ecfb6ce6e31991e75da6e748538f7c277013a0e8e939e68ef2f493fb414"
+    },
+    {
+      "path": "중학교수학_2015개정_부등식과그해_BookData_시범.json",
+      "source_sha256": "8539c4fe84d71f0ca9bb203e381a9a9c549cb8b859559b020cab12c593aefa55",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "aded76187101bd6cb94db12ffa941bb7f674a183dd8ceaa73f7d162d2108c54b"
+    },
+    {
+      "path": "중학교수학_2015개정_상황을그래프로표현하고해석하기_BookData_시범.json",
+      "source_sha256": "3ebbb65e0d7e5783eae88cee1230c41ff29718a8a968a39748a89db4cbe4eef5",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "f6bd4802567f484da491cdcb7f3d70da15a8ccf54e4d3b607cd5db16727ee5f0"
+    },
+    {
+      "path": "중학교수학_2015개정_소인수분해_BookData_시범.json",
+      "source_sha256": "adbe442a10998b6af458a29b07e1969bcbc1e85c029683fca4170fe0c77d9040",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "626e634b0d89860e340820efd4e0c9f0701d822fdae799353397cbecacb135c6"
+    },
+    {
+      "path": "중학교수학_2015개정_순서쌍과좌표_BookData_시범.json",
+      "source_sha256": "6a0c0d421d67d0210d31eeb0306cbe52249e07a9a6d15550d8ccf756e88e3d96",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d6665a5412daa3626d14d5b13d875a408a5539f53d748f0bdb2f752a3732e2c7"
+    },
+    {
+      "path": "중학교수학_2015개정_식의값_BookData_시범.json",
+      "source_sha256": "bf61a838fa247a1dc29b8ded760af94c3e1a5f0582362da9e5d177965e140ae1",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ac1d3338bd9ba7e5b748ded59d752c8a290249d464f8621c44adf655003d0c59"
+    },
+    {
+      "path": "중학교수학_2015개정_실수의대소관계_BookData_시범.json",
+      "source_sha256": "c26e60db9642898699b2c6244fc3fec47837527951ac8a1d7da31f881dc76660",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "b308fe87998f02bfcf53fffe0e593e236bee9b8b7c7548f940bdd78a839729a4"
+    },
+    {
+      "path": "중학교수학_2015개정_양수음수정수와유리수_BookData_시범.json",
+      "source_sha256": "079bfb4d83722f2b0b3d9b1acea381511c251b3e0e9d6611ce559777b3ed7da3",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "a4a23f01773c785b47c14fa0fd8f29e763b4be692319d72674bc19ba585d9a73"
+    },
+    {
+      "path": "중학교수학_2015개정_연립일차방정식_BookData_시범.json",
+      "source_sha256": "60c6e0b69d507420085d63f9a8588a90d633a0102610527a5f0b47487fd1a64c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ffc40540044dc0d72f16b3c36e20e761e5454b5afc8c09de1f78ec91ed08607a"
+    },
+    {
+      "path": "중학교수학_2015개정_유리수와순환소수_BookData_시범.json",
+      "source_sha256": "2c8467503cee1576eec73d1d032754edbea723fa0365dc995ee1f2a4610d32f4",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "7dd7b8bafd159c71764888512535e28954b95567f9c50c9513ed253866d9c740"
+    },
+    {
+      "path": "중학교수학_2015개정_이차방정식_BookData_시범.json",
+      "source_sha256": "48717c00d0d38fb3b5f71d42618fce589681b57485ba530867f71391b9b2b579",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3a965daada0cad45f317055f460d8f628fb98238d78ea50afebf504cda65c41a"
+    },
+    {
+      "path": "중학교수학_2015개정_일차방정식의풀이와활용_BookData_시범.json",
+      "source_sha256": "680e5a740950550b9b7eaadb76ced4d91985cea949345959c193c334340cf0cd",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "867fd86942cffdced199005feeb7b18c31d527b6b1e8af4cc59f5420cf901311"
+    },
+    {
+      "path": "중학교수학_2015개정_일차부등식의풀이와활용_BookData_시범.json",
+      "source_sha256": "084feca432c1c4017d9748e4355d04ed46047b3fdf2fca7d0aee7069d46331cc",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "fe057a17b1c06cd1a47520cdd762f88b72ed2a37df24566217737df0c23cc78d"
+    },
+    {
+      "path": "중학교수학_2015개정_일차식의덧셈과뺄셈_BookData_시범.json",
+      "source_sha256": "96f0002f50f3267c4a915979a338ca55c3bef4218567bd2fa225dcf710b9a125",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "3f36e14df2496e8be35d02ee6f4d6b04e2e45670cd7efa5ae3c330628709a447"
+    },
+    {
+      "path": "중학교수학_2015개정_정비례와반비례_BookData_시범.json",
+      "source_sha256": "df2dc5a21a55555547494197538828ac4b47b5721728f76fbac6e8945f7b50c6",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "d6f33a0040d50e950f4463bb5b9ecffbb8d442d9773fbd1457a9ac8ebc77f8a2"
+    },
+    {
+      "path": "중학교수학_2015개정_정수와유리수사칙계산_BookData_시범.json",
+      "source_sha256": "9e4cb8c50bf5dc11b1a72e851cf014918ef62c73b1bc7d4cf8bed51f106f2e9b",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "1584d8f09680eb20be23d1468ca0de17d4a50b237ffe3bcefc88bc9834d39206"
+    },
+    {
+      "path": "중학교수학_2015개정_정수와유리수의대소관계_BookData_시범.json",
+      "source_sha256": "38f70d2e346560cacc2232924b423e6e55d28b3cd2c9726b82680b2631ecd0d0",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ae254a182fc2617c88b2a084ec5eabf85dc6193e1c306e9fead19192e3576dcc"
+    },
+    {
+      "path": "중학교수학_2015개정_제곱근의뜻과성질_BookData_시범.json",
+      "source_sha256": "cdc413916689f3ef577ee9af70650fe50643901c110a02ac000b799a92e1844e",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "51e010d9cb8939034c5d2487f587bb9d60e758e4f4f7b7f9e13f4a8628eb20b3"
+    },
+    {
+      "path": "중학교수학_2015개정_지수법칙_BookData_시범.json",
+      "source_sha256": "53431f0dc9b5bf2b13935746b80196c8b75113e5ccddb877edc8a95e58fc9fc9",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "e2414911be7a142fec086092d42e99d9efb24a6ecab0d5b9c40f39de4921d091"
+    },
+    {
+      "path": "중학교수학_2015개정_최대공약수와최소공배수_BookData_시범.json",
+      "source_sha256": "fad428e5735e12035b7399f798936e840d4a5f36b660bd8e00636e620c1b1f17",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "68af337ca2e85f6b02383c2c224c7f92ed25708a6c71a13900b2941d75bbc7ed"
+    },
+    {
+      "path": "중학교수학_2015개정_함수의개념_BookData_시범.json",
+      "source_sha256": "f3be4b4f55bb9f72d6a7c3827c77eb56f4406c84f1da387a5838772e395da93f",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "6be8ba603f1fd99f8140fd4ef62d9ddb1bd102d50d799274a8f52aeb4448eb07"
+    },
+    {
+      "path": "중학수학1-1_2022개정_그래프변화읽기_BookData_시범.json",
+      "source_sha256": "67efc9b7491e41fd421076bd197520a8ad283bb37dc0489307afb4bef9911477",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "9d51a0a022a91baf90d4449b09465f6dc051e50e66817d49917ac4dd3c0e040d"
+    },
+    {
+      "path": "중학수학1-1_2022개정_문자와식_등식의성질과방정식의해_BookData_시범.json",
+      "source_sha256": "f7abf75a49a97eb6f5117d6323b12c57d2891551cb9c55e0c21cea1625b54525",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4df86315b3397d61ee48b5b1eddd3a953ea0aafba7fd5a7eea6b353307302fbb"
+    },
+    {
+      "path": "중학수학1-1_2022개정_문자와식_문자의사용과식의값_BookData_시범.json",
+      "source_sha256": "fc3f5c6884ca214b055e82d9982063bb19424fe1da73d175f0570c66fca739d4",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "dabcce5c8696f5b822e0de596dd59b674d2080db7dbca6a6f2587df1775e47df"
+    },
+    {
+      "path": "중학수학1-1_2022개정_문자와식_일차방정식의활용_BookData_시범.json",
+      "source_sha256": "7b22e987e8b158252319f805243baf99ba696043755c09bb4bd87102a1349b49",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "8e3bf1cf8f677728453a6fe3831d75eee76cbf9fa46b561ffba71f17a793c45b"
+    },
+    {
+      "path": "중학수학1-1_2022개정_문자와식_일차식과수의곱셈나눗셈_BookData_시범.json",
+      "source_sha256": "32819e211bda81aab25f2d7436f6fa1e4fa3616c9560a83d655693839baca635",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "2c9b37070871853a3401d933dcb3b839e2d4d2e4a67fae1f7ee73326242b811e"
+    },
+    {
+      "path": "중학수학1-1_2022개정_문자와식_일차식의덧셈과뺄셈_BookData_시범.json",
+      "source_sha256": "0743bb79308fe61a32cc5b8b8a5affe499970e97ea6f4ac2a0b68a2416b98352",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c523623509e479ce42939ee103fe4c6efabdbb740b738878ee8b99a0f3e3c26c"
+    },
+    {
+      "path": "중학수학1-1_2022개정_소인수분해_BookData_시범.json",
+      "source_sha256": "6558f310625d837afaf6defbb8a2c61271d36fda7e419738bca1346e24d0abca",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "fb3474712ddce3b1ad77c59a25ccc60c9581bc0dba97d56a9506e0414b4f7358"
+    },
+    {
+      "path": "중학수학1-1_2022개정_정비례와반비례_BookData_시범.json",
+      "source_sha256": "cd26c54308987bcbcd76b3a65579fede42eaad3b9ea99255c8b43a164e19c26d",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "92cd4bf7544b1b512da18ea0b08f98ff647feb33206256ce7fe2902cfc85bd03"
+    },
+    {
+      "path": "중학수학1-1_2022개정_정수와유리수_BookData_시범.json",
+      "source_sha256": "9fb2d74d28c2bf511a9086375bd52d2abe60faad2895944447f8eef2d173b599",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "e1d15b24ae4a22394cb3faea3edf6a681c689c0e4d4082585fe2cc2523d9e77a"
+    },
+    {
+      "path": "중학수학1-1_2022개정_정수와유리수_사칙계산_BookData_시범.json",
+      "source_sha256": "8721c365937e94eb1f8376b38e7584358522209e9c05e6e821dd5733270f9bd6",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "af96608ec9955733468402cd8f95cdcc497cffc006c6da980aee1281ffc0a1d8"
+    },
+    {
+      "path": "중학수학1-1_2022개정_좌표로위치기록하기_BookData_시범.json",
+      "source_sha256": "300336522798c8f61a7497dec74902b6753b976f84d3c4607739785629ffe06c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "b248cb8192d83aaa46187712ee653a77d04aa2cb416fcda78080a172a9d55b23"
+    },
+    {
+      "path": "중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json",
+      "source_sha256": "073de18ab7680918b7deffad89fe28a808b1ddc9fa11cf1f5072f2db705c053c",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "ac5a28577ea3681f3e0dcceb1a84ed34860404d752743c490010cb658adc46b5"
+    },
+    {
+      "path": "중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json",
+      "source_sha256": "ee25125e183002a6aa5faadd06d591b06bd4f6ca47e25475a01eb67a69aed733",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4b0f4f1fe17e5da22b38b60eed55c0b7816561c3e92bf0428399826565de469d"
+    },
+    {
+      "path": "중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json",
+      "source_sha256": "79d5fb92c1450c6a4c01b2e7f3ddd0dc43c31bf49413f8d03a8fee9f4fbb6083",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "024270aa249d3860e7f2c38dfff6e46574500c9c47dc84e2489884f3b6b94c6c"
+    },
+    {
+      "path": "중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json",
+      "source_sha256": "9d34766d43222d1afda1b5b51918559d078c6ced39c7a0d5f06d4ca5f7e49167",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "bd7417b0d360b605a107df273facc2fafe8aae37825bcb11c28c3dfc1ed2e299"
+    },
+    {
+      "path": "중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json",
+      "source_sha256": "9d1edcedc4758854d56e8cd2fb74c1da70e0a22115658c3b62e32114096b98c9",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c20888690bc43ac68c665b7a91067410af6dd00b02d38197964c1a6b8a6d27ea"
+    },
+    {
+      "path": "확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json",
+      "source_sha256": "9d57121cbec97658d49179bd058ac55b648253b3915ea89a9b8c170bae251972",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "4db6f1df8ac83117cb5c2dbc99051cb033fb29e82ebc41655de28d7632e8e95e"
+    },
+    {
+      "path": "확률과통계_2015개정_이항분포_BookData_시범.json",
+      "source_sha256": "044a381003b73a4078e535be79674f792d695ad7ecb99d61e8459a8ca0c1a497",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "abbcfc3113659c7be1cb56201104406be9de301a4ba16a6320cfd7219078a690"
+    },
+    {
+      "path": "확률과통계_2015개정_조건부확률_BookData_시범.json",
+      "source_sha256": "79831ee583c2ffe3a2482069beee75631801a6e2875704b2cd961c5e139efcc9",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c2a23c9ad7712f2377c3d339817b40dfa67199077f9b58f6bab975fcd7b4b77a"
+    },
+    {
+      "path": "확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json",
+      "source_sha256": "1a6e6d152ee643f8ad7fd50cc0664615878f94e4e414e2bdc5f0bfea00b9d7ea",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c987debac85329b9854633b44673afb5657dba4294a1f51f1f9038aa85fea52c"
+    },
+    {
+      "path": "확률과통계_2022개정_기본확률1단원_Batch4_BookData_V2_시범.json",
+      "source_sha256": "c70d4ea232e313b020c13923e0969260b4b762725d8b3a935f4dacd0f32a47e2",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "51463478545708e2ad80e595ae56b5949c450c6c4ad26b20e1a395f217e55be0"
+    },
+    {
+      "path": "확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json",
+      "source_sha256": "f200146b72392d11dd51a1be5d1091af783dcaa0c33c4efe11a69aa7e6cb2399",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "2659de4a14e569eb920fb24186d9859e201b2d80e13f72d2d6388671b7953a70"
+    },
+    {
+      "path": "확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json",
+      "source_sha256": "398475d130b2712980a0fa9041a81a2ce26a22e537f2378ed2264f50259fb465",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "242b820dc86ac6433a24b1f02c51b3820fbb56a7a86efeb060aa908a32a1dd68"
+    },
+    {
+      "path": "확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json",
+      "source_sha256": "28edfe3363cc976bf899f41afbce31c1ce10ff71b547f262915d5449de4276fa",
+      "status": "roundtrip_pass",
+      "runtime_sha256": "c6d3615d3e6a8d0f181b28232ea3bcd4b30181fa07ad4dd31f938eeee52d8ad3"
+    }
+  ]
+}
