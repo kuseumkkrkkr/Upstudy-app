@@ -26,6 +26,7 @@ GENERATORS = [
     ("build_common_math2_existing_candidate_tags.py", "main"),
     ("build_common_math2_missing_v2_batch1.py", "main"),
     ("build_other_2022_course_drafts.py", "main"),
+    ("build_calculus1_2022_remaining_v2_batch1.py", "main"),
     ("build_calculus_1_2022_draft.py", "main"),
     ("build_calculus_2_2022_draft.py", "main"),
     ("build_calculus_2_2022_sequences_v2_batch1.py", "main"),

@@ -20,9 +20,10 @@ def signature(page: dict) -> str:
 def main() -> None:
     grouped: OrderedDict[str, list[dict]] = OrderedDict()
     expected: Counter[str] = Counter()
-    for path in sorted(MANUSCRIPTS.glob("미적분Ⅰ*_BookData_시범.json")):
+    for path in sorted(MANUSCRIPTS.glob("미적분Ⅰ*_BookData*.json")):
         book = json.loads(path.read_text(encoding="utf-8"))
-        codes = sorted({match.group(2) for match in CODE.finditer(" ".join(book.get("tags", [])))})
+        matches = list(CODE.finditer(" ".join(book.get("tags", []))))
+        codes = sorted({match.group(2) for match in matches})
         if not codes:
             continue
         chapters = book.get("chapters", [])
@@ -31,9 +32,8 @@ def main() -> None:
             raise RuntimeError(f"No pages in {path.name}")
         for page in pages:
             expected[signature(page)] += 1
-        # Every current source module belongs to the 02 domain. Keep all codes
-        # on its chapter opening rather than pretending each source is a full unit.
-        unit = "02"
+        # Keep modules grouped by the unit encoded in their candidate standards.
+        unit = matches[0].group(1)
         grouped.setdefault(unit, []).append({"file": path.name, "book": book, "pages": pages, "codes": codes})
     if not grouped:
         raise RuntimeError("No tagged 2022 Calculus I BookData samples found")

@@ -1,0 +1,195 @@
+{
+  "title": "미적분Ⅰ 2022 개정 · 단원 코드 03 부분 통합 초안",
+  "tags": [
+    "미적분Ⅰ",
+    "2022 개정",
+    "12미적Ⅰ-03",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "xⁿ을 미분하면 왜 n xⁿ⁻¹일까?",
+      "pages": [
+        {
+          "title": "xⁿ을 미분하면 왜 n xⁿ⁻¹일까? · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 도함수 · 거듭제곱함수 · 시범 · 판본 대조 전 · 성취기준 후보: 12미적Ⅰ-02-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-03-03. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-03-01-001"
+        },
+        {
+          "id": "calc1-03-01-002",
+          "template": "opening",
+          "title": "기울기 공식부터 외우지 말고 확인하기",
+          "kicker": "x³, a=2에서 예상",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=x³의 x=1에서 기울기를 3이라고 예상했다면, 차분몫을 전개해 3이 어디서 남는지 확인해 보자."
+            },
+            {
+              "type": "thinking",
+              "title": "두 표현을 연결",
+              "text": "그래프의 할선 기울기와 식 [(a+h)^n−a^n]/h는 어떻게 같은 값을 나타낼까? h=0을 먼저 넣어도 될까?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-03-01-003",
+          "template": "experiment",
+          "title": "지수와 기준점을 바꾸어 관찰하기",
+          "kicker": "|h|를 줄이고 좌우를 비교",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험",
+              "text": "n을 1부터 5까지, a를 −1부터 1까지 조절한다. h의 방향과 양수 크기를 따로 선택한다. x^n 곡선의 두 점을 잇는 선분과 현재 기울기 값을 살핀다."
+            },
+            {
+              "type": "graph",
+              "title": "xⁿ 곡선과 할선",
+              "text": "앱 그래프 지면의 매개변수 n, a, side, d는 f(x)=x^n과 기준점 a, h=side×d를 정한다. 독립 HTML 도구는 같은 입력에서 수치 할선 기울기와 n a^(n−1)을 나란히 비교하고 전개 단계를 수동으로 연다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "power-function",
+                    "type": "function",
+                    "label": "f(x)=x^n",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^n"
+                  },
+                  {
+                    "id": "power-secant",
+                    "type": "function",
+                    "label": "할선",
+                    "colorHex": "#C2410C",
+                    "enabled": true,
+                    "expression": "((a+side*d)^n-a^n)/(side*d)*(x-a)+a^n"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": false,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -1.5,
+                    "right": 1.5,
+                    "top": 9,
+                    "bottom": -9
+                  },
+                  "parameters": [
+                    {
+                      "id": "n",
+                      "label": "양의 정수 지수 n",
+                      "value": 3,
+                      "min": 1,
+                      "max": 5,
+                      "step": 1
+                    },
+                    {
+                      "id": "a",
+                      "label": "기준점 a",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 0.5
+                    },
+                    {
+                      "id": "side",
+                      "label": "h 접근 방향",
+                      "value": 1,
+                      "min": -1,
+                      "max": 1,
+                      "step": 2
+                    },
+                    {
+                      "id": "d",
+                      "label": "간격 |h|",
+                      "value": 0.5,
+                      "min": 0.1,
+                      "max": 0.5,
+                      "step": 0.1
+                    }
+                  ]
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "Socratic 확인",
+              "text": "전개 후 h로 나누면 어떤 항이 h→0에서도 남을까? n=3, a=2를 넣어 숫자로 확인하자."
+            },
+            {
+              "type": "verification",
+              "title": "관찰 확인",
+              "text": "n=3이면 차분몫은 3a²+3ah+h²이다. h→0에서 3a²가 남고, a=2에서는 12다."
+            },
+            {
+              "type": "misconception",
+              "title": "유한한 h와 미분계수 구분",
+              "text": "슬라이더의 h는 항상 0이 아닌 유한한 간격이다. 현재 할선 기울기와 미분계수는 다를 수 있으며, 간격을 줄여 극한으로 연결한다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-03-01-004",
+          "template": "practice",
+          "title": "전개하고 새 조건으로 확인하기",
+          "kicker": "공식을 정의와 연결",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x³, a=2에서 차분몫을 전개해 미분계수를 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "도움 질문",
+              "text": "(2+h)³−8을 전개한 각 항에서 h를 묶고, h로 나눈 뒤 h→0에서 사라지는 항과 남는 항을 구분하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "(2+h)³=8+12h+6h²+h³. h≠0에서 나눈 뒤 h의 차수를 살펴본다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "차분몫은 12+6h+h²이고 극한은 12다. 따라서 f'(2)=12다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "왜 a^n 항이 상쇄되는지 말한다.",
+                "h가 포함된 항이 극한에서 사라지는 이유를 말한다.",
+                "n=4, a=−1에서 도함수 값을 구한다."
+              ]
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_x의n제곱_BookData_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-03-03"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "미적분Ⅰ_x의n제곱_BookData_시범.json"
+    ]
+  }
+}

@@ -1,0 +1,1569 @@
+{
+  "title": "미적분Ⅰ 2022 개정 · 단원 코드 01 부분 통합 초안",
+  "tags": [
+    "미적분Ⅰ",
+    "2022 개정",
+    "12미적Ⅰ-01",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "함수의 극한의 뜻 / 극한의 성질 / 극한으로 탐구하는 연속 / 연속함수의 성질 / 평균값 정리 / 미분으로 방정식·부등식 해결 / 직선 운동의 속도와 가속도 / 부정적분의 뜻 / 다항함수의 부정적분 / 정적분의 개념과 성질 / 부정적분과 정적분 / 곡선 사이의 넓이 / 직선 운동에서 적분과 거리",
+      "pages": [
+        {
+          "title": "함수의 극한의 뜻 / 극한의 성질 / 극한으로 탐구하는 연속 / 연속함수의 성질 / 평균값 정리 / 미분으로 방정식·부등식 해결 / 직선 운동의 속도와 가속도 / 부정적분의 뜻 / 다항함수의 부정적분 / 정적분의 개념과 성질 / 부정적분과 정적분 / 곡선 사이의 넓이 / 직선 운동에서 적분과 거리 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 미적분Ⅰ · 2022 개정 · 추가 원고 후보 · 가상 예시 · 12미적Ⅰ-01-01 · 12미적Ⅰ-01-02 · 12미적Ⅰ-01-03 · 12미적Ⅰ-01-04 · 12미적Ⅰ-02-06 · 12미적Ⅰ-02-09 · 12미적Ⅰ-02-10 · 12미적Ⅰ-03-01 · 12미적Ⅰ-03-02 · 12미적Ⅰ-03-03 · 12미적Ⅰ-03-04 · 12미적Ⅰ-03-05 · 12미적Ⅰ-03-06"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12미적Ⅰ-01-01, 12미적Ⅰ-01-02, 12미적Ⅰ-01-03, 12미적Ⅰ-01-04, 12미적Ⅰ-01-05, 12미적Ⅰ-01-06, 12미적Ⅰ-01-09, 12미적Ⅰ-01-10. 후보 태그이며 공식 대조는 미완료입니다."
+            }
+          ],
+          "id": "calc1-01-01-001"
+        },
+        {
+          "id": "calc1-01-01-002",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "함수의 극한의 뜻"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "함수의 극한의 뜻",
+              "text": "x가 a에 가까워질 때 f(x)가 한 값 L에 가까워지면 그 값을 함수의 극한이라 한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-004",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x가 2에 가까워질 때 3x−1의 극한을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=2x+1이면 x가 3에 가까워질 때 f(x)는 7에 가까워진다. 따라서 답은 5."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x가 2에 가까워질 때 3x−1의 극한을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x 대신 2에 가까운 값을 대입해 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "5"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0101-quiz",
+              "question": "x가 2에 가까워질 때 3x−1의 극한을 구하세요.",
+              "options": [
+                "5",
+                "3",
+                "6"
+              ],
+              "correctIndex": 0,
+              "explanation": "5"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "함수의 극한의 뜻: x가 a에 가까워질 때 f(x)가 한 값 L에 가까워지면 그 값을 함수의 극한이라 한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-007",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "극한의 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-008",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "극한의 성질",
+              "text": "각 극한이 존재하면 합·차·곱의 극한은 극한값의 합·차·곱이고, 분모의 극한이 0이 아니면 몫도 나눌 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-009",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "lim(x→1)(x²+2x)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "lim(x→2)(x²+3x)=4+6=10이다. 따라서 답은 3."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-010",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "lim(x→1)(x²+2x)를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "다항식은 대입으로 극한값을 구할 수 있습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0102-quiz",
+              "question": "lim(x→1)(x²+2x)를 구하세요.",
+              "options": [
+                "3",
+                "2",
+                "4"
+              ],
+              "correctIndex": 0,
+              "explanation": "3"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-011",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "극한의 성질: 각 극한이 존재하면 합·차·곱의 극한은 극한값의 합·차·곱이고, 분모의 극한이 0이 아니면 몫도 나눌 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-012",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "극한으로 탐구하는 연속"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-013",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "극한으로 탐구하는 연속",
+              "text": "f가 x=a에서 연속이려면 lim(x→a)f(x)=f(a)이어야 한다. 좌극한·우극한·함숫값을 함께 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-014",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x²가 x=2에서 연속인지 판정하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x+2는 a=1에서 극한값 3과 함숫값 3이 같아 연속이다. 따라서 답은 연속이다. 극한값과 함숫값이 모두 4이다.."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-015",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x²가 x=2에서 연속인지 판정하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "극한과 그 점의 실제 함숫값을 각각 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "연속이다. 극한값과 함숫값이 모두 4이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "연속"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0103-quiz",
+              "question": "f(x)=x²가 x=2에서 연속인지 판정하세요.",
+              "options": [
+                "연속",
+                "불연속",
+                "판정 불가"
+              ],
+              "correctIndex": 0,
+              "explanation": "연속이다. 극한값과 함숫값이 모두 4이다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-016",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "극한으로 탐구하는 연속: f가 x=a에서 연속이려면 lim(x→a)f(x)=f(a)이어야 한다. 좌극한·우극한·함숫값을 함께 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-017",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "연속함수의 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-018",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "연속함수의 성질",
+              "text": "닫힌구간에서 연속인 함수는 최댓값과 최솟값을 가지며, 양 끝에서 부호가 바뀌면 구간 안에 영점이 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-019",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x−2는 [1,3]에서 연속이고 f(1)<0<f(3)이므로 (1,3)에 영점 2가 있다. 따라서 답은 있다. g(0)<0<g(2)이므로 영점 1이 있다.."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-020",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "양 끝 함숫값의 부호를 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "있다. g(0)<0<g(2)이므로 영점 1이 있다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "있다"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0104-quiz",
+              "question": "g(x)=x−1은 [0,2]에서 연속이다. 영점이 구간 안에 있나요?",
+              "options": [
+                "있다",
+                "없다",
+                "항상 두 개"
+              ],
+              "correctIndex": 0,
+              "explanation": "있다. g(0)<0<g(2)이므로 영점 1이 있다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-021",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "연속함수의 성질: 닫힌구간에서 연속인 함수는 최댓값과 최솟값을 가지며, 양 끝에서 부호가 바뀌면 구간 안에 영점이 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-022",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "평균값 정리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-023",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "평균값 정리",
+              "text": "[a,b]에서 연속이고 (a,b)에서 미분가능한 함수는 어떤 c에서 f′(c)=(f(b)−f(a))/(b−a)를 만족한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-02-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-024",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x², [1,3]에서 평균 기울기는 4이다. f′(c)=2c=4이므로 c=2이다. 따라서 답은 c=1."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-025",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "평균 기울기는 2이고 f′(x)=2x입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "c=1"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0206-quiz",
+              "question": "f(x)=x², [0,2]의 평균값 정리에 맞는 c를 구하세요.",
+              "options": [
+                "1",
+                "0",
+                "2"
+              ],
+              "correctIndex": 0,
+              "explanation": "c=1"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-026",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "평균값 정리: [a,b]에서 연속이고 (a,b)에서 미분가능한 함수는 어떤 c에서 f′(c)=(f(b)−f(a))/(b−a)를 만족한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-027",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "미분으로 방정식·부등식 해결"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-028",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "미분으로 방정식·부등식 해결",
+              "text": "도함수의 부호로 함수의 증가·감소를 분석하면 방정식의 근 개수나 부등식의 참을 설명할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-02-09"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-029",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x≥0에서 x²+4의 최솟값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x≥0에서 f(x)=x²+1은 f′(x)=2x≥0이므로 증가하고 f(x)≥f(0)=1이다. 따라서 답은 4."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-030",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x≥0에서 x²+4의 최솟값을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "도함수의 부호 또는 제곱의 범위를 이용하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "4"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "4"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0209-quiz",
+              "question": "x≥0에서 x²+4의 최솟값을 구하세요.",
+              "options": [
+                "4",
+                "0",
+                "최솟값 없음"
+              ],
+              "correctIndex": 0,
+              "explanation": "4"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-031",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "미분으로 방정식·부등식 해결: 도함수의 부호로 함수의 증가·감소를 분석하면 방정식의 근 개수나 부등식의 참을 설명할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-032",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "직선 운동의 속도와 가속도"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-033",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "직선 운동의 속도와 가속도",
+              "text": "위치 s(t)의 도함수 v(t)=s′(t)는 속도, 속도의 도함수 a(t)=v′(t)는 가속도다. 여기서는 직선 운동만 다룬다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-02-10"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-034",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "s(t)=3t²인 물체의 t=2에서 속도를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다. 따라서 답은 12."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-035",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "s(t)=3t²인 물체의 t=2에서 속도를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 s(t)를 미분해 v(t)를 구한 뒤 t=2를 대입합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "12"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0210-quiz",
+              "question": "s(t)=3t²인 물체의 t=2에서 속도를 구하세요.",
+              "options": [
+                "12",
+                "6",
+                "9"
+              ],
+              "correctIndex": 0,
+              "explanation": "12"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-036",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "직선 운동의 속도와 가속도: 위치 s(t)의 도함수 v(t)=s′(t)는 속도, 속도의 도함수 a(t)=v′(t)는 가속도다. 여기서는 직선 운동만 다룬다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-037",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "부정적분의 뜻"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-038",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "부정적분의 뜻",
+              "text": "F′(x)=f(x)이면 F를 f의 한 부정적분이라 하며, 모든 부정적분은 적분상수 C만큼 차이가 난다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-039",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫2x dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(x³/3)′=x²이므로 ∫x²dx=x³/3+C이다. 따라서 답은 x²+C."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-040",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫2x dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "미분하면 2x가 되는 함수를 찾으세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²+C"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+C"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0301-quiz",
+              "question": "∫2x dx를 구하세요.",
+              "options": [
+                "x²+C",
+                "2x²+C",
+                "x+C"
+              ],
+              "correctIndex": 0,
+              "explanation": "x²+C"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-041",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "부정적분의 뜻: F′(x)=f(x)이면 F를 f의 한 부정적분이라 하며, 모든 부정적분은 적분상수 C만큼 차이가 난다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-042",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "다항함수의 부정적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-043",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "다항함수의 부정적분",
+              "text": "적분은 실수배와 합·차에 대해 항별로 계산하며, xⁿ(n≠−1)은 xⁿ⁺¹/(n+1)+C로 적분한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-044",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫(2x+4)dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫(3x²−2)dx=x³−2x+C이다. 따라서 답은 x²+4x+C."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-045",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫(2x+4)dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "각 항을 따로 적분하고 상수항을 붙이세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²+4x+C"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+4x+C"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0302-quiz",
+              "question": "∫(2x+4)dx를 구하세요.",
+              "options": [
+                "x²+4x+C",
+                "2x²+4x+C",
+                "x²+4+C"
+              ],
+              "correctIndex": 0,
+              "explanation": "x²+4x+C"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-046",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "다항함수의 부정적분: 적분은 실수배와 합·차에 대해 항별로 계산하며, xⁿ(n≠−1)은 xⁿ⁺¹/(n+1)+C로 적분한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-047",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "정적분의 개념과 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-048",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정적분의 개념과 성질",
+              "text": "정적분은 구간의 누적량을 나타내며 구간을 나누면 적분값이 더해진다. 그래프가 축 아래에 있으면 부호 있는 넓이로 계산한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-049",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫₀¹ 2 dx를 계산하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫₀² x dx는 삼각형 넓이 2와 같고, ∫₀¹x dx+∫₁²x dx=1/2+3/2=2이다. 따라서 답은 2."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-050",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫₀¹ 2 dx를 계산하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "높이 2인 직사각형의 폭은 1입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0303-quiz",
+              "question": "∫₀¹ 2 dx를 계산하세요.",
+              "options": [
+                "2",
+                "1",
+                "0"
+              ],
+              "correctIndex": 0,
+              "explanation": "2"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-051",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "정적분의 개념과 성질: 정적분은 구간의 누적량을 나타내며 구간을 나누면 적분값이 더해진다. 그래프가 축 아래에 있으면 부호 있는 넓이로 계산한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-052",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "부정적분과 정적분"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-053",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "부정적분과 정적분",
+              "text": "F′=f이면 ∫ₐᵇ f(x)dx=F(b)−F(a)이다. 다항함수에서는 항별 부정적분을 구해 끝값의 차를 계산한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-054",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "∫₁³ 2x dx를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "∫₀² 2x dx=[x²]₀²=4이다. 따라서 답은 8."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-055",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "∫₁³ 2x dx를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "원시함수 x²에 3과 1을 대입해 차를 구합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "8"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "8"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0304-quiz",
+              "question": "∫₁³ 2x dx를 구하세요.",
+              "options": [
+                "8",
+                "6",
+                "10"
+              ],
+              "correctIndex": 0,
+              "explanation": "8"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-056",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "부정적분과 정적분: F′=f이면 ∫ₐᵇ f(x)dx=F(b)−F(a)이다. 다항함수에서는 항별 부정적분을 구해 끝값의 차를 계산한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-057",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "곡선 사이의 넓이"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-058",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "곡선 사이의 넓이",
+              "text": "위쪽 곡선에서 아래쪽 곡선을 뺀 함수를 적분하면 두 그래프 사이 넓이를 구할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-059",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=2와 y=0 사이, x∈[0,3]의 넓이는 ∫₀³2dx=6이다. 따라서 답은 2."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-060",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "삼각형의 밑변은 2, 높이는 2입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0305-quiz",
+              "question": "y=x와 x축 사이, x∈[0,2]의 넓이를 구하세요.",
+              "options": [
+                "2",
+                "4",
+                "1"
+              ],
+              "correctIndex": 0,
+              "explanation": "2"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-061",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "곡선 사이의 넓이: 위쪽 곡선에서 아래쪽 곡선을 뺀 함수를 적분하면 두 그래프 사이 넓이를 구할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-062",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "직선 운동에서 적분과 거리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 조건과 구간을 표시하고 무엇을 구하는지 말해 봅니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-063",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "직선 운동에서 적분과 거리",
+              "text": "속도 v(t)를 적분하면 변위가 된다. 속도가 부호를 바꾸지 않는 구간에서는 이동 거리는 속도의 절댓값을 적분한 값이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12미적Ⅰ-03-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "정의역, 구간, 미분가능성 또는 적분 구간 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-064",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "0≤t≤3에서 v(t)=2이면 변위와 이동 거리는 각각 ∫₀³2dt=6이다. 따라서 답은 12."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "계산 결과를 조건과 원래 식에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-065",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "일정한 속도×시간으로 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "12"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12"
+            },
+            {
+              "type": "quiz",
+              "id": "c1-0306-quiz",
+              "question": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.",
+              "options": [
+                "12",
+                "7",
+                "1"
+              ],
+              "correctIndex": 0,
+              "explanation": "12"
+            }
+          ]
+        },
+        {
+          "id": "calc1-01-01-066",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "직선 운동에서 적분과 거리: 속도 v(t)를 적분하면 변위가 된다. 속도가 부호를 바꾸지 않는 구간에서는 이동 거리는 속도의 절댓값을 적분한 값이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념과 조건, 풀이 근거를 설명하고 계산을 확인할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12미적Ⅰ-01-01",
+        "12미적Ⅰ-01-02",
+        "12미적Ⅰ-01-03",
+        "12미적Ⅰ-01-04",
+        "12미적Ⅰ-01-05",
+        "12미적Ⅰ-01-06",
+        "12미적Ⅰ-01-09",
+        "12미적Ⅰ-01-10"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json"
+    ]
+  }
+}
