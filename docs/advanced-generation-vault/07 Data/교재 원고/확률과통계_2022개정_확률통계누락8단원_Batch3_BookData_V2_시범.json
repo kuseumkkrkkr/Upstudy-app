@@ -1072,6 +1072,46 @@
                   "표본비율 28/50을 계산합니다."
                 ]
               }
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0307-estimate-mean",
+                "kind": "statisticsEstimator",
+                "prompt": "가상 표본 8, 9, 10, 10, 11, 12로 모평균을 추정해 보세요.",
+                "statistics": {
+                  "mode": "mean",
+                  "sample_values": [
+                    8,
+                    9,
+                    10,
+                    10,
+                    11,
+                    12
+                  ]
+                },
+                "hints": [
+                  "표본 값의 합과 개수를 확인하세요.",
+                  "표본평균을 모평균의 추정값으로 해석하세요."
+                ]
+              }
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0307-estimate-proportion",
+                "kind": "statisticsEstimator",
+                "prompt": "가상 표본 50명 중 28명이 선호했습니다. 모비율을 추정해 보세요.",
+                "statistics": {
+                  "mode": "proportion",
+                  "successes": 28,
+                  "trials": 50
+                },
+                "hints": [
+                  "성공 수를 표본 크기로 나누세요.",
+                  "표본비율을 모비율의 추정값으로 해석하세요."
+                ]
+              }
             }
           ]
         },

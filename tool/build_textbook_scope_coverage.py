@@ -122,8 +122,13 @@ def main() -> None:
         for code, description in per_product[number]:
             sources = [name for name, tag_edition in tagged.get(code, []) if tag_edition == edition]
             evidence = ", ".join(f"`{name}`" for name in sources) if sources else "—"
-            if module_alignment.get(code) == "pending_first_class_statistics_tool":
+            alignment = module_alignment.get(code)
+            if alignment == "pending_first_class_statistics_tool":
                 status = "태그 있음 · 전용 공학 도구 상호작용 미구현; 연동 후보"
+            elif alignment == "candidate_statistics_estimator_added_runtime_qa_pending":
+                status = "태그·statisticsEstimator 후보 있음 · importer/reader QA 대기"
+            elif alignment == "candidate_statistics_estimator_qa_passed_pending_teacher_review":
+                status = "태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기"
             else:
                 status = "tag 있음 · 내용 검수 필요" if sources else "same-edition tag 없음 · 원고 대조 필요"
             excerpt = description.replace("|", "\\|")[:180]
@@ -158,8 +163,8 @@ def main() -> None:
         "",
         f"현재 재귀 인벤토리: BookData `{len(recursive_bookdata)}`개(그중 V2 `{len(v2_files)}`개), 선언형 activity `{sum(activity_kinds.values())}`개({kind_summary}), 독립 HTML `{len(html_files)}`개.",
         "",
-        "실제 앱 계약은 guarded `Upstudy-hotfix`의 `api/book_activity.py`와 `deploy/vercel/BOOK_ACTIVITY_V2.md`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`다. `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며, 학생결과 사전 입력이나 API 저장은 허용하지 않는다.",
-        "`12확통03-07`은 공학 도구를 이용한 모평균·모비율 추정 기준이다. 현재 V2 계약에는 표본 값 입력, 평균/성공수÷n 비율 계산, 결과 해석, 편집·초기화·힌트를 제공하는 `statisticsEstimator` first-class kind가 없다. 해당 모듈은 연동 후보로 보류하며, 앱 스키마와 화면 계약이 추가되기 전에는 완료로 세지 않는다.",
+        "실제 앱 계약은 guarded `Upstudy-hotfix`의 `api/book_activity.py`와 `deploy/vercel/BOOK_ACTIVITY_V2.md`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`다. `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며, 학생결과 사전 입력이나 API 저장은 허용하지 않는다.",
+        "`statisticsEstimator`는 표본 값 입력으로 평균을 계산하거나 성공 수÷표본 크기로 비율을 계산하고, 결과 해석·수정·초기화·힌트를 제공한다. 상태는 reader-session에 한정된다. `12확통03-07` 후보에는 mean/proportion 두 모드를 넣었다. 전체 BookData importer, Python activity/import 32개, Flutter estimator/V2 reader 9개가 guarded hotfix HEAD에서 통과했으나, 교사 수학검토·권리승인은 남아 있다.",
         "독립 HTML/JavaScript 자산은 V2 activity로 임베드되거나 자동 실행되지 않는다. 이산실험은 native discreteExperiment로 일부 기능을 대응할 수 있으나 원본 HTML과 화면·기능 패리티는 별도 검수 대상이다. 범용 드래그 도형, 범용 애니메이션, 자유서술 의미 채점은 등록 계약 밖이다.",
         "V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다. 실제 서버 저장, 페이지별 UI 패리티, 교사 검수, 권리 승인 단계는 별도로 남아 있다.",
         "",

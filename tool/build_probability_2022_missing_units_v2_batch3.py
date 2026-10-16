@@ -130,6 +130,13 @@ def make_quiz(spec: dict[str, object], pid: str) -> dict[str, object]:
     }}
 
 
+def make_estimator(pid: str, prompt: str, statistics: dict[str, object], hints: list[str]) -> dict[str, object]:
+    return {"type": "activity", "activity": {
+        "id": pid, "kind": "statisticsEstimator", "prompt": prompt,
+        "statistics": statistics, "hints": hints,
+    }}
+
+
 def main() -> None:
     rows = json.loads(STANDARDS.read_text(encoding="utf-8"))["standards"]
     official = {item["code"]: item["criterion"].rstrip(" .") for item in rows}
@@ -146,7 +153,12 @@ def main() -> None:
                 page(f"{short}-open", "opening", "상황에서 질문 만들기", block("lead", "가상 예시", spec["lead"]), block("thinking", "먼저 생각하기", "무엇을 세거나 추정하며, 어떤 조건을 사용했는지 확인합니다.")),
                 page(f"{short}-concept", "concept", "정의와 규칙", block("definition", "핵심 개념", spec["concept"]), block("formula", "공식 기준", spec["code"]), block("misconception", "주의", "표본 통계량과 모집단 모수, 정확한 분포와 근사 분포를 혼동하지 않습니다.")),
                 page(f"{short}-example", "example", "예제와 풀이", block("question", "예제", spec["lead"]), block("solutionStep", "풀이", spec["example"]), block("verification", "검산", "조건·계산·해석이 가상 자료에 일관되는지 확인합니다.")),
-                page(f"{short}-practice", "practice", "연습과 설명", block("question", "연습", spec["practice"]), block("hint", "Socratic 힌트", "필요한 수치와 그 수치가 나타내는 사건·표본을 먼저 나누어 적으세요."), block("solutionStep", "해설", spec["answer"]), block("answer", "정답", spec["answer"]), make_quiz(spec, f"{short}-quiz")),
+                page(f"{short}-practice", "practice", "연습과 설명", block("question", "연습", spec["practice"]), block("hint", "Socratic 힌트", "필요한 수치와 그 수치가 나타내는 사건·표본을 먼저 나누어 적으세요."), block("solutionStep", "해설", spec["answer"]), block("answer", "정답", spec["answer"]), make_quiz(spec, f"{short}-quiz"), *(
+                    [
+                        make_estimator(f"{short}-estimate-mean", "가상 표본 8, 9, 10, 10, 11, 12로 모평균을 추정해 보세요.", {"mode": "mean", "sample_values": [8, 9, 10, 10, 11, 12]}, ["표본 값의 합과 개수를 확인하세요.", "표본평균을 모평균의 추정값으로 해석하세요."]),
+                        make_estimator(f"{short}-estimate-proportion", "가상 표본 50명 중 28명이 선호했습니다. 모비율을 추정해 보세요.", {"mode": "proportion", "successes": 28, "trials": 50}, ["성공 수를 표본 크기로 나누세요.", "표본비율을 모비율의 추정값으로 해석하세요."]),
+                    ] if spec["code"] == "12확통03-07" else []
+                )),
                 page(f"{short}-summary", "summary", "핵심 정리", block("summary", "기억할 점", spec["title"]), block("checklist", "스스로 확인", "공식과 결과가 무엇을 세거나 추정하는지 말할 수 있나요?")),
             ],
         })
@@ -172,8 +184,9 @@ def main() -> None:
                         raise RuntimeError("Duplicate activity id")
                     ids.add(activity["id"])
                     activities.append(activity)
-    if len(chapters) != 8 or len(activities) != 8:
-        raise RuntimeError("Expected eight modules and eight quizzes")
+    activity_kinds = [activity["kind"] for activity in activities]
+    if len(chapters) != 8 or activity_kinds.count("quiz") != 8 or activity_kinds.count("statisticsEstimator") != 2:
+        raise RuntimeError("Expected eight quizzes and two 12확통03-07 estimator interactions")
     # Exact arithmetic checks for every numerical claim in the new examples.
     assert 3**3 == 27 and math.factorial(3) // math.factorial(2) == 3
     assert math.factorial(5) // (math.factorial(2) ** 2) == 30
@@ -194,17 +207,23 @@ def main() -> None:
     except (OSError, json.JSONDecodeError):
         old = {}
     same_hash = old.get("bookdata_sha256") == digest
+    alignment = {
+        code: ("candidate_statistics_estimator_added_runtime_qa_pending" if code == "12확통03-07" else "content_mapped_pending_teacher_review")
+        for code in EXPECTED
+    }
+    if same_hash and isinstance(old.get("preliminary_module_alignment"), dict):
+        alignment.update(old["preliminary_module_alignment"])
     manifest = {
         "bookdata_file": OUT.name, "bookdata_sha256": digest,
         "candidate_code_references": list(EXPECTED), "candidate_code_reference_type": "official_hwp_criterion_table",
-        "module_count": 8, "page_count": 40, "native_activity_count": 8, "native_activity_kinds": ["quiz"],
+        "module_count": 8, "page_count": 40, "native_activity_count": 10, "native_activity_kinds": ["quiz", "statisticsEstimator"],
         "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
         "curriculum_review_status": "official_codes_mapped; semester_and_full_scope_pending",
         "math_review_status": "pending_full_review", "math_arithmetic_check_status": "pass_for_listed_examples_only",
-        "preliminary_module_alignment": {
-            code: ("pending_first_class_statistics_tool" if code == "12확통03-07" else "content_mapped_pending_teacher_review")
-            for code in EXPECTED
-        },
+        "preliminary_module_alignment": alignment,
+        "statistics_estimator_qa_status": old.get("statistics_estimator_qa_status", "pending") if same_hash else "pending",
+        "statistics_estimator_qa_head": old.get("statistics_estimator_qa_head") if same_hash else None,
+        "statistics_estimator_qa_page_id": "ps0307-practice",
         "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending",
         "integration_status": "not_merged_into_master_book", "publication_eligibility": "not_eligible",
         "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same_hash else "pending_current_hash_validation",
@@ -214,12 +233,12 @@ def main() -> None:
     (PACKAGE / "README.md").write_text(
         f"# {book['title']}\n\n"
         "신규 집필 8모듈·40쪽의 재개 가능한 V2 후보입니다. 모든 조사와 수치는 개념 연습을 위해 직접 만든 가상 예시이며 상업 교재의 문장·문제·그림·데이터를 복사하지 않았습니다. "
-        "7개 모듈은 기준과 초안 본문을 예비 대조했으나 교사 검토는 남아 있습니다. `12확통03-07`은 공학 도구 기준으로 전용 계산 상호작용이 없어 연동 후보이며, first-class statisticsEstimator 계약이 준비되기 전까지 완료로 세지 않습니다. "
+        "7개 모듈은 기준과 초안 본문을 예비 대조했으나 교사 검토는 남아 있습니다. `12확통03-07`에는 표본평균과 표본비율 추정용 first-class statisticsEstimator를 넣었습니다. QA 상태와 검증 checkout은 manifest에 기록하며 수학·교사 검토 및 권리 결정은 별도 승인 전까지 대기합니다. "
         "과목 전체 완료, 학기 배정, 권리 결정도 대기 중입니다.\n\n"
         f"BookData: [`{OUT.name}`](../{OUT.name})\n",
         encoding="utf-8",
     )
-    print(f"Built {len(chapters)} probability/statistics modules, 40 pages, 8 native quizzes: {OUT}")
+    print(f"Built {len(chapters)} probability/statistics modules, 40 pages, 8 quizzes, 2 statistics estimators: {OUT}")
 
 
 if __name__ == "__main__":
