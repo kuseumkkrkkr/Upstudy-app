@@ -28,17 +28,38 @@ SPECS=[
  ("03-05","곡선으로 둘러싸인 넓이","구간에서 위쪽 함수와 아래쪽 함수의 차를 적분하면 둘러싸인 넓이를 구한다.","y=2와 x축 사이에서 0≤x≤3인 넓이는 2×3=6이다.","y=x와 x축 사이, 0≤x≤2인 넓이는 얼마인가요?","2",["2","4","1"]),
  ("03-06","속도와 거리","속도를 적분하면 변위가 된다. 속도 부호가 일정한 동안 이동거리는 속력의 정적분으로 구한다.","0≤t≤3에서 v(t)=2이면 변위와 이동거리는 모두 6이다.","0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요.","12",["12","7","1"]),
 ]
+EXAMPLE_QUESTIONS={
+ "12수학Ⅱ01-04":"f(x)=x−2가 [1,3]에서 영점을 갖는 이유를 설명하고 그 영점을 구하세요.",
+ "12수학Ⅱ02-01":"f(x)=x²의 x=2에서 차분몫의 극한으로 미분계수를 구하세요.",
+ "12수학Ⅱ02-02":"y=x²의 x=1에서 접선의 기울기와 방정식을 구하세요.",
+ "12수학Ⅱ02-03":"|x|는 x=0에서 연속인가요? 미분가능한가요?",
+ "12수학Ⅱ02-04":"x⁴을 미분하세요.",
+ "12수학Ⅱ02-05":"(x²+1)(x+2)를 미분하세요.",
+ "12수학Ⅱ02-06":"y=x²의 x=1에서 접선 방정식을 구하세요.",
+ "12수학Ⅱ02-07":"f(x)=x²을 [1,3]에 적용한 평균값 정리의 c를 구하세요.",
+ "12수학Ⅱ02-08":"f(x)=x²−4x의 극값과 그때의 함수값을 구하세요.",
+ "12수학Ⅱ02-09":"f(x)=x³−3x의 임계점을 찾고 도함수로 증가·감소를 조사하세요.",
+ "12수학Ⅱ02-10":"x²+1의 최솟값과 등호가 성립하는 x를 구하세요.",
+ "12수학Ⅱ02-11":"s(t)=t²+2t일 때 속도와 가속도 함수를 구하세요.",
+ "12수학Ⅱ03-01":"∫x² dx를 구하세요.",
+ "12수학Ⅱ03-02":"∫(3x²−2) dx를 구하세요.",
+ "12수학Ⅱ03-03":"∫₀² x dx를 계산하고 [0,1], [1,2]로 나누어도 값이 같은지 확인하세요.",
+ "12수학Ⅱ03-04":"∫₀² 2x dx를 원시함수로 계산하세요.",
+ "12수학Ⅱ03-05":"y=2와 x축 사이에서 0≤x≤3인 넓이를 구하세요.",
+ "12수학Ⅱ03-06":"0≤t≤3에서 속도 v(t)=2일 때 변위와 이동거리를 구하세요.",
+}
 UNIT={"01":"함수의 극한과 연속","02":"미분","03":"적분"}
 
 def main():
  chapters=[]; codes=[]
  for code,title,concept,example,question,answer,options in SPECS:
   full="12수학Ⅱ"+code; unit=UNIT[code[:2]]; codes.append(full); slug="m2-"+code.replace("-","")
-  explanation=example
+  example_question=EXAMPLE_QUESTIONS[full]
+  explanation=answer
   pages=[
    {"id":slug+"-open","template":"opening","title":"질문 열기","blocks":[{"type":"lead","title":"핵심 질문","text":title},{"type":"thinking","title":"먼저 생각하기","text":"조건과 구간을 표시하고 풀이에서 쓸 관계를 찾아봅니다."}]},
    {"id":slug+"-concept","template":"concept","title":"개념과 조건","blocks":[{"type":"definition","title":title,"text":concept},{"type":"formula","title":"2015 공식 기준 후보","text":full},{"type":"misconception","title":"조건 확인","text":"구간, 정의역, 미분가능성 또는 적분 구간 조건을 확인합니다."}]},
-   {"id":slug+"-example","template":"example","title":"예제 풀이","blocks":[{"type":"question","title":"예제","text":question},{"type":"solutionStep","title":"풀이","text":example},{"type":"verification","title":"검산","text":"계산을 원래 조건에 대입해 확인합니다."}]},
+   {"id":slug+"-example","template":"example","title":"예제 풀이","blocks":[{"type":"question","title":"예제","text":example_question},{"type":"solutionStep","title":"풀이","text":example},{"type":"verification","title":"검산","text":"계산을 원래 조건에 대입해 확인합니다."}]},
    {"id":slug+"-practice","template":"practice","title":"연습과 해설","blocks":[{"type":"question","title":"연습","text":question},{"type":"hint","title":"힌트","text":"공식의 조건을 확인하고 한 단계씩 계산하세요."},{"type":"solutionStep","title":"해설","text":explanation},{"type":"answer","title":"정답","text":answer},{"type":"activity","activity":{"id":slug+"-quiz","kind":"quiz","prompt":question,"options":options,"correct_index":options.index(answer),"correct_feedback":"정답입니다. "+answer,"incorrect_feedback":"정답은 "+answer+"입니다. "+explanation,"hints":["공식의 조건을 확인하고 한 단계씩 계산하세요.",explanation]}}]},
    {"id":slug+"-summary","template":"summary","title":"핵심 정리","blocks":[{"type":"summary","title":"기억할 점","text":title+": "+concept},{"type":"checklist","title":"스스로 확인","text":"개념의 조건과 풀이 근거를 설명할 수 있나요?"}]},
   ]
@@ -46,15 +67,33 @@ def main():
  book={"schema_version":2,"title":"수학Ⅱ · 미연결 기준 보완 18모듈 후보","subtitle":"극한·연속, 미분, 적분","category":"concept_textbook_prototype","curriculum_version":"2015","tags":["수학Ⅱ","2015 개정","추가 원고 후보","가상 예시",*codes],"standard_codes":codes,"chapters":chapters}
  pages=[p for c in chapters for p in c["pages"]]; ids=[p["id"] for p in pages]
  assert len(codes)==18 and len(pages)==90 and len(set(ids))==90
- assert 4**2==16 and 3*2+1==7 and 3**2==9 and (4*2-4)==4 and 3*2*2==12 and 3*4==12
+ assert set(EXAMPLE_QUESTIONS)==set(codes)
+ assert (1-2)<0<(3-2) and 2-2==0
+ assert (2+1)**2-2**2==5 and 2**2==4 and 2*2==4
+ assert -1<0<1 and (-1)!=1
+ assert 4*2**3==32
+ assert 2*2*(2+2)+(2**2+1)==21 and 3*2**2+4*2+1==21
+ assert 2*1-1==1 and 4*2-4==4
+ assert (3**2-1**2)/(3-1)==4 and (2**2-0**2)/(2-0)==2
+ assert (2**2-4*2)==-4 and 2*2-4==0
+ assert 3*((-1)**2-1)==0 and 3*(0**2-1)<0 and 3*(2**2-1)>0
+ assert 0**2+1==1 and 0**2+4==4
+ assert 2*1+2==4 and 2==2
+ assert (3**3/3)==9 and 3**2/2==4.5
+ assert 3*(2**2)-2==10 and 2*2+4==8 and 2**2+4*2==12
+ assert (2**2/2)==2 and (1**2/2)+(2**2-1**2)/2==2
+ assert 3**2==9 and 3**2-1==8
+ assert 2*3==6 and 2*4==8 and 2**2==4
+ assert 2*3==6 and 3*4==12
+ assert all(spec[5] in spec[6] for spec in SPECS)
  OUT.write_text(json.dumps(book,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
  PACKAGE.mkdir(parents=True,exist_ok=True); old={}
  try: old=json.loads((PACKAGE/"REVIEW_MANIFEST.json").read_text(encoding="utf-8"))
  except (OSError,json.JSONDecodeError): pass
  digest=canonical_file_sha256(OUT)
- manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2015_appendix8_math_criteria_table","module_count":18,"page_count":90,"native_activity_count":18,"native_activity_kinds":["quiz"],"math_arithmetic_check_status":"pass_for_spot_checked_examples_only","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","curriculum_review_status":"official_codes_verified; scope_and_existing_content_merge_pending","math_review_status":"author_spot_checks_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; existing graph/HTML assets remain separate and parity_unreviewed","integration_status":"candidate_for_tag_grouping; not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if old.get("bookdata_sha256")==digest else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if old.get("bookdata_sha256")==digest else None}
+ manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2015_appendix8_math_criteria_table","module_count":18,"page_count":90,"native_activity_count":18,"native_activity_kinds":["quiz"],"math_arithmetic_check_status":"pass_for_listed_calculation_assertions; independent_teacher_review_pending","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","example_question_alignment_status":"explicit_example_question_map_for_all_18_codes; independent review pending","curriculum_review_status":"official_codes_verified; scope_and_existing_content_merge_pending","math_review_status":"author_calculation_assertions_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; existing graph/HTML assets remain separate and parity_unreviewed","integration_status":"candidate_for_tag_grouping; not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if old.get("bookdata_sha256")==digest else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if old.get("bookdata_sha256")==digest else None}
  (PACKAGE/"REVIEW_MANIFEST.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
- (PACKAGE/"README.md").write_text(f"# {book['title']}\n\n공식 기준 18개를 보완하는 18모듈·90쪽 V2 원고 후보입니다. 예시는 직접 만든 가상 자료입니다. 교사 검수·권리 결정 전 출판 부적격이며, 기존 그래프·HTML과 화면 parity는 검증 전입니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n",encoding="utf-8")
+ (PACKAGE/"README.md").write_text(f"# {book['title']}\n\n공식 기준 18개를 보완하는 18모듈·90쪽 V2 원고 후보입니다. 예제 질문을 풀이에 맞춰 분리하고 연습 해설은 해당 연습 문항의 답에 연결했습니다. 예시는 직접 만든 가상 자료입니다. 교사 검수·권리 결정 전 출판 부적격이며, 기존 그래프·HTML과 화면 parity는 검증 전입니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n",encoding="utf-8")
  print(f"Built {len(chapters)} modules, {len(pages)} pages, {len(codes)} standard candidates; sha256={digest}")
 
 if __name__=="__main__": main()

@@ -1,6 +1,6 @@
 {
   "bookdata_file": "수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "ABE83F0CA6CA751B8D77E19BDD8CE1CA16AF47FAE7AC0BC6881E46395B647525",
+  "bookdata_sha256": "17635B9E58B0A4D706453A2D6AB20A535631C194DFC1CCC136608D5E26E02601",
   "candidate_code_references": [
     "12수학Ⅱ01-04",
     "12수학Ⅱ02-01",
@@ -28,15 +28,16 @@
   "native_activity_kinds": [
     "quiz"
   ],
-  "math_arithmetic_check_status": "pass_for_spot_checked_examples_only",
+  "math_arithmetic_check_status": "pass_for_listed_calculation_assertions; independent_teacher_review_pending",
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "example_question_alignment_status": "explicit_example_question_map_for_all_18_codes; independent review pending",
   "curriculum_review_status": "official_codes_verified; scope_and_existing_content_merge_pending",
-  "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending",
+  "math_review_status": "author_calculation_assertions_passed; independent_teacher_review_pending",
   "teacher_review_status": "pending",
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "source_interaction_status": "native_quiz_candidates; existing graph/HTML assets remain separate and parity_unreviewed",
   "integration_status": "candidate_for_tag_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pass_guarded_BookData_fromJson",
-  "runtime_validator_head": "e0bc17074481259c6f8d4c63894da07dd6c2e814"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
 }
