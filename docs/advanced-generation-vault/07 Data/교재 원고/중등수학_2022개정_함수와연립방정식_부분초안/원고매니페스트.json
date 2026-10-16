@@ -1,16 +1,19 @@
 {
   "status": "candidate_partial_draft",
   "standard_codes": [
+    "9수02-14",
     "9수02-17",
     "9수02-18"
   ],
   "official_criteria": {
+    "9수02-14": "함수의 개념을 이해하고, 함숫값을 구할 수 있다",
     "9수02-17": "일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다",
     "9수02-18": "두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다"
   },
-  "module_count": 2,
-  "page_count": 12,
+  "module_count": 3,
+  "page_count": 18,
   "interactive_blocks": [
+    "ms22-0214-quiz",
     "ms22-0217-quiz",
     "ms22-0218-quiz"
   ],

@@ -5,6 +5,7 @@
   "category": "concept_textbook_prototype",
   "curriculum_version": "2022",
   "standard_codes": [
+    "9수02-14",
     "9수02-17",
     "9수02-18"
   ],
@@ -17,10 +18,220 @@
     "부분 원고 후보",
     "교사·수학 검수 대기",
     "권리 검토 대기",
+    "성취기준 후보: 9수02-14",
     "성취기준 후보: 9수02-17",
     "성취기준 후보: 9수02-18"
   ],
   "chapters": [
+    {
+      "title": "함수의 대응과 함숫값",
+      "intro": [
+        "공식 기준: 9수02-14 함수의 개념을 이해하고, 함숫값을 구할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-14 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-14. 이 단원의 조작 자료는 앱 내 BookData 지면과 native quiz에 별도 보존합니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-function-input-output-opening",
+          "template": "opening",
+          "title": "입력 하나마다 출력이 하나씩 정해지는 규칙은 어떻게 구별할까요?",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "입력 하나마다 출력이 하나씩 정해지는 규칙은 어떻게 구별할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "함수의 대응과 함숫값의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-function-input-output-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "독립 체험 파일 앱 내 BookData 지면과 native quiz에서 값을 바꾸고 결과를 관찰하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "값을 바꾸어도 유지되는 관계는 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 조건만 바꾸고, 바꾸기 전후를 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "체험 도구는 원고와 별도 파일로 보존됩니다. 앱에서 자동 실행되는 기능은 아닙니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-function-input-output-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "집합 X의 각 원소에 집합 Y의 원소가 하나씩 대응할 때 함수라고 합니다. 서로 다른 입력이 같은 출력에 대응해도 함수일 수 있지만, 한 입력이 두 출력에 대응하면 함수가 아닙니다. f(x)=2x−3이면 입력 x에 대응하는 함숫값은 f(x)로 씁니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-14"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-function-input-output-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=2x−3일 때 f(4)를 구하고, f(x)=5가 되게 하는 x를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "f(4)=2×4−3=5입니다. f(x)=5이면 2x−3=5이므로 2x=8, x=4입니다. 두 결과를 원래 식에 대입해 확인할 수 있습니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-function-input-output-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=−3x+2일 때 g(−2)를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "g(−2)=−3×(−2)+2=6+2=8입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "g(−2)=−3×(−2)+2=6+2=8입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0214-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=2x−3일 때 f(4)는 얼마인가요?",
+                "options": [
+                  "5",
+                  "8",
+                  "11"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "2×4−3=5입니다.",
+                "incorrect_feedback": "x 대신 4를 대입한 뒤 곱셈과 뺄셈을 계산하세요.",
+                "hints": [
+                  "f(4)=2×4−3으로 씁니다.",
+                  "먼저 2×4를 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-function-input-output-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "함수의 대응과 함숫값의 관계를 식과 그래프로 설명한다. · 찾은 점을 원래 식에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "함수의 대응과 함숫값의 관계를 식과 그래프로 설명한다.",
+                "찾은 점을 원래 식에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
     {
       "title": "두 변수 일차방정식과 일차함수의 그래프",
       "intro": [

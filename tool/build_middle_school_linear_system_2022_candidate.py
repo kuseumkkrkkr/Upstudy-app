@@ -11,6 +11,18 @@ OUT = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고/중등수학_
 BOOK_FILE = "중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json"
 SPECS = [
     {
+        "code": "9수02-14", "slug": "ms22-function-input-output",
+        "title": "함수의 대응과 함숫값",
+        "criterion": "함수의 개념을 이해하고, 함숫값을 구할 수 있다",
+        "opening": "입력 하나마다 출력이 하나씩 정해지는 규칙은 어떻게 구별할까요?",
+        "concept": "집합 X의 각 원소에 집합 Y의 원소가 하나씩 대응할 때 함수라고 합니다. 서로 다른 입력이 같은 출력에 대응해도 함수일 수 있지만, 한 입력이 두 출력에 대응하면 함수가 아닙니다. f(x)=2x−3이면 입력 x에 대응하는 함숫값은 f(x)로 씁니다.",
+        "example": "f(x)=2x−3일 때 f(4)를 구하고, f(x)=5가 되게 하는 x를 구하세요.",
+        "solution": "f(4)=2×4−3=5입니다. f(x)=5이면 2x−3=5이므로 2x=8, x=4입니다. 두 결과를 원래 식에 대입해 확인할 수 있습니다.",
+        "practice": "g(x)=−3x+2일 때 g(−2)를 구하세요.",
+        "answer": "g(−2)=−3×(−2)+2=6+2=8입니다.",
+        "quiz": {"id": "ms22-0214-quiz", "kind": "quiz", "prompt": "f(x)=2x−3일 때 f(4)는 얼마인가요?", "options": ["5", "8", "11"], "correct_index": 0, "correct_feedback": "2×4−3=5입니다.", "incorrect_feedback": "x 대신 4를 대입한 뒤 곱셈과 뺄셈을 계산하세요.", "hints": ["f(4)=2×4−3으로 씁니다.", "먼저 2×4를 계산합니다."]},
+    },
+    {
         "code": "9수02-17", "slug": "ms22-linear-equation-function",
         "title": "두 변수 일차방정식과 일차함수의 그래프",
         "criterion": "일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다",
@@ -44,6 +56,8 @@ def main() -> None:
         if official.get(item["code"]) != item["criterion"]:
             raise ValueError(f"Official standard missing: {item['code']}")
         assert 2 * 1 + 6 == 8
+    assert 2 * 4 - 3 == 5
+    assert -3 * -2 + 2 == 8
     assert (2 + 1) == (-2 + 5)
     assert 2 * 3 - 1 == -3 + 8 == 5
     helper_path = Path(__file__).with_name("build_middle_school_1_2_2022_candidate.py")
