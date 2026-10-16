@@ -685,6 +685,7 @@ class UserStorageRequest(BaseModel):
 class TextbookCreateRequest(BaseModel):
     """인증된 학생의 개인 교재 초안. 원문 크기·개수 제한은 요청 경계에서 강제한다."""
 
+    model_config = {"extra": "forbid"}
     schema_version: int = Field(default=1, ge=1, le=2, strict=True)
     title: str = Field(min_length=1, max_length=120)
     subtitle: str = Field(default="", max_length=300)

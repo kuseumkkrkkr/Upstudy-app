@@ -143,6 +143,9 @@ void main() {
     await tester.tap(find.text('답 확인'));
     await tester.pump();
     expect(find.text('Correct'), findsOneWidget);
+    await tester.pumpWidget(app(quiz()));
+    await tester.pump();
+    expect(find.text('Correct'), findsOneWidget);
     await tester.tap(find.text('초기화'));
     await tester.pump();
     expect(find.text('Correct'), findsNothing);

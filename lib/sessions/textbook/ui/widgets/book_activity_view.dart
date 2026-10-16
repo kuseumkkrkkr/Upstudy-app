@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
@@ -47,7 +48,9 @@ class _BookActivityViewState extends State<BookActivityView>
   @override
   void didUpdateWidget(covariant BookActivityView oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (!identical(oldWidget.activity, a)) _reset();
+    if (jsonEncode(oldWidget.activity.toJson()) != jsonEncode(a.toJson())) {
+      _reset();
+    }
   }
 
   @override

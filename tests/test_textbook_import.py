@@ -71,7 +71,7 @@ def test_import_retries_and_owner_scope(monkeypatch, version):
             assert path == 'canary_user_kv'
             with self.lock:
                 if method == 'POST':
-                    assert prefer == 'resolution=ignore-duplicates,return=minimal'
+                    assert prefer in ('resolution=ignore-duplicates,return=minimal', 'resolution=merge-duplicates,return=minimal')
                     self.rows.setdefault((body['user_id'], body['key']), body['value'])
                     return None
                 user = query['user_id'].removeprefix('eq.')
@@ -110,3 +110,12 @@ def test_import_retries_and_owner_scope(monkeypatch, version):
         corrupt['sha256'] = '0' * 64
         assert client.post('/textbooks/import', json=corrupt, headers=headers('owner')).status_code == 422
         assert len(store.rows) == 1
+        if version == 2:
+            created = client.post('/textbooks', json=source_book, headers=headers('owner'))
+            assert created.status_code == 201, created.text
+            assert created.json()['schema_version'] == 2
+            assert created.json()['chapters'] == source_book['chapters']
+            created_id = created.json()['textbook_id']
+            assert client.get('/textbooks/' + created_id, headers=headers('owner')).json()['chapters'] == source_book['chapters']
+            assert client.get('/textbooks/' + created_id, headers=headers('other')).status_code == 404
+            assert client.post('/textbooks', json={**source_book, 'script': 'not allowed'}, headers=headers('owner')).status_code == 422

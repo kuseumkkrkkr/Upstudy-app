@@ -28,6 +28,12 @@ Status: implemented locally; candidate/browser verification required before rele
 - Browser QA caught unequal axis pixel scales in candidate1's geometry. Fixed
   native drawing and dragging to use the same graph-unit scale on both axes.
   **Candidate1 is superseded and must NOT be promoted.** Fix widget tests5 passed.
+- Same-payload model recreation now retains local answers/interaction state;
+  changed activity content still resets. Regression test rebuilds a typed model
+  and checks feedback survives. Native browser QA is separate from live imports.
+- V2 create/list/detail storage is also covered by the fake-store endpoint test;
+  unknown create fields are rejected rather than silently dropped. Python31
+  passed after this addition. New model/widget/preview/test analysis: zero issues.
 - `tool/book_activity_preview.dart` is a separate local QA entrypoint with
   synthetic data, not a production route/import or a real learner record.
 - Existing course/exam/problem-set deletion remains0 pending student-record
