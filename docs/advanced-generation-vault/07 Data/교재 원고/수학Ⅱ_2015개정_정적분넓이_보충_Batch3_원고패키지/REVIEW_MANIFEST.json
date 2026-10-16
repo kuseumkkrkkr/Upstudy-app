@@ -1,0 +1,22 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_정적분넓이_보충_Batch3_BookData_V2_시범.json",
+  "bookdata_sha256": "E716E3176D6CA9B3F038F0B14B6F0450C21BD1E7BF47695F87453D729B8DFF6A",
+  "candidate_code_references": [
+    "12수학Ⅱ03-05"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "integral_evaluation_assertions_passed; independent_review_pending",
+  "source_scope_review": "existing_source_and_batch1_candidate_contrast_recorded_in_readme",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; original_interactive_html_preserved_separately"
+}
