@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/sessions/textbook/ui/widgets/book_area_model_pieces.dart';
+import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 
 void main() {
   test('standard block identity and 48 tags survive serialization', () {
@@ -33,6 +34,31 @@ void main() {
     for (final label in ['x² 정사각형', 'ax 직사각형', 'bx 직사각형', 'ab 정사각형']) {
       expect(find.text(label), findsOneWidget);
     }
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('long area formula can be scrolled instead of clipped', (tester) async {
+    tester.view.physicalSize = const Size(390, 844);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    final book = BookData.fromJson({'title': 'Synthetic', 'chapters': [
+      {'title': 'Area', 'pages': [{'template': 'concept', 'title': 'Area', 'blocks': [
+        {'type': 'visual', 'visual': {'kind': 'area-model', 'title': 'Pieces',
+          'formula': '(x+a)(x+b)=x^2+ax+bx+ab', 'items': ['x²', 'ax', 'bx', 'ab']}}
+      ]}]}
+    ]});
+    await tester.pumpWidget(MaterialApp(home: BookWidget(book: book, persistenceEnabled: false)));
+    await tester.pumpAndSettle();
+    final area = find.byWidgetPredicate((w) => w is Semantics &&
+        w.properties.label == '수식. 좌우로 움직여 전체 수식을 확인하세요.');
+    final scroll = find.descendant(of: area, matching: find.byType(Scrollable));
+    expect(scroll, findsOneWidget);
+    final state = tester.state<ScrollableState>(scroll);
+    expect(state.position.maxScrollExtent, greaterThan(0));
+    await tester.drag(scroll, const Offset(-180, 0));
+    await tester.pumpAndSettle();
+    expect(state.position.pixels, greaterThan(0));
     expect(tester.takeException(), isNull);
   });
 }

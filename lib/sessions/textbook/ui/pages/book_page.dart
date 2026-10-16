@@ -3910,7 +3910,14 @@ class _BookVisualCard extends StatelessWidget {
     final content = switch (visual.kind) {
       'formula' => _buildFormula(),
       'area-model' => Column(children: [
-        if (visual.formula.isNotEmpty) _buildFormula(),
+        if (visual.formula.isNotEmpty)
+          Semantics(
+            label: '수식. 좌우로 움직여 전체 수식을 확인하세요.',
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: _buildFormula(),
+            ),
+          ),
         const SizedBox(height: 8),
         BookAreaModelPieces(labels: visual.items),
       ]),

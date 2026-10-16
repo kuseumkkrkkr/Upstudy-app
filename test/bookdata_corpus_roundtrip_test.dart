@@ -20,7 +20,9 @@ void main() {
             // Optional explicit defaults may serialize as an absent key.
             if (!after.containsKey(key) && (before[key] == null ||
                 (before[key] is List && before[key].isEmpty) ||
-                (key == 'schema_version' && before[key] == 1))) continue;
+                (key == 'schema_version' && before[key] == 1))) {
+              continue;
+            }
             expect(after.containsKey(key), isTrue, reason: '$location/$key');
             preserved(before[key], after[key], '$location/$key');
           }
