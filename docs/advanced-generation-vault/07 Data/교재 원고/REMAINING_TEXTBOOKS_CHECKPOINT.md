@@ -3,6 +3,12 @@
 기준일: 2026-10-17
 상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
+### 2026-10-17 태그 인벤토리 재검증
+
+- Root 교재 원고 폴더를 비재귀 집계해 Markdown 110개, BookData JSON 115개, HTML 86개, 전체 JSON 120개를 확인했다. 전체 JSON의 첫 태그는 17종이며 대시보드 표 합계도 120으로 동기화했다.
+
+- `flutter test --no-pub --reporter compact test/concept_textbook_html_motion_test.dart test/concept_textbook_prototype_json_test.dart test/perfect_square_textbook_data_test.dart`: 209개 통과. 여기에는 사용자 작업트리의 dashboard inventory assertion 수정이 포함된다.
+
 ## 2026-10-17 현재 작업트리 재검증
 
 - 현재 앱 테스트를 다시 실행했다: BookData 인벤토리 왕복과 activity compatibility 합계 127 tests passed. Upstudy-hotfix 공개/가져오기/저자 호환/그래프 보안 회귀도 51 passed, Starlette/httpx deprecation warning 1개다. 이는 전체 standalone HTML의 화면·동작 parity 검증이 아니다.
