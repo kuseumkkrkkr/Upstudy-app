@@ -11,6 +11,14 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_이차함수와연립이차부등식_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_내분점외분점_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_직선yx대칭_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_집합개념과표현_보충V2_BookData_초안.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학하_2015개정_초안/수학하_2015개정_전칭존재명제_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json',

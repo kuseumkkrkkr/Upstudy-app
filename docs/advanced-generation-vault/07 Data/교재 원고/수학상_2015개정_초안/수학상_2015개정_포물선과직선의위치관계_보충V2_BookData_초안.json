@@ -1,0 +1,155 @@
+{
+  "title": "수학(상) 2015 개정 · 이차함수 그래프와 직선의 위치 관계 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학01-10"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학01-10",
+    "방정식과 부등식",
+    "이차함수 그래프와 직선의 위치 관계",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "이차함수 그래프와 직선의 위치 관계",
+      "standard_codes": [
+        "10수학01-10"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학01-10",
+        "방정식과 부등식",
+        "이차함수 그래프와 직선의 위치 관계",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0110-포물선과직선의위치관계-opening",
+          "template": "opening",
+          "title": "이차함수 그래프와 직선의 위치 관계",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "포물선 y=x²과 직선 y=2x+3의 교점 개수와 좌표를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "두 점 (3,9), (−1,1)에서 만납니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0110-포물선과직선의위치관계-concept",
+          "template": "concept",
+          "title": "이차함수 그래프와 직선의 위치 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "이차함수 y=f(x)의 그래프와 직선 y=mx+n의 교점은 f(x)=mx+n의 실근에 대응합니다. 정리한 이차방정식의 판별식이 양수이면 두 점, 0이면 한 점에서 만나고, 음수이면 만나지 않습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0110-포물선과직선의위치관계-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "포물선 y=x²과 직선 y=2x+3의 교점 개수와 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x²=2x+3을 정리하면 x²−2x−3=0입니다.",
+                "(x−3)(x+1)=0이므로 x=3 또는 x=−1입니다.",
+                "각 x를 직선에 대입하면 교점은 (3,9), (−1,1)입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "두 점 (3,9), (−1,1)에서 만납니다."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0110-포물선과직선의위치관계-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=x²−4와 y=0의 교점 개수와 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "x²−4=0을 풀면 x=−2 또는 x=2입니다.",
+                "두 교점의 y좌표는 0입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(−2,0), (2,0)의 두 점"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0110-포물선과직선의위치관계-quiz",
+                "kind": "quiz",
+                "prompt": "y=x²과 y=2x−1은 몇 점에서 만나나요?",
+                "options": [
+                  "한 점",
+                  "두 점",
+                  "만나지 않는다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x²=2x−1에서 (x−1)²=0이므로 한 점 (1,1)에서 만납니다.",
+                "incorrect_feedback": "두 그래프의 y값을 같게 놓고 판별식을 확인하세요.",
+                "hints": [
+                  "두 그래프의 y값을 같게 놓고 판별식을 확인하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

@@ -69,6 +69,17 @@ PARTIAL_CONTENT_AUDIT: dict[str, tuple[str, str, str]] = {
     "10수학03-04": ("진리집합은 {−1,1}", "명제·조건·진리집합", "‘모든’, ‘어떤’을 포함한 명제"),
 }
 
+SUPPLEMENTAL_V2: dict[str, tuple[str, str]] = {
+    "10수학01-10": ("포물선과직선의위치관계", "이차함수 그래프와 직선의 위치 관계"),
+    "10수학01-11": ("이차함수최대최소활용", "이차함수의 최댓값·최솟값과 활용"),
+    "10수학01-12": ("사차방정식풀이", "치환과 인수분해로 사차방정식 풀기"),
+    "10수학01-16": ("이차함수와연립이차부등식", "이차함수와 연립이차부등식"),
+    "10수학02-02": ("내분점외분점", "선분의 내분점과 외분점 좌표"),
+    "10수학02-09": ("직선yx대칭", "직선 y=x에 대한 대칭이동"),
+    "10수학03-01": ("집합개념과표현", "집합의 개념과 표현"),
+    "10수학03-04": ("전칭존재명제", "모든과 어떤을 포함한 명제"),
+}
+
 
 def flatten_text(value: object) -> str:
     if isinstance(value, str):
@@ -141,6 +152,22 @@ def main() -> None:
             f"| `{code}` | {quote_page.get('title', '')} · “{quote}” | {coverage} | {gap} |"
         )
 
+    supplemental_rows = []
+    for code, (slug, title) in SUPPLEMENTAL_V2.items():
+        volume = "상" if code in standards and code.startswith(("10수학01", "10수학02")) else "하"
+        filename = f"수학{volume}_2015개정_{slug}_보충V2_BookData_초안.json"
+        candidate = MANUSCRIPTS / f"수학{volume}_2015개정_초안" / filename
+        if candidate.exists():
+            supplement = json.loads(candidate.read_text(encoding="utf-8-sig"))
+            chapter = supplement.get("chapters", [{}])[0]
+            pages = chapter.get("pages", [])
+            if supplement.get("standard_codes") != [code] or chapter.get("standard_codes") != [code] or len(pages) != 4:
+                raise RuntimeError(f"Invalid supplemental draft evidence for {code}: {candidate}")
+            missing = PARTIAL_CONTENT_AUDIT[code][2]
+            supplemental_rows.append(f"| `{code}` | `{filename}` · {title} · {len(pages)}쪽 | {missing} | candidate draft; human review pending |")
+        else:
+            supplemental_rows.append(f"| `{code}` | not generated | {PARTIAL_CONTENT_AUDIT[code][2]} | remaining |")
+
     lines = [
         "# 2015 고등 수학(상·하) 기준-원고 후보 대조",
         "",
@@ -157,22 +184,30 @@ def main() -> None:
         "",
         "아래는 각 연결 chapter의 전체 4쪽 텍스트를 확인해 현재 드러난 범위와 공식 기준에서 추가로 필요한 범위를 분리한 기록이다. 인용 구절은 생성 시 원고에서 검증한다. 이는 독립 수학·교사 검토나 본문 충족 승인이 아니다.",
         "",
-        "| 공식 코드 | 실제 페이지 근거 | 확인된 내용 | 아직 드러나지 않은 기준 요소 |",
+        "| 공식 코드 | 실제 페이지 근거 | 확인된 내용 | 기존 통합 chapter에서 미확인 기준 요소 |",
         "|---|---|---|---|",
         *content_rows,
+        "",
+        "## 미확인 요소 보충 V2 후보",
+        "",
+        "별도 파일의 보충 초안은 기존 통합본을 덮어쓰지 않는다. 생성 여부와 코드 연결은 확인하지만, 본문 전체의 기준 충족·정확성·교사 승인은 별도 검토가 필요하다.",
+        "",
+        "| 공식 코드 | 보충 후보 | 보충 대상 | 상태 |",
+        "|---|---|---|---|",
+        *supplemental_rows,
         "",
         "## 출판·재개 판단",
         "",
         "- 통합본은 상권 23개·하권 16개 chapter다. 신규 10개 코드는 chapter/root에 명시하고 있으나 상·하권은 `editorial_split_candidate`이며 공식 분권이 아니다.",
         "- 신규 V2 10개는 도입·개념·예제·연습과 native quiz를 갖춘 후보이며, 기준 문구 전체에 대한 내용 충족은 독립 검토 전이다. 공식 교육과정에는 상·하권 경계가 없으므로 코드 연결만으로 각 상품 완료를 계산하지 않는다.",
-        "- 기존 소단원 원고는 정의·질문·풀이·오답 점검 block을 포함하는 정적 BookData다. 해당 29개 장에는 선언형 activity가 확인되지 않아 interactive HTML 자산의 동등성이나 앱 동작을 주장하지 않는다.",
+        "- 기존 통합본 29개 장은 정의·질문·풀이·오답 점검 block을 포함하는 정적 BookData이며 선언형 activity가 없다. 별도 보충 V2에는 native quiz가 있으나 기존 HTML 자산과의 동등성 또는 전체 앱 동작 parity를 주장하지 않는다.",
         "- 교사·독립 수학검토와 원고 권리 근거가 없으므로 이 대조로 게시 자격을 부여하지 않는다.",
         "",
         "재생성: `python tool/audit_2015_upper_lower_scope.py` (공식 추출물 및 상·하 통합 BookData 필요)",
         "",
     ]
     OUT.write_text("\n".join(lines), encoding="utf-8")
-    print(f"Wrote 2015 upper/lower audit: {len(codes)} criteria, {title_links} title candidates, {partial} partial candidates, {no_candidates} no-chapter candidates.")
+    print(f"Wrote 2015 upper/lower audit: {len(codes)} criteria, {title_links} title candidates, {partial} partial candidates, {sum('not generated' not in row for row in supplemental_rows)} supplemental V2 candidates, {no_candidates} no-chapter candidates.")
 
 
 if __name__ == "__main__":

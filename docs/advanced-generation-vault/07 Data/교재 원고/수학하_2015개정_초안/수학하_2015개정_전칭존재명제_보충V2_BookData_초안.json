@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 모든과 어떤을 포함한 명제 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-04"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-04",
+    "수와 연산",
+    "모든과 어떤을 포함한 명제",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "모든과 어떤을 포함한 명제",
+      "standard_codes": [
+        "10수학03-04"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-04",
+        "수와 연산",
+        "모든과 어떤을 포함한 명제",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0304-전칭존재명제-opening",
+          "template": "opening",
+          "title": "모든과 어떤을 포함한 명제",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "실수 x에 대하여 ‘모든 x는 x²≥0이다’와 ‘어떤 x는 x²=2이다’를 판단하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "두 명제 모두 참"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0304-전칭존재명제-concept",
+          "template": "concept",
+          "title": "모든과 어떤을 포함한 명제",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "‘모든 x에 대하여 P(x)’는 정해진 논의 영역의 모든 원소에서 P가 참이라는 뜻이고, ‘어떤 x가 존재하여 P(x)’는 적어도 하나에서 참이라는 뜻입니다. 참·거짓은 논의 영역에 따라 달라질 수 있습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0304-전칭존재명제-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "실수 x에 대하여 ‘모든 x는 x²≥0이다’와 ‘어떤 x는 x²=2이다’를 판단하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "모든 실수의 제곱은 0 이상이므로 첫 명제는 참입니다.",
+                "x=√2를 택하면 x²=2이므로 둘째 명제도 참입니다.",
+                "전칭명제는 임의의 원소에서 확인하고, 존재명제는 한 예를 제시하면 됩니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "두 명제 모두 참"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0304-전칭존재명제-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "정수 n에 대한 ‘모든 n은 짝수이다’와 ‘어떤 n은 홀수이다’를 판단하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "n=1은 홀수이므로 첫 명제의 반례입니다.",
+                "n=1을 택하면 둘째 명제는 참입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "첫 명제는 거짓, 둘째 명제는 참"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0304-전칭존재명제-quiz",
+                "kind": "quiz",
+                "prompt": "논의 영역이 정수일 때 ‘어떤 n은 n²=2이다’는?",
+                "options": [
+                  "거짓",
+                  "참",
+                  "논의 영역과 무관하게 참"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정수의 제곱이 2가 되는 경우는 없습니다.",
+                "incorrect_feedback": "정수에서 제곱수가 2가 될 수 있는지 확인하세요.",
+                "hints": [
+                  "정수에서 제곱수가 2가 될 수 있는지 확인하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

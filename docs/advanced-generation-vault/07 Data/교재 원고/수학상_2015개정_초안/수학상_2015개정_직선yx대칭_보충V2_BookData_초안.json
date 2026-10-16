@@ -1,0 +1,155 @@
+{
+  "title": "수학(상) 2015 개정 · 직선 y=x에 대한 대칭이동 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학02-09"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학02-09",
+    "도형의 방정식",
+    "직선 y=x에 대한 대칭이동",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "직선 y=x에 대한 대칭이동",
+      "standard_codes": [
+        "10수학02-09"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학02-09",
+        "도형의 방정식",
+        "직선 y=x에 대한 대칭이동",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0209-직선yx대칭-opening",
+          "template": "opening",
+          "title": "직선 y=x에 대한 대칭이동",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "점 P(2,−3)을 직선 y=x에 대하여 대칭이동한 점을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "(−3,2)"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0209-직선yx대칭-concept",
+          "template": "concept",
+          "title": "직선 y=x에 대한 대칭이동",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "점 (a,b)를 직선 y=x에 대하여 대칭이동하면 좌표가 서로 바뀌어 (b,a)가 됩니다. 직선 y=x 위의 점은 두 좌표가 같으므로 대칭이동 뒤에도 그대로입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0209-직선yx대칭-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 P(2,−3)을 직선 y=x에 대하여 대칭이동한 점을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "y=x 대칭은 x좌표와 y좌표를 서로 바꿉니다.",
+                "(2,−3)을 (−3,2)로 바꿉니다.",
+                "원래 점과 대칭점의 중점 (−1/2,−1/2)은 y=x 위에 있습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "(−3,2)"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0209-직선yx대칭-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (4,4)와 (1,5)를 각각 y=x에 대하여 대칭이동하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "(4,4)는 좌표가 같아 그대로입니다.",
+                "(1,5)는 좌표를 바꾸어 (5,1)입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(4,4), (5,1)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0209-직선yx대칭-quiz",
+                "kind": "quiz",
+                "prompt": "점 (−2,7)의 y=x 대칭점은?",
+                "options": [
+                  "(7,−2)",
+                  "(2,−7)",
+                  "(−2,−7)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "직선 y=x 대칭은 두 좌표를 맞바꿉니다.",
+                "incorrect_feedback": "x좌표와 y좌표의 자리를 서로 바꾸세요.",
+                "hints": [
+                  "x좌표와 y좌표의 자리를 서로 바꾸세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

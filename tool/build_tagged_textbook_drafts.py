@@ -97,6 +97,7 @@ GENERATORS = [
     ("build_math_upper_parallel_perpendicular_lines_sample.py", "main"),
     ("build_math_upper_compound_linear_inequalities_sample.py", "main"),
     ("build_math_2015_missing_criteria_v2.py", "main"),
+    ("build_math_2015_partial_criteria_completion_v2.py", "main"),
     ("build_math_2015_split_books.py", "main"),
     ("build_curriculum_code_inventory.py", "main"),
     ("build_textbook_scope_coverage.py", "main"),

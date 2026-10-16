@@ -203,3 +203,10 @@
 
 - `tool/build_html_asset_inventory.py`와 `REMAINING_TEXTBOOKS_HTML_ASSET_INDEX.md`를 보강해 HTML 파일명이 언급된 JSON 경로, 같은 chapter의 native activity 종류를 기록한다. 재생성 결과는 106 HTML/166 BookData, 정확한 파일명 참조 27개, `external_interactive_assets` metadata 명시 1개, 같은 chapter에 선언형 activity가 있는 자산 20개다.
 - 이 표는 정적 참조만 분류한다. 파일명 언급이나 native activity 병존을 실행 연결 또는 인터랙션 parity 증거로 간주하지 않는다. 권리·교사·독립 수학 검토는 계속 미완료이며 배포하지 않는다.
+
+## 2026-10-17 2015 고교 부분 기준 보충 V2
+
+- 기존 본문 대조에서 범위 요소가 빠진 8개 기준(`10수학01-10/11/12/16`, `02-02/09`, `03-01/04`)을 각각 4쪽 보충 BookData와 native quiz로 작성했다. 주제는 포물선-직선 교점, 이차함수 최댓값·최솟값 활용, 치환을 이용한 사차방정식, 이차함수 관계와 연립이차부등식, 내·외분점, `y=x` 대칭, 집합 정의·표현, 전칭·존재 명제다.
+- 생성기 `tool/build_math_2015_partial_criteria_completion_v2.py`를 resumable draft pipeline stage 87/91에 추가하고, 2015 고교 audit에 보충 파일/코드/대상 범위 표를 추가했다. 보충은 기존 통합본과 분리돼 있으며 자동으로 상품 완료 처리하지 않는다.
+- 생성기 산술·집합·명제 assert와 4쪽·코드·quiz 구조 검증 통과. `flutter test --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart` 3/3 통과; `flutter test --reporter compact test/textbook_activity_compatibility_test.dart` 113/113 통과. 두 테스트에 새 BookData 왕복과 학생 BookWidget quiz 제출/피드백을 포함했다.
+- 최신 재생성 원장: 26개 상품/1,038 product-standard 행/111 root source BookData; 392 official edition-code 쌍 중 same-edition tag 369, chapter exact-code 323, 단일-code 단일-chapter 21, 구조 신호 없음 52. 재귀 BookData 174개 중 출판 부적격 29, 권리·교사 검토 pending 29, 미지정 145; 신규 8개 포함. 독립 수학검토·권리 확인이 남아 배포하지 않았다.

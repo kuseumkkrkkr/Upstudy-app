@@ -1,0 +1,155 @@
+{
+  "title": "수학(상) 2015 개정 · 선분의 내분점과 외분점 좌표 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학02-02"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학02-02",
+    "도형의 방정식",
+    "선분의 내분점과 외분점 좌표",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "선분의 내분점과 외분점 좌표",
+      "standard_codes": [
+        "10수학02-02"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학02-02",
+        "도형의 방정식",
+        "선분의 내분점과 외분점 좌표",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0202-내분점외분점-opening",
+          "template": "opening",
+          "title": "선분의 내분점과 외분점 좌표",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A(0,0), B(6,3)을 AP:PB=1:2로 내분하는 점을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "P(2,1)"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0202-내분점외분점-concept",
+          "template": "concept",
+          "title": "선분의 내분점과 외분점 좌표",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "A(x₁,y₁), B(x₂,y₂)를 AP:PB=m:n으로 내분하는 점은 ((n x₁+m x₂)/(m+n), (n y₁+m y₂)/(m+n))입니다. 외분점은 m≠n일 때 ((m x₂−n x₁)/(m−n), (m y₂−n y₁)/(m−n))입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0202-내분점외분점-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A(0,0), B(6,3)을 AP:PB=1:2로 내분하는 점을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "내분 공식에서 m=1,n=2를 대입합니다.",
+                "x좌표는 (2·0+1·6)/3=2입니다.",
+                "y좌표는 (2·0+1·3)/3=1입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "P(2,1)"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0202-내분점외분점-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A(0,0), B(6,3)을 AP:PB=2:1로 외분하는 점을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "외분 공식에 m=2,n=1을 대입합니다.",
+                "x=(2·6−1·0)/(2−1)=12, y=(2·3−1·0)/(2−1)=6입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "P(12,6)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0202-내분점외분점-quiz",
+                "kind": "quiz",
+                "prompt": "A(0,0), B(8,4)를 1:3으로 내분하는 점은?",
+                "options": [
+                  "(2,1)",
+                  "(6,3)",
+                  "(4,2)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "(3A+1B)/4=(2,1)입니다.",
+                "incorrect_feedback": "AP:PB=m:n이면 A 쪽 좌표에 n, B 쪽에 m을 곱합니다.",
+                "hints": [
+                  "AP:PB=m:n이면 A 쪽 좌표에 n, B 쪽에 m을 곱합니다."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

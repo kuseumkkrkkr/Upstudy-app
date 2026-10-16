@@ -1,0 +1,155 @@
+{
+  "title": "수학(하) 2015 개정 · 집합의 개념과 표현 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학03-01"
+  ],
+  "tags": [
+    "수학(하)",
+    "2015 개정",
+    "10수학03-01",
+    "수와 연산",
+    "집합의 개념과 표현",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "집합의 개념과 표현",
+      "standard_codes": [
+        "10수학03-01"
+      ],
+      "tags": [
+        "수학(하)",
+        "2015 개정",
+        "10수학03-01",
+        "수와 연산",
+        "집합의 개념과 표현",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0301-집합개념과표현-opening",
+          "template": "opening",
+          "title": "집합의 개념과 표현",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "A={x∈Z | −1≤x<3}을 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "A={−1,0,1,2}"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0301-집합개념과표현-concept",
+          "template": "concept",
+          "title": "집합의 개념과 표현",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "집합은 대상이 무엇인지 분명하고, 각 대상이 원소인지 아닌지를 판단할 수 있는 모임입니다. 원소를 직접 나열하는 방법과 조건을 이용해 {x | 조건}으로 나타내는 방법이 있습니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0301-집합개념과표현-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={x∈Z | −1≤x<3}을 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "정수 가운데 −1 이상 3 미만인 수를 찾습니다.",
+                "해당 정수는 −1, 0, 1, 2입니다.",
+                "집합의 원소를 중복 없이 나열합니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "A={−1,0,1,2}"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0301-집합개념과표현-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "B={x∈N | x는 10의 양의 약수}를 원소나열법으로 나타내세요. (N은 양의 정수)"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "10의 양의 약수는 1,2,5,10입니다.",
+                "각 원소를 한 번씩 씁니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "B={1,2,5,10}"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0301-집합개념과표현-quiz",
+                "kind": "quiz",
+                "prompt": "집합을 판별하는 조건으로 가장 알맞은 것은?",
+                "options": [
+                  "대상이 원소인지 분명히 판단할 수 있다",
+                  "원소의 개수가 반드시 3개이다",
+                  "원소는 숫자만 가능하다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "집합은 각 대상의 포함 여부가 명확해야 합니다.",
+                "incorrect_feedback": "모임의 구성원이 되는지 객관적으로 판단 가능한지 보세요.",
+                "hints": [
+                  "모임의 구성원이 되는지 객관적으로 판단 가능한지 보세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

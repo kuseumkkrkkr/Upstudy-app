@@ -1,0 +1,156 @@
+{
+  "title": "수학(상) 2015 개정 · 이차함수와 연립이차부등식 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학01-16"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학01-16",
+    "방정식과 부등식",
+    "이차함수와 연립이차부등식",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "이차함수와 연립이차부등식",
+      "standard_codes": [
+        "10수학01-16"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학01-16",
+        "방정식과 부등식",
+        "이차함수와 연립이차부등식",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0116-이차함수와연립이차부등식-opening",
+          "template": "opening",
+          "title": "이차함수와 연립이차부등식",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "x²+x−2≤0과 x²≤4를 함께 푸세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "−2≤x≤1"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0116-이차함수와연립이차부등식-concept",
+          "template": "concept",
+          "title": "이차함수와 연립이차부등식",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "이차부등식 f(x)≥0의 해는 그래프 y=f(x)가 x축 위에 있거나 만나는 x의 범위입니다. 연립부등식은 각 부등식의 해집합을 구한 뒤 교집합을 취합니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0116-이차함수와연립이차부등식-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x²+x−2≤0과 x²≤4를 함께 푸세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "x²+x−2=(x+2)(x−1)이므로 첫 부등식의 해는 −2≤x≤1입니다.",
+                "x²≤4의 해는 −2≤x≤2입니다.",
+                "두 구간의 교집합을 구합니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "−2≤x≤1"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0116-이차함수와연립이차부등식-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x²−x−2≥0과 x²<9를 함께 푸세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "(x−2)(x+1)≥0의 해는 x≤−1 또는 x≥2입니다.",
+                "x²<9의 해는 −3<x<3입니다.",
+                "두 해집합의 교집합을 취합니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−3<x≤−1 또는 2≤x<3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0116-이차함수와연립이차부등식-quiz",
+                "kind": "quiz",
+                "prompt": "x²−1≤0과 x≥0의 공통 해는?",
+                "options": [
+                  "0≤x≤1",
+                  "x≤−1 또는 x≥1",
+                  "−1≤x≤1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "첫 해는 −1≤x≤1이고, x≥0과의 교집합은 0≤x≤1입니다.",
+                "incorrect_feedback": "각 부등식의 해를 따로 구하고 겹치는 부분만 남기세요.",
+                "hints": [
+                  "각 부등식의 해를 따로 구하고 겹치는 부분만 남기세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}

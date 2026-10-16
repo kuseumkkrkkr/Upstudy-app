@@ -1,0 +1,155 @@
+{
+  "title": "수학(상) 2015 개정 · 이차함수의 최댓값·최솟값과 활용 보충 후보",
+  "subtitle": "기존 부분 후보의 미확인 기준 요소를 보강하는 재개형 원고",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "10수학01-11"
+  ],
+  "tags": [
+    "수학(상)",
+    "2015 개정",
+    "10수학01-11",
+    "방정식과 부등식",
+    "이차함수의 최댓값·최솟값과 활용",
+    "보충 V2 후보"
+  ],
+  "schema_version": 2,
+  "chapters": [
+    {
+      "title": "이차함수의 최댓값·최솟값과 활용",
+      "standard_codes": [
+        "10수학01-11"
+      ],
+      "tags": [
+        "수학(상)",
+        "2015 개정",
+        "10수학01-11",
+        "방정식과 부등식",
+        "이차함수의 최댓값·최솟값과 활용",
+        "보충 V2 후보"
+      ],
+      "pages": [
+        {
+          "id": "math15-supp-10수학0111-이차함수최대최소활용-opening",
+          "template": "opening",
+          "title": "이차함수의 최댓값·최솟값과 활용",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "가로와 세로의 합이 10인 직사각형의 넓이 최댓값을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "공식만 적용하기 전에 대상·조건·정의역을 확인하고 그림이나 식으로 관계를 나타내 보세요."
+            },
+            {
+              "type": "answer",
+              "title": "핵심 확인",
+              "text": "가로 5, 세로 5일 때 25"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0111-이차함수최대최소활용-concept",
+          "template": "concept",
+          "title": "이차함수의 최댓값·최솟값과 활용",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "개념",
+              "text": "y=a(x−p)²+q에서 (x−p)²≥0입니다. a>0이면 꼭짓점에서 최솟값 q를, a<0이면 최댓값 q를 갖습니다. 문제의 정의역이 제한되면 꼭짓점뿐 아니라 구간 끝의 함수값도 비교합니다."
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 점",
+              "text": "부호, 정의역, 조건의 방향을 확인하고 구한 답을 원래 식이나 상황에 대입해 검산하세요."
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0111-이차함수최대최소활용-example",
+          "template": "example",
+          "title": "예제로 풀이 순서 익히기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "가로와 세로의 합이 10인 직사각형의 넓이 최댓값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "가로를 x라 하면 세로는 10−x이고 0<x<10입니다.",
+                "넓이 A=x(10−x)=−(x−5)²+25입니다.",
+                "x=5에서 넓이의 최댓값은 25입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "가로 5, 세로 5일 때 25"
+            }
+          ]
+        },
+        {
+          "id": "math15-supp-10수학0111-이차함수최대최소활용-practice",
+          "template": "practice",
+          "title": "스스로 풀고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "0≤x≤3에서 f(x)=−(x−1)²+4의 최댓값과 최솟값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 검산",
+              "items": [
+                "아래로 열린 포물선이므로 꼭짓점 x=1에서 최댓값 4입니다.",
+                "끝점 값은 f(0)=3, f(3)=0이므로 최솟값은 0입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "최댓값 4, 최솟값 0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "math15-supp-10수학0111-이차함수최대최소활용-quiz",
+                "kind": "quiz",
+                "prompt": "−2≤x≤4에서 f(x)=−(x−1)²+5의 최댓값은?",
+                "options": [
+                  "5",
+                  "4",
+                  "−4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "꼭짓점 x=1이 구간 안에 있고 아래로 열린 포물선이므로 최댓값은 5입니다.",
+                "incorrect_feedback": "꼭짓점이 정의역 구간 안에 있는지 먼저 확인하세요.",
+                "hints": [
+                  "꼭짓점이 정의역 구간 안에 있는지 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "edition_status": "editorial_split_candidate",
+    "standard_code_status": "candidate_exact_code_pending_teacher_review",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statement"
+  }
+}
