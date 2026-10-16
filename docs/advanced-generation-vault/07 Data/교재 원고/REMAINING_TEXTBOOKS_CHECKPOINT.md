@@ -22,6 +22,7 @@
 - 재귀 BookData metadata 집계: publication `not_eligible` 42 / `unspecified` 145; rights `pending` 33 / `publication_decision_pending` 9 / `unspecified` 145; teacher review `pending` 42 / `unspecified` 145; math review `author_checks_recorded_independent_review_pending` 32 / `independent_review_pending` 9 / `pending` 1 / `unspecified` 145. 재귀 manifest 39개는 모두 `not_eligible`; 독립 승인 자료 0개다. 과거 38개 manifest SHA 대조(34 match/4 mismatch)는 이전 snapshot 감사이므로 새 manifest를 포함한 최신 전체 SHA 감사로 읽지 않는다.
 - 디자이너 앱 통합의 보존 검사 187개 중 182개 통과, 5개 차단 원인은 전달 내용과 대조했다: 두 건은 실제 target에 등록된 `radicalFunctionExplorer`/`logarithmPowerExplorer`를 호환성 allowlist가 미지원으로 오판한 경우, 세 건은 `source_html_reference`(chapter extra) 및 `candidate_standard_codes`(book/chapter extra) 메타데이터가 직렬화에서 보존되지 않는 경우다. 앞의 둘은 정확한 positive/negative 검증으로 처리하고, 뒤의 셋은 lossless migration/명시적 metadata 모델 전까지 차단 유지가 맞다.
 - 디자이너 검수에서는 정적 그래프가 현재 Dart reader에서 표시되지 않는 결함과 좌표 활동 hint가 page context에서 빠지는 누락도 발견됐다. hint 누락은 보완된 것으로 보고됐지만, 최신 Preview 재검증은 별도이며 정적 그래프 문제는 남아 있다. 기존 HTML 106개 전체 parity도 아직 검증하지 않았다.
+- 별도 `Upstudy-hotfix`는 읽기 전용으로 `HEAD == origin/hotfix == 52b1e6bea719b92919df0236267eac0ce7b61505`를 확인했다. 릴리스 승인 경로 변경은 이전 `ad4a763`에서 검증한 사항이며, 최신 HEAD에서 테스트를 재실행하지 않았다.
 - `REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md`와 package index의 latest refresh는 187개 기준이다. 이 체크포인트 갱신은 해당 문서들 및 대시보드 범위로 한정하며, 다른 변경 파일은 staging하지 않는다. 모든 후보의 승인/권리 게이트가 미해결이고 공개 적격 BookData가 0개이므로 배포하지 않았다.
 
 ## 2026-10-17 공식 권리·게시 승인 경로 재확인
@@ -348,12 +349,12 @@
 - 이번에는 coverage audit generator 단계만 재실행했다: 26상품·1,038 상품-기준 행·115 root / 178 recursive BookData. 재귀 178개 중 exact field/tag code 135, 출판 `not_eligible` 33, unspecified 145, 독립 승인 인정 0. 전체 95단계 파이프라인을 다시 돌린 것은 아니다.
 - 최신 범위 원장은 392개 공식 판본-코드 쌍 모두에 field/tag 신호, 342개 exact chapter anchor, 21개 단일코드·단일chapter 연결, 75개 검토 대기 candidate chapter mapping, exact/candidate 구조 신호 누락 0개를 기록한다. 이 최신 구조 신호 집계가 위 Stage 95 시점의 47개 누락 기록을 갱신하며, 내용 충족·승인을 뜻하지 않는다.
 
-## 2026-10-17 현재 체크아웃 교재 호환성 재검증
+## 2026-10-17 과거 체크아웃 호환성 스냅샷 (Batch4 추가 전)
 
 - `flutter test --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart test/textbook_activity_compatibility_test.dart` 종료 코드 0, 127개 테스트 통과. 왕복 테스트는 재귀 BookData 178개 모두를 검사하고, activity suite는 현재 지정된 후보 파일의 payload 보존과 학생·교사 리더 상호작용을 확인한다.
 - 이는 BookData 직렬화와 선택된 네이티브 활동 렌더링 검증이다. 106개 HTML 전체 화면 동등성, 실제 저장 API/DB, 실사용자 검증을 증명하지 않는다.
-- 외부 릴리스 경로 `Upstudy-hotfix`의 현재 `HEAD`와 `origin/hotfix`는 모두 `ad4a763`이며, manifest builder와 runtime 모두 publication, cleared rights, teacher, math, curriculum approval을 요구한다. 현재 원장상 네 게이트가 모두 승인된 교재는 0개이므로 교재 배포는 진행하지 않았다.
-- 릴리스 계약 회귀 검증: 현재 `Upstudy-hotfix`의 `ad4a763`에서 bookdata create contract/import, public-textbook release gates, author compatibility, graph math security 5개 suite가 `51 passed`로 통과했다. Starlette/httpx deprecation warning 1건이 있다. 이는 승인 누락 거부 동작을 검증하며, 승인 대상이 생겼거나 배포·DB·실사용이 완료됐다는 증거는 아니다.
+- 당시 외부 릴리스 경로 `Upstudy-hotfix`의 `HEAD`와 `origin/hotfix`는 `ad4a763`이었다. 그 커밋의 manifest builder와 runtime은 publication, cleared rights, teacher, math, curriculum approval을 요구했다. 이후 HEAD는 `52b1e6b`로 변경됐다.
+- 해당 `ad4a763`에서 bookdata create contract/import, public-textbook release gates, author compatibility, graph math security 5개 suite가 `51 passed`로 통과했고 Starlette/httpx deprecation warning 1건이 있었다. 이는 당시 승인 누락 거부를 검증한 결과이며, 이후 커밋의 재실행 결과나 배포·DB·실사용 증거는 아니다.
 - 미연결 원본 중 명시적 2015 후보 5개를 source-level 산술·범위 기준으로 점검했다: 벡터 내적의 −5/6, 수열극한 1·3, 직사각형 합 12와 삼각형 넓이 18, 이항확률 3/8·평균 2, 조건부확률 2/3은 기재 계산과 일치한다. 수열극한·면적·이항분포는 기준 범위가 부분만 확인되어 감사표에 partial candidate로 남겼다.
 - 5개 중 native `vectorInnerProduct`만 학생 리더 activity로 확인됐다. 나머지 4개의 시각 조작은 별도 HTML이며 BookData에서 자동 실행되지 않는다. HTML 전체 화면·동작 패리티는 미검증이다. 이 산술 점검은 교사·독립 수학검수가 아니다.
 
