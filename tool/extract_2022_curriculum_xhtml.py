@@ -92,6 +92,7 @@ def main() -> None:
         if scripts:
             row["equation_scripts"] = scripts
     required_equations = {
+        "9수02-10": {"times", "div"},
         "10공수2-01-07": {"x", "y", "y=x"},
         "10공수2-03-04": {"y= {ax+b} over {cx+d}"},
         "10공수2-03-05": {"y= sqrt {ax+b} +c"},
