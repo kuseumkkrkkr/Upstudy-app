@@ -30,8 +30,8 @@
 
 기준 커밋 `fb8f4cae67b615a291166483e282632055850a59`의 격리 worktree에서 `python tool/build_tagged_textbook_drafts.py` 전체 실행을 완료했다. 78/78 단계가 성공했고, 생성 패키지 참조 검증은 원본 BookData 107개 전체에서 통과했다. 공식 교육과정 입력을 복사한 별도 worktree에서 실행했으며 원본 체크아웃의 미관련 dirty files는 보존했다. 파이프라인 로그: 34 unit books, 109 subunits, 199 concepts, 1,594 existing pages; 최신 coverage ledger: 26 products, 1,038 product-standard rows, 107 source BookData; HTML index: 106 standalone assets, 143 BookData files. 후보 생성/태그 집계는 수학·교사·권리 승인이나 전체범위 충족을 뜻하지 않는다.
 - 재실행·재개 점검: 같은 입력으로 격리 worktree에서 전체 파이프라인을 다시 실행했고, 실행 전후 추적 diff는 134,078 bytes 및 SHA-256 `4a77338a3961da8c8a0e3d8d489e9903e98583e8644fd13bc5c71db2ad3d6156`로 동일했다. `--list-stages`는 78단계를 출력했고 `--from-stage build_html_asset_inventory.py`는 마지막 단계부터 재개해 107개 BookData 참조 검사를 통과했다. 중간 단계부터 이어가는 수동 재개 옵션이며 stage 완료 상태를 자동 저장하는 매니페스트는 아니다.
-- 커버리지 원장은 이제 `standard_codes`/`standard_code`와 tags의 exact official-code token을 검사한다. 판본은 `curriculum_version` 또는 명시적인 판본 태그에서만 확인하고, 파일명으로 추정하지 않는다. 이에 따라 2015 중학교 학년군 태그 27개, 2022 중학교 학년군 태그 30개가 각각 확인됐지만, 이 기준은 학기별·상품별로 배분하지 않았다.
-- 범위 표기 재점검: #1–#12의 27/30은 학년군 코드 태그 원고 인벤토리이며 6개 학기 상품 각각의 coverage가 아니다. #13–#14는 공식 `<수학>`의 41개 코드를 함께 기준선으로 표시할 뿐 상·하권 배분이 승인되지 않았으므로 두 상품의 태그 수를 `분권 미확정`으로 표기한다. 상품별 본문 충족 수치는 어느 행에도 승인된 것이 없다.
+- 커버리지 원장은 이제 `standard_codes`/`standard_code`와 tags의 exact official-code token을 검사한다. 판본은 `curriculum_version` 또는 명시적인 판본 태그에서만 확인하고, 파일명으로 추정하지 않는다. 이에 따라 2015 중학교 학년군 태그 27개, 2022 중학교 학년군 태그 43개가 각각 확인됐지만, 이 기준은 학기별·상품별로 배분하지 않았다.
+- 범위 표기 재점검: #1–#12의 27/35는 학년군 코드 태그 원고 인벤토리이며 6개 학기 상품 각각의 coverage가 아니다. #13–#14는 공식 `<수학>`의 41개 코드를 함께 기준선으로 표시할 뿐 상·하권 배분이 승인되지 않았으므로 두 상품의 태그 수를 `분권 미확정`으로 표기한다. 상품별 본문 충족 수치는 어느 행에도 승인된 것이 없다.
 - Official-code candidate tags: #15 수학Ⅰ(2015) 19/19, #16 수학Ⅱ(2015) 21/21, #17 확률과 통계(2015) 17/17, #18 미적분(2015) 27/27, #19 Geometry (2015) 16/16, #20 공통수학1(2022) 19/19, #21 공통수학2(2022) 20/20, #22 대수(2022) 18/18, #23 미적분Ⅰ(2022) 20/20, #24 확률과 통계(2022) 16/16, #25 미적분Ⅱ(2022) 23/23, #26 기하(2022) 14/14. Counts are tag candidates, not content-completion claims.
 - 권리 근거 확인: 교육부 [2022 개정 교육과정 고시 게시물](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458)은 별책 ZIP 첨부를 제공하지만 본문에는 해당 파일의 공공누리 유형이 표시되지 않는다. 교육부 [저작권 정책](https://www.moe.go.kr/sub/infoRenew.do?m=070105&page=070105&s=moe)은 공공누리 표시가 있는 자료에 한해 유형별 자유이용을 안내하고, 표시가 없는 자료는 실무 담당자와 사전 협의하도록 안내한다. 현 로컬 2022 HWP SHA-256은 `AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856`이며 원문 스크립트를 재사용하는 새 원고의 허가·출처표기 범위는 확인되지 않았다. 2015 PDF/기존 HTML의 출처별 권리도 미확인이다. 따라서 모든 상품의 상업 출판 권리 판정은 계속 pending이며, 배포 가능 자료로 세지 않는다. 공공누리 [유형 안내](https://www.copyright.or.kr/gov/nuri/guide/index.do)는 제2유형의 상업 이용 금지와 제3유형의 변경 금지를 구분한다.
 - 공식 파일 표시 재점검: 로컬 2015 Appendix 8 PDF 첫 표지를 렌더해 확인했으며 해당 표지에서 공공누리/KOGL 표시를 확인하지 못했다. 이는 PDF 전체나 원 배포 ZIP의 권리표시 부재를 증명하지 않으므로 rights clearance는 계속 pending이다. 2022 원문 HWP와 출처별 기존 HTML도 상업적 재사용·변경 권한이 확인되지 않았다.
@@ -49,6 +49,14 @@
 - Calculus (2015): generated original candidate content for 27 official standards (27 modules/135 pages); the existing 3-page source remains preserved separately. Unit integration preserves 138 source pages. Arithmetic spot checks, official-code set check, unique IDs, pipeline, and guarded app parser passed. Rights clearance and independent math review are still pending, so it is not publish eligible.
 - Geometry (2015): mapped 4 existing vector sources to 4 provisional, partial standard candidates and authored 12 V2 modules/60 pages for the remaining codes. Integration preserves 78 original pages across 18 modules and adds 18 source-label pages. Unit counts: conics 4 modules, vector applications 1, spatial geometry 7. All 12 quiz payloads round-trip exactly; student and active teacher course-reader quiz interaction passed. Five related HTML assets remain separate from BookData; HTML execution/parity, rights and teacher review remain open.
 - 대수(2022): Batch1 14 modules/70 pages and EqEdit Batch2 3 modules/15 pages with 3 quizzes each; existing arithmetic-sequence candidate included in the integrated draft makes 18 modules/89 original source pages plus 18 integration labels. Candidate tags cover 18/18 official codes. Batch2 records raw HWP scripts for `12대수03-03/04/05`; all 17 generated Algebra V2 quiz payloads round-trip through the app model, and the 11-test compatibility suite loads the actual Batch2 BookData in the teacher reader, submits its quiz and checks feedback. Server/database persistence, related HTML runtime/parity, source rights and independent content review remain unverified; deployment is ineligible.
+- 이어서 2022 중등 공식 기준 `9수02-14`, `9수02-17`, `9수02-18`에 대해 재실행 가능한 후보 생성기를 추가했다. 3개 모듈/18쪽/native quiz 3개이며 학기 미배정, 본문·수학·교사 검수 및 권리 판정 대기 상태다. 공식 기준 인덱스 문자열 비교, 예제 계산 assert, 출력 SHA-256 재생성 일치(`92F9E2D44B985B53E623A86A0C420109552230F98B6A65473FC353576D234F98`)를 확인했다. 학생 BookWidget 퀴즈 제출/피드백과 BookData activity round-trip 테스트가 통과했다; 2022 중등 학년군 tag inventory는 35/60이며 이를 6개 학기 상품에 배분하지 않는다. 후보 코드는 커버리지 원장에 tag evidence로 연결했으나 전체 범위 충족이나 출판 승인을 뜻하지 않는다.
+
+- 추가로 2022 중등 대수·부등식·연립방정식 공식 기준 `9수02-08~13` 6개를 6개 모듈/36쪽/native quiz 6개로 작성했다. 공식 코드 인덱스 연결, 지수·다항식·부등식·연립방정식 산술 assert와 출력 재생성을 확인했고, 실제 학생 BookWidget 퀴즈와 activity round-trip 검증을 추가했다. 이 배치는 2022 중등 학년군 tag 후보를 41/60으로 올리지만, 학기 배정이나 내용 충족 승인은 아니다. 권리·교사·독립 수학 검토 대기 상태는 유지한다.
+
+- 2022 중등 `9수02-08~13` 6개 기준에 대한 대수·부등식·연립방정식 후보를 추가했다(6모듈/36쪽/native quiz 6개). 생성기는 공식 코드 유무와 지수법칙·다항식·분배법칙·부등식 풀이·연립방정식 및 문장제 계산을 assert하고, 실제 reader 퀴즈 피드백과 BookData activity 왕복 테스트를 통과했다. 전체 tag 기반 재생성기의 stage 목록에 두 신규 2022 후보 배치 생성기를 등록해 현재 82단계이며, 이번에는 전체 pipeline 실행은 하지 않았다. 2022 중등 학년군 tag 후보는 41/60; 이 수는 6개 학기 상품에 분배하지 않는다. rights, 독립 수학·교사 검수는 pending이다.
+
+- 2022 중등 `9수02-20/21` 이차방정식·이차함수 부분 후보를 추가했다(2모듈/12쪽/native quiz 2개). 직사각형 넓이 문장제와 함숫값 계산을 포함하고 해·값 대입 계산 assert 및 reader 퀴즈/BookData round-trip 검증을 통과했다. 생성기를 전체 83단계 pipeline에 등록했다. 학기 배정, 독립 교사·수학 검토, 권리 판정은 대기 중이다. 2022 중등 학년군 exact tag inventory는 43/60이며 나머지 17개 코드는 여전히 미태그다.
+
 ## 2026-10-16 이전 재검증
 
 - 파이프라인 66단계 성공, 원본 BookData 98개 참조 확인. 교재 원고 폴더 실측: BookData 파일 134개, JSON 223개, 하위 폴더 40개, HTML 106개. HTML 인덱스 재생성 완료.
@@ -115,7 +123,7 @@
 | 14 | 수학(하) · 2015 | partial | 집합 합집합·교집합 4쪽 등 일부 시범; 공식 `<수학>` 41개 코드 중 하권 배분 및 나머지 집합·명제·함수·경우의 수 필요 | 별책8 10수학01–05 인덱스; 자체 분권 범위 미승인 | BookData 지면; 체험 자산 미확인 | 권리 미기록; 초안 |
 | 15 | 수학Ⅰ · 2015 | partial | 기존 4 BookData/23쪽 + 신규 V2 10모듈/50쪽; 14모듈/73 원본 지면, 19/19 코드 후보 태그 | 별책8 12수학Ⅰ01–03의 19개 코드 대조; 일부 후보 내용은 부분 매핑 | 신규 quiz 10개 importer 통과; 기존 HTML 보존, 앱 parity 미검증 | 교사·수학/권리 검토 대기; 출판 부적격 |
 | 16 | Mathematics II · 2015 | partial | Existing 4 modules/12 pages + new V2 18 modules/90 pages; integrated 22 modules/102 pages; 21/21 code tag candidates | All 21 standards checked against 2015 Appendix 8; some source mappings remain partial | Guarded BookData.fromJson passed for V2 candidate at `e0bc17074481259c6f8d4c63894da07dd6c2e814`; existing graph/HTML parity unverified | Teacher review and rights decision pending; not publish eligible |
-| 17 | 확률과 통계 · 2015 | partial | 기존 조건부확률·이항분포 2모듈/6쪽 및 신규 V2 후보 17모듈/85쪽; 17개 공식 코드 모두 tag 후보 연결 | `12확통02-05`, `12확통03-03`; 15개 기준과 상품 범위 대조 필요 | V2 quiz 17개 importer 통과; 기존 HTML 자산은 별도이며 parity 미확인 | 교사·권리 검토 대기 |
+| 17 | 확률과 통계 · 2015 | partial | 기존 조건부확률·이항분포 2모듈/6쪽 및 신규 V2 후보 15모듈/75쪽; 17개 공식 코드 모두 tag 후보 연결 | 기존 두 기준과 신규 15개 기준 공식 텍스트 연결; `12확통02-03` 퀴즈 사건 조건을 답 2/3에 맞게 바로잡음; 전체 상품 범위 대조 필요 | 전체 15개 후보 BookData round-trip, 01-01 quiz student BookWidget 실행, 02-03 조건-정답 회귀검사 통과; 기존 HTML 자산 parity 미확인 | 독립 교사·수학 검수와 권리 결정 대기; 출판 부적격 |
 | 18 | Calculus · 2015 | partial | Existing sequence-limit sample/3 pages + new V2 27 modules/135 pages; integrated 28 modules/138 source pages; 27/27 code tag candidates. New generator revision aligns each module's example and practice prompt; scoped check covers all 27 prompt/answer/activity links. | 2015 Appendix 8 codes checked; full product scope and content quality review remain pending | BookData round-trip passed; quiz 01-01 ran in student BookWidget; independent HTML parity unverified | Independent teacher review and rights decision pending; not publish eligible |
 | 19 | Geometry · 2015 | partial | Existing vector 6 modules/18 pages + new V2 12 modules/60 pages; integrated 18 modules/78 original pages; 16/16 candidate codes | 2015 Appendix 8 checked; existing vector mappings partial; all 12 absent/untagged standards newly drafted | Guarded app parser passed for 4 existing sources and V2 batch; 5 related HTML files retained separately; no HTML runtime/parity claim | Independent teacher review pending; existing-source rights unverified; new draft rights decision pending; not publish eligible |
 | 20 | 공통수학1 · 2022 | partial | 기존 7모듈/37쪽 및 별도 후보 19모듈/98쪽(3+16); 19개 공식 기준에 태그 후보 연결, 전체 과목 범위 대조는 미완성 | 2022 본표 공식 기준 19개와 대조 | Batch2 16개 quiz importer 통과; 기존 HTML 매핑 미확인 | 권리 미결; 교사·수학 검토 pending; 통합본 미병합 |
@@ -145,3 +153,39 @@
 5. hotfix 저장소 가드 안에서만 승인 원고를 전달·실제 렌더 검증한다. 공개 배포 적격 항목만 deploy하고 URL/ID/해시/모바일·데스크톱 스크린샷을 확인한다.
 
 재현 명령: `python tool/build_tagged_textbook_drafts.py`
+
+## 2026-10-17 이어서 확인한 사항
+
+- 현행 HEAD/origin은 `99120e885b1cdc2c3e77e144944853ee6b7bf8c5`로 일치했다. 기존 무관 dirty 파일은 유지했다.
+- 2022 중등 공식 기준 중 태그가 없던 13개(`9수03-02/04/06/08/10/12/13/14/16/18/19`, `9수04-02/07`)에 도형·통계 후보 13모듈/78쪽/native quiz 13개를 추가했다. 공식 JSON 코드 대조와 각 예시 산술 assert를 생성기에 넣었다. activity round-trip 및 학생 BookWidget 퀴즈 테스트 통과.
+- 2022 중등 학년군 기준 exact-tag 인벤토리는 60/60이지만 이는 내용 충족, 상품별 학기 배정 또는 승인 증거가 아니다. 26종 상품은 여전히 partial. 교사·독립 수학·권리 검토 pending.
+- 생성기를 pipeline stage 11/85에 등록. 전체 pipeline은 실행하지 않았고 배포도 하지 않았다.
+- 이 배치의 HTML 원본 대응/시각 parity는 검증하지 않았으며 BookData에는 native quiz만 연결했다. 외부 HTML 호환/패리티를 주장하지 않는다.
+
+## 2026-10-17 추가 이어서 확인한 사항
+
+- 원장 기준 2015 중등 `9수03-05~10` 6개 함수 기준이 미태그였다. 오리지널 후보 6모듈/36쪽/6 quiz와 native graph 6개를 추가했다. 공식 2015 추출 코드 대조, 함수 대입·교점·포물선 산술 assert, BookData round-trip, 실제 graph builder 생성과 학생 퀴즈 테스트를 통과했다.
+- 재생성 원장 기준 2015 중등 학년군 exact tag inventory는 27/61에서 33/61로 증가했다. 나머지 28개는 미태그이며 학기 상품 배정은 확인되지 않았다. 2022 중등은 60/60 후보 태그 상태를 유지한다.
+- 파이프라인은 86 stage이며 신규 후보는 stage 12. 전체 pipeline 실행과 배포는 하지 않았다. 신규 manifest는 rights, 교사, 독립 수학 검토 pending, 출판 부적격이다.
+
+## 2026-10-17 2015 중등 도형 배치 1
+
+- 2015 중등 `9수04-01~10` 도형 기준 10개 후보를 10모듈/50쪽/native quiz 10개로 작성했다. 공식 코드 존재 검사, 삼각형 부등식·다각형 각/대각선·부채꼴·다면체 오일러 관계·원뿔 부피·이등변삼각형 산술 assert 통과. BookData round-trip 및 학생 BookWidget 퀴즈 테스트 통과.
+- 원장 exact-tag 후보는 2015 중등 33/61에서 43/61로 갱신됐다. 18개 코드가 미태그로 남는다. 2022 중등 60/60 후보 태그 유지. 어느 수치도 학기별 상품 귀속이나 본문 완료 승인이 아니다.
+- 파이프라인 87단계, 신규 배치 stage 13. 전체 pipeline 실행/배포 없음. 새 BookData의 권리·교사·독립 수학 검토 pending, 출판 부적격.
+
+## 2026-10-17 2015 중등 통계 완료 태그 배치
+
+- 2015 중등 마지막 미태그 기준 `9수05-01~08` 8개를 통계 후보 8모듈/40쪽/native quiz 8개로 작성했다. 공식 코드 일치와 도수·상대도수·경우의 수·확률·대표값·분산/표준편차 계산 assert를 통과했다. BookData activity round-trip과 학생 퀴즈 테스트 통과.
+- 원장 exact-tag 후보는 2015 중등 53/61에서 61/61로 갱신됐다. 2022 중등은 60/60. 양 판본 중등 12개 상품의 코드 인벤토리는 기준 전체에 태그가 있으나, 학기 배정·본문 충족은 여전히 승인되지 않았다.
+- 파이프라인 89단계, 신규 통계 후보 stage 15. BookData 전체 metadata 게이트 집계 156개: not_eligible 9, unspecified 147; 검토/권리 근거가 없는 자료는 승인 취급하지 않는다. 전체 pipeline 실행 및 배포 없음.
+
+## 2026-10-17 최신 원장·재개 검증
+
+- 검증 기준 HEAD와 `origin/main`은 `936e4ca528da993c9adf9b0db7eec2b1ecb65034`로 일치한다. 현재 체크아웃의 무관 dirty 작업은 보존했다.
+- `python tool/build_textbook_scope_coverage.py` 및 `python tool/audit_2015_upper_lower_scope.py` 재생성: 26개 상품, 1,038 product-standard 행, 2015 고교 기준 41개(기존 제목 후보 23, 부분 후보 8, 신규 V2 10, chapter 후보 없음 0). 태그 없는 행 31개는 2015 상·하권에 중복 표시된 같은 코드이며, 공식 분권 배정은 미승인이다.
+- `python tool/build_tagged_textbook_drafts.py --from-stage build_math_2015_missing_criteria_v2.py`로 90단계 중 마지막 5단계를 실행했다. 고교 2015 V2 후보 10개 재생성, 원본 BookData 111개 패키지 참조 검증 통과, HTML 색인 106 standalone HTML 및 재귀 BookData 166개.
+- 원장 인벤토리: 공식 판본-코드 쌍 392개, same-edition 태그 361개, exact chapter 코드 315개, 단일 코드·단일 chapter 연결 21개, 구조 신호 없음 60개. 재귀 BookData 166개 중 V2 45개, 선언형 activity 311개.
+- scoped Flutter 검증: `textbook_activity_compatibility_test.dart` 97/97 통과, `textbook_bookdata_inventory_roundtrip_test.dart` 3/3 통과. 두 테스트는 공유 캐시 때문에 병렬 실행하지 않고 순차 재실행해 성공 결과를 확인했다.
+- 게시/권리/사람 검토 metadata는 166개 중 `not_eligible` 21, `unspecified` 145; 권리·교사 검토는 `pending` 21, `unspecified` 145; 수학 검토는 저자 점검 기록·독립 검토 대기 20, `pending` 1, `unspecified` 145. 승인 증거가 없어 배포하지 않았다.
+- 2015 고교 상·하 scope audit를 page-level로 보강했다. 기존 41개 코드·제목 대조는 유지하고, 8개 부분 후보의 실제 4쪽 본문 인용을 생성 시 검증하며 확인된 범위와 미확인 기준 요소를 기록한다. 이는 저자 대조이며 독립 수학·교사 검토를 대체하지 않는다.

@@ -55,6 +55,30 @@ MAPPING: dict[str, tuple[str | None, str]] = {
     "10수학05-03": ("조합", "title candidate"),
 }
 
+# Full-page text was checked for the partial candidates. Each quote is also
+# verified against the mapped chapter below, so the report does not silently
+# drift when source pages change.
+PARTIAL_CONTENT_AUDIT: dict[str, tuple[str, str, str]] = {
+    "10수학01-10": ("x축과 두 점에서 만납니다", "이차함수의 x절편·방정식 실근", "이차함수 그래프와 일반 직선의 위치 관계"),
+    "10수학01-11": ("꼭짓점은 (2,−1)", "꼭짓점 계산", "최대·최소 및 활용 문제"),
+    "10수학01-12": ("x=−2, 2, 3", "인수분해로 삼차방정식 풀이", "사차방정식 풀이"),
+    "10수학01-16": ("−2≤x≤3", "이차부등식의 해 구간", "이차함수와의 관계 및 연립이차부등식"),
+    "10수학02-02": ("중점의 y좌표는", "두 점 사이 거리·중점", "내분·외분 및 내분점·외분점 좌표"),
+    "10수학02-09": ("x축 대칭은 (x,−y)", "원점·x축·y축 대칭", "직선 y=x에 대한 대칭"),
+    "10수학03-01": ("A∪B", "집합을 원소나열법으로 나타내고 합집합·교집합 연산", "집합 자체의 명시적 정의와 표현 방법 설명"),
+    "10수학03-04": ("진리집합은 {−1,1}", "명제·조건·진리집합", "‘모든’, ‘어떤’을 포함한 명제"),
+}
+
+
+def flatten_text(value: object) -> str:
+    if isinstance(value, str):
+        return value
+    if isinstance(value, list):
+        return " ".join(flatten_text(item) for item in value)
+    if isinstance(value, dict):
+        return " ".join(flatten_text(item) for key, item in value.items() if key not in {"id", "type", "template"})
+    return ""
+
 
 def main() -> None:
     source = (SOURCES / "2015_appendix8_math.txt").read_text(encoding="utf-8")
@@ -65,8 +89,11 @@ def main() -> None:
     codes = sorted(code for code in standards if code.startswith("10수학"))
     if set(codes) != set(MAPPING) or len(codes) != 41:
         raise RuntimeError(f"Expected 41 mapped official criteria; found {len(codes)}")
+    expected_partial = {code for code, (_, status) in MAPPING.items() if status.startswith("partial")}
+    if set(PARTIAL_CONTENT_AUDIT) != expected_partial:
+        raise RuntimeError("Page-level notes must cover every and only partial candidate")
 
-    chapters: dict[str, tuple[str, str, int]] = {}
+    chapters: dict[str, tuple[str, str, dict]] = {}
     for folder in ("수학상_2015개정_초안", "수학하_2015개정_초안"):
         book_path = next((MANUSCRIPTS / folder).glob("*태그분권_통합BookData*.json"))
         book = json.loads(book_path.read_text(encoding="utf-8-sig"))
@@ -74,8 +101,7 @@ def main() -> None:
             title = str(chapter.get("title", ""))
             if title in chapters:
                 raise RuntimeError(f"Duplicate chapter title: {title}")
-            page_count = len(chapter.get("pages", []))
-            chapters[title] = (folder, book_path.name, page_count)
+            chapters[title] = (folder, book_path.name, chapter)
 
     rows = []
     title_links = 0
@@ -90,8 +116,8 @@ def main() -> None:
         else:
             if title not in chapters:
                 raise RuntimeError(f"Mapped chapter missing from integrated BookData: {title}")
-            folder, book_name, pages = chapters[title]
-            evidence = f"`{folder}/{book_name}` · {title} · {pages}쪽"
+            folder, book_name, chapter = chapters[title]
+            evidence = f"`{folder}/{book_name}` · {title} · {len(chapter.get('pages', []))}쪽"
             if status == "title candidate":
                 title_links += 1
             elif status.startswith("partial"):
@@ -99,6 +125,21 @@ def main() -> None:
             else:
                 new_v2 += 1
         rows.append(f"| `{code}` | {standards[code]} | {evidence} | {status} |")
+
+    content_rows = []
+    for code, (quote, coverage, gap) in PARTIAL_CONTENT_AUDIT.items():
+        title, _ = MAPPING[code]
+        if title is None or title not in chapters:
+            raise RuntimeError(f"Partial content audit has no mapped chapter: {code}")
+        chapter = chapters[title][2]
+        if len(chapter.get("pages", [])) != 4:
+            raise RuntimeError(f"Expected four source pages for partial candidate {code}")
+        quote_page = next((page for page in chapter.get("pages", []) if quote in flatten_text(page)), None)
+        if quote_page is None:
+            raise RuntimeError(f"Page evidence quote missing from {code}: {quote}")
+        content_rows.append(
+            f"| `{code}` | {quote_page.get('title', '')} · “{quote}” | {coverage} | {gap} |"
+        )
 
     lines = [
         "# 2015 고등 수학(상·하) 기준-원고 후보 대조",
@@ -111,6 +152,14 @@ def main() -> None:
         "| 공식 코드 | 공식 기준 | 원고 chapter 후보 | 대조 상태 |",
         "|---|---|---|---|",
         *rows,
+        "",
+        "## 부분 후보 8개 본문 대조 (저자 수준)",
+        "",
+        "아래는 각 연결 chapter의 전체 4쪽 텍스트를 확인해 현재 드러난 범위와 공식 기준에서 추가로 필요한 범위를 분리한 기록이다. 인용 구절은 생성 시 원고에서 검증한다. 이는 독립 수학·교사 검토나 본문 충족 승인이 아니다.",
+        "",
+        "| 공식 코드 | 실제 페이지 근거 | 확인된 내용 | 아직 드러나지 않은 기준 요소 |",
+        "|---|---|---|---|",
+        *content_rows,
         "",
         "## 출판·재개 판단",
         "",
