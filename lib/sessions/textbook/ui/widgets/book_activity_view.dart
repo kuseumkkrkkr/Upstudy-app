@@ -7,6 +7,7 @@ import 'book_discrete_experiment_view.dart';
 import 'book_statistics_estimator_view.dart';
 import 'book_right_triangle_view.dart';
 import 'book_coordinate_point_view.dart';
+import 'book_vector_operations_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -120,6 +121,7 @@ class _BookActivityViewState extends State<BookActivityView>
           'rightTriangle',
           'coordinatePoint',
           'coordinateWalk',
+          'vectorOperation',
         }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
@@ -216,6 +218,9 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'coordinatePoint' || a.kind == 'coordinateWalk') {
       return BookCoordinatePointView(activity: a);
+    }
+    if (a.kind == 'vectorOperation') {
+      return BookVectorOperationsView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,

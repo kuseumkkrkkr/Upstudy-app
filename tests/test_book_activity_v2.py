@@ -18,7 +18,9 @@ def test_registered_activities_and_lossless_migration():
     for value in [quiz(), dict(id='n', kind='quiz', prompt='Half?', answer=.5, tolerance=.001,
                               correct_feedback='Yes', incorrect_feedback='Retry'),
                   dict(id='s', kind='steps', prompt='Reason', steps=['First', 'Next', 'Last']),
-                  dict(id='p', kind='parabolaDistance', prompt='Compare', p=2, x=4)]:
+                  dict(id='p', kind='parabolaDistance', prompt='Compare', p=2, x=4),
+                  dict(id='v', kind='vectorOperation', prompt='Explore', operation='scalar',
+                       ux=1, uy=-1, vx=2, vy=1, alpha=.5)]:
         assert validate_book(book(value)) == book(value)
     original = dict(title='V1', chapters=[dict(title='Keep', sections=[dict(title='Original', paragraphs=['Preserved'])])])
     frozen = copy.deepcopy(original)
@@ -49,3 +51,12 @@ def test_versions_and_duplicate_activity_ids_rejected():
 def test_geometry_is_bounded(p, x):
     with pytest.raises(ValueError):
         validate_activity(dict(id='p', kind='parabolaDistance', prompt='Compare', p=p, x=x))
+
+
+@pytest.mark.parametrize('change', [dict(operation='matrix'), dict(ux=5), dict(vy=True),
+                                    dict(alpha=.3), dict(alpha=float('nan')), dict(script='alert(1)')])
+def test_vector_operation_is_registered_and_bounded(change):
+    value = dict(id='v', kind='vectorOperation', prompt='Explore', operation='scalar',
+                 ux=1, uy=-1, vx=2, vy=1, alpha=.5)
+    with pytest.raises(ValueError):
+        validate_activity(dict(value, **change))

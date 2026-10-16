@@ -5,6 +5,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_vector_operations_view.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -32,6 +33,38 @@ Widget app(Map<String, dynamic> value, {bool reduced = false}) => MaterialApp(
 );
 
 void main() {
+  final vector = {
+    'id': 'vector',
+    'kind': 'vectorOperation',
+    'prompt': 'Explore vector operations',
+    'operation': 'scalar',
+    'ux': 1,
+    'uy': -1,
+    'vx': 2,
+    'vy': 1,
+    'alpha': .5,
+    'hints': ['Try a negative scalar.'],
+  };
+  test('bounded vector definition survives BookData JSON round trip', () {
+    final activity = BookActivity.fromJson(vector);
+    expect(activity.toJson(), vector);
+    expect(
+      () => BookActivity.fromJson({...vector, 'alpha': .3}),
+      throwsFormatException,
+    );
+  });
+  testWidgets('vector operation renders and calculates half scalar exactly', (
+    tester,
+  ) async {
+    await tester.pumpWidget(app(vector));
+    expect(find.byType(BookVectorOperationsView), findsOneWidget);
+    expect(find.textContaining('αu=(0.5, -0.5)'), findsOneWidget);
+    await tester.ensureVisible(find.text('힌트 한 단계'));
+    await tester.tap(find.text('힌트 한 단계'));
+    await tester.pump();
+    expect(find.text('Try a negative scalar.'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
   const sourcePath = String.fromEnvironment('BOOK_ACTIVITY_SOURCE');
   if (sourcePath.isNotEmpty) {
     test('external private manuscript V2 model round trip', () async {

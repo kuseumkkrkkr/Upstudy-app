@@ -95,6 +95,17 @@ def validate_activity(value):
         for name in ('x', 'y'):
             if type(value.get(name)) is not int or not -5 <= value[name] <= 5:
                 raise ValueError('activity: coordinates require integers -5..5')
+    elif kind == 'vectorOperation':
+        fields(value, common + ' operation ux uy vx vy alpha')
+        if value.get('operation') not in ('add', 'subtract', 'scalar'):
+            raise ValueError('activity: unsupported plane vector operation')
+        for name in ('ux', 'uy', 'vx', 'vy'):
+            if type(value.get(name)) is not int or not -4 <= value[name] <= 4:
+                raise ValueError('activity: vector components require integers -4..4')
+        alpha = value.get('alpha')
+        number(alpha)
+        if not -2 <= alpha <= 2 or not math.isclose(alpha * 2, round(alpha * 2), rel_tol=0, abs_tol=1e-9):
+            raise ValueError('activity: scalar coefficient requires half steps in -2..2')
     elif kind == 'rightTriangle':
         fields(value, common + ' a b')
         for name in ('a', 'b'):
