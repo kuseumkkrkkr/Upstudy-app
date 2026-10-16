@@ -9,7 +9,17 @@ import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
+const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_기본확률1단원_Batch4_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json',
+];
+
 const _draftPaths = <String>[
+  ..._additionalReaderValidationPaths,
   'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json',
@@ -42,6 +52,45 @@ void main() {
 
       expect(expected, isNotEmpty);
       expect(actual, expected);
+    });
+  }
+
+  for (final path in _additionalReaderValidationPaths) {
+    testWidgets('$path quizzes submit and show feedback', (tester) async {
+      final source =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final activities = _activities(source);
+      expect(activities, isNotEmpty);
+      for (final activity in activities) {
+        expect(activity['kind'], 'quiz');
+        final feedback = activity['correct_feedback'] as String;
+        await tester.pumpWidget(
+          MaterialApp(
+            home: BookWidget(
+              book: _activityBook(activity),
+              initialEntryIndex: 0,
+              persistenceEnabled: false,
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+        if (activity['options'] is List) {
+          final options = activity['options'] as List<dynamic>;
+          final correctIndex = activity['correct_index'] as int;
+          await tester.tap(find.text(options[correctIndex] as String));
+          await tester.pumpAndSettle();
+          await tester.ensureVisible(find.text('정답 확인'));
+          await tester.tap(find.text('정답 확인'));
+        } else {
+          await tester.enterText(
+            find.byType(TextField),
+            (activity['answer'] as num).toString(),
+          );
+          await tester.tap(find.text('답 확인'));
+        }
+        await tester.pumpAndSettle();
+        expect(find.text(feedback), findsOneWidget);
+      }
     });
   }
 
