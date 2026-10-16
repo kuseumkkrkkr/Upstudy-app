@@ -812,7 +812,7 @@
               "activity": {
                 "id": "prob150203-quiz",
                 "kind": "quiz",
-                "prompt": "주사위에서 A=짝수, B=5보다 큰 눈일 때 P(A∪B)는?",
+                "prompt": "주사위에서 A=짝수, B=4보다 큰 눈일 때 P(A∪B)는?",
                 "options": [
                   "1/2",
                   "2/3",

@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "F9F8BF3975F690B746A05E21FB51B11431612C2312F5E7FA1CA9A09158526298",
+  "bookdata_sha256": "9D57121CBEC97658D49179BD058AC55B648253B3915EA89A9B8C170BAE251972",
   "candidate_code_references": [
     "12확통01-01",
     "12확통01-02",
@@ -29,12 +29,14 @@
   "curriculum_review_status": "official_codes_verified; product_scope_pending",
   "math_review_status": "pending_full_teacher_review",
   "math_arithmetic_check_status": "pass_for_listed_spot_checks_only",
-  "author_math_review_status": "manual_spot_review_pass; independent_teacher_review_pending",
+  "author_math_review_status": "manual_spot_review_with_12확통02-03_prompt_correction; independent_teacher_review_pending",
   "teacher_review_status": "pending",
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }

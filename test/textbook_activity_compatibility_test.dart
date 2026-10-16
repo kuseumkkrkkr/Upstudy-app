@@ -22,6 +22,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -278,6 +279,52 @@ void main() {
     await tester.tap(find.text('정답 확인'));
     await tester.pumpAndSettle();
     expect(find.text('정답입니다: 0'), findsOneWidget);
+  });
+
+  testWidgets('2015 Probability Batch2 quiz runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activities = _activities(source);
+    expect(activities, hasLength(15));
+    final activity = activities.singleWhere(
+      (activity) => activity['id'] == 'prob150101-quiz',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('원순열의 수는?'), findsOneWidget);
+    await tester.tap(find.text('6'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('회전한 배치를 같게 보므로'), findsOneWidget);
+  });
+
+  test('2015 probability addition-rule quiz matches its event definition', () {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activity = _activities(
+      source,
+    ).singleWhere((activity) => activity['id'] == 'prob150203-quiz');
+    expect(activity['prompt'], contains('B=4보다 큰'));
+    expect(
+      (activity['options'] as List<dynamic>)[activity['correct_index'] as int],
+      '2/3',
+    );
   });
 
   testWidgets(

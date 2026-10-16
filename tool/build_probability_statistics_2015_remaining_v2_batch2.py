@@ -82,7 +82,7 @@ SPECS = [
         "example": "주사위에서 A=짝수, B=5보다 큰 눈이면 P(A)=3/6, P(B)=2/6, P(A∩B)=1/6이다. 따라서 P(A∪B)=4/6=2/3이다.",
         "practice": "주사위에서 A={1,2,3,4}, B={3,4,5}일 때 P(A∪B)를 구하세요.",
         "answer": "A∪B={1,2,3,4,5}이므로 확률은 5/6입니다.",
-        "prompt": "주사위에서 A=짝수, B=5보다 큰 눈일 때 P(A∪B)는?", "options": ["1/2", "2/3", "5/6"], "correct": 1,
+        "prompt": "주사위에서 A=짝수, B=4보다 큰 눈일 때 P(A∪B)는?", "options": ["1/2", "2/3", "5/6"], "correct": 1,
         "feedback": "3/6+2/6−1/6=4/6=2/3입니다.",
         "wrong": "두 사건에 모두 속하는 눈 6을 한 번 빼야 합니다.",
         "hints": ["P(A)=3/6, P(B)=2/6입니다.", "교집합은 눈 6 하나이므로 1/6을 뺍니다."],
@@ -295,6 +295,9 @@ def main() -> None:
     for item in SPECS:
         if not (0 <= int(item["correct"]) < len(item["options"])):
             raise RuntimeError(f"Invalid quiz answer key for {item['code']}")
+    union_quiz = next(item for item in SPECS if item["code"] == "12확통02-03")
+    if "B=4보다 큰" not in str(union_quiz["prompt"]) or union_quiz["options"][union_quiz["correct"]] != "2/3":
+        raise RuntimeError("The addition-rule quiz prompt and answer must describe A={even}, B={5,6}")
     book = {
         "schema_version": 2,
         "title": "확률과 통계 · 2015 미연결 기준 보완 15모듈 후보",
@@ -322,7 +325,7 @@ def main() -> None:
         "curriculum_review_status": "official_codes_verified; product_scope_pending",
         "math_review_status": "pending_full_teacher_review",
         "math_arithmetic_check_status": "pass_for_listed_spot_checks_only",
-        "author_math_review_status": "manual_spot_review_pass; independent_teacher_review_pending",
+        "author_math_review_status": "manual_spot_review_with_12확통02-03_prompt_correction; independent_teacher_review_pending",
         "teacher_review_status": "pending",
         "rights_status": "newly_authored; publication_rights_decision_pending",
         "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
@@ -330,6 +333,8 @@ def main() -> None:
         "publication_eligibility": "not_eligible",
         "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation",
         "runtime_validator_head": old.get("runtime_validator_head") if same else None,
+        "runtime_validation_command": old.get("runtime_validation_command") if same else None,
+        "runtime_validator_candidate_sha256": old.get("runtime_validator_candidate_sha256") if same else None,
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2)+"\n", encoding="utf-8")
     (PACKAGE / "README.md").write_text(
