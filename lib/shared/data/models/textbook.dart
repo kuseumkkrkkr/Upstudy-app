@@ -14,6 +14,7 @@ class BookData {
     this.coverColor,
     this.tags = const [],
     this.category = 'custom',
+    this.candidateStandardCodes,
     this.createdAt,
     this.updatedAt,
     this.createdBy,
@@ -28,6 +29,7 @@ class BookData {
   final Color? coverColor;
   final List<String> tags;
   final String category;
+  final List<String>? candidateStandardCodes;
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
@@ -41,6 +43,9 @@ class BookData {
     final coverColorValue = (json['cover_color'] as num?)?.toInt();
     final tags = _readStringList(json['tags']);
     final category = json['category']?.toString() ?? 'custom';
+    final candidateStandardCodes = json.containsKey('candidate_standard_codes')
+        ? _readStringList(json['candidate_standard_codes'])
+        : null;
     final createdAt = _readDate(json['created_at']);
     final updatedAt = _readDate(json['updated_at']);
     final createdBy = json['created_by']?.toString();
@@ -55,6 +60,7 @@ class BookData {
       coverColor: coverColorValue == null ? null : Color(coverColorValue),
       tags: tags,
       category: category,
+      candidateStandardCodes: candidateStandardCodes,
       createdAt: createdAt,
       updatedAt: updatedAt,
       createdBy: createdBy,
@@ -67,6 +73,8 @@ class BookData {
       'subtitle': subtitle,
       'category': category,
       'tags': tags,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
       'chapters': chapters.map((chapter) => chapter.toJson()).toList(),
       if (coverColor != null) 'cover_color': coverColor!.toARGB32(),
     };
@@ -79,6 +87,8 @@ class BookData {
       'subtitle': subtitle,
       'category': category,
       'tags': tags,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
       'chapters': chapters.map((chapter) => chapter.toJson()).toList(),
       'cover_color': coverColor?.toARGB32(),
       'created_at': createdAt?.millisecondsSinceEpoch,
@@ -113,6 +123,8 @@ class BookChapter {
     required this.sections,
     this.visuals = const [],
     this.pages = const [],
+    this.sourceHtmlReference,
+    this.candidateStandardCodes,
   });
 
   final String title;
@@ -120,6 +132,8 @@ class BookChapter {
   final List<BookSection> sections;
   final List<BookVisual> visuals;
   final List<BookPage> pages;
+  final String? sourceHtmlReference;
+  final List<String>? candidateStandardCodes;
 
   factory BookChapter.fromJson(Map<String, dynamic> json) {
     return BookChapter(
@@ -128,6 +142,10 @@ class BookChapter {
       sections: _readSections(json['sections']),
       visuals: _readVisuals(json['visuals']),
       pages: _readPages(json['pages']),
+      sourceHtmlReference: json['source_html_reference']?.toString(),
+      candidateStandardCodes: json.containsKey('candidate_standard_codes')
+          ? _readStringList(json['candidate_standard_codes'])
+          : null,
     );
   }
 
@@ -140,6 +158,10 @@ class BookChapter {
         'visuals': visuals.map((visual) => visual.toJson()).toList(),
       if (pages.isNotEmpty)
         'pages': pages.map((page) => page.toJson()).toList(),
+      if (sourceHtmlReference != null)
+        'source_html_reference': sourceHtmlReference,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
     };
   }
 }

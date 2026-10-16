@@ -8,6 +8,41 @@ import 'package:s11/shared/data/models/textbook.dart';
 
 void main() {
   test(
+    'candidate and source metadata survive create and storage round trips',
+    () {
+      final source = <String, dynamic>{
+        'id': 'candidate-book',
+        'title': 'Candidate book',
+        'subtitle': '',
+        'candidate_standard_codes': ['10공수2-03-05'],
+        'chapters': [
+          {
+            'title': 'Candidate chapter',
+            'intro': <String>[],
+            'sections': <dynamic>[],
+            'candidate_standard_codes': ['10공수2-03-05'],
+            'source_html_reference': 'source-demo.html',
+          },
+        ],
+      };
+      final book = BookData.fromJson(source);
+      final roundTripped = BookData.fromJson(
+        Map<String, dynamic>.from(jsonDecode(jsonEncode(book.toJson())) as Map),
+      );
+
+      expect(roundTripped.toJson()['candidate_standard_codes'], [
+        '10공수2-03-05',
+      ]);
+      expect(roundTripped.toCreateJson()['candidate_standard_codes'], [
+        '10공수2-03-05',
+      ]);
+      final chapter = (roundTripped.toJson()['chapters'] as List).single as Map;
+      expect(chapter['candidate_standard_codes'], ['10공수2-03-05']);
+      expect(chapter['source_html_reference'], 'source-demo.html');
+    },
+  );
+
+  test(
     'all current BookData files preserve pages and activities through round trip',
     () {
       final directory = Directory(
