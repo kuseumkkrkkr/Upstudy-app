@@ -92,11 +92,12 @@ def approved_files(source_root, manifest):
         raise ValueError('Approval manifest requires 1..1000 explicit files')
     root = source_root.resolve(); selected = {}; seen = set()
     for item in manifest['files']:
-        if set(item) != {'path', 'sha256', 'publication_approved', 'rights_status', 'teacher_review_status', 'math_review_status'}:
+        if set(item) != {'path', 'sha256', 'publication_approved', 'rights_status', 'teacher_review_status', 'math_review_status', 'curriculum_review_status'}:
             raise ValueError('Approval entry fields must be explicit')
         if (item['publication_approved'] is not True or item['rights_status'] != 'cleared'
-                or item['teacher_review_status'] != 'approved' or item['math_review_status'] != 'approved'):
-            raise ValueError('Publication/rights/teacher approval is incomplete')
+                or item['teacher_review_status'] != 'approved' or item['math_review_status'] != 'approved'
+                or item['curriculum_review_status'] != 'approved'):
+            raise ValueError('Publication/rights/teacher/math/curriculum approval is incomplete')
         path = (root / item['path']).resolve()
         if not path.is_relative_to(root) or path == root or path in seen or not path.is_file():
             raise ValueError('Approval path is missing, repeated or outside the source root')
@@ -123,7 +124,8 @@ def build(source_root, manifest=None):
                                 if (source_root / item['path']).resolve() == path)
                 entry['source_metadata']['approval'] = {
                     key: approval[key] for key in ('sha256', 'publication_approved',
-                        'rights_status', 'teacher_review_status', 'math_review_status')}
+                        'rights_status', 'teacher_review_status', 'math_review_status',
+                        'curriculum_review_status')}
             if entry['sha256'] in entries:
                 raise ValueError('Duplicate runtime content: choose one explicit publication source')
             entries[entry['sha256']] = entry

@@ -43,7 +43,8 @@ def setup(tmp_path, monkeypatch):
     entry['source_metadata']['approval'] = {
         'sha256': entry['source_metadata']['original_sha256'],
         'publication_approved': True, 'rights_status': 'cleared',
-        'teacher_review_status': 'approved', 'math_review_status': 'approved'}
+        'teacher_review_status': 'approved', 'math_review_status': 'approved',
+        'curriculum_review_status': 'approved'}
     path = tmp_path / 'published.json'
     path.write_text(json.dumps({'version': 1, 'books': [entry]}), encoding='utf-8')
     monkeypatch.setattr(public, 'BUNDLE', path)
@@ -126,17 +127,25 @@ def test_real_routes_require_auth_and_keep_reader_owner_boundary(setup, monkeypa
 
 
 def test_explicit_approval_subset_never_leaks_sibling_drafts(tmp_path):
-    selected = json.dumps(source())
+    book = source()
+    evidence = {'reviewer': 'synthetic-reviewer', 'source_version': 'synthetic-v1',
+                'reviewed_at': '2026-10-17T00:00:00Z'}
+    book['metadata'] = {'review_evidence': evidence}
+    selected = json.dumps(book)
     (tmp_path / 'approved_BookData.json').write_text(selected, encoding='utf-8')
     (tmp_path / 'private_BookData.json').write_text('{"private":"never publish"}', encoding='utf-8')
     manifest = {'version': 1, 'files': [{
         'path': 'approved_BookData.json', 'sha256': hashlib.sha256(selected.encode()).hexdigest(),
         'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved',
-        'math_review_status': 'approved'}]}
+        'math_review_status': 'approved', 'curriculum_review_status': 'approved'}]}
     report, entries = build(tmp_path, manifest)
     assert report == {'files': 1, 'valid': 1, 'errors': []}
     assert len(entries) == 1 and 'private' not in entries[0]['source']
     assert entries[0]['source_metadata']['approval']['math_review_status'] == 'approved'
+    assert entries[0]['source_metadata']['approval']['curriculum_review_status'] == 'approved'
+    assert entries[0]['source_metadata']['approval']['sha256'] == hashlib.sha256(selected.encode()).hexdigest()
+    assert entries[0]['source_metadata']['annotations']['book']['metadata']['review_evidence'] == evidence
+    assert 'metadata' not in json.loads(entries[0]['source'])
     (tmp_path / 'approved_BookData.json').write_text(selected + ' ', encoding='utf-8')
     with pytest.raises(ValueError, match='Approved source changed'):
         build(tmp_path, manifest)
@@ -151,7 +160,7 @@ def test_approved_but_invalid_runtime_blocks_the_release(tmp_path):
     manifest = {'version': 1, 'files': [{
         'path': 'invalid_BookData.json', 'sha256': hashlib.sha256(invalid.encode()).hexdigest(),
         'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved',
-        'math_review_status': 'approved'}]}
+        'math_review_status': 'approved', 'curriculum_review_status': 'approved'}]}
     report, entries = build(tmp_path, manifest)
     assert report['valid'] == 0 and len(report['errors']) == 1 and entries == []
     manifest['files'][0]['path'] = '../outside.json'
@@ -178,13 +187,18 @@ def test_empty_bundle_never_queries_ownership_storage(tmp_path, monkeypatch):
     ('math_review_status', 'pending'), ('teacher_review_status', 'pending'),
     ('rights_status', 'pending'), ('publication_approved', False),
     ('sha256', '0' * 64),
+    ('curriculum_review_status', 'pending'), ('curriculum_review_status', None),
 ])
 def test_deployment_bundle_requires_all_approvals_bound_to_original_hash(tmp_path, monkeypatch, field, value):
     entry = prepare(json.dumps(source()))
     approval = {'sha256': entry['source_metadata']['original_sha256'],
                 'publication_approved': True, 'rights_status': 'cleared',
-                'teacher_review_status': 'approved', 'math_review_status': 'approved'}
-    approval[field] = value
+                'teacher_review_status': 'approved', 'math_review_status': 'approved',
+                'curriculum_review_status': 'approved'}
+    if value is None:
+        approval.pop(field)
+    else:
+        approval[field] = value
     entry['source_metadata']['approval'] = approval
     path = tmp_path / 'bundle.json'
     path.write_text(json.dumps({'version': 1, 'books': [entry]}))
@@ -197,13 +211,17 @@ def test_deployment_bundle_requires_all_approvals_bound_to_original_hash(tmp_pat
         public.books.cache_clear()
 
 
-def test_release_manifest_rejects_missing_or_pending_math_review(tmp_path):
-    raw = json.dumps(source())
+@pytest.mark.parametrize('field', ['math_review_status', 'curriculum_review_status'])
+def test_release_manifest_rejects_missing_or_pending_independent_review(tmp_path, field):
+    # A self-declared source annotation must never substitute for manifest approval.
+    raw = json.dumps({**source(), 'metadata': {field: 'approved'}})
     (tmp_path / 'BookData.json').write_text(raw)
     item = {'path': 'BookData.json', 'sha256': hashlib.sha256(raw.encode()).hexdigest(),
-            'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved'}
+            'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved',
+            'math_review_status': 'approved', 'curriculum_review_status': 'approved'}
+    del item[field]
     with pytest.raises(ValueError, match='fields must be explicit'):
         build(tmp_path, {'version': 1, 'files': [item]})
-    item['math_review_status'] = 'pending'
+    item[field] = 'pending'
     with pytest.raises(ValueError, match='approval is incomplete'):
         build(tmp_path, {'version': 1, 'files': [item]})

@@ -33,6 +33,7 @@ def books():
                 or approval.get('rights_status') != 'cleared'
                 or approval.get('teacher_review_status') != 'approved'
                 or approval.get('math_review_status') != 'approved'
+                or approval.get('curriculum_review_status') != 'approved'
                 or not re.fullmatch(r'[0-9a-f]{64}', str(approval.get('sha256', '')))
                 or approval.get('sha256') != metadata.get('original_sha256')):
             raise ValueError('Public textbook publication approval is incomplete')

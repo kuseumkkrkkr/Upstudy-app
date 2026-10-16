@@ -48,3 +48,11 @@
 - No production deployment, canary alias change, pricing change, real publication, user-data deletion or separate author-tree edit occurred.
 - The previously recorded undeclared `a*x^2` author manuscript remains a separate source blocker; this synthetic graph declares its own coefficient and is not a correction of that manuscript.
 - Before deployment: confirm live storage policy/constraint, run real DB owner-isolation/retry tests, then build the full product from an intentionally reviewed source snapshot. Preserve all unrelated dirty changes, including the old drawer deletion.
+
+## Curriculum-review gate follow-up (2026-10-17)
+
+- `curriculum_review_status=approved` is now independently required by both `approved_files` and deployment bundle validation; teacher/math review does not imply curriculum approval. Older manifests/bundles missing the field fail closed and must be explicitly reviewed, not auto-upgraded.
+- The builder copies the curriculum approval into deployment-owned `source_metadata.approval`, with the exact approved original source SHA. Original reviewer, reviewed-at and source-version evidence in author `metadata` remains unchanged under `source_metadata.annotations.book.metadata`; it is not promoted to a trusted approval or added to private draft APIs. The existing original/runtime hashes still distinguish the reviewed input from normalized runtime content.
+- Regression cases cover missing/pending curriculum approval at build and runtime, source metadata claiming approval without a manifest, preservation of synthetic reviewer/version/time evidence, and source hash drift. These checks preserve attestations; they do not independently establish a reviewer's identity or perform curriculum review.
+- Focused Python regressions: 30 passed (`test_public_textbooks`, `test_textbook_create_contract`, `test_bookdata_author_compatibility`), one existing Starlette/httpx deprecation warning. No Flutter rebuild is necessary for this server/tool-only follow-up.
+- No content bundle, database mutation, browser/UI change or deployment was performed for this follow-up.
