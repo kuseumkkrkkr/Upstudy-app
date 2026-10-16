@@ -8,6 +8,42 @@ BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조�
 
 정적 신호 검출 파일 수(중복 가능): random `2`, pointer/drag `2`, JavaScript timer API `13`, CSS animation `51`, reduced-motion `86`, network-call `0`. HTML 파일명이 BookData 본문에 정확히 언급된 자산은 `27`개다. 이 숫자는 상품 소유·실행 연결 수가 아니다.
 
+## BookData 참조 문맥
+
+정확한 HTML 파일명 참조 `27`개를 JSON 경로별로 분류했다. 이 중 `external_interactive_assets` metadata에도 기록된 자산은 `1`개, 같은 chapter에 선언형 native activity가 함께 있는 자산은 `20`개다. 이는 정적 연결 증거일 뿐 HTML 실행·시각·시간 동작 parity를 뜻하지 않는다.
+
+| Asset ID | HTML 상대 경로 | BookData 파일 | 파일명이 나온 JSON 경로 | 같은 chapter의 native activity 종류 |
+|---|---|---|---|---|
+| `html-57a7b535af1fdced` | `고등수학_확률과통계_이항분포_체험형_시범.html` | `고등수학_확률과통계_이항분포_BookData_시범.json` | `chapters/0/pages/1/blocks/1/text` | 성공 횟수는 어떤 분포를 이룰까?: no native activity |
+| `html-57a7b535af1fdced` | `고등수학_확률과통계_이항분포_체험형_시범.html` | `확률과통계_2015개정_이항분포_BookData_시범.json` | `chapters/0/pages/1/blocks/1/text` | 성공 횟수는 어떤 분포를 이룰까?: no native activity |
+| `html-ab03d4f241f01b9c` | `공통수학1_다항식_동류항계산_체험형.html` | `공통수학1_다항식_동류항계산_BookData_시범.json` | `chapters/0/pages/2/blocks/0/text` | 동류항을 정렬해 다항식 더하고 빼기: no native activity |
+| `html-6fdeba15e95f60c2` | `공통수학1_인수분해_완전제곱식_체험형_시범.html` | `공통수학1_인수분해_완전제곱식_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 정사각형 넓이로 완전제곱식 이해하기: no native activity |
+| `html-be106f51101bf936` | `대수_등차수열_체험형_시범.html` | `대수_등차수열_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 공차를 이용해 n번째 항 예측하기: no native activity |
+| `html-53bf8449d3ae8654` | `수학Ⅰ_삼각함수_단위원과그래프_체험형_시범.html` | `수학Ⅰ_삼각함수_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 단위원에서 그래프까지: no native activity |
+| `html-f548d98e61e76003` | `수학Ⅰ_삼각함수_사인법칙코사인법칙_체험형_시범.html` | `수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json` | `chapters/0/pages/3/blocks/2/text` | 삼각형의 길이를 찾는 두 법칙: no native activity |
+| `html-d2b2053ceb1fb473` | `중학교수학_2015개정_다항식의곱셈과인수분해_체험형.html` | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 전개와 인수분해를 서로 거꾸로 읽기: no native activity |
+| `html-426f0cf6f6c7b517` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_다각형각과대각선_체험형_시범.html` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | `chapters/2/sections/0/paragraphs/0`, `chapters/2/pages/1/blocks/0/text` | 다각형의 각과 대각선 탐구: quiz |
+| `html-8bb456b9183efb5a` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_대푯값_체험형_시범.html` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | `chapters/3/sections/0/paragraphs/0`, `chapters/3/pages/1/blocks/0/text` | 자료를 대표하는 값 고르기: quiz |
+| `html-f8aa57d3d32b1c95` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_삼각형작도_체험형_시범.html` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | `chapters/1/sections/0/paragraphs/0`, `chapters/1/pages/1/blocks/0/text` | 조건을 이용해 삼각형 작도하기: quiz |
+| `html-1e9b8417879e2620` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_점선면과각_체험형_시범.html` | `중학수학1-2_2022개정_통합시범/중학수학1-2_2022개정_수학의언어와자료_BookData_시범.json` | `chapters/0/sections/0/paragraphs/0`, `chapters/0/pages/1/blocks/0/text` | 점·선·면과 각의 언어: quiz |
+| `html-b5e1d9501ec883bc` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_사각형대각선_체험형_시범.html` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | `chapters/2/sections/0/paragraphs/0`, `chapters/2/pages/1/blocks/0/text` | 사각형의 대각선 성질로 관계 설명하기: quiz |
+| `html-205e78d22b7370ac` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_상대도수비교_체험형_시범.html` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | `chapters/3/sections/0/paragraphs/0`, `chapters/3/pages/1/blocks/0/text` | 상대도수로 크기가 다른 집단 비교하기: quiz |
+| `html-35c4e3e2c8a71201` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_이등변삼각형증명_체험형_시범.html` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | `chapters/1/sections/0/paragraphs/0`, `chapters/1/pages/1/blocks/0/text` | 이등변삼각형의 성질을 정당화하기: quiz |
+| `html-6fdbe0238db2d2e9` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_입체도형관찰_체험형_시범.html` | `중학수학2-1_2022개정_통합시범/중학수학2-1_2022개정_공간과도형자료_BookData_V2_시범.json` | `chapters/0/sections/0/paragraphs/0`, `chapters/0/pages/1/blocks/0/text` | 입체도형을 여러 방향에서 관찰하기: quiz |
+| `html-45f8382b7881e7cc` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_경우의수세기_체험형_시범.html` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | `chapters/2/sections/0/paragraphs/0`, `chapters/2/pages/1/blocks/0/text` | 합의 법칙과 곱의 법칙으로 경우 세기: quiz |
+| `html-8469f22f74a83056` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_삼각비비율_체험형_시범.html` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | `chapters/1/sections/0/paragraphs/0`, `chapters/1/pages/1/blocks/0/text` | 삼각비로 직접 재기 어려운 길이 추정하기: quiz |
+| `html-a10eb6a3240af7e0` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_피타고라스정리_체험형_시범.html` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | `chapters/0/sections/0/paragraphs/0`, `chapters/0/pages/1/blocks/0/text` | 피타고라스 정리로 길이와 관계 구하기: quiz |
+| `html-4f713a1ae26d9f06` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_확률실험_체험형_시범.html` | `중학수학2-2_2022개정_통합시범/중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json` | `chapters/3/sections/0/paragraphs/0`, `chapters/3/pages/1/blocks/0/text` | 실험과 경우의 수로 확률 이해하기: discreteExperiment, quiz |
+| `html-d2b300ca0f76adab` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_다항식넓이모형_체험형_시범.html` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | `chapters/1/sections/0/paragraphs/0`, `chapters/1/pages/1/blocks/0/text` | 다항식의 곱셈을 넓이로 설명하기: quiz |
+| `html-44c391e3cae805f7` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_이차함수꼭짓점_체험형_시범.html` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | `chapters/3/sections/0/paragraphs/0`, `chapters/3/pages/1/blocks/0/text` | 이차함수 그래프의 최댓값·최솟값 읽기: quiz |
+| `html-88b8949b006aa795` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_인수분해짝찾기_체험형_시범.html` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | `chapters/2/sections/0/paragraphs/0`, `chapters/2/pages/1/blocks/0/text` | 전개의 역으로 다항식 인수분해하기: quiz |
+| `html-cb85964cbe0fb821` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_제곱근수직선_체험형_시범.html` | `중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json` | `metadata/external_interactive_assets/0` | no matching chapter |
+| `html-cb85964cbe0fb821` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_제곱근수직선_체험형_시범.html` | `중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_수와다항식함수_BookData_V2_시범.json` | `chapters/0/sections/0/paragraphs/0`, `chapters/0/pages/1/blocks/0/text` | 제곱근과 무리수의 크기 살펴보기: quiz |
+| `html-bc37651558e5557c` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_9수04-01_체험형_시범.html` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | `chapters/3/sections/0/paragraphs/0`, `chapters/3/pages/1/blocks/0/text` | 자료에 맞는 대푯값: quiz |
+| `html-ad1c62c3c760df44` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_9수04-04_체험형_시범.html` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | `chapters/0/sections/0/paragraphs/0`, `chapters/0/pages/1/blocks/0/text` | 통계적 탐구 계획: quiz |
+| `html-342ebacfb4d0cfba` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_9수04-08_체험형_시범.html` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | `chapters/1/sections/0/paragraphs/0`, `chapters/1/pages/1/blocks/0/text` | 상자그림으로 분포 비교: quiz |
+| `html-d77d34c7ab368bbe` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_9수04-09_체험형_시범.html` | `중학수학3-2_2022개정_통합시범/중학수학3-2_2022개정_통계탐구와분포_BookData_V2_시범.json` | `chapters/2/sections/0/paragraphs/0`, `chapters/2/pages/1/blocks/0/text` | 산점도와 상관관계: quiz |
+
 | Asset ID | 상대 경로 | bytes | 본문 SHA-256 | inline script SHA-256 | 검출 컨트롤 수 | control IDs | event names | 정적 신호 | BookData exact reference | external scripts | 상태 |
 |---|---|---:|---|---|---|---|---|---|---|---|---|
 | `html-002d8074c7ebb2fb` | `고등수학_기하_벡터덧셈_실수배_체험형_시범.html` | 23575 | `7AC675567F706757FCE13640EF4F749B8446992F16B7008E26FFBCBA13D8992A` | `EA06A4CC83213AFC3358620AF7575DF8F9EDFB8003605F1C3890D6AC10A080A8` | button×8, input:radio×3, input:range×5, select×1, svg×1 | `svg#plane, select#operation, input#alpha, input#ux, input#uy, input#vx, input#vy, button#step-back, button#step-next, button#step-reset, button#socratic-reset, button#practice-check` | click, input | random=0, pointer=0, timer=1, css_animation=0, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |

@@ -198,3 +198,8 @@
 - 교육부 [2015-74 고시 게시물](https://www.moe.go.kr/boardCnts/view.do?boardID=141&boardSeq=60747&lev=0&m=0404)은 별책 1–15 ZIP을 제공하고 별책 8이 수학과임을 명시하지만, 첨부 ZIP에 적용되는 개별 KOGL 표시를 게시물 본문에서 확인하지 못했다. 별도 [2015 교육과정 안내 페이지](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=316&boardSeq=62381&lev=0&m=0302&opType=N&page=1&s=moe&searchType=null&statusYN=C)의 KOGL 제2유형은 그 안내 저작물에 붙은 표시라 별책 ZIP에 전이하지 않는다.
 - 교육부 [2022-33 고시 게시물](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0&m=0404)은 수학과 별책 8을 포함하는 ZIP을 제공하지만 첨부별 KOGL 조건은 본문에서 확인되지 않았다. 별도 [2022 개정 교육과정 발표자료](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=93459&lev=0)의 제1유형 표시도 그 발표자료의 저작물 표시이므로 고시 ZIP의 권리 근거로 사용하지 않는다.
 - 교육부 [저작권 정책](https://www.moe.go.kr/sub/infoRenew.do?m=070105&page=070105&s=moe)은 KOGL 부착 자료의 유형별 이용조건을 확인하도록 하고, 표시 없는 자료는 공공저작물 실무 담당자와 사전 협의하도록 안내한다. 따라서 2015·2022 원문과 기존 HTML/외부 요소의 상업 이용·변형 권한은 계속 pending이다. 별책 재사용에 대한 서면 권리 확인 전 배포하지 않는다.
+
+## 2026-10-17 HTML 자산 정적 참조 문맥
+
+- `tool/build_html_asset_inventory.py`와 `REMAINING_TEXTBOOKS_HTML_ASSET_INDEX.md`를 보강해 HTML 파일명이 언급된 JSON 경로, 같은 chapter의 native activity 종류를 기록한다. 재생성 결과는 106 HTML/166 BookData, 정확한 파일명 참조 27개, `external_interactive_assets` metadata 명시 1개, 같은 chapter에 선언형 activity가 있는 자산 20개다.
+- 이 표는 정적 참조만 분류한다. 파일명 언급이나 native activity 병존을 실행 연결 또는 인터랙션 parity 증거로 간주하지 않는다. 권리·교사·독립 수학 검토는 계속 미완료이며 배포하지 않는다.

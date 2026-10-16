@@ -23,20 +23,61 @@ def sha(data: bytes) -> str:
     return hashlib.sha256(data).hexdigest().upper()
 
 
+def string_fields(value: object, path: str = "") -> list[tuple[str, str]]:
+    if isinstance(value, str):
+        return [(path, value)]
+    if isinstance(value, dict):
+        return [
+            item
+            for key, child in value.items()
+            for item in string_fields(child, f"{path}/{key}".strip("/"))
+        ]
+    if isinstance(value, list):
+        return [
+            item
+            for index, child in enumerate(value)
+            for item in string_fields(child, f"{path}/{index}".strip("/"))
+        ]
+    return []
+
+
+def activity_kinds(value: object) -> set[str]:
+    if isinstance(value, dict):
+        found = set()
+        if value.get("type") == "activity" and isinstance(value.get("activity"), dict):
+            found.add(str(value["activity"].get("kind", "unspecified")))
+        for child in value.values():
+            found.update(activity_kinds(child))
+        return found
+    if isinstance(value, list):
+        return set().union(*(activity_kinds(child) for child in value)) if value else set()
+    return set()
+
+
 def main() -> None:
     html_files = sorted(MANUSCRIPTS.rglob("*.html"))
     bookdata = sorted(MANUSCRIPTS.rglob("*BookData*.json"))
     book_text: dict[Path, str] = {}
+    book_objects: dict[Path, dict] = {}
     for path in bookdata:
         try:
             book_text[path] = path.read_text(encoding="utf-8")
+            parsed = json.loads(book_text[path].lstrip("\ufeff"))
+            if isinstance(parsed, dict):
+                book_objects[path] = parsed
         except (OSError, UnicodeDecodeError):
+            book_text[path] = ""
+        except json.JSONDecodeError:
             book_text[path] = ""
 
     total_bytes = 0
     signal_counts = Counter()
     explicit_ref_assets = 0
     rows = []
+    reference_rows = []
+    reference_asset_count = 0
+    explicit_metadata_assets: set[str] = set()
+    chapter_activity_assets: set[str] = set()
     for path in html_files:
         raw = path.read_bytes()
         source = raw.decode("utf-8", errors="replace")
@@ -71,6 +112,29 @@ def main() -> None:
         refs = [p.relative_to(MANUSCRIPTS).as_posix() for p, text in book_text.items() if path.name in text]
         if refs:
             explicit_ref_assets += 1
+            reference_asset_count += 1
+            for ref_path in refs:
+                book = book_objects.get(MANUSCRIPTS / ref_path, {})
+                locations = [value_path for value_path, value in string_fields(book) if path.name in value]
+                external_locations = [
+                    value_path for value_path in locations
+                    if value_path.startswith("metadata/external_interactive_assets/")
+                ]
+                chapter_evidence = []
+                for index, chapter in enumerate(book.get("chapters", [])):
+                    if any(path.name in value for _, value in string_fields(chapter)):
+                        title = str(chapter.get("title", f"chapter {index + 1}"))
+                        kinds = sorted(activity_kinds(chapter))
+                        chapter_evidence.append(f"{title}: {', '.join(kinds) if kinds else 'no native activity'}")
+                if external_locations:
+                    explicit_metadata_assets.add(rel)
+                if any("no native activity" not in evidence for evidence in chapter_evidence):
+                    chapter_activity_assets.add(rel)
+                location_text = ", ".join(f"`{value_path}`" for value_path in locations) or "filename match only"
+                chapter_text = "; ".join(chapter_evidence) or "no matching chapter"
+                reference_rows.append(
+                    f"| `{asset_id}` | `{rel}` | `{ref_path}` | {location_text} | {chapter_text} |"
+                )
         total_bytes += len(raw)
         controls = ", ".join(f"{key}×{count}" for key, count in sorted(tags.items())) or "none detected"
         ids = ", ".join(control_ids) or "none detected"
@@ -94,6 +158,14 @@ def main() -> None:
         "네트워크 신호는 inline source에서의 `fetch`/XHR/WebSocket 정적 검색이다. 외부 `<script src>` 값은 별도 열에 기록한다. 보안/저작권/수학 검토를 대체하지 않는다.",
         "",
         f"정적 신호 검출 파일 수(중복 가능): random `{signal_counts['random']}`, pointer/drag `{signal_counts['pointer']}`, JavaScript timer API `{signal_counts['timer']}`, CSS animation `{signal_counts['css_animation']}`, reduced-motion `{signal_counts['reduced_motion']}`, network-call `{signal_counts['network']}`. HTML 파일명이 BookData 본문에 정확히 언급된 자산은 `{explicit_ref_assets}`개다. 이 숫자는 상품 소유·실행 연결 수가 아니다.",
+        "",
+        "## BookData 참조 문맥",
+        "",
+        f"정확한 HTML 파일명 참조 `{reference_asset_count}`개를 JSON 경로별로 분류했다. 이 중 `external_interactive_assets` metadata에도 기록된 자산은 `{len(explicit_metadata_assets)}`개, 같은 chapter에 선언형 native activity가 함께 있는 자산은 `{len(chapter_activity_assets)}`개다. 이는 정적 연결 증거일 뿐 HTML 실행·시각·시간 동작 parity를 뜻하지 않는다.",
+        "",
+        "| Asset ID | HTML 상대 경로 | BookData 파일 | 파일명이 나온 JSON 경로 | 같은 chapter의 native activity 종류 |",
+        "|---|---|---|---|---|",
+        *reference_rows,
         "",
         "| Asset ID | 상대 경로 | bytes | 본문 SHA-256 | inline script SHA-256 | 검출 컨트롤 수 | control IDs | event names | 정적 신호 | BookData exact reference | external scripts | 상태 |",
         "|---|---|---:|---|---|---|---|---|---|---|---|---|",
