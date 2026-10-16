@@ -337,3 +337,9 @@
 - 5개 중 native `vectorInnerProduct`만 학생 리더 activity로 확인됐다. 나머지 4개의 시각 조작은 별도 HTML이며 BookData에서 자동 실행되지 않는다. HTML 전체 화면·동작 패리티는 미검증이다. 이 산술 점검은 교사·독립 수학검수가 아니다.
 
 - 추가 페이지 대조로 2015 수학(하) 여집합·차집합 원본을 `10수학03-03` 부분 후보로 연결했다. 표본 계산은 맞지만 합집합·교집합 범위는 이 파일에 없어 partial로 유지한다. 따라서 43개 중 candidate link는 32, 상·하 감사표 직접 후보 없음은 2, 판본/기준 미확정은 9로 갱신했다.
+
+## 2026-10-17 패키지 검수 manifest 증거 대조
+
+- 재귀 검색한 `REVIEW_MANIFEST.json` 30개를 확인했다. 전부 `publication_eligibility=not_eligible`이며, publication/rights/teacher/math/curriculum 전 항목이 모두 승인으로 표기된 record는 0개다.
+- manifest가 지목하는 BookData 및 source BookData 32개 SHA-256 참조를 현재 파일과 대조했다. CRLF 정규화 해시 또는 raw 해시 기준 32/32 일치했다. 해시 일치는 현재 파일의 내용 식별만 증명하며, manifest의 미승인 상태를 승인으로 바꾸지 않는다.
+- 원고 인벤토리 178개 중 manifest를 가진 패키지가 30개뿐이라는 점도 구분한다. 나머지 148개는 manifest 승인 증거가 없으며 BookData metadata 역시 승인으로 확인되지 않는다.
