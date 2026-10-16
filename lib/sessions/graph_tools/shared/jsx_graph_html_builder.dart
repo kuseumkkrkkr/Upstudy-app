@@ -740,6 +740,8 @@ String buildAiFlowGraphHtml(
                   strokeWidth: 2.2,
                   name: label,
                   withLabel: Boolean(label),
+                  // Author labels are text, never HTML or JessieCode.
+                  label: { display: 'internal', parse: false, useMathJax: false, useKatex: false },
                 },
               );
               renderedElements.push(graph);

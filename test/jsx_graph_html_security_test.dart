@@ -34,9 +34,18 @@ void main() {
         ),
       );
       final html = buildAiFlowGraphHtml(document);
+      final fixture = File('build/temp/graph-security-fixture/index.html');
+      await fixture.parent.create(recursive: true);
+      await fixture.writeAsString(html);
       expect(html, isNot(contains('</script><script>parent.bad')));
       expect(html, isNot(contains('new Function')));
       expect(html, isNot(contains('eval(')));
+      expect(
+        html,
+        contains(
+          "label: { display: 'internal', parse: false, useMathJax: false, useKatex: false }",
+        ),
+      );
       expect(html, contains(r'\u003c/script\u003e'));
       expect(
         html.indexOf('function compileGraphMath('),
