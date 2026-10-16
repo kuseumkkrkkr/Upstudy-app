@@ -181,6 +181,47 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text(activity['correct_feedback'] as String), findsOneWidget);
   });
+
+  testWidgets('Algebra EqEdit Batch2 quiz runs in the teacher reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final activity = _activities(source).first;
+    SharedPreferences.setMockInitialValues(<String, Object>{});
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: TeacherCourseTextbookReaderPage(
+          courseId: 'algebra-course',
+          moduleId: 'algebra-module',
+          textbookId: 'algebra-book',
+          pageFrom: 4,
+          pageTo: 4,
+          minMinutes: 0,
+          previewBook: book,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.text(activity['prompt'] as String), findsOneWidget);
+    final correctIndex = activity['correct_index'] as int;
+    await tester.ensureVisible(
+      find.byKey(ValueKey('quiz-option-$correctIndex')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(ValueKey('quiz-option-$correctIndex')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text(activity['correct_feedback'] as String), findsOneWidget);
+  });
 }
 
 BookData _quizBook() => BookData(

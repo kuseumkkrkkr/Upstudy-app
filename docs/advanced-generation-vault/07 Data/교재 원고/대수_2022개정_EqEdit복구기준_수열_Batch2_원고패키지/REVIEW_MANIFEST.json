@@ -29,6 +29,9 @@
     "quiz"
   ],
   "spot_checks": "listed arithmetic checks passed only",
+  "app_model_roundtrip_status": "passed: all 3 Batch2 quiz payloads preserved by BookData.fromJson/toJson",
+  "teacher_reader_interaction_status": "passed: actual Batch2 BookData rendered in teacher reader; quiz submission and feedback verified",
+  "validation_test": "test/textbook_activity_compatibility_test.dart",
   "teacher_review_status": "pending",
   "math_review_status": "author spot checks passed; independent teacher review pending",
   "rights_status": "new original examples; publication rights decision pending",
