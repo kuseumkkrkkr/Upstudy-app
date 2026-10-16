@@ -42,7 +42,7 @@ class _TextbookActivityBlockState extends State<TextbookActivityBlock> {
         options.length >= 2 &&
         correctIndex >= 0 &&
         correctIndex < options.length;
-    if (kind == 'vectorOperation' || kind == 'vectorInnerProduct') {
+    if (kind != 'quiz') {
       try {
         return BookActivityView(activity: BookActivity.fromJson(activity));
       } on FormatException {

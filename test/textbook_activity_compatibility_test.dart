@@ -23,6 +23,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -325,6 +326,54 @@ void main() {
       (activity['options'] as List<dynamic>)[activity['correct_index'] as int],
       '2/3',
     );
+  });
+
+  testWidgets('2022 Probability estimators run in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activities = _activities(source);
+    expect(activities, hasLength(10));
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+
+    final meanActivity = activities.singleWhere(
+      (activity) => activity['id'] == 'ps0307-estimate-mean',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(meanActivity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('추정하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('모평균의 추정값: 10.0000'), findsOneWidget);
+
+    final proportionActivity = activities.singleWhere(
+      (activity) => activity['id'] == 'ps0307-estimate-proportion',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(proportionActivity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('추정하기'));
+    await tester.pumpAndSettle();
+    expect(find.text('모비율의 추정값: 56.00%'), findsOneWidget);
   });
 
   testWidgets(

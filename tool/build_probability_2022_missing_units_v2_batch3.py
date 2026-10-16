@@ -229,6 +229,8 @@ def main() -> None:
         "integration_status": "not_merged_into_master_book", "publication_eligibility": "not_eligible",
         "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same_hash else "pending_current_hash_validation",
         "runtime_validator_head": old.get("runtime_validator_head") if same_hash else None,
+        "runtime_validation_command": old.get("runtime_validation_command") if same_hash else None,
+        "runtime_validator_candidate_sha256": old.get("runtime_validator_candidate_sha256") if same_hash else None,
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (PACKAGE / "README.md").write_text(

@@ -41,5 +41,7 @@
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5"
+  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5",
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }
