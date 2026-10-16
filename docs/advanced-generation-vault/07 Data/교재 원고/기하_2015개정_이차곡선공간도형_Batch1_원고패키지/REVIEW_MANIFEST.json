@@ -1,6 +1,6 @@
 {
   "bookdata_file": "기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "1BD3B6EBCAC588FBE8765972553BCBC57B664420B1B5851737906C71CCA54158",
+  "bookdata_sha256": "63F8D7302884E26A76CC76CE2AC44FF35F775AA5B71C288B4E6E00390474A88F",
   "candidate_code_references": [
     "12기하01-01",
     "12기하01-02",
@@ -35,7 +35,7 @@
     "고등수학_기하_포물선_체험형_시범.html"
   ],
   "html_compatibility_status": "separate_sources_preserved; not embedded or runtime-executed by BookData V2; visual parity unverified",
-  "app_activity_status": "passed: all 12 quiz payloads round-trip; student BookWidget verified geo15-0205 selection and feedback; full-book and teacher-reader flows unverified",
+  "app_activity_status": "passed: all 12 quiz payloads round-trip; 12 worked-solution answer keys match their worked-solution text; student BookWidget verifies geo15-0205 quiz selection and feedback; full-book and teacher-reader flows unverified",
   "math_arithmetic_check_status": "pass_for_listed_spot_checks_only",
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
   "curriculum_review_status": "all_12_new_codes_verified; existing_4_vector_code_mappings_partial; full_product_scope_pending",
@@ -45,7 +45,7 @@
   "integration_status": "candidate_for_tag_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed_flutter_compatibility_suite",
-  "runtime_validator_head": "bea7a02dc860733d7e182754cf430775787d5904",
+  "runtime_validator_head": "f00ee64b161f07b0782a496631300fc746cb38db",
   "runtime_validator_command": "flutter test test/textbook_activity_compatibility_test.dart (21 tests passed)",
-  "runtime_validator_candidate_sha256": "1BD3B6EBCAC588FBE8765972553BCBC57B664420B1B5851737906C71CCA54158"
+  "runtime_validator_candidate_sha256": "63F8D7302884E26A76CC76CE2AC44FF35F775AA5B71C288B4E6E00390474A88F"
 }
