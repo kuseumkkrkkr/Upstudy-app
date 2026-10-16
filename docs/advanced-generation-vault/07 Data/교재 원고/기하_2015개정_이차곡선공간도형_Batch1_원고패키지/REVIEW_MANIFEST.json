@@ -1,0 +1,49 @@
+{
+  "bookdata_file": "기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json",
+  "bookdata_sha256": "CE337CFEEF62477935D0B32ADB275825883FFCB0298CC8BE3C270ABE1C37181A",
+  "candidate_code_references": [
+    "12기하01-01",
+    "12기하01-02",
+    "12기하01-03",
+    "12기하01-04",
+    "12기하02-05",
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03",
+    "12기하03-04",
+    "12기하03-05",
+    "12기하03-06",
+    "12기하03-07"
+  ],
+  "candidate_code_reference_type": "2015_moe_appendix8_geometry_standards",
+  "module_count": 12,
+  "unit_module_counts": {
+    "01": 4,
+    "02": 1,
+    "03": 7
+  },
+  "page_count": 60,
+  "native_activity_count": 12,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "preserved_html_files": [
+    "고등수학_기하_벡터덧셈_실수배_체험형_시범.html",
+    "고등수학_기하_벡터의덧셈과실수배_체험형_시범.html",
+    "고등수학_기하_위치벡터와좌표_체험형_시범.html",
+    "고등수학_기하_평면벡터내적_체험형_시범.html",
+    "고등수학_기하_포물선_체험형_시범.html"
+  ],
+  "html_compatibility_status": "separate_sources_preserved; not embedded or runtime-executed by BookData V2; visual parity unverified",
+  "app_activity_status": "native_quiz_candidate; guarded import pass",
+  "math_arithmetic_check_status": "pass_for_listed_spot_checks_only",
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "all_12_new_codes_verified; existing_4_vector_code_mappings_partial; full_product_scope_pending",
+  "math_review_status": "author_spot_checks_passed; independent_teacher_review_pending",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored_candidate; publication_rights_decision_pending",
+  "integration_status": "candidate_for_tag_grouping; not_merged_into_master_book",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pass_guarded_BookData_fromJson",
+  "runtime_validator_head": "e0bc17074481259c6f8d4c63894da07dd6c2e814"
+}

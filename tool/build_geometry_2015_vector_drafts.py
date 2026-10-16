@@ -32,7 +32,7 @@ def main() -> None:
             raise RuntimeError(f"No pages in master chapter {chapter.get('title')}")
         for page in pages:
             expected[signature(page)] += 1
-        groups.setdefault("평면벡터", []).append({"file": master_path.name, "book": master, "pages": pages, "tags": master_tags, "subunit": chapter["title"]})
+        groups.setdefault("평면벡터", []).append({"file": master_path.name, "book": master, "pages": pages, "tags": master_tags, "subunit": chapter["title"], "codes": master.get("standard_codes", [])})
 
     for path in sorted(MANUSCRIPTS.glob("고등수학_기하*_BookData*.json")):
         if path.name == EXCLUDED:
@@ -50,7 +50,20 @@ def main() -> None:
             raise RuntimeError(f"No pages in {path.name}")
         for page in pages:
             expected[signature(page)] += 1
-        groups.setdefault(unit, []).append({"file": path.name, "book": book, "pages": pages, "tags": tags, "subunit": subunit})
+        groups.setdefault(unit, []).append({"file": path.name, "book": book, "pages": pages, "tags": tags, "subunit": subunit, "codes": book.get("standard_codes", [])})
+    batch_path = MANUSCRIPTS / "기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json"
+    if batch_path.exists():
+        batch = json.loads(batch_path.read_text(encoding="utf-8"))
+        for chapter in batch.get("chapters", []):
+            unit = chapter.get("unit_name")
+            if unit not in {"이차곡선", "평면벡터", "공간도형"}:
+                raise RuntimeError(f"Unknown 2015 Geometry unit in {chapter.get('title')}: {unit}")
+            pages = chapter.get("pages", [])
+            if not pages:
+                raise RuntimeError(f"No candidate pages in {chapter.get('title')}")
+            for page in pages:
+                expected[signature(page)] += 1
+            groups.setdefault(unit, []).append({"file": batch_path.name, "book": batch, "pages": pages, "tags": batch.get("tags", []), "subunit": chapter["title"], "codes": ["12기하" + chapter["title_code"]]})
     if not groups:
         raise RuntimeError("No 2015 Geometry vector samples found")
 
@@ -75,7 +88,7 @@ def main() -> None:
                 ids.add(page["id"])
                 if page_index > 1:
                     actual[signature(page)] += 1
-            chapters.append({"title": module["subunit"], "pages": pages, "source_file": module["file"], "source_tags": module["tags"]})
+            chapters.append({"title": module["subunit"], "pages": pages, "source_file": module["file"], "source_tags": module["tags"], "candidate_standard_codes": module.get("codes", [])})
         data = {"title": f"기하 2015 개정 · {unit} 태그별 통합 초안", "tags": ["기하", "2015 개정", unit, "태그 기반 초안"], "chapters": chapters, "metadata": {"status": "partial_draft", "source_files": [item["file"] for item in modules]}}
         filename = f"기하_2015개정_{unit}_통합초안.json"
         (OUTPUT / filename).write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
@@ -90,7 +103,7 @@ def main() -> None:
         for module in modules:
             title = module.get("subunit") or " / ".join(ch.get("title", "") for ch in module["book"]["chapters"])
             lines.append(f"  - {module['subunit']}: {title} (`{module['file']}`)")
-    lines += ["", "기존 `개념서_시범`의 3개 핵심 장과 개별 체험형 BookData 3개를 함께 담았습니다. 지면 내용은 서로 달라 모두 보존했으며, 같은 주제의 핵심 전개와 활동형 전개가 나란히 포함됩니다. 교사 검수·앱 통합·완전한 과목 범위는 확인하지 않았습니다.", "", "재생성: `python tool/build_geometry_2015_vector_drafts.py`", ""]
+    lines += ["", "기존 벡터 6모듈/18쪽과 신규 V2 12모듈/60쪽을 합쳐 18모듈/78개 원본 지면을 보존했습니다. 편집용으로 모듈마다 출처 표지 1쪽이 추가됩니다. 신규 quiz는 네이티브 BookData activity 후보입니다. 기존 HTML 5개는 별도 파일로 보존되며 앱에서 자동 실행되지 않고 화면 parity도 검증하지 않았습니다. 전체 교재 검수·권리 결정 전 출판 부적격입니다.", "", "재생성: `python tool/build_geometry_2015_vector_drafts.py`", ""]
     (OUTPUT / "README.md").write_text("\n".join(lines), encoding="utf-8")
     print(f"Built {sum(len(row[2]) for row in manifest)} modules in {len(manifest)} tagged units; preserved {sum(expected.values())} pages; IDs unique.")
 

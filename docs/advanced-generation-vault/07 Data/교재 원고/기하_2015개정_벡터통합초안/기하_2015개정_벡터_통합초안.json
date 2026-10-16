@@ -16,7 +16,7 @@
           "blocks": [
             {
               "type": "paragraph",
-              "text": "기하 · 2015 개정 · 벡터 · 벡터의 덧셈 · 실수배 · 부분 시범 · 성취기준 원문 대조 완료 · 교사 검수 전"
+              "text": "기하 · 2015 개정 · 벡터 · 벡터의 덧셈 · 실수배 · 부분 시범 · 성취기준 원문 대조 완료 · 교사 검수 전 · 12기하02-01 · 12기하02-02 · official-code candidate mapping; content review pending"
             },
             {
               "type": "paragraph",
@@ -123,7 +123,14 @@
         "실수배",
         "부분 시범",
         "성취기준 원문 대조 완료",
-        "교사 검수 전"
+        "교사 검수 전",
+        "12기하02-01",
+        "12기하02-02",
+        "official-code candidate mapping; content review pending"
+      ],
+      "candidate_standard_codes": [
+        "12기하02-01",
+        "12기하02-02"
       ]
     }
   ],

@@ -1,0 +1,1685 @@
+{
+  "schema_version": 2,
+  "title": "기하 · 2015 개정 미연결 기준 보완 12모듈 후보",
+  "subtitle": "이차곡선·평면벡터·공간도형",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "tags": [
+    "기하",
+    "2015 개정",
+    "추가 원고 후보",
+    "가상 예시",
+    "12기하01-01",
+    "12기하01-02",
+    "12기하01-03",
+    "12기하01-04",
+    "12기하02-05",
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03",
+    "12기하03-04",
+    "12기하03-05",
+    "12기하03-06",
+    "12기하03-07"
+  ],
+  "standard_codes": [
+    "12기하01-01",
+    "12기하01-02",
+    "12기하01-03",
+    "12기하01-04",
+    "12기하02-05",
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03",
+    "12기하03-04",
+    "12기하03-05",
+    "12기하03-06",
+    "12기하03-07"
+  ],
+  "chapters": [
+    {
+      "title": "포물선의 정의와 방정식",
+      "title_code": "01-01",
+      "unit": "01",
+      "unit_name": "이차곡선",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하01-01에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0101-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "포물선의 정의와 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0101-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "포물선의 정의와 방정식",
+              "text": "포물선은 초점과 준선까지의 거리가 같은 점의 자취다. 꼭짓점이 원점인 가로형 포물선은 y²=4px로 나타낸다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0101-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "초점이 (3,0)이고 준선이 x=−3인 포물선의 방정식을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y²=8x에서 p=2이므로 초점은 (2,0), 준선은 x=−2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0101-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "초점이 (3,0)이고 준선이 x=−3인 포물선의 방정식을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y²=8x에서 p=2이므로 초점은 (2,0), 준선은 x=−2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "y²=12x"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0101-quiz",
+                "kind": "quiz",
+                "prompt": "초점이 (3,0)이고 준선이 x=−3인 포물선의 방정식을 쓰세요.",
+                "options": [
+                  "y²=12x",
+                  "x²=12y",
+                  "y²=6x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: y²=12x",
+                "incorrect_feedback": "정답은 y²=12x입니다. y²=8x에서 p=2이므로 초점은 (2,0), 준선은 x=−2이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "y²=8x에서 p=2이므로 초점은 (2,0), 준선은 x=−2이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0101-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "포물선의 정의와 방정식: 포물선은 초점과 준선까지의 거리가 같은 점의 자취다. 꼭짓점이 원점인 가로형 포물선은 y²=4px로 나타낸다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "타원의 정의와 방정식",
+      "title_code": "01-02",
+      "unit": "01",
+      "unit_name": "이차곡선",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하01-02에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0102-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "타원의 정의와 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0102-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "타원의 정의와 방정식",
+              "text": "타원은 두 초점까지 거리의 합이 일정한 점의 자취다. 중심 원점, 장축 x축인 표준형에서 c²=a²−b²이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0102-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "a=5,b=4인 타원의 초점까지 거리 c를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x²/25+y²/9=1이면 c²=25−9=16이므로 초점은 (±4,0)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0102-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=5,b=4인 타원의 초점까지 거리 c를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²/25+y²/9=1이면 c²=25−9=16이므로 초점은 (±4,0)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0102-quiz",
+                "kind": "quiz",
+                "prompt": "a=5,b=4인 타원의 초점까지 거리 c를 구하세요.",
+                "options": [
+                  "3",
+                  "9",
+                  "√41"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 3",
+                "incorrect_feedback": "정답은 3입니다. x²/25+y²/9=1이면 c²=25−9=16이므로 초점은 (±4,0)이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "x²/25+y²/9=1이면 c²=25−9=16이므로 초점은 (±4,0)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0102-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "타원의 정의와 방정식: 타원은 두 초점까지 거리의 합이 일정한 점의 자취다. 중심 원점, 장축 x축인 표준형에서 c²=a²−b²이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "쌍곡선의 정의와 방정식",
+      "title_code": "01-03",
+      "unit": "01",
+      "unit_name": "이차곡선",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하01-03에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0103-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "쌍곡선의 정의와 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0103-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "쌍곡선의 정의와 방정식",
+              "text": "쌍곡선은 두 초점까지 거리의 차의 절댓값이 일정한 점의 자취다. x축 방향 표준형은 x²/a²−y²/b²=1이고 c²=a²+b²이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0103-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "a=3,b=4인 표준형 쌍곡선의 c를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x²/9−y²/16=1에서 c²=25이므로 초점은 (±5,0)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0103-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=3,b=4인 표준형 쌍곡선의 c를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²/9−y²/16=1에서 c²=25이므로 초점은 (±5,0)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0103-quiz",
+                "kind": "quiz",
+                "prompt": "a=3,b=4인 표준형 쌍곡선의 c를 구하세요.",
+                "options": [
+                  "5",
+                  "1",
+                  "7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 5",
+                "incorrect_feedback": "정답은 5입니다. x²/9−y²/16=1에서 c²=25이므로 초점은 (±5,0)이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "x²/9−y²/16=1에서 c²=25이므로 초점은 (±5,0)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0103-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "쌍곡선의 정의와 방정식: 쌍곡선은 두 초점까지 거리의 차의 절댓값이 일정한 점의 자취다. x축 방향 표준형은 x²/a²−y²/b²=1이고 c²=a²+b²이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "이차곡선과 직선의 접선",
+      "title_code": "01-04",
+      "unit": "01",
+      "unit_name": "이차곡선",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하01-04에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0104-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "이차곡선과 직선의 접선"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0104-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "이차곡선과 직선의 접선",
+              "text": "직선과 이차곡선의 교점은 연립해 판별식 또는 중근 조건으로 판정한다. 포물선 y²=4px의 점 (pt²,2pt)에서 접선은 ty=x+pt²이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0104-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y²=4x의 점 (4,4)에서 접선의 방정식을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y²=4x의 점 (1,2)는 t=1에 해당하므로 접선은 y=x+1이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0104-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y²=4x의 점 (4,4)에서 접선의 방정식을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y²=4x의 점 (1,2)는 t=1에 해당하므로 접선은 y=x+1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2y=x+4"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0104-quiz",
+                "kind": "quiz",
+                "prompt": "y²=4x의 점 (4,4)에서 접선의 방정식을 구하세요.",
+                "options": [
+                  "2y=x+4",
+                  "y=2x+4",
+                  "2y=x−4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 2y=x+4",
+                "incorrect_feedback": "정답은 2y=x+4입니다. y²=4x의 점 (1,2)는 t=1에 해당하므로 접선은 y=x+1이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "y²=4x의 점 (1,2)는 t=1에 해당하므로 접선은 y=x+1이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0104-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "이차곡선과 직선의 접선: 직선과 이차곡선의 교점은 연립해 판별식 또는 중근 조건으로 판정한다. 포물선 y²=4px의 점 (pt²,2pt)에서 접선은 ty=x+pt²이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "벡터를 이용한 직선과 원의 방정식",
+      "title_code": "02-05",
+      "unit": "02",
+      "unit_name": "평면벡터",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하02-05에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0205-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "벡터를 이용한 직선과 원의 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0205-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "벡터를 이용한 직선과 원의 방정식",
+              "text": "점 A와 방향벡터 d를 이용한 직선은 r=a+td로 나타낸다. 중심 C, 반지름 R인 원은 |r−c|=R이며 좌표식으로 바꿀 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하02-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0205-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 (0,1)을 지나고 방향벡터 (3,2)인 직선의 매개방정식을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A=(1,2), d=(2,−1)이면 직선은 (x,y)=(1,2)+t(2,−1)이다. 중심 (1,2), 반지름 3인 원은 (x−1)²+(y−2)²=9이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0205-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (0,1)을 지나고 방향벡터 (3,2)인 직선의 매개방정식을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "A=(1,2), d=(2,−1)이면 직선은 (x,y)=(1,2)+t(2,−1)이다. 중심 (1,2), 반지름 3인 원은 (x−1)²+(y−2)²=9이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x,y)=(0,1)+t(3,2)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0205-quiz",
+                "kind": "quiz",
+                "prompt": "점 (0,1)을 지나고 방향벡터 (3,2)인 직선의 매개방정식을 쓰세요.",
+                "options": [
+                  "(x,y)=(0,1)+t(3,2)",
+                  "(x,y)=(3,2)+t(0,1)",
+                  "(x,y)=(0,1)+t(2,3)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: (x,y)=(0,1)+t(3,2)",
+                "incorrect_feedback": "정답은 (x,y)=(0,1)+t(3,2)입니다. A=(1,2), d=(2,−1)이면 직선은 (x,y)=(1,2)+t(2,−1)이다. 중심 (1,2), 반지름 3인 원은 (x−1)²+(y−2)²=9이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "A=(1,2), d=(2,−1)이면 직선은 (x,y)=(1,2)+t(2,−1)이다. 중심 (1,2), 반지름 3인 원은 (x−1)²+(y−2)²=9이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0205-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "벡터를 이용한 직선과 원의 방정식: 점 A와 방향벡터 d를 이용한 직선은 r=a+td로 나타낸다. 중심 C, 반지름 R인 원은 |r−c|=R이며 좌표식으로 바꿀 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "공간에서 직선·평면의 위치 관계",
+      "title_code": "03-01",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-01에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0301-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "공간에서 직선·평면의 위치 관계"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0301-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "공간에서 직선·평면의 위치 관계",
+              "text": "방향벡터와 평면의 법선벡터를 비교하면 평행·수직을 확인할 수 있다. 간단한 좌표 설정으로 서로 다른 평행 직선을 증명할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0301-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 직선의 방향벡터가 같고 한 점도 공유하지 않으면 두 직선의 관계는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(x,y,z)=(t,0,0)과 (x,y,z)=(s,1,0)은 방향벡터가 모두 (1,0,0)이고 서로 만나지 않으므로 평행이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0301-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "두 직선의 방향벡터가 같고 한 점도 공유하지 않으면 두 직선의 관계는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(x,y,z)=(t,0,0)과 (x,y,z)=(s,1,0)은 방향벡터가 모두 (1,0,0)이고 서로 만나지 않으므로 평행이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "평행"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0301-quiz",
+                "kind": "quiz",
+                "prompt": "두 직선의 방향벡터가 같고 한 점도 공유하지 않으면 두 직선의 관계는?",
+                "options": [
+                  "평행",
+                  "수직으로 만남",
+                  "항상 꼬인 위치"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 평행",
+                "incorrect_feedback": "정답은 평행입니다. (x,y,z)=(t,0,0)과 (x,y,z)=(s,1,0)은 방향벡터가 모두 (1,0,0)이고 서로 만나지 않으므로 평행이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "(x,y,z)=(t,0,0)과 (x,y,z)=(s,1,0)은 방향벡터가 모두 (1,0,0)이고 서로 만나지 않으므로 평행이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0301-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공간에서 직선·평면의 위치 관계: 방향벡터와 평면의 법선벡터를 비교하면 평행·수직을 확인할 수 있다. 간단한 좌표 설정으로 서로 다른 평행 직선을 증명할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼수선의 정리",
+      "title_code": "03-02",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-02에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0302-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "삼수선의 정리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0302-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "삼수선의 정리",
+              "text": "평면 위의 한 직선이 공간의 사선의 정사영과 수직이면 그 사선과도 수직이다. 정사영과 수직 관계를 구별해 적용한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0302-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "평면 위 직선이 사선의 정사영과 수직일 때 사선과의 관계는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "사선의 평면 성분이 x방향이고 평면 안의 직선이 y방향이면 두 방향벡터의 내적이 0이므로 직교한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0302-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "평면 위 직선이 사선의 정사영과 수직일 때 사선과의 관계는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "사선의 평면 성분이 x방향이고 평면 안의 직선이 y방향이면 두 방향벡터의 내적이 0이므로 직교한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "수직"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0302-quiz",
+                "kind": "quiz",
+                "prompt": "평면 위 직선이 사선의 정사영과 수직일 때 사선과의 관계는?",
+                "options": [
+                  "수직",
+                  "평행",
+                  "항상 같은 직선"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 수직",
+                "incorrect_feedback": "정답은 수직입니다. 사선의 평면 성분이 x방향이고 평면 안의 직선이 y방향이면 두 방향벡터의 내적이 0이므로 직교한다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "사선의 평면 성분이 x방향이고 평면 안의 직선이 y방향이면 두 방향벡터의 내적이 0이므로 직교한다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0302-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "삼수선의 정리: 평면 위의 한 직선이 공간의 사선의 정사영과 수직이면 그 사선과도 수직이다. 정사영과 수직 관계를 구별해 적용한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "정사영의 뜻과 길이",
+      "title_code": "03-03",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-03에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0303-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "정사영의 뜻과 길이"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0303-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정사영의 뜻과 길이",
+              "text": "도형을 한 평면에 수직으로 비춘 것이 정사영이다. 선분과 평면이 이루는 예각이 θ이고 선분 길이가 L이면 정사영 길이는 L cosθ이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0303-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "길이 10인 선분이 평면과 60°를 이룰 때 정사영 길이는?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "길이 8인 선분이 평면과 60°를 이루면 정사영 길이는 8cos60°=4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0303-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "길이 10인 선분이 평면과 60°를 이룰 때 정사영 길이는?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "길이 8인 선분이 평면과 60°를 이루면 정사영 길이는 8cos60°=4이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0303-quiz",
+                "kind": "quiz",
+                "prompt": "길이 10인 선분이 평면과 60°를 이룰 때 정사영 길이는?",
+                "options": [
+                  "5",
+                  "10",
+                  "5√3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 5",
+                "incorrect_feedback": "정답은 5입니다. 길이 8인 선분이 평면과 60°를 이루면 정사영 길이는 8cos60°=4이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "길이 8인 선분이 평면과 60°를 이루면 정사영 길이는 8cos60°=4이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0303-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "정사영의 뜻과 길이: 도형을 한 평면에 수직으로 비춘 것이 정사영이다. 선분과 평면이 이루는 예각이 θ이고 선분 길이가 L이면 정사영 길이는 L cosθ이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "좌표공간의 점과 좌표",
+      "title_code": "03-04",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-04에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0304-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "좌표공간의 점과 좌표"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0304-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "좌표공간의 점과 좌표",
+              "text": "공간의 한 점은 세 좌표 (x,y,z)로 나타내며 각 좌표는 세 좌표축에 평행하게 잰 위치를 나타낸다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0304-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 P=(−2,4,1)의 z좌표를 고르세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "P=(2,−1,3)은 x축 방향 2, y축 방향 −1, z축 방향 3의 위치를 뜻한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0304-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 P=(−2,4,1)의 z좌표를 고르세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "P=(2,−1,3)은 x축 방향 2, y축 방향 −1, z축 방향 3의 위치를 뜻한다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "1"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0304-quiz",
+                "kind": "quiz",
+                "prompt": "점 P=(−2,4,1)의 z좌표를 고르세요.",
+                "options": [
+                  "1",
+                  "−2",
+                  "4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 1",
+                "incorrect_feedback": "정답은 1입니다. P=(2,−1,3)은 x축 방향 2, y축 방향 −1, z축 방향 3의 위치를 뜻한다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "P=(2,−1,3)은 x축 방향 2, y축 방향 −1, z축 방향 3의 위치를 뜻한다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0304-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "좌표공간의 점과 좌표: 공간의 한 점은 세 좌표 (x,y,z)로 나타내며 각 좌표는 세 좌표축에 평행하게 잰 위치를 나타낸다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "공간의 두 점 사이 거리",
+      "title_code": "03-05",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-05에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0305-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "공간의 두 점 사이 거리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0305-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "공간의 두 점 사이 거리",
+              "text": "A(x₁,y₁,z₁), B(x₂,y₂,z₂)의 거리는 √((x₂−x₁)²+(y₂−y₁)²+(z₂−z₁)²)이다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0305-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(0,0,0)과 (2,3,6) 사이 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A=(1,2,3), B=(4,6,3)이면 거리는 √(9+16)=5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0305-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(0,0,0)과 (2,3,6) 사이 거리를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "A=(1,2,3), B=(4,6,3)이면 거리는 √(9+16)=5이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "7"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0305-quiz",
+                "kind": "quiz",
+                "prompt": "(0,0,0)과 (2,3,6) 사이 거리를 구하세요.",
+                "options": [
+                  "7",
+                  "6",
+                  "11"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: 7",
+                "incorrect_feedback": "정답은 7입니다. A=(1,2,3), B=(4,6,3)이면 거리는 √(9+16)=5이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "A=(1,2,3), B=(4,6,3)이면 거리는 √(9+16)=5이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0305-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공간의 두 점 사이 거리: A(x₁,y₁,z₁), B(x₂,y₂,z₂)의 거리는 √((x₂−x₁)²+(y₂−y₁)²+(z₂−z₁)²)이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "공간에서 선분의 내분점·외분점",
+      "title_code": "03-06",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-06에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0306-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "공간에서 선분의 내분점·외분점"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0306-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "공간에서 선분의 내분점·외분점",
+              "text": "A와 B를 AP:PB=m:n으로 내분하는 점은 (nA+mB)/(m+n)이다. 좌표별로 같은 가중평균을 적용한다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0306-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A=(1,0,2), B=(7,6,8)을 1:2로 내분하는 점을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A=(0,0,0), B=(6,3,9), AP:PB=1:2이면 P=(2,1,3)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0306-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A=(1,0,2), B=(7,6,8)을 1:2로 내분하는 점을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "A=(0,0,0), B=(6,3,9), AP:PB=1:2이면 P=(2,1,3)이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(3,2,4)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0306-quiz",
+                "kind": "quiz",
+                "prompt": "A=(1,0,2), B=(7,6,8)을 1:2로 내분하는 점을 구하세요.",
+                "options": [
+                  "(3,2,4)",
+                  "(5,4,6)",
+                  "(2,3,4)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: (3,2,4)",
+                "incorrect_feedback": "정답은 (3,2,4)입니다. A=(0,0,0), B=(6,3,9), AP:PB=1:2이면 P=(2,1,3)이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "A=(0,0,0), B=(6,3,9), AP:PB=1:2이면 P=(2,1,3)이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0306-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "공간에서 선분의 내분점·외분점: A와 B를 AP:PB=m:n으로 내분하는 점은 (nA+mB)/(m+n)이다. 좌표별로 같은 가중평균을 적용한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "구의 방정식",
+      "title_code": "03-07",
+      "unit": "03",
+      "unit_name": "공간도형",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12기하03-07에 연결한 신규 후보입니다.",
+        "좌표와 수치는 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-0307-open",
+          "template": "opening",
+          "title": "질문 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "구의 방정식"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "주어진 좌표·길이·각·관계를 그림과 식으로 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0307-concept",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "구의 방정식",
+              "text": "중심 C=(a,b,c), 반지름 R인 구는 (x−a)²+(y−b)²+(z−c)²=R²로 나타낸다."
+            },
+            {
+              "type": "formula",
+              "title": "2015 공식 기준 후보",
+              "text": "12기하03-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "좌표계, 기하적 정의, 방향, 길이, 비율과 각의 단위를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0307-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "중심이 원점이고 반지름이 3인 구의 방정식을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "중심 (1,−2,3), 반지름 2인 구는 (x−1)²+(y+2)²+(z−3)²=4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "구한 좌표나 방정식을 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-0307-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "중심이 원점이고 반지름이 3인 구의 방정식을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정의와 조건을 표시한 뒤 좌표 또는 벡터 계산을 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "중심 (1,−2,3), 반지름 2인 구는 (x−1)²+(y+2)²+(z−3)²=4이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+y²+z²=9"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-0307-quiz",
+                "kind": "quiz",
+                "prompt": "중심이 원점이고 반지름이 3인 구의 방정식을 쓰세요.",
+                "options": [
+                  "x²+y²+z²=9",
+                  "x²+y²+z²=3",
+                  "(x−3)²+y²+z²=9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다: x²+y²+z²=9",
+                "incorrect_feedback": "정답은 x²+y²+z²=9입니다. 중심 (1,−2,3), 반지름 2인 구는 (x−1)²+(y+2)²+(z−3)²=4이다.",
+                "hints": [
+                  "조건을 확인하고 식을 세워 보세요.",
+                  "중심 (1,−2,3), 반지름 2인 구는 (x−1)²+(y+2)²+(z−3)²=4이다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-0307-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "구의 방정식: 중심 C=(a,b,c), 반지름 R인 구는 (x−a)²+(y−b)²+(z−c)²=R²로 나타낸다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의·조건·계산 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

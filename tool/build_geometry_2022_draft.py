@@ -23,7 +23,11 @@ def main() -> None:
     original: Counter[str] = Counter()
     for path in sorted(MANUSCRIPTS.glob("*기하*_BookData_시범.json")):
         book = json.loads(path.read_text(encoding="utf-8"))
-        matches = list(CODE.finditer(" ".join(book.get("tags", []))))
+        tags = book.get("tags", [])
+        # 2015 and 2022 Geometry reuse the code prefix and numbers with different meanings.
+        if book.get("curriculum_version") != "2022" and not any(tag in {"2022 개정", "2022 개정 후보"} for tag in tags):
+            continue
+        matches = list(CODE.finditer(" ".join(tags)))
         codes = sorted({match.group(0) for match in matches})
         if not codes:
             continue
