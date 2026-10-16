@@ -44,6 +44,7 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   Timer? _pollTimer;
   Timer? _examCountdownTimer;
   int? _remainingSeconds;
+  bool _timerVisible = true;
   final DateTime _examStartedAt = DateTime.now();
   bool _courseModuleCompletionSubmitted = false;
   bool _continueLoaded = false;
