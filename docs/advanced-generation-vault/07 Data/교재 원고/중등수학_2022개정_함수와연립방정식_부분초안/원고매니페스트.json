@@ -1,0 +1,23 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수02-17",
+    "9수02-18"
+  ],
+  "official_criteria": {
+    "9수02-17": "일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다",
+    "9수02-18": "두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다"
+  },
+  "module_count": 2,
+  "page_count": 12,
+  "interactive_blocks": [
+    "ms22-0217-quiz",
+    "ms22-0218-quiz"
+  ],
+  "curriculum_review": "pending",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}

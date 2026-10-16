@@ -1,0 +1,452 @@
+{
+  "schema_version": 2,
+  "title": "중등수학 2022 개정 · 함수와 연립방정식 부분 후보",
+  "subtitle": "공식 기준 후보와 원고·native quiz 연결",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": [
+    "9수02-17",
+    "9수02-18"
+  ],
+  "standard_coverage": "partial",
+  "grade_semester_status": "not_assigned",
+  "tags": [
+    "중등수학",
+    "2022 개정",
+    "학년·학기 미배정",
+    "부분 원고 후보",
+    "교사·수학 검수 대기",
+    "권리 검토 대기",
+    "성취기준 후보: 9수02-17",
+    "성취기준 후보: 9수02-18"
+  ],
+  "chapters": [
+    {
+      "title": "두 변수 일차방정식과 일차함수의 그래프",
+      "intro": [
+        "공식 기준: 9수02-17 일차함수와 미지수가 2개인 일차방정식의 관계를 설명할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-17 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-17. 이 단원의 조작 자료는 앱 내 BookData 지면과 native quiz에 별도 보존합니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-linear-equation-function-opening",
+          "template": "opening",
+          "title": "두 수의 합이 6이라는 조건을 좌표평면의 점들로 나타내면 어떤 모양일까요?",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 수의 합이 6이라는 조건을 좌표평면의 점들로 나타내면 어떤 모양일까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "두 변수 일차방정식과 일차함수의 그래프의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-equation-function-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "독립 체험 파일 앱 내 BookData 지면과 native quiz에서 값을 바꾸고 결과를 관찰하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "값을 바꾸어도 유지되는 관계는 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 조건만 바꾸고, 바꾸기 전후를 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "체험 도구는 원고와 별도 파일로 보존됩니다. 앱에서 자동 실행되는 기능은 아닙니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-equation-function-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "두 변수 일차방정식 x+y=6의 해는 x+y=6을 만족하는 순서쌍 (x,y)입니다. y=6−x로 고쳐 쓰면 일차함수의 그래프 위 점과 같은 점들이 해임을 볼 수 있습니다. 일반적으로 ax+by=c에서 b≠0이면 y=(c−ax)/b로 나타내어 직선 그래프와 연결할 수 있습니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-17"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-equation-function-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "x+y=6의 해인 순서쌍 세 개를 찾고 그래프에서 공통점을 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "x=0, 2, 6을 차례로 대입하면 (0,6), (2,4), (6,0)을 얻습니다. 세 점은 모두 y=6−x를 만족하므로 같은 직선 위에 있고, 이 직선의 점은 모두 원래 방정식의 해입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-equation-function-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "2x+y=8을 y에 대한 식으로 나타내고, x=1일 때 그래프 위의 점을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "y=8−2x입니다. x=1이면 y=6이므로 점 (1,6)입니다. 2×1+6=8이므로 원래 방정식에도 맞습니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "y=8−2x입니다. x=1이면 y=6이므로 점 (1,6)입니다. 2×1+6=8이므로 원래 방정식에도 맞습니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0217-quiz",
+                "kind": "quiz",
+                "prompt": "2x+y=8을 만족하는 점은 무엇인가요?",
+                "options": [
+                  "(1, 6)",
+                  "(1, 5)",
+                  "(2, 3)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "2×1+6=8이므로 해입니다.",
+                "incorrect_feedback": "각 좌표를 2x+y=8에 대입해 확인하세요.",
+                "hints": [
+                  "x=1을 대입하면 2+y=8입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-equation-function-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 변수 일차방정식과 일차함수의 그래프의 관계를 식과 그래프로 설명한다. · 찾은 점을 원래 식에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "두 변수 일차방정식과 일차함수의 그래프의 관계를 식과 그래프로 설명한다.",
+                "찾은 점을 원래 식에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "두 직선의 교점과 연립일차방정식",
+      "intro": [
+        "공식 기준: 9수02-18 두 일차함수의 그래프와 연립일차방정식의 관계를 설명할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-18 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-18. 이 단원의 조작 자료는 앱 내 BookData 지면과 native quiz에 별도 보존합니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-two-lines-system-opening",
+          "template": "opening",
+          "title": "두 직선이 만나는 점의 좌표는 두 직선의 식을 동시에 만족할까요?",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 직선이 만나는 점의 좌표는 두 직선의 식을 동시에 만족할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "두 직선의 교점과 연립일차방정식의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-two-lines-system-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "조작",
+              "text": "독립 체험 파일 앱 내 BookData 지면과 native quiz에서 값을 바꾸고 결과를 관찰하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "값을 바꾸어도 유지되는 관계는 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 조건만 바꾸고, 바꾸기 전후를 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "체험 도구는 원고와 별도 파일로 보존됩니다. 앱에서 자동 실행되는 기능은 아닙니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-two-lines-system-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "두 일차함수 y=f(x), y=g(x)의 그래프가 만나는 점에서는 같은 x에 대해 f(x)=g(x)입니다. 따라서 교점의 좌표는 두 식을 동시에 만족하는 순서쌍이며, 연립일차방정식의 해와 같습니다. 교점이 없으면 공통 해가 없고, 두 직선이 겹치면 공통 해가 여러 개입니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-18"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-two-lines-system-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=x+1과 y=−x+5의 그래프 교점과 이에 대응하는 연립방정식의 해를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "교점에서는 x+1=−x+5이므로 2x=4, x=2입니다. y=2+1=3이므로 교점은 (2,3)입니다. 두 식에 대입하면 3=2+1, 3=−2+5로 모두 성립합니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-two-lines-system-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=2x−1과 y=−x+8의 그래프 교점 좌표를 구하고 두 식에 대입해 확인하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2x−1=−x+8에서 3x=9, x=3입니다. y=2×3−1=5이므로 교점은 (3,5)입니다. 두 번째 식도 −3+8=5를 줍니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "2x−1=−x+8에서 3x=9, x=3입니다. y=2×3−1=5이므로 교점은 (3,5)입니다. 두 번째 식도 −3+8=5를 줍니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0218-quiz",
+                "kind": "quiz",
+                "prompt": "y=x+1과 y=−x+5의 교점은 무엇인가요?",
+                "options": [
+                  "(2, 3)",
+                  "(3, 2)",
+                  "(1, 4)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x+1=−x+5에서 x=2, y=3입니다.",
+                "incorrect_feedback": "먼저 두 식의 y값을 같게 놓고 x를 구하세요.",
+                "hints": [
+                  "x+1=−x+5를 풀어 x를 찾습니다.",
+                  "구한 x를 식에 대입해 y를 찾습니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-two-lines-system-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 직선의 교점과 연립일차방정식의 관계를 식과 그래프로 설명한다. · 찾은 점을 원래 식에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "두 직선의 교점과 연립일차방정식의 관계를 식과 그래프로 설명한다.",
+                "찾은 점을 원래 식에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "candidate_partial_draft",
+    "teacher_review_status": "pending",
+    "math_review_status": "pending",
+    "rights_status": "pending",
+    "publication_eligibility": "not_eligible",
+    "source": "교육부 고시 제2022-33호 별책8 공식 기준 인덱스",
+    "content_rights": "newly authored candidate; independent rights decision pending",
+    "semester_assignment": "not assigned; middle-school codes are grade-band standards"
+  }
+}

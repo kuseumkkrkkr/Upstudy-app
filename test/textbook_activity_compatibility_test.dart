@@ -10,6 +10,7 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json',
