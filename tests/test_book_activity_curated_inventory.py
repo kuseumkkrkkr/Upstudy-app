@@ -5,6 +5,7 @@ from pathlib import Path
 import re
 from tools.migrate_polynomial_area import SOURCE_HTML_SHA256, PAGE_ID
 from tools.migrate_set_operations import SOURCE_HTML_SHA256 as SET_SHA256, PAGE_ID as SET_PAGE_ID
+from tools.migrate_coordinate_point import SOURCE_HTML_SHA256 as POINT_SHA256, PAGE_ID as POINT_PAGE_ID
 
 
 def test_curated_inventory_counts_and_private_candidate_provenance():
@@ -13,10 +14,11 @@ def test_curated_inventory_counts_and_private_candidate_provenance():
     assets = report['assets']
     assert len(assets) == report['asset_count'] == 106
     assert Counter(asset['status'] for asset in assets) == {
-        'source_review_required_not_ported': 104,
-        'private_candidate_local_reader_verified_not_published': 2}
+        'source_review_required_not_ported': 103,
+        'private_candidate_local_reader_verified_not_published': 3}
     reviewed = {'html-d2b300ca0f76adab': (SOURCE_HTML_SHA256, PAGE_ID),
-                'html-244e439259c143b2': (SET_SHA256, SET_PAGE_ID)}
+                'html-244e439259c143b2': (SET_SHA256, SET_PAGE_ID),
+                'html-3050dd8407807a29': (POINT_SHA256, POINT_PAGE_ID)}
     for asset_id, (digest, page_id) in reviewed.items():
         candidate = next(asset for asset in assets if asset['asset_id'] == asset_id)
         assert candidate['sha256'] == digest
@@ -39,3 +41,12 @@ def test_curated_inventory_counts_and_private_candidate_provenance():
     assert proof['bytes'] == 5763257 and proof['status'] == 200
     assert proof['mimeType'] == 'application/javascript'
     assert proof['fromDiskCache'] is False and proof['fromServiceWorker'] is False
+    point_scope = capabilities['kinds']['coordinatePoint']
+    point_proof = json.loads((root / 'design/student/audits/evidence/2026-10-17-coordinate-source/preview-browser-bundle.json').read_text(encoding='utf-8'))
+    assert point_proof['deployment_id'] == point_scope['preview_deployment']
+    assert point_proof['js_sha256'] == point_scope['preview_bundle_sha256']
+    assert point_proof['js_bytes'] == 5764824 and point_proof['status'] == 200
+    assert point_proof['mime'] == 'application/javascript'
+    assert point_proof['disk_cache'] is False and point_proof['service_worker'] is False
+    assert point_proof['root_url'].startswith('https://aiflow-web-canary-5obgs9007-')
+    assert all((root / 'design/student/audits/evidence/2026-10-17-coordinate-source' / name).is_file() for name in point_proof['screenshots'])

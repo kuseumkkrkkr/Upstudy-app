@@ -1,6 +1,6 @@
 # Interactive textbook family ledger
 
-Current checkpoint after corrected setOperations verification: **2/106** explicitly mapped private reader candidates; **104/106** unreviewed/unresolved; **0/106** public/production-verified. Older 1/106 paragraphs below are historical polynomialArea checkpoints. Nine broader families remain open. Latest set report: [corrected Preview evidence](2026-10-17-set-operations-preview.md).
+Current checkpoint after coordinate/disclosure and singleton-scatter verification: **3/106** explicitly mapped private reader candidates; **103/106** unreviewed/unresolved; **0/106** public/production-verified. Older 1/106 paragraphs below are historical polynomialArea checkpoints. Nine broader families remain open. Latest report: [coordinate Preview evidence](2026-10-17-coordinate-source-preview.md); previous [corrected set Preview](2026-10-17-set-operations-preview.md).
 
 Starting source: D: hotfix `ad4a763`; `origin/hotfix` matched at inspection. The 106-HTML inventory is a historical static inventory, **not** 106 verified ports or the current author-folder count. Current author files may have changed; verify exact hashes before each port. No original author files are edited here.
 
@@ -8,7 +8,7 @@ Starting source: D: hotfix `ad4a763`; `origin/hotfix` matched at inspection. The
 | --- | --- | --- | --- |
 | P1 | Existing graph / number-line regression | Existing observation cursor, safe graph expressions, squareRootNumberLine | Recheck in the same synthetic Preview as polynomialArea; no inference of full graph-source parity. |
 | P1 | parameter_dependent_metrics | rightTriangle; new polynomialArea; graph observation readouts | Other formulas/measurements unreviewed. Read exact source render/event paths before choosing a registered payload. |
-| P1 | cartesian_point_drag | Integer coordinatePoint/coordinateWalk | Curve constraints and other point dragging remain unported; source/gesture comparison required. |
+| P1 | cartesian_point_drag | Integer coordinatePoint/coordinateWalk; one actual coordinate source mapped with quiz/disclosure | Coordinate source local candidate + synthetic Preview verified. Curve constraints and other point dragging remain unported. |
 | P2 | algebra_area_partitions | New polynomialArea: a,b integer 1..8, expansion, source-static partition | Private candidate and local reader verified for one hash only. Other partition HTML and any piece dragging are not covered. |
 | P2 | vector_transformations | Add/subtract/scalar and inner product/projection | Matrices, basis/affine changes and 3D remain unsupported. |
 | P2 | conics_3d_distance | Existing bounded parabolaDistance | Other conics and 3D distance scenes need explicit source review/contracts. |

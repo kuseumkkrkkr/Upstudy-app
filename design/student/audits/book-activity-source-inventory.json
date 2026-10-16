@@ -4872,8 +4872,18 @@
         "draw",
         "quadrant"
       ],
-      "manuscript_mapping": "unresolved_until_explicit_source_index",
-      "status": "source_review_required_not_ported"
+      "manuscript_mapping": "중등수학_좌표와순서쌍_BookData_시범.json#ms1-coordinate-experiment",
+      "status": "private_candidate_local_reader_verified_not_published",
+      "verification_evidence": {
+        "contract": "deploy/vercel/BOOK_DISCLOSURE.md",
+        "ledger": "design/student/audits/2026-10-17-coordinate-source-preview.md",
+        "source_book_sha256": "bec3409afbda2f556d8cb9e1b3b782173914fbd945e2ba06c8d19d70f3d4aaf6",
+        "candidate_sha256": "d7f929ea0f7ac6a18cd5525f3f1c1194a3cce67f296dc398b34356a9a8cf2d6c",
+        "publication_approved": false,
+        "production_reader_verified": false,
+        "synthetic_preview_deployment": "dpl_FdY7zwvejJtVNHvQYbtKLWKiX6Sp",
+        "synthetic_preview_js_sha256": "2111c1d49503f877fe0cfe3ab847488ea583818c049dbf51054d6e89e6f78489"
+      }
     },
     {
       "asset_id": "html-83a4a5f34ecf39f0",

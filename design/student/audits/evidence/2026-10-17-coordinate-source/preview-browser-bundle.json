@@ -1,0 +1,20 @@
+{
+  "deployment_id": "dpl_FdY7zwvejJtVNHvQYbtKLWKiX6Sp",
+  "source_commit": "06c60b759b005534b464c738a6e6d87306d8e915",
+  "url": "https://aiflow-web-canary-5obgs9007-cw20208021-9200s-projects.vercel.app/main.dart.js",
+  "status": 200,
+  "mime": "application/javascript",
+  "js_bytes": 5764824,
+  "js_sha256": "2111c1d49503f877fe0cfe3ab847488ea583818c049dbf51054d6e89e6f78489",
+  "disk_cache": false,
+  "service_worker": false,
+  "root_url": "https://aiflow-web-canary-5obgs9007-cw20208021-9200s-projects.vercel.app/",
+  "preview_kind": "synthetic harness only, private manuscript loopback only",
+  "screenshots": [
+    "preview-drag-390.png",
+    "preview-controls-390.png",
+    "preview-quiz-1280.png",
+    "preview-disclosure-1280.png",
+    "preview-disclosure-390.png"
+  ]
+}
