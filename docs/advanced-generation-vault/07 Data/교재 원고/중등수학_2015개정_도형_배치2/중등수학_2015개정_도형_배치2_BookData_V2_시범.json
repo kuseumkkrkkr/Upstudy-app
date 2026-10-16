@@ -1,0 +1,1223 @@
+{
+  "schema_version": 2,
+  "title": "중학교 수학 2015 개정 · 도형 부분 후보 배치 2",
+  "subtitle": "공식 기준별 개념·예제·연습·native quiz",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "9수04-11",
+    "9수04-12",
+    "9수04-13",
+    "9수04-14",
+    "9수04-15",
+    "9수04-16",
+    "9수04-17",
+    "9수04-18",
+    "9수04-19",
+    "9수04-20"
+  ],
+  "standard_coverage": "partial",
+  "grade_semester_status": "not_assigned",
+  "tags": [
+    "중학교 수학",
+    "2015 개정",
+    "학년군 기준",
+    "학기 미배정",
+    "부분 원고 후보",
+    "교사·수학 검수 대기",
+    "권리 검토 대기",
+    "성취기준 후보: 9수04-11",
+    "성취기준 후보: 9수04-12",
+    "성취기준 후보: 9수04-13",
+    "성취기준 후보: 9수04-14",
+    "성취기준 후보: 9수04-15",
+    "성취기준 후보: 9수04-16",
+    "성취기준 후보: 9수04-17",
+    "성취기준 후보: 9수04-18",
+    "성취기준 후보: 9수04-19",
+    "성취기준 후보: 9수04-20"
+  ],
+  "chapters": [
+    {
+      "title": "삼각형의 외심과 내심",
+      "intro": [
+        "삼각형의 외심과 내심의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-11; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-11 삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-11-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "삼각형의 외심과 내심",
+              "text": "외심은 세 변의 수직이등분선의 교점이므로 세 꼭짓점에서 같은 거리에 있다. 내심은 세 내각의 이등분선의 교점이므로 세 변까지의 거리가 같다. 외심은 외접원의 중심, 내심은 내접원의 중심이다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-11-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "외심은 세 변의 수직이등분선의 교점이므로 세 꼭짓점에서 같은 거리에 있다. 내심은 세 내각의 이등분선의 교점이므로 세 변까지의 거리가 같다. 외심은 외접원의 중심, 내심은 내접원의 중심이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "삼각형의 외심과 내심의 성질을 이해하고 설명할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-11-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "삼각형의 외심 O에서 한 꼭짓점까지의 거리가 5 cm일 때 다른 두 꼭짓점까지의 거리는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "외심은 세 꼭짓점에서 같은 거리에 있으므로 각각 5 cm입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-11-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "삼각형의 내심에서 세 변까지의 거리는 어떤 관계인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "세 내각의 이등분선 위의 점은 두 변까지 거리가 같으므로 내심은 세 변까지 거리가 같습니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-11-quiz",
+                "kind": "quiz",
+                "prompt": "삼각형의 외심 O에서 한 꼭짓점까지의 거리가 5 cm일 때 다른 두 꼭짓점까지의 거리는 얼마인가요?",
+                "options": [
+                  "모두 5 cm",
+                  "서로 다르다",
+                  "두 꼭짓점만 같다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "외심은 세 꼭짓점에서 같은 거리에 있으므로 각각 5 cm입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-11-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "외심은 세 변의 수직이등분선의 교점이므로 세 꼭짓점에서 같은 거리에 있다. 내심은 세 내각의 이등분선의 교점이므로 세 변까지의 거리가 같다. 외심은 외접원의 중심, 내심은 내접원의 중심이다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "사각형의 성질",
+      "intro": [
+        "사각형의 성질의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-12; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-12 사각형의 성질을 이해하고 설명할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-12-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "사각형의 성질",
+              "text": "평행사변형은 두 쌍의 대변이 평행하고 길이가 같으며 대각선이 서로를 이등분한다. 직사각형은 네 각이 직각, 마름모는 네 변의 길이가 같고, 정사각형은 두 성질을 모두 갖는다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-12-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "평행사변형은 두 쌍의 대변이 평행하고 길이가 같으며 대각선이 서로를 이등분한다. 직사각형은 네 각이 직각, 마름모는 네 변의 길이가 같고, 정사각형은 두 성질을 모두 갖는다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "사각형의 성질을 이해하고 설명할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-12-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "평행사변형의 한 각이 70°일 때 이웃한 각을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "이웃한 내각의 합은 180°이므로 110°입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-12-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "평행사변형의 대각선이 만나는 점에서 한쪽 대각선 반쪽이 4 cm이면 나머지 반쪽은 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "대각선은 서로를 이등분하므로 나머지 반쪽도 4 cm입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-12-quiz",
+                "kind": "quiz",
+                "prompt": "평행사변형의 한 각이 70°일 때 이웃한 각을 구하세요.",
+                "options": [
+                  "110°",
+                  "70°",
+                  "140°"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "이웃한 내각의 합은 180°이므로 110°입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-12-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "평행사변형은 두 쌍의 대변이 평행하고 길이가 같으며 대각선이 서로를 이등분한다. 직사각형은 네 각이 직각, 마름모는 네 변의 길이가 같고, 정사각형은 두 성질을 모두 갖는다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "도형의 닮음",
+      "intro": [
+        "도형의 닮음의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-13; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-13 도형의 닮음의 의미와 닮은 도형의 성질을 이해한다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-13-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "도형의 닮음",
+              "text": "두 도형이 닮음이면 대응각은 각각 같고 대응변의 길이의 비는 일정하다. 대응변 비가 k이면 둘레 비는 k, 넓이 비는 k²이다. 확대·축소해도 모양은 보존된다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-13-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "두 도형이 닮음이면 대응각은 각각 같고 대응변의 길이의 비는 일정하다. 대응변 비가 k이면 둘레 비는 k, 넓이 비는 k²이다. 확대·축소해도 모양은 보존된다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "도형의 닮음의 의미와 닮은 도형의 성질을 이해한다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-13-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "닮음비가 2:3인 두 도형의 넓이의 비를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "넓이의 비는 닮음비의 제곱이므로 4:9입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-13-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "두 닮은 삼각형의 대응변 비가 3:5이고 작은 삼각형의 둘레가 12 cm이면 큰 삼각형의 둘레는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "둘레 비도 3:5이므로 큰 둘레는 12×5/3=20 cm입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-13-quiz",
+                "kind": "quiz",
+                "prompt": "닮음비가 2:3인 두 도형의 넓이의 비를 구하세요.",
+                "options": [
+                  "4:9",
+                  "2:3",
+                  "4:6"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "넓이의 비는 닮음비의 제곱이므로 4:9입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-13-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 도형이 닮음이면 대응각은 각각 같고 대응변의 길이의 비는 일정하다. 대응변 비가 k이면 둘레 비는 k, 넓이 비는 k²이다. 확대·축소해도 모양은 보존된다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼각형의 닮음 조건",
+      "intro": [
+        "삼각형의 닮음 조건의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-14; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-14 삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-14-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "삼각형의 닮음 조건",
+              "text": "두 삼각형에서 두 쌍의 대응각이 같으면 AA 닮음이다. 세 쌍의 대응변 비가 같거나 두 쌍의 대응변 비와 끼인각이 각각 같을 때도 닮음이다. 대응 순서를 먼저 맞춘다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-14-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "두 삼각형에서 두 쌍의 대응각이 같으면 AA 닮음이다. 세 쌍의 대응변 비가 같거나 두 쌍의 대응변 비와 끼인각이 각각 같을 때도 닮음이다. 대응 순서를 먼저 맞춘다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "삼각형의 닮음 조건을 이해하고, 이를 이용하여 두 삼각형이 닮음인지 판별할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-14-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 삼각형에서 두 각이 각각 45°, 60°로 같다면 닮음인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "두 쌍의 대응각이 같으므로 AA 닮음입니다. 나머지 각도 각각 75°입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-14-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "한 쌍의 대응변 비만 같으면 두 삼각형이 닮았다고 할 수 있나요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "아닙니다. 한 쌍의 변 비만으로 각이나 나머지 변 비가 정해지지 않습니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-14-quiz",
+                "kind": "quiz",
+                "prompt": "두 삼각형에서 두 각이 각각 45°, 60°로 같다면 닮음인가요?",
+                "options": [
+                  "AA로 닮음",
+                  "항상 합동",
+                  "한 변 비만으로 닮음"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 쌍의 대응각이 같으므로 AA 닮음입니다. 나머지 각도 각각 75°입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-14-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 삼각형에서 두 쌍의 대응각이 같으면 AA 닮음이다. 세 쌍의 대응변 비가 같거나 두 쌍의 대응변 비와 끼인각이 각각 같을 때도 닮음이다. 대응 순서를 먼저 맞춘다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "평행선과 선분의 길이 비",
+      "intro": [
+        "평행선과 선분의 길이 비의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-15; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-15 평행선 사이의 선분의 길이의 비를 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-15-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "평행선과 선분의 길이 비",
+              "text": "삼각형에서 한 변과 평행한 직선이 나머지 두 변을 자르면 대응 선분의 비가 같다. 평행 조건과 대응점을 확인하고 비례식을 세워 미지 길이를 구한다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-15-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "삼각형에서 한 변과 평행한 직선이 나머지 두 변을 자르면 대응 선분의 비가 같다. 평행 조건과 대응점을 확인하고 비례식을 세워 미지 길이를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "평행선 사이의 선분의 길이의 비를 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-15-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "△ABC에서 D는 AB, E는 AC 위에 있고 DE∥BC이다. AD=2, DB=3, AE=4일 때 EC를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "AD:DB=AE:EC이므로 2:3=4:EC, 따라서 EC=6입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-15-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "AD:DB=4:5이고 AE=12일 때 EC를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "4:5=12:EC이므로 EC=15입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-15-quiz",
+                "kind": "quiz",
+                "prompt": "△ABC에서 D는 AB, E는 AC 위에 있고 DE∥BC이다. AD=2, DB=3, AE=4일 때 EC를 구하세요.",
+                "options": [
+                  "6",
+                  "8",
+                  "10"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "AD:DB=AE:EC이므로 2:3=4:EC, 따라서 EC=6입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-15-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "삼각형에서 한 변과 평행한 직선이 나머지 두 변을 자르면 대응 선분의 비가 같다. 평행 조건과 대응점을 확인하고 비례식을 세워 미지 길이를 구한다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "피타고라스 정리",
+      "intro": [
+        "피타고라스 정리의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-16; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-16 피타고라스 정리를 이해하고 설명할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-16-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "피타고라스 정리",
+              "text": "직각삼각형에서 직각을 낀 두 변의 길이를 a,b, 빗변을 c라 하면 a²+b²=c²이다. 역으로 세 변이 이 관계를 만족하면 가장 긴 변의 맞은편 각은 직각이다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-16-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "직각삼각형에서 직각을 낀 두 변의 길이를 a,b, 빗변을 c라 하면 a²+b²=c²이다. 역으로 세 변이 이 관계를 만족하면 가장 긴 변의 맞은편 각은 직각이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "피타고라스 정리를 이해하고 설명할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-16-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "직각변이 5 cm, 12 cm인 직각삼각형의 빗변을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "5²+12²=25+144=169=13²이므로 빗변은 13 cm입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-16-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "빗변 10 cm, 한 직각변 6 cm인 삼각형에서 다른 직각변을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "다른 변의 제곱은 10²−6²=64이므로 길이는 8 cm입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-16-quiz",
+                "kind": "quiz",
+                "prompt": "직각변이 5 cm, 12 cm인 직각삼각형의 빗변을 구하세요.",
+                "options": [
+                  "13 cm",
+                  "17 cm",
+                  "7 cm"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "5²+12²=25+144=169=13²이므로 빗변은 13 cm입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-16-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "직각삼각형에서 직각을 낀 두 변의 길이를 a,b, 빗변을 c라 하면 a²+b²=c²이다. 역으로 세 변이 이 관계를 만족하면 가장 긴 변의 맞은편 각은 직각이다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼각비의 뜻과 값",
+      "intro": [
+        "삼각비의 뜻과 값의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-17; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-17 삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-17-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "삼각비의 뜻과 값",
+              "text": "직각삼각형의 예각 θ에 대해 sinθ=맞은편/빗변, cosθ=이웃한 변/빗변, tanθ=맞은편/이웃한 변이다. 기준각에 따라 세 변의 역할이 바뀐다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-17-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "직각삼각형의 예각 θ에 대해 sinθ=맞은편/빗변, cosθ=이웃한 변/빗변, tanθ=맞은편/이웃한 변이다. 기준각에 따라 세 변의 역할이 바뀐다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "삼각비의 뜻을 알고, 간단한 삼각비의 값을 구할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-17-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3-4-5 직각삼각형에서 θ의 맞은편 변이 3, 이웃한 변이 4일 때 sinθ, cosθ, tanθ를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "빗변은 5이므로 sinθ=3/5, cosθ=4/5, tanθ=3/4입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-17-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "같은 삼각형에서 맞은편 변이 4이고 이웃한 변이 3인 각 φ의 tanφ를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "tanφ=맞은편/이웃한 변=4/3입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-17-quiz",
+                "kind": "quiz",
+                "prompt": "3-4-5 직각삼각형에서 θ의 맞은편 변이 3, 이웃한 변이 4일 때 sinθ, cosθ, tanθ를 구하세요.",
+                "options": [
+                  "3/5, 4/5, 3/4",
+                  "4/5, 3/5, 4/3",
+                  "3/4, 4/3, 5/4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "빗변은 5이므로 sinθ=3/5, cosθ=4/5, tanθ=3/4입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-17-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "직각삼각형의 예각 θ에 대해 sinθ=맞은편/빗변, cosθ=이웃한 변/빗변, tanθ=맞은편/이웃한 변이다. 기준각에 따라 세 변의 역할이 바뀐다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼각비의 활용",
+      "intro": [
+        "삼각비의 활용의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-18; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-18 삼각비를 활용하여 여러 가지 문제를 해결할 수 있다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-18-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "삼각비의 활용",
+              "text": "직각삼각형에서 삼각비를 이용해 직접 재기 어려운 높이나 거리를 구한다. 관찰점, 수평선, 높이로 직각삼각형을 만들고 기준각과 맞은편·이웃한 변을 표시한다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-18-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "직각삼각형에서 삼각비를 이용해 직접 재기 어려운 높이나 거리를 구한다. 관찰점, 수평선, 높이로 직각삼각형을 만들고 기준각과 맞은편·이웃한 변을 표시한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "삼각비를 활용하여 여러 가지 문제를 해결할 수 있다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-18-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "높이 10 m인 건물에서 수평거리 10 m 떨어진 지점의 앙각 θ에 대해 tanθ를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "맞은편과 이웃한 변이 모두 10 m이므로 tanθ=10/10=1입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-18-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "사다리 길이가 10 m이고 지면과 이루는 각에서 sinθ=3/5일 때 벽에 닿는 높이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "높이는 빗변의 맞은편이므로 10×3/5=6 m입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-18-quiz",
+                "kind": "quiz",
+                "prompt": "높이 10 m인 건물에서 수평거리 10 m 떨어진 지점의 앙각 θ에 대해 tanθ를 구하세요.",
+                "options": [
+                  "1",
+                  "1/2",
+                  "2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "맞은편과 이웃한 변이 모두 10 m이므로 tanθ=10/10=1입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-18-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "직각삼각형에서 삼각비를 이용해 직접 재기 어려운 높이나 거리를 구한다. 관찰점, 수평선, 높이로 직각삼각형을 만들고 기준각과 맞은편·이웃한 변을 표시한다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "원의 현과 접선의 성질",
+      "intro": [
+        "원의 현과 접선의 성질의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-19; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-19 원의 현에 관한 성질과 접선에 관한 성질을 이해한다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-19-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "원의 현과 접선의 성질",
+              "text": "원의 중심에서 현에 내린 수선은 현을 이등분한다. 중심에서 같은 거리에 있는 현의 길이는 같다. 원의 접선은 접점에서 반지름과 수직이며, 한 점에서 그은 두 접선의 길이는 같다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-19-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "원의 중심에서 현에 내린 수선은 현을 이등분한다. 중심에서 같은 거리에 있는 현의 길이는 같다. 원의 접선은 접점에서 반지름과 수직이며, 한 점에서 그은 두 접선의 길이는 같다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "원의 현에 관한 성질과 접선에 관한 성질을 이해한다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-19-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "반지름 13 cm인 원에서 중심과 현 사이 거리가 5 cm일 때 현의 길이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "현의 반쪽 길이를 x라 하면 x²+5²=13²이므로 x=12, 현의 길이는 24 cm입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-19-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "한 점 P에서 원에 그은 두 접선 중 하나가 8 cm일 때 다른 접선 길이는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "같은 외부점에서 그은 접선의 길이는 같으므로 8 cm입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-19-quiz",
+                "kind": "quiz",
+                "prompt": "반지름 13 cm인 원에서 중심과 현 사이 거리가 5 cm일 때 현의 길이를 구하세요.",
+                "options": [
+                  "24 cm",
+                  "18 cm",
+                  "12 cm"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "현의 반쪽 길이를 x라 하면 x²+5²=13²이므로 x=12, 현의 길이는 24 cm입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-19-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "원의 중심에서 현에 내린 수선은 현을 이등분한다. 중심에서 같은 거리에 있는 현의 길이는 같다. 원의 접선은 접점에서 반지름과 수직이며, 한 점에서 그은 두 접선의 길이는 같다."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "원주각의 성질",
+      "intro": [
+        "원주각의 성질의 조건과 성질을 익힙니다.",
+        "2015 개정 중학교 학년군 기준 후보 9수04-20; 학기 귀속은 별도 대조가 필요합니다."
+      ],
+      "sections": [
+        {
+          "title": "기준과 검토 상태",
+          "paragraphs": [
+            "공식 기준 후보: 9수04-20 원주각의 성질을 이해한다.",
+            "새로 작성한 부분 후보입니다. 독립 교사·수학 검토와 권리 검토는 pending입니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms15-geometry-20-opening",
+          "template": "opening",
+          "title": "생각 열기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "원주각의 성질",
+              "text": "같은 호를 보는 원주각의 크기는 같다. 같은 호에 대한 원주각은 중심각의 절반이며, 지름을 보는 원주각은 90°이다. 각의 꼭짓점과 두 끝점이 만드는 호를 확인한다."
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "결론을 얻는 데 꼭 필요한 조건은 무엇인가요?"
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-20-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정의와 성질",
+              "text": "같은 호를 보는 원주각의 크기는 같다. 같은 호에 대한 원주각은 중심각의 절반이며, 지름을 보는 원주각은 90°이다. 각의 꼭짓점과 두 끝점이 만드는 호를 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "원주각의 성질을 이해한다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-20-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "중심각이 100°인 호를 보는 원주각의 크기는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "같은 호의 원주각은 중심각의 절반이므로 50°입니다."
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-20-practice",
+          "template": "practice",
+          "title": "연습",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습문제",
+              "text": "지름의 양 끝점을 잇는 원주각의 크기는 얼마인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "지름에 대한 중심각은 180°이므로 원주각은 90°입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms15-geometry-20-quiz",
+                "kind": "quiz",
+                "prompt": "중심각이 100°인 호를 보는 원주각의 크기는 얼마인가요?",
+                "options": [
+                  "50°",
+                  "100°",
+                  "200°"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "같은 호의 원주각은 중심각의 절반이므로 50°입니다.",
+                "incorrect_feedback": "조건에 맞는 대응 요소와 정리를 다시 확인하세요.",
+                "hints": [
+                  "각과 변의 대응, 또는 필요한 직각삼각형을 먼저 표시하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms15-geometry-20-summary",
+          "template": "summary",
+          "title": "정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "같은 호를 보는 원주각의 크기는 같다. 같은 호에 대한 원주각은 중심각의 절반이며, 지름을 보는 원주각은 90°이다. 각의 꼭짓점과 두 끝점이 만드는 호를 확인한다."
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "candidate_partial_draft",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "rights_status": "pending",
+    "publication_eligibility": "not_eligible",
+    "standard_source": "2015 개정 수학과 교육과정 별책8 공식 추출 텍스트",
+    "content_rights": "newly authored candidate; independent rights decision pending",
+    "semester_assignment": "grade-band only; semester not assigned",
+    "interactive_compatibility_status": "native quiz activities; external interactive-source parity not claimed"
+  }
+}

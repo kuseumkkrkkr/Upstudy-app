@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import runpy
 from pathlib import Path
 from typing import Sequence
@@ -110,7 +111,7 @@ GENERATORS = [
 
 
 def verify_bookdata_references() -> int:
-    source_files = list(MANUSCRIPTS.glob("*BookData*.json"))
+    source_files = sorted(MANUSCRIPTS.rglob("*BookData*.json"))
     output_readmes = [readme for readme in MANUSCRIPTS.rglob("README.md") if readme.parent != MANUSCRIPTS]
     output_dirs = [readme.parent for readme in output_readmes]
     generated_text = []
@@ -121,6 +122,10 @@ def verify_bookdata_references() -> int:
             generated_text.append(readme.read_text(encoding="utf-8"))
         except (UnicodeDecodeError, OSError):
             continue
+    package_index = MANUSCRIPTS / "REMAINING_TEXTBOOKS_DRAFT_PACKAGE_INDEX.md"
+    if not package_index.is_file():
+        raise RuntimeError("Recursive BookData package index is missing")
+    generated_text.append(package_index.read_text(encoding="utf-8"))
     for directory in output_dirs:
         for path in directory.rglob("*"):
             if path.is_file():
@@ -132,6 +137,69 @@ def verify_bookdata_references() -> int:
     if missing:
         raise RuntimeError("BookData sources without a generated package reference: " + ", ".join(missing))
     return len(source_files)
+
+
+def build_draft_package_index() -> int:
+    """Index every recursive BookData artifact and its declared review/interaction signals."""
+    paths = sorted(MANUSCRIPTS.rglob("*BookData*.json"))
+    lines = [
+        "# 재귀 BookData 초안 패키지 색인",
+        "",
+        f"재귀 BookData `{len(paths)}`개를 파일 경로와 선언된 구조·검토 상태로 색인했다. 태그·구조·검토 metadata는 내용 충족이나 독립 승인을 증명하지 않는다.",
+        "",
+        "| BookData | 판본 | 기준 코드 수 | 챕터 | 페이지 | activity block | 외부 HTML 참조 | 게시 적격성 | 교사 검토 | 수학 검토 | 권리 |",
+        "|---|---|---:|---:|---:|---:|---:|---|---|---|---|",
+    ]
+
+    def count_structure(value: object) -> tuple[int, int, int]:
+        chapters = pages = activities = 0
+        if isinstance(value, dict):
+            chapters = int("pages" in value and "title" in value)
+            pages = int("blocks" in value and isinstance(value.get("blocks"), list))
+            activities = int(value.get("type") == "activity" and isinstance(value.get("activity"), dict))
+            for child in value.values():
+                c, p, a = count_structure(child)
+                chapters += c
+                pages += p
+                activities += a
+        elif isinstance(value, list):
+            for child in value:
+                c, p, a = count_structure(child)
+                chapters += c
+                pages += p
+                activities += a
+        return chapters, pages, activities
+
+    for path in paths:
+        data = json.loads(path.read_text(encoding="utf-8-sig"))
+        metadata = data.get("metadata", {})
+        metadata = metadata if isinstance(metadata, dict) else {}
+        codes = data.get("standard_codes", [])
+        code_count = len(codes) if isinstance(codes, list) else int(bool(codes))
+        code_count += int(bool(data.get("standard_code")) and not code_count)
+        chapters, pages, activities = count_structure(data.get("chapters", []))
+        assets = metadata.get("external_interactive_assets", [])
+        asset_count = len(assets) if isinstance(assets, list) else 0
+        relative = path.relative_to(MANUSCRIPTS).as_posix()
+        label = str(data.get("title") or path.name).replace("|", "\\|")
+        link = f"[{label}](<{relative}>)"
+        values = [
+            link,
+            str(data.get("curriculum_version") or "미기록"),
+            str(code_count),
+            str(chapters),
+            str(pages),
+            str(activities),
+            str(asset_count),
+            str(metadata.get("publication_eligibility", data.get("publication_eligibility", "unspecified"))),
+            str(metadata.get("teacher_review_status", metadata.get("teacher_review", "unspecified"))),
+            str(metadata.get("math_review_status", metadata.get("independent_math_review", "unspecified"))),
+            str(metadata.get("rights_status", metadata.get("rights_review", "unspecified"))),
+        ]
+        lines.append("| " + " | ".join(value.replace("|", "\\|") for value in values) + " |")
+    output = MANUSCRIPTS / "REMAINING_TEXTBOOKS_DRAFT_PACKAGE_INDEX.md"
+    output.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return len(paths)
 
 
 def main(argv: Sequence[str] | None = None) -> None:
@@ -185,8 +253,9 @@ def main(argv: Sequence[str] | None = None) -> None:
             raise RuntimeError(f"Generator entrypoint missing: {filename}:{function_name}")
         print(f"Running {filename}")
         function()
+    indexed_count = build_draft_package_index()
     source_count = verify_bookdata_references()
-    print(f"Verified generated package references for all {source_count} BookData source files.")
+    print(f"Indexed {indexed_count} recursive BookData files and verified package references for all {source_count} files.")
     print(f"Completed {len(selected_generators)} textbook generation steps.")
 
 

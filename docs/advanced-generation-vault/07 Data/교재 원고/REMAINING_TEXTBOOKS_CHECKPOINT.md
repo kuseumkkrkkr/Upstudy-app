@@ -3,6 +3,13 @@
 기준일: 2026-10-17
 상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
+## 2026-10-17 2015 중학교 기하 배치 2 수학 검사·재귀 패키지 참조
+
+- `9수04-11`–`9수04-20`의 10개 후보(50쪽, native quiz 10개)를 공식 2015 코드 추출물과 대조했다. 생성기 산술 검사를 보강해 10개 예제 풀이·10개 연습 해설·10개 quiz 정답 키가 계산 결과와 기대 답에 포함되는지 확인한다. 이전 검사에서 practice 답 두 개가 관계 설명/판별 문제였는데 수치 답으로 잘못 기대한 점을 고쳐 현재 문항의 답과 맞췄다.
+- 생성 패키지에 개별 `README.md`를 추가하고 BookData V2를 재생성했다. 학년군 기준이며 학기 배정 미확정, 교사·독립 수학·권리 검토 pending, publication `not_eligible` 상태를 유지한다.
+- `build_tagged_textbook_drafts.py --from-stage build_textbook_scope_coverage.py`를 현재 체크아웃에서 실행했다. 94–95단계 후반 산출과 package-reference 검사를 완료했으며, 기존 검사 범위가 root BookData 115개에 한정됨을 확인해 재귀 BookData 전체를 나열하는 `REMAINING_TEXTBOOKS_DRAFT_PACKAGE_INDEX.md`를 추가했다. 재귀 BookData 178개 전체 참조 확인 통과; 이전 누락 12개 filename 참조도 색인에서 확인된다.
+- `py_compile`(두 생성기), BookData inventory roundtrip(3 tests), activity compatibility(124 tests) 통과. 검증은 데이터 계약·선택된 reader interaction에 한정되며 전체 HTML parity·독립 수학/교사 승인·권리 판정을 대신하지 않는다.
+
 ## 2026-10-17 vectorOperation + resumable pipeline 재검증
 
 - 기존 vector source tag 생성 stage에 `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json` 생성을 추가했다. 원본 3쪽을 보존하며 `vectorOperation` 조작 activity와 HTML의 2개 Socratic 확인·연습을 quiz 3개로 연결했다. 후보에는 independent teacher/math review와 rights 확인 전 상태를 유지했다.
