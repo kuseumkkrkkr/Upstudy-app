@@ -7,7 +7,7 @@
 
 - 교육부 공식 [2015-74 고시 페이지](https://www.moe.go.kr/boardCnts/view.do?boardID=141&boardSeq=60747&lev=0&m=0404)는 수학과 교육과정을 별책 8로 지정하고 ZIP 첨부를 제공한다. [2022-33 고시 페이지](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0&m=0404)도 같은 별책 8과 첨부 ZIP을 명시한다. 현재 확인한 페이지 본문에는 첨부 자료의 공공누리 유형이 표시되지 않는다. 이것만으로 ZIP/HWP/PDF 자체의 표시 유무를 단정하지 않는다.
 - 교육부 [저작권 정책](https://www.moe.go.kr/sub/infoRenew.do?m=070105&page=070105&s=moe)은 공공누리 부착 자료의 유형별 조건을 적용하고, 미부착 자료는 공공저작물 실무담당자와 사전 협의하도록 안내한다. 상업 이용은 제2유형에서 금지되고, 변경 이용은 제3유형에서 금지된다. 따라서 현 원고의 교육과정 원문·기존 HTML 재사용 권리는 확인 전까지 pending으로 유지한다.
-- 별도 `Upstudy-hotfix` HEAD `3eb084c`의 공개 release 검증은 publication/rights/teacher/math 승인을 요구하지만 curriculum-review 승인은 별도 필드로 강제하지 않는다. 이 누락을 해당 담당 스레드에 전달했다. 해당 구현은 private draft 저장과 공개 배포를 분리하며, 실제 DB/RLS 상태와 운영 배포 검증은 pending이다.
+- 별도 `Upstudy-hotfix`는 위 누락을 반영해 HEAD `ad4a763`에서 공개 manifest와 runtime 모두 `curriculum_review_status=approved`를 요구한다. 공개 release 필수 승인에는 publication/rights/teacher/math/curriculum이 포함되며, manifest는 원문 SHA와 함께 승인 metadata를 보존한다. origin/hotfix와 HEAD 일치 및 관련 파일의 clean 상태를 읽기 전용으로 확인했다. 담당 스레드는 관련 30개 테스트 통과를 보고했다. 이는 권리 승인 자체가 아니며, 실제 DB/RLS 상태와 운영 배포 검증은 pending이다.
 - 위 근거는 권리 승인이나 배포 승인이 아니다. 현재 이 저장소 원장상 공개 적격 BookData는 0개이며, 공식 별첨의 개별 이용허락 및 독립 교육과정 검토를 추가 확인해야 한다.
 
 ## 2026-10-17 2015 중학교 기하 배치 2 수학 검사·재귀 패키지 참조
