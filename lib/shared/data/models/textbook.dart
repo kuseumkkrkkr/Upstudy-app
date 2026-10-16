@@ -216,6 +216,25 @@ class BookPage {
   final String kicker;
   final List<BookContentBlock> blocks;
 
+  /// Authored context from this page only, including disclosure content.
+  List<String> get contextText => [
+    if (kicker.isNotEmpty) kicker,
+    for (final block in blocks) ...[
+      if (block.title.isNotEmpty) block.title,
+      if (block.text.isNotEmpty) block.text,
+      if (block.formula.isNotEmpty) block.formula,
+      if (block.activity != null) ...[
+        block.activity!['prompt']?.toString() ?? '',
+        ..._readStringList(block.activity!['options']),
+        ..._readStringList(block.activity!['hints']),
+        if (block.activity!['kind'] == 'disclosure') ...[
+          block.activity!['content']?.toString() ?? '',
+        ],
+      ],
+      ...block.items,
+    ],
+  ];
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'template': template.name,

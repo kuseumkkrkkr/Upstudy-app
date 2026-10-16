@@ -36,6 +36,7 @@ class BookActivity {
     this.walkDurationMs,
     this.numberLineMin,
     this.numberLineMax,
+    this.disclosureContent,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -54,6 +55,7 @@ class BookActivity {
   final BookRadicalFunctionExplorer? radicalFunctionExplorer;
   final int walkDurationMs;
   final int numberLineMin, numberLineMax;
+  final String disclosureContent;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -94,6 +96,7 @@ class BookActivity {
     BookRadicalFunctionExplorer? radicalFunctionExplorer;
     var walkDurationMs = 0;
     var numberLineMin = 1, numberLineMax = 25;
+    var disclosureContent = '';
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -194,6 +197,9 @@ class BookActivity {
         if (json['min'] != 1 || json['max'] != 25) fail();
         numberLineMin = 1;
         numberLineMax = 25;
+      case 'disclosure':
+        allowed.add('content');
+        disclosureContent = text(json['content']);
       default:
         fail();
     }
@@ -225,6 +231,7 @@ class BookActivity {
       walkDurationMs,
       numberLineMin,
       numberLineMax,
+      disclosureContent,
     );
   }
 
@@ -263,6 +270,7 @@ class BookActivity {
       'min': numberLineMin,
       'max': numberLineMax,
     },
+    if (kind == 'disclosure') 'content': disclosureContent,
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.
