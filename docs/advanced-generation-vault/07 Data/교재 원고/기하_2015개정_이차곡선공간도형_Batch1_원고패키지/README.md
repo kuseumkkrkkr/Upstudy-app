@@ -4,7 +4,7 @@
 
 ## 앱 호환성 확인
 
-`BookData.fromJson`→`toJson` 왕복에서 quiz activity 12개 payload가 모두 보존됩니다. 호환성 테스트는 학생 `BookWidget`과 교사 코스 읽기 화면에서 선택·피드백 상호작용까지 확인했습니다. HTML은 별도 자산이며 앱 실행·화면 동등성은 미검증입니다.
+BookData 왕복 검사는 quiz activity 12개의 payload 보존을 확인했고, 학생 `BookWidget` 상호작용 테스트는 12기하02-05 퀴즈 하나를 검증했습니다. 전체 교재 읽기 흐름, 교사 화면, HTML 화면 parity는 이 결과로 검증되지 않습니다.
 
 신규 가상 예시는 수학 교사 검수와 권리 결정을 기다리므로 출판 부적격입니다.
 

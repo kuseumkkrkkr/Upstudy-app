@@ -12,6 +12,7 @@
 - 다음 미충족 기준 `12기하02-01 벡터의 뜻을 안다`에 대해 정의, 풀이 예제, 거리와 변위 비교, 3개 연습과 해설, native quiz를 담은 5쪽 V2 부분 후보를 생성했다. BookData round-trip과 후보 quiz의 학생 BookWidget 상호작용을 테스트했다. 이 기준의 본문 적합성은 독립 검토 전이며, Geometry(2015) 전체 기준 매핑, 교사·수학 검토와 rights는 pending이다.
 - 이어서 `12기하02-03 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다` 부분 후보 4쪽을 작성했다. 기준점과 위치벡터 정의, 점 좌표↔성분 대응, 두 점 사이 벡터 예제와 연습 3개·해설, native quiz를 포함한다. importer round-trip 및 실제 후보 quiz의 학생 BookWidget 제출·피드백이 통과했다. 전체 파이프라인 80/80 단계와 111개 BookData package-reference 검사가 성공했고 HTML index는 106 standalone HTML/147 recursive BookData를 집계했다. 내용 적합성의 독립 수학·교사 검수와 rights는 pending; 출판 부적격이다.
 - 두 V2 생성기는 현재 후보 SHA가 직전 검증 SHA와 같을 때만 `passed_flutter_activity_compatibility_suite` 결과·검증 HEAD·명령을 다음 생성에도 보존하고, 내용 해시가 달라지면 재검증 대기로 되돌린다. 이 결과는 지정된 importer 왕복과 퀴즈 상호작용 범위만 기록하며 전체 BookWidget 과정, 교육과정 내용 적합성, 독립 수학·교사 승인으로 확장하지 않는다.
+- 2015 기하 `12기하02-05` 기존 후보의 실제 문항과 해설을 대조해 답안 설명이 다른 점·방향벡터·원의 예시를 섞은 불일치를 발견했다. 생성기에서 풀이를 문항과 일치하도록 고치고, 직선 매개식 대입 및 원의 중심·원 위 점 대입 검산을 추가했다. 대상 12퀴즈의 importer 왕복 보존과 02-05 학생 `BookWidget` 선택·피드백을 포함한 Flutter compatibility test 21/21이 통과했다. manifest는 후보 SHA-256 `1BD3B6EBCAC588FBE8765972553BCBC57B664420B1B5851737906C71CCA54158`에 이 검증 결과를 고정했다. 이 수정은 저자 수준 산술 점검이며 독립 수학·교사 검토 및 전체 교재/HTML 패리티는 여전히 대기 중이다.
 
 ## 2026-10-17 vectorInnerProduct reader 연결 업데이트
 

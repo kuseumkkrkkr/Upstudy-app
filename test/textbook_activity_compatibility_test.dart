@@ -171,6 +171,47 @@ void main() {
     expect(find.textContaining('계수가 음수'), findsOneWidget);
   });
 
+  testWidgets('2015 Geometry V2 02-05 quiz runs in the student BookWidget', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final module = (source['chapters'] as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((chapter) => chapter['title_code'] == '02-05');
+    final examplePage = (module['pages'] as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((page) => page['id'] == 'geo15-0205-example');
+    final solution = (examplePage['blocks'] as List)
+        .cast<Map<String, dynamic>>()
+        .singleWhere((block) => block['type'] == 'solutionStep')['text'] as String;
+    expect(solution, contains('(x,y)=(0,1)+t(3,2)'));
+    expect(solution, contains('(x−2)²+(y+1)²=9'));
+    expect(solution, isNot(contains('(1,2)+t(2,−1)')));
+    final activity = _activities(source).singleWhere(
+      (activity) => activity['id'] == 'geo15-0205-quiz',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('점 (0,1)을 지나고 방향벡터 (3,2)'), findsOneWidget);
+    await tester.tap(find.text('(x,y)=(0,1)+t(3,2)'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다: (x,y)=(0,1)+t(3,2)'), findsOneWidget);
+  });
+
   testWidgets('vector meaning V2 practice runs in the student reader', (
     tester,
   ) async {
