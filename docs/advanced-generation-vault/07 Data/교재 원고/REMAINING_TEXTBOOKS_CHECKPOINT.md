@@ -288,3 +288,10 @@
 - 두 공유 README의 기존 29개 및 18개 하위 제목이 전부 유지되는 것을 확인했다. 재실행 시 README 전체를 덮어쓰던 다항식 연산·집합 생성기를 각자 섹션만 갱신하도록 수정했다.
 - BookData 왕복, 전체 activity compatibility 124/124, 범위/HTML 원장, 115 root BookData 패키지 참조 검증이 통과했다. 원장은 26상품/1,038 기준 행/178 재귀 BookData/106 HTML이며, 392 공식 쌍 중 same-edition tag 370, chapter anchor 328, 구조 신호 없음 47이다.
 - 이 샘플은 공식 코드 대조, 교사·독립 수학·권리 검토 및 학생 파일럿의 대체물이 아니다.
+
+
+## 2026-10-17 2022 공통수학Ⅰ 태그 통합 단계 70–72 재검증
+
+- 공통수학Ⅰ 2022 누락 기준 V2 3모듈·18쪽과 미연결 기준 Batch2 16모듈·80쪽 생성기를 재실행했다. 통합기는 26개 모듈을 4개 단원으로 분류하고 135개 원본 쪽을 보존했으며 page ID 검사를 통과했다.
+- BookData 왕복, 전체 activity compatibility 124/124, 26상품 범위/106 HTML 원장, 115 root BookData 패키지 참조 검증이 통과했다. 이 단계 산출물은 현재 커밋과 동일해 새 파일 변경은 없다.
+- 재귀 BookData 178개 가운데 출판 eligibility not_eligible 33, unspecified 145; 교사/권리 pending 33·unspecified 145; 수학 검토 author checks with independent review pending 32·pending 1·unspecified 145다. 따라서 배포하지 않았다.
