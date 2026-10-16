@@ -75,7 +75,21 @@ def main() -> None:
     if len(verified["chapters"][0]["pages"]) != 4 or len({page["id"] for page in pages}) != len(pages):
         raise RuntimeError("Generated draft structure or page IDs are invalid")
     readme = ["# 수학(하) 2015 개정 · 집합의 합집합과 교집합", "", "공식 과목 범위 요약의 집합 영역에 맞춘 신규 소단원 시범입니다.", "", f"- [{filename}]({filename}): 도입·개념·예제·연습 4쪽", "- 태그: " + " · ".join(TAGS), "- 공식 성취기준 코드 대조·교사 검수·학생 파일럿은 미완료입니다.", "- 상·하 상품 분권은 편집 초안이며 최종 승인되지 않았습니다.", "", "재생성: `python tool/build_math_lower_2015_sets_sample.py`", ""]
-    (OUTPUT / "README.md").write_text("\n".join(readme), encoding="utf-8")
+    readme_path = OUTPUT / "README.md"
+    generated_section = "\n".join(readme).rstrip()
+    if readme_path.exists():
+        existing_readme = readme_path.read_text(encoding="utf-8")
+        next_section = existing_readme.find("\n## ")
+        if existing_readme.startswith(readme[0]):
+            retained_sections = existing_readme[next_section:].strip() if next_section >= 0 else ""
+            combined = generated_section + ("\n\n" + retained_sections if retained_sections else "") + "\n"
+        elif generated_section in existing_readme:
+            combined = existing_readme
+        else:
+            combined = existing_readme.rstrip() + "\n\n" + generated_section + "\n"
+        readme_path.write_text(combined, encoding="utf-8")
+    else:
+        readme_path.write_text(generated_section + "\n", encoding="utf-8")
     print(f"Created one tagged subunit with {len(pages)} pages.")
 
 

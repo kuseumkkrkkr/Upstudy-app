@@ -93,7 +93,21 @@ def main() -> None:
         "재생성: `python tool/build_math_upper_2015_polynomial_sample.py`",
         "",
     ]
-    (OUTPUT / "README.md").write_text("\n".join(readme), encoding="utf-8")
+    readme_path = OUTPUT / "README.md"
+    generated_section = "\n".join(readme).rstrip()
+    if readme_path.exists():
+        existing_readme = readme_path.read_text(encoding="utf-8")
+        next_section = existing_readme.find("\n## ")
+        if existing_readme.startswith(readme[0]):
+            retained_sections = existing_readme[next_section:].strip() if next_section >= 0 else ""
+            combined = generated_section + ("\n\n" + retained_sections if retained_sections else "") + "\n"
+        elif generated_section in existing_readme:
+            combined = existing_readme
+        else:
+            combined = existing_readme.rstrip() + "\n\n" + generated_section + "\n"
+        readme_path.write_text(combined, encoding="utf-8")
+    else:
+        readme_path.write_text(generated_section + "\n", encoding="utf-8")
     print(f"Created one tagged subunit with {len(pages)} pages.")
 
 
