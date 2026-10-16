@@ -24,7 +24,9 @@ void main() {
     final book = BookData.fromJson({'title': 'Synthetic TOC', 'chapters': [
       {'title': title, 'sections': []}, {'title': 'Next chapter', 'sections': []}]});
     await tester.pumpWidget(MaterialApp(home: BookWidget(book: book, persistenceEnabled: false)));
-    await tester.pumpAndSettle();
+    // Verify row geometry after layout, not unrelated reader animation settling.
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
     final row = find.byKey(const ValueKey('book-toc-entry-0'));
     final next = find.byKey(const ValueKey('book-toc-entry-1'));
     final label = find.descendant(of: row, matching: find.text(title));

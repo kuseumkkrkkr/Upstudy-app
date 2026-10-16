@@ -36,3 +36,7 @@ Inventory checkpoint: **1/106** explicitly mapped to a private, locally verified
 - Actual Supabase project `aybqetiydxafeuzudltb`, SQL editor read-only SELECT: KV RLS **true**, anon/authenticated any direct table access **false/false**, service SELECT/INSERT **true/true**, primary key **(user_id, key)**. No user row read or DB write was needed. Cropped metadata-only screenshot retained locally; this does not prove endpoint read/write durability or multi-connection concurrency.
 - Initial DSN-based preflight could not establish that configured `DATABASE_URL` targeted this project and deliberately did not connect. Browser SQL supplied the actual project-specific read-only evidence instead.
 - Next release gate: deploy only a fixed synthetic Preview first; verify its own source/hash/controls/pages at 390 and 1280, separately from production. Evaluate promotion only after the live-source/UI baseline is reconciled. Keep publication approvals and prices unchanged.
+
+## Synthetic Preview checkpoint
+
+Preview `dpl_Dsonb44LLYcr94YVF4iJP4VKQc83` now has matching local/browser JS hash and actual 390/1280 activity, quiz, graph cursor and root regression evidence. Python 156 / Flutter 12 passed on the repeated focused checks. Actual private manuscript TOC overlap was rechecked fixed. See [Preview report](2026-10-17-polynomial-area-preview.md). Production alias is unchanged; 105 sources, nine broader families, clean full-app release and real persistence/concurrency remain open. Synthetic Preview success does not change those verdicts.
