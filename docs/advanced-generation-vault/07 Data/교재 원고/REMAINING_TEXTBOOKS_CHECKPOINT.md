@@ -14,9 +14,9 @@
 - 현재 태그 생성기는 104개 stage를 등록한다. 최근 생성 배치는 수학Ⅱ Batch2–Batch7과 2015 기하 Batch2–Batch4이며, stage 등록이나 태그만으로 내용 충족을 승인하지 않는다.
 
 
-## 2026-10-17 현재 작업트리 재검증 — `adbfdf0`
+## 2026-10-17 검증 기준 코드 — `adbfdf0`
 
-- 현재 `HEAD == origin/main == adbfdf08dc82a3de782b205d821bbe920b743792`. 재귀 BookData 187개(그중 V2 66), 선언형 activity 340개, root BookData 124개, root JSON 129개, root/재귀 HTML 86/106개다. 전체 태그 생성 파이프라인은 재실행하지 않았다; registry는 104 stage다.
+- 검증 대상 코드는 `adbfdf08dc82a3de782b205d821bbe920b743792`다. 이 기록 갱신 뒤 checkpoint 문서만 별도 커밋했다. 재귀 BookData 187개(그중 V2 66), 선언형 activity 340개, root BookData 124개, root JSON 129개, root/재귀 HTML 86/106개다. 전체 태그 생성 파이프라인은 재실행하지 않았다; registry는 104 stage다.
 - `flutter test --no-pub --reporter compact test/concept_textbook_prototype_json_test.dart`: 153 tests passed. 앞선 실행의 152 pass + 1 fail은 합계 행 파싱 오류였다. 합계 숫자를 굵게 고친 뒤 전체 suite를 다시 실행해 통과를 확인했다.
 - `flutter test --no-pub --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart test/textbook_activity_compatibility_test.dart`: 129 tests passed. 이 실행은 재귀 BookData 187개 왕복, 신규 candidate/source metadata 왕복, 선택된 native activity와 reader 동작을 포함한다. `dart analyze lib/shared/data/models/textbook.dart test/textbook_bookdata_inventory_roundtrip_test.dart`도 `No issues found`다. 독립 HTML 106개 전체 화면·동작 parity나 실제 공개 API/DB 저장은 검증하지 않았다.
 - 최신 원장은 26개 상품·1,038 product-standard 행·root source BookData 124개다. package index와 재귀 참조 verifier는 각각 187개를 확인했다. 392 공식 판본-코드 쌍에 field/tag 신호, exact chapter anchor 342, 단일 코드·단일 chapter 연결 28, 검토 대기 candidate chapter mapping 75, exact/candidate 구조 신호 누락 0개다. 이 신호는 내용 충족이나 승인을 뜻하지 않는다.
