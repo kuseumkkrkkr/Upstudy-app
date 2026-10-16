@@ -28,6 +28,8 @@ class BookActivity {
     this.vectorOperation,
     this.vectorInnerProduct,
     this.walkDurationMs,
+    this.numberLineMin,
+    this.numberLineMax,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -42,6 +44,7 @@ class BookActivity {
   final BookVectorOperation? vectorOperation;
   final BookVectorInnerProduct? vectorInnerProduct;
   final int walkDurationMs;
+  final int numberLineMin, numberLineMax;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -78,6 +81,7 @@ class BookActivity {
     BookVectorOperation? vectorOperation;
     BookVectorInnerProduct? vectorInnerProduct;
     var walkDurationMs = 0;
+    var numberLineMin = 1, numberLineMax = 25;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -152,6 +156,11 @@ class BookActivity {
         p = number(json['p']);
         x = number(json['x']);
         if (p < .5 || p > 3 || x < -4 || x > 4) fail();
+      case 'squareRootNumberLine':
+        allowed.addAll({'min', 'max'});
+        if (json['min'] != 1 || json['max'] != 25) fail();
+        numberLineMin = 1;
+        numberLineMax = 25;
       default:
         fail();
     }
@@ -178,6 +187,8 @@ class BookActivity {
       vectorOperation,
       vectorInnerProduct,
       walkDurationMs,
+      numberLineMin,
+      numberLineMax,
     );
   }
 
@@ -206,6 +217,10 @@ class BookActivity {
     if (vectorOperation != null) ...vectorOperation!.toJson(),
     if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
+    if (kind == 'squareRootNumberLine') ...{
+      'min': numberLineMin,
+      'max': numberLineMax,
+    },
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

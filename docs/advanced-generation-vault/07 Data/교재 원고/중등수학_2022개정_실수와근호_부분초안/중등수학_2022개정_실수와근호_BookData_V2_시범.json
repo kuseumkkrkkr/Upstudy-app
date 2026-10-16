@@ -1,0 +1,888 @@
+{
+  "schema_version": 2,
+  "title": "중등수학 2022 개정 · 실수와 근호 부분 후보",
+  "subtitle": "공식 학년군 기준별 개념·예제·연습·native quiz",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": [
+    "9수01-06",
+    "9수01-07",
+    "9수01-09",
+    "9수01-10"
+  ],
+  "standard_coverage": "partial",
+  "grade_semester_status": "not_assigned",
+  "tags": [
+    "중등수학",
+    "2022 개정",
+    "학년군 기준",
+    "학년·학기 미배정",
+    "부분 원고 후보",
+    "교사·수학 검수 대기",
+    "권리 검토 대기",
+    "성취기준 후보: 9수01-06",
+    "성취기준 후보: 9수01-07",
+    "성취기준 후보: 9수01-09",
+    "성취기준 후보: 9수01-10"
+  ],
+  "chapters": [
+    {
+      "title": "순환소수와 유리수",
+      "intro": [
+        "공식 기준: 9수01-06 순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수01-06 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수01-06. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-recurring-decimals-opening",
+          "template": "opening",
+          "title": "순환소수와 유리수의 표현을 말과 식으로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "순환소수와 유리수의 표현을 말과 식으로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "순환소수와 유리수의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-recurring-decimals-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 수를 수직선이나 식으로 나타내고 계산 과정을 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "기호·제곱·부호 중 결과를 바꾸는 조건은 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "양수·음수와 근호 안의 수를 구분해 한 단계씩 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-recurring-decimals-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "순환소수는 소수점 아래의 숫자 배열이 일정한 부분부터 반복되는 소수입니다. 순환마디 위에 점을 찍어 나타냅니다. 유리수를 소수로 나타내면 유한소수 또는 순환소수가 되고, 순환소수는 분수로 나타낼 수 있습니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수01-06"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-recurring-decimals-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "0.272727…을 분수로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "x=0.272727…이라 하면 100x=27.272727…입니다. 빼면 99x=27이므로 x=27/99=3/11입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-recurring-decimals-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "0.6666…을 기약분수로 나타내세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x=0.6666…이면 10x=6.6666…입니다. 빼면 9x=6이므로 x=6/9=2/3입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "x=0.6666…이면 10x=6.6666…입니다. 빼면 9x=6이므로 x=6/9=2/3입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0106-quiz",
+                "kind": "quiz",
+                "prompt": "0.454545…을 기약분수로 나타내면 무엇인가요?",
+                "options": [
+                  "5/11",
+                  "45/100",
+                  "4/9"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "순환마디가 45이므로 45/99=5/11입니다.",
+                "incorrect_feedback": "x=0.454545…로 두고 100x−x를 계산하세요.",
+                "hints": [
+                  "100x=45.454545…입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-recurring-decimals-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "순환소수와 유리수의 뜻과 성질을 설명한다. · 계산 결과와 대소 관계를 다시 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "순환소수와 유리수의 뜻과 성질을 설명한다.",
+                "계산 결과와 대소 관계를 다시 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "제곱근의 뜻과 대소",
+      "intro": [
+        "공식 기준: 9수01-07 제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수01-07 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수01-07. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-square-roots-opening",
+          "template": "opening",
+          "title": "제곱근의 뜻과 대소의 표현을 말과 식으로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "제곱근의 뜻과 대소의 표현을 말과 식으로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "제곱근의 뜻과 대소의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-square-roots-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 수를 수직선이나 식으로 나타내고 계산 과정을 확인합니다."
+            },
+            {
+              "type": "activity",
+              "title": "제곱근의 위치 조절",
+              "activity": {
+                "id": "ms22-sqrt-number-line",
+                "kind": "squareRootNumberLine",
+                "prompt": "n을 바꾸고 √n의 위치를 수직선에서 확인하세요.",
+                "min": 1,
+                "max": 25,
+                "hints": []
+              }
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "기호·제곱·부호 중 결과를 바꾸는 조건은 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "양수·음수와 근호 안의 수를 구분해 한 단계씩 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "점의 위치가 표시된 √n 값과 일치하는지 확인하세요."
+            }
+          ]
+        },
+        {
+          "id": "ms22-square-roots-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "a≥0일 때 √a는 제곱하여 a가 되는 음이 아닌 수입니다. a>0이면 x²=a의 해는 x=√a와 x=−√a 두 개입니다. 양수의 제곱근은 수직선의 대소 관계를 이용해 비교할 수 있습니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수01-07"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-square-roots-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "√50을 간단히 하고, 7과 8 중 어느 수 사이에 있는지 판단하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "√50=√(25×2)=5√2입니다. 7²=49<50<64=8²이고 모두 양수이므로 7<√50<8입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-square-roots-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "√72를 간단히 하고 x²=72의 두 해를 나타내세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "√72=√(36×2)=6√2입니다. 따라서 x²=72의 두 해는 x=6√2와 x=−6√2입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "√72=√(36×2)=6√2입니다. 따라서 x²=72의 두 해는 x=6√2와 x=−6√2입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0107-quiz",
+                "kind": "quiz",
+                "prompt": "√49의 값은 얼마인가요?",
+                "options": [
+                  "7",
+                  "−7",
+                  "±7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "√ 기호는 음이 아닌 제곱근을 뜻하므로 √49=7입니다.",
+                "incorrect_feedback": "√49의 값과 x²=49의 해 두 개를 구별하세요.",
+                "hints": [
+                  "7²=49이고 7은 음이 아닙니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-square-roots-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "제곱근의 뜻과 대소의 뜻과 성질을 설명한다. · 계산 결과와 대소 관계를 다시 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "제곱근의 뜻과 대소의 뜻과 성질을 설명한다.",
+                "계산 결과와 대소 관계를 다시 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "실수의 대소 관계",
+      "intro": [
+        "공식 기준: 9수01-09 실수의 대소 관계를 판단하고 설명할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수01-09 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수01-09. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-real-number-order-opening",
+          "template": "opening",
+          "title": "실수의 대소 관계의 표현을 말과 식으로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "실수의 대소 관계의 표현을 말과 식으로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "실수의 대소 관계의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-real-number-order-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 수를 수직선이나 식으로 나타내고 계산 과정을 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "기호·제곱·부호 중 결과를 바꾸는 조건은 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "양수·음수와 근호 안의 수를 구분해 한 단계씩 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-real-number-order-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "실수는 수직선 위의 점과 대응하며, 오른쪽에 있는 수가 더 큽니다. 음이 아닌 두 수의 제곱근은 제곱을 비교해 대소를 판단할 수 있습니다. 음수를 붙이면 대소 관계가 반대로 바뀌므로 부호를 확인해야 합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수01-09"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-real-number-order-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "2.5와 √7의 대소를 판단하고, −2.5와 −√7의 대소도 비교하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "2.5²=6.25<7이므로 2.5<√7입니다. 양변에 −1을 곱하면 부등호가 반대로 되어 −2.5>−√7입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-real-number-order-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "−√5, −2.1, 0, √5를 작은 수부터 차례로 쓰세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2.1²=4.41<5이므로 2.1<√5입니다. 부호를 바꾸면 −√5<−2.1입니다. 따라서 −√5<−2.1<0<√5입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "2.1²=4.41<5이므로 2.1<√5입니다. 부호를 바꾸면 −√5<−2.1입니다. 따라서 −√5<−2.1<0<√5입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0109-quiz",
+                "kind": "quiz",
+                "prompt": "2.6과 √7의 대소 관계로 옳은 것은 무엇인가요?",
+                "options": [
+                  "2.6<√7",
+                  "2.6>√7",
+                  "2.6=√7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "2.6²=6.76<7이므로 2.6<√7입니다.",
+                "incorrect_feedback": "두 수가 모두 양수이므로 제곱을 비교하세요.",
+                "hints": [
+                  "2.6²를 계산해 7과 비교합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-real-number-order-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "실수의 대소 관계의 뜻과 성질을 설명한다. · 계산 결과와 대소 관계를 다시 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "실수의 대소 관계의 뜻과 성질을 설명한다.",
+                "계산 결과와 대소 관계를 다시 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "근호를 포함한 식의 계산",
+      "intro": [
+        "공식 기준: 9수01-10 근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수01-10 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수01-10. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-radical-arithmetic-opening",
+          "template": "opening",
+          "title": "근호를 포함한 식의 계산의 표현을 말과 식으로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "근호를 포함한 식의 계산의 표현을 말과 식으로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "근호를 포함한 식의 계산의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-radical-arithmetic-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 수를 수직선이나 식으로 나타내고 계산 과정을 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "기호·제곱·부호 중 결과를 바꾸는 조건은 무엇인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "양수·음수와 근호 안의 수를 구분해 한 단계씩 계산하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-radical-arithmetic-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "근호 안의 수를 제곱수의 곱으로 나타내면 근호를 간단히 할 수 있습니다. 같은 근호끼리는 계수끼리 더하거나 뺍니다. 곱셈·나눗셈은 근호의 성질을 적용하며, 나누는 식이 0이 아닌지 확인합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수01-10"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-radical-arithmetic-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3√5−√20을 간단히 하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "√20=√(4×5)=2√5이므로 3√5−√20=3√5−2√5=√5입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-radical-arithmetic-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "√8+√18을 간단히 하고, √6×√24와 √48÷√3도 계산하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "√8=2√2, √18=3√2이므로 합은 5√2입니다. √6×√24=√144=12이고 √48÷√3=√(48/3)=√16=4입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "√8=2√2, √18=3√2이므로 합은 5√2입니다. √6×√24=√144=12이고 √48÷√3=√(48/3)=√16=4입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0110-quiz",
+                "kind": "quiz",
+                "prompt": "2√3+√12를 간단히 하면 무엇인가요?",
+                "options": [
+                  "4√3",
+                  "3√15",
+                  "2√15"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "√12=2√3이므로 2√3+2√3=4√3입니다.",
+                "incorrect_feedback": "먼저 √12를 간단히 한 뒤 같은 근호끼리 계산하세요.",
+                "hints": [
+                  "12=4×3이므로 √12=2√3입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-radical-arithmetic-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "근호를 포함한 식의 계산의 뜻과 성질을 설명한다. · 계산 결과와 대소 관계를 다시 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "근호를 포함한 식의 계산의 뜻과 성질을 설명한다.",
+                "계산 결과와 대소 관계를 다시 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "candidate_partial_draft",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "rights_status": "pending",
+    "publication_eligibility": "not_eligible",
+    "standard_source": "교육부 고시 제2022-33호 별책8 공식 기준 인덱스",
+    "content_rights": "newly authored candidate; independent rights decision pending",
+    "semester_assignment": "not assigned; middle-school codes are grade-band standards",
+    "interactive_compatibility_status": "native squareRootNumberLine interaction; validation pending",
+    "external_interactive_assets": [
+      "docs/advanced-generation-vault/07 Data/교재 원고/중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_제곱근수직선_체험형_시범.html"
+    ]
+  }
+}

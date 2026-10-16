@@ -10,6 +10,7 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_이차방정식과이차함수_부분초안/중등수학_2022개정_이차방정식과이차함수_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_대수와방정식_부분초안/중등수학_2022개정_대수와방정식_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_함수와연립방정식_부분초안/중등수학_2022개정_함수와연립방정식_BookData_V2_시범.json',
@@ -58,14 +59,45 @@ void main() {
     });
   }
 
+  testWidgets(
+    '2022 square-root HTML behavior maps to native number-line control',
+    (tester) async {
+      const path =
+          'docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2022개정_실수와근호_부분초안/중등수학_2022개정_실수와근호_BookData_V2_시범.json';
+      final raw =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final activities = _activities(raw);
+      final activity = activities.singleWhere(
+        (item) => item['kind'] == 'squareRootNumberLine',
+      );
+      expect(activity['min'], 1);
+      expect(activity['max'], 25);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookWidget(
+            book: _activityBook(activity),
+            initialEntryIndex: 0,
+            persistenceEnabled: false,
+          ),
+        ),
+      );
+      expect(find.text('n = 1 · √n = 1.000'), findsOneWidget);
+      final slider = tester.widget<Slider>(find.byType(Slider));
+      slider.onChanged!(4);
+      await tester.pump();
+      expect(find.text('n = 4 · √n = 2.000'), findsOneWidget);
+      expect(find.byType(CustomPaint), findsWidgets);
+    },
+  );
   for (final path in _additionalReaderValidationPaths) {
     testWidgets('$path quizzes submit and show feedback', (tester) async {
       final source =
           jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
-      final activities = _activities(source);
+      final activities = _activities(
+        source,
+      ).where((item) => item['kind'] == 'quiz').toList();
       expect(activities, isNotEmpty);
       for (final activity in activities) {
-        expect(activity['kind'], 'quiz');
         final feedback = activity['correct_feedback'] as String;
         await tester.pumpWidget(
           MaterialApp(

@@ -76,6 +76,7 @@ class _BookActivityViewState extends State<BookActivityView>
   int _step = 0, _hints = 0;
   int? _choice;
   String _feedback = '';
+  double _sqrtN = 1;
   bool _restored = false;
   BookActivity get a => widget.activity;
   @override
@@ -86,6 +87,7 @@ class _BookActivityViewState extends State<BookActivityView>
     WidgetsBinding.instance.addObserver(this);
     _p = a.p;
     _x = a.x;
+    _sqrtN = a.numberLineMin.toDouble();
   }
 
   void _stop() {
@@ -226,6 +228,43 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'vectorInnerProduct') {
       return BookVectorInnerProductView(activity: a);
+    }
+    if (a.kind == 'squareRootNumberLine') {
+      final root = math.sqrt(_sqrtN);
+      return Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          border: Border.all(color: const Color(0xffd4d4d8)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Text(
+              a.prompt,
+              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            ),
+            SizedBox(
+              height: 96,
+              child: CustomPaint(painter: _SquareRootLinePainter(root)),
+            ),
+            Semantics(
+              liveRegion: true,
+              child: Text(
+                'n = ${_sqrtN.round()} · √n = ${root.toStringAsFixed(3)}',
+              ),
+            ),
+            Slider(
+              min: a.numberLineMin.toDouble(),
+              max: a.numberLineMax.toDouble(),
+              divisions: a.numberLineMax - a.numberLineMin,
+              value: _sqrtN,
+              semanticFormatterCallback: (v) =>
+                  'n ${v.round()}, 제곱근 ${math.sqrt(v).toStringAsFixed(3)}',
+              onChanged: (v) => setState(() => _sqrtN = v),
+            ),
+          ],
+        ),
+      );
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,
@@ -429,6 +468,54 @@ class _BookActivityViewState extends State<BookActivityView>
       ),
     ];
   }
+}
+
+class _SquareRootLinePainter extends CustomPainter {
+  const _SquareRootLinePainter(this.root);
+  final double root;
+  @override
+  void paint(Canvas canvas, Size size) {
+    const left = 16.0, right = 5.5;
+    final y = size.height / 2;
+    final x = left + (size.width - left * 2) * root / right;
+    final line = Paint()
+      ..color = const Color(0xff555b66)
+      ..strokeWidth = 2;
+    canvas.drawLine(Offset(left, y), Offset(size.width - left, y), line);
+    for (var i = 0; i <= 5; i++) {
+      final tx = left + (size.width - left * 2) * i / right;
+      canvas.drawLine(Offset(tx, y - 5), Offset(tx, y + 5), line);
+      final tp = TextPainter(
+        text: TextSpan(
+          text: '$i',
+          style: const TextStyle(color: Color(0xff343a40), fontSize: 12),
+        ),
+        textDirection: TextDirection.ltr,
+      )..layout();
+      tp.paint(canvas, Offset(tx - tp.width / 2, y + 9));
+    }
+    canvas.drawCircle(
+      Offset(x, y),
+      8,
+      Paint()..color = const Color(0xff315da8),
+    );
+    final label = TextPainter(
+      text: TextSpan(
+        text: '√n',
+        style: const TextStyle(
+          color: Color(0xff315da8),
+          fontSize: 13,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+      textDirection: TextDirection.ltr,
+    )..layout();
+    label.paint(canvas, Offset(x - label.width / 2, y - 26));
+  }
+
+  @override
+  bool shouldRepaint(covariant _SquareRootLinePainter oldDelegate) =>
+      oldDelegate.root != root;
 }
 
 class _ParabolaPainter extends CustomPainter {

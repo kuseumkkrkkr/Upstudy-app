@@ -1,0 +1,44 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수01-06",
+    "9수01-07",
+    "9수01-09",
+    "9수01-10"
+  ],
+  "official_criteria": {
+    "9수01-06": "순환소수의 뜻을 알고, 유리수와 순환소수의 관계를 설명할 수 있다",
+    "9수01-07": "제곱근의 뜻과 성질을 알고, 제곱근의 대소 관계를 판단할 수 있다",
+    "9수01-09": "실수의 대소 관계를 판단하고 설명할 수 있다",
+    "9수01-10": "근호를 포함한 식의 사칙계산의 원리를 이해하고, 그 계산을 할 수 있다"
+  },
+  "module_count": 4,
+  "page_count": 24,
+  "native_quiz_ids": [
+    "ms22-0106-quiz",
+    "ms22-0107-quiz",
+    "ms22-0109-quiz",
+    "ms22-0110-quiz"
+  ],
+  "bookdata_sha256": "99B34B17AB3D445CDD0DB752F98ECCB54C855A9F93126873CDCA43B1F6FCCB30",
+  "validated_bookdata_sha256": null,
+  "validation": {
+    "activity_roundtrip": "pending",
+    "native_graph_builder": "pending",
+    "student_quiz_reader": "pending",
+    "source_html_visual_behavior_parity": "pending"
+  },
+  "interactive_source": {
+    "path": "docs/advanced-generation-vault/07 Data/교재 원고/중학수학3-1_2022개정_통합시범/중학수학3-1_2022개정_제곱근수직선_체험형_시범.html",
+    "sha256": "56AD36F7BAD107FECED81B2B424F689369F22B1245EACBFDE9D9A76FE73D3C74",
+    "source_behavior": "range input n=1..25; displays sqrt(n) to 3 decimals and moves an SVG number-line point",
+    "native_mapping": "squareRootNumberLine with n slider, three-decimal sqrt value, and moving number-line point",
+    "full_html_visual_behavior_parity": "implemented; visual review pending"
+  },
+  "arithmetic_checks": "passed",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}
