@@ -1,0 +1,200 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅱ · 도함수로 함수 그래프 개형 그리기 보충 Batch6",
+  "subtitle": "2015 개정 기준 12수학Ⅱ02-09 · 증감에서 절편·극값·양 끝 거동까지 확장",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12수학Ⅱ02-09"
+  ],
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정",
+    "도함수 그래프 개형 보충",
+    "추가 원고 후보",
+    "12수학Ⅱ02-09"
+  ],
+  "chapters": [
+    {
+      "title": "도함수로 함수 그래프 개형 그리기",
+      "intro": [
+        "공식 성취기준 12수학Ⅱ02-09에 연결한 보충 후보입니다.",
+        "기존 도함수 부호 체험과 Batch1 증감 사례를 보존하며 그래프 개형에 필요한 정보를 추가합니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-graphsketch-b6-open",
+          "template": "opening",
+          "title": "도함수 정보로 그래프 전체를 그리려면?",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "증가·감소뿐 아니라 x절편, 극값, 양 끝의 모양을 모으면 함수 그래프 개형을 어떻게 정할 수 있을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도함수 부호표에 함수값과 x절편 정보를 더해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "m2-graphsketch-b6-concept",
+          "template": "concept",
+          "title": "그래프 개형을 위한 정보",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "확인 순서",
+              "text": "정의역과 절편을 찾고, f′(x)=0이거나 미분 불가능한 점을 조사한다. 도함수 부호로 증가·감소와 극값을 정한 다음, 주요 함수값과 양 끝 거동을 함께 표시해 그래프 개형을 그린다."
+            },
+            {
+              "type": "formula",
+              "title": "도함수 부호와 극값",
+              "text": "f′: +→− 이면 극대, f′: −→+ 이면 극소"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "임계점의 x좌표만으로 그래프 개형이 결정되지는 않는다. x절편과 극값의 좌표 및 양 끝 거동도 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "m2-graphsketch-b6-example",
+          "template": "example",
+          "title": "삼차함수 개형 예제",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x³−3x의 x절편, 극값, 증가·감소를 조사해 그래프 개형을 정하라."
+            },
+            {
+              "type": "graph",
+              "title": "함수 그래프",
+              "text": "그래프는 풀이에서 찾은 절편과 극값을 시각적으로 확인하는 정적 보조 자료다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "cubic-sketch",
+                    "type": "function",
+                    "label": "f(x)=x³−3x",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "x^3-3*x"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -2.5,
+                    "right": 2.5,
+                    "top": 7,
+                    "bottom": -7
+                  },
+                  "parameters": []
+                }
+              }
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 절편",
+              "text": "f(x)=x(x²−3)이므로 x절편은 −√3, 0, √3이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 증감과 극값",
+              "text": "f′(x)=3(x²−1)=3(x−1)(x+1)이다. x=−1,1에서 부호가 바뀌며 증가→감소→증가한다. f(−1)=2는 극댓값, f(1)=−2는 극솟값이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "3단계 · 양 끝과 개형",
+              "text": "최고차항이 x³이므로 x→−∞에서 f(x)→−∞, x→∞에서 f(x)→∞이다. 절편 세 점과 극대·극소를 표시해 왼쪽 아래에서 오른쪽 위로 이어지는 개형을 그린다."
+            }
+          ]
+        },
+        {
+          "id": "m2-graphsketch-b6-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "g(x)=x³−3x²의 증가·감소, 극값, x절편을 조사해 개형 정보를 정리하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "g′(x)=3x(x−2)로 임계점을 찾고, g(x)=x²(x−3)으로 절편을 찾는다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "g′ 부호는 x<0에서 양수, 0<x<2에서 음수, x>2에서 양수다. x=0에서 극댓값 0, x=2에서 극솟값 −4를 갖는다. x절편은 0과 3이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "증가 (−∞,0), (2,∞); 감소 (0,2); 극대 (0,0); 극소 (2,−4); x절편 0,3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-graphsketch-b6-quiz",
+                "kind": "quiz",
+                "prompt": "g(x)=x³−3x²의 [0,2]에서 감소하는 까닭은?",
+                "options": [
+                  "g′(x)=3x(x−2)<0",
+                  "g′(x)>0",
+                  "g(x)가 상수"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 0<x<2에서 x>0, x−2<0이므로 도함수가 음수입니다.",
+                "incorrect_feedback": "g′(x)=3x(x−2)이고 0<x<2에서 두 인자의 부호가 반대입니다.",
+                "hints": [
+                  "g′(x)를 인수분해합니다.",
+                  "0<x<2에서 각 인자의 부호를 확인합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-graphsketch-b6-summary",
+          "template": "summary",
+          "title": "개형 점검",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "정리",
+              "text": "정의역·절편·임계점·도함수 부호·극값·양 끝 거동을 한데 표시해 그래프 개형을 정한다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "x절편을 찾았다.",
+                "도함수 부호로 증감과 극값을 구했다.",
+                "극값의 좌표와 함수값을 표시했다.",
+                "양 끝 거동까지 연결해 개형을 정했다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "supplement_only": true,
+    "publication_eligibility": "not_eligible",
+    "teacher_review_status": "pending",
+    "math_review_status": "independent_review_pending",
+    "rights_status": "publication_decision_pending"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_도함수그래프개형_보충_Batch6_BookData_V2_시범.json",
+  "bookdata_sha256": "3F0CEE27C0C0E9E3CF80C842014D236003DE7F523D5982314E5933D88C3CE295",
+  "candidate_code_references": [
+    "12수학Ⅱ02-09"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "intercepts_derivatives_extrema_and_end_behavior_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; existing_derivative_sign_html_preserved_separately"
+}

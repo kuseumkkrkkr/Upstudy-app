@@ -111,6 +111,7 @@ GENERATORS = [
     ("build_math2_2015_integral_area_v2_batch3.py", "main"),
     ("build_math2_2015_velocity_distance_v2_batch4.py", "main"),
     ("build_math2_2015_continuous_extrema_v2_batch5.py", "main"),
+    ("build_math2_2015_derivative_graph_v2_batch6.py", "main"),
 ]
 
 
