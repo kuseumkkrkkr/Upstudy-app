@@ -16,7 +16,7 @@ from api.textbook_import import _unique_object, _reject_constant, parse_import
 
 ROOT_ANNOTATIONS = {'metadata', 'standard_coverage', 'grade_semester_status',
     'teacher_review_status', 'units'}
-CHAPTER_ANNOTATIONS = {'unit', 'title_code', 'unit_name', 'unitTitle', 'candidate_standard_codes'}
+CHAPTER_ANNOTATIONS = {'unit', 'title_code', 'unit_name', 'unitTitle'}
 
 
 def migrate_observation_sliders(book):

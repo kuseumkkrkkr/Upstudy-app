@@ -1,5 +1,6 @@
 """V2 registered native activities; never accept author HTML, JS, or executable math."""
 import math
+from api.book_function_explorer import KINDS as EXPLORER_KINDS, validate_explorer
 
 
 def validate_activity(value):
@@ -41,6 +42,9 @@ def validate_activity(value):
             number(value.get('tolerance', 0))
             if value.get('tolerance', 0) < 0 or 'correct_index' in value:
                 raise ValueError('activity: invalid numeric answer')
+    elif kind in EXPLORER_KINDS:
+        fields(value, common + ' explorer')
+        validate_explorer(kind, value.get('explorer'))
     elif kind == 'discreteExperiment':
         fields(value, common + ' experiment')
         experiment = value.get('experiment')

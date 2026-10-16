@@ -4,6 +4,7 @@ import 'book_coordinate_point.dart';
 import 'book_vector_operation.dart';
 import 'book_vector_inner_product.dart';
 import 'book_set_operations.dart';
+import 'book_function_explorer.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -31,6 +32,7 @@ class BookActivity {
     this.walkDurationMs,
     this.setOperations,
     this.disclosureContent,
+    this.functionExplorer,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -47,6 +49,7 @@ class BookActivity {
   final int walkDurationMs;
   final BookSetOperations? setOperations;
   final String disclosureContent;
+  final BookFunctionExplorer? functionExplorer;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -85,6 +88,7 @@ class BookActivity {
     var walkDurationMs = 0;
     BookSetOperations? setOperations;
     var disclosureContent = '';
+    BookFunctionExplorer? functionExplorer;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -115,6 +119,13 @@ class BookActivity {
           );
           if (tolerance < 0 || json.containsKey('correct_index')) fail();
         }
+      case 'radicalFunctionExplorer':
+      case 'rationalFunctionExplorer':
+      case 'logarithmPowerExplorer':
+        allowed.add('explorer');
+        final payload = json['explorer'];
+        if (payload is! Map) fail();
+        functionExplorer = BookFunctionExplorer.fromJson(kind as String, Map<String, dynamic>.from(payload));
       case 'discreteExperiment':
         allowed.add('experiment');
         final payload = json['experiment'];
@@ -203,6 +214,7 @@ class BookActivity {
       walkDurationMs,
       setOperations,
       disclosureContent,
+      functionExplorer,
     );
   }
 
@@ -234,6 +246,7 @@ class BookActivity {
     if (kind == 'squareRootNumberLine') ...{'min': 1, 'max': 25},
     if (setOperations != null) ...setOperations!.toJson(),
     if (kind == 'disclosure') 'content': disclosureContent,
+    if (functionExplorer != null) 'explorer': functionExplorer!.toJson(),
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

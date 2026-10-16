@@ -1,0 +1,25 @@
+{
+  "schema_version": 2,
+  "title": "합성 함수 탐구 QA",
+  "candidate_standard_codes": ["candidate-only"],
+  "chapters": [{
+    "title": "합성 확인",
+    "candidate_standard_codes": [],
+    "source_html_reference": "synthetic-reference.html",
+    "pages": [
+      {"id":"radical","title":"무리함수","template":"experiment","blocks":[{"type":"activity","activity":{
+        "id":"radical","kind":"radicalFunctionExplorer","prompt":"합성 무리함수 · 계수와 이동을 확인하세요.",
+        "hints":["제곱근 안은 0 이상입니다."],
+        "explorer":{"a_values":[-2,-1,1,2],"initial_a":2,"min_b":-2,"max_b":2,"b_step":0.5,"initial_b":2,"min_c":-3,"max_c":3,"c_step":0.5,"initial_c":1}
+      }}]},
+      {"id":"rational","title":"유리함수","template":"experiment","blocks":[{"type":"activity","activity":{
+        "id":"rational","kind":"rationalFunctionExplorer","prompt":"합성 유리함수 · 점근선을 확인하세요.",
+        "explorer":{"a_values":[-2,-1,1,2],"initial_a":2,"min_h":-2,"max_h":2,"h_step":0.5,"initial_h":1,"min_k":-3,"max_k":3,"k_step":0.5,"initial_k":-3}
+      }}]},
+      {"id":"power","title":"지수와 로그","template":"experiment","blocks":[{"type":"activity","activity":{
+        "id":"power","kind":"logarithmPowerExplorer","prompt":"합성 지수·로그 · 밑과 지수를 확인하세요.",
+        "explorer":{"bases":[0.5,0.8,1.2,1.5,2,3],"initial_base":2,"initial_exponent":2,"min_exponent":-2,"max_exponent":2,"step":0.25}
+      }}]}
+    ]
+  }]
+}

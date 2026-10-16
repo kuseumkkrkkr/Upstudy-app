@@ -22,6 +22,7 @@ class BookData {
     this.standardCodes = const [],
     this.sourceSha256,
     this.schemaVersion = 1,
+    this.candidateStandardCodes,
   });
 
   final String id;
@@ -42,6 +43,9 @@ class BookData {
   /// Server-verified SHA-256: exact import source or canonical create payload.
   final String? sourceSha256;
   final int schemaVersion;
+
+  /// Unapproved author candidates, independent from confirmed standards.
+  final List<String>? candidateStandardCodes;
 
   factory BookData.fromJson(Map<String, dynamic> json) {
     final version = json['schema_version'] ?? 1;
@@ -90,6 +94,7 @@ class BookData {
       standardCodes: _readStringList(json['standard_codes']),
       sourceSha256: json['source_sha256']?.toString(),
       schemaVersion: version,
+      candidateStandardCodes: _readCandidateCodes(json),
     );
   }
 
@@ -104,6 +109,7 @@ class BookData {
       if (coverColor != null) 'cover_color': coverColor!.toARGB32(),
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
+      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
     };
   }
 
@@ -125,6 +131,7 @@ class BookData {
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
       if (sourceSha256 != null) 'source_sha256': sourceSha256,
+      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
     };
   }
 
@@ -145,6 +152,7 @@ class BookData {
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
       if (sourceSha256 != null) 'source_sha256': sourceSha256,
+      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
     };
   }
 }
@@ -158,6 +166,8 @@ class BookChapter {
     this.pages = const [],
     this.tags = const [],
     this.standardCodes = const [],
+    this.candidateStandardCodes,
+    this.sourceHtmlReference,
   });
 
   final String title;
@@ -170,6 +180,10 @@ class BookChapter {
   final List<String> tags;
   final List<String> standardCodes;
 
+  /// Filename provenance only: never fetched, linked or executed.
+  final String? sourceHtmlReference;
+  final List<String>? candidateStandardCodes;
+
   factory BookChapter.fromJson(Map<String, dynamic> json) {
     return BookChapter(
       title: json['title']?.toString() ?? '',
@@ -179,6 +193,8 @@ class BookChapter {
       pages: _readPages(json['pages']),
       tags: _readStringList(json['tags']),
       standardCodes: _readStringList(json['standard_codes']),
+      candidateStandardCodes: _readCandidateCodes(json),
+      sourceHtmlReference: _readSourceHtmlReference(json),
     );
   }
 
@@ -187,6 +203,8 @@ class BookChapter {
       'title': title,
       if (tags.isNotEmpty) 'tags': tags,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
+      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
+      if (sourceHtmlReference != null) 'source_html_reference': sourceHtmlReference,
       'intro': intro,
       'sections': sections.map((section) => section.toJson()).toList(),
       if (visuals.isNotEmpty)
@@ -195,6 +213,26 @@ class BookChapter {
         'pages': pages.map((page) => page.toJson()).toList(),
     };
   }
+}
+
+List<String>? _readCandidateCodes(Map<String, dynamic> json) {
+  if (!json.containsKey('candidate_standard_codes')) return null;
+  final value = json['candidate_standard_codes'];
+  if (value is! List || value.length > 32 ||
+      value.any((item) => item is! String || item.length > 80)) {
+    throw const FormatException('Invalid candidate standards metadata');
+  }
+  return List<String>.unmodifiable(value.cast<String>());
+}
+
+String? _readSourceHtmlReference(Map<String, dynamic> json) {
+  if (!json.containsKey('source_html_reference')) return null;
+  final value = json['source_html_reference'];
+  if (value is! String || value.length > 240 || value.trim().isEmpty ||
+      value == '.' || value == '..' || RegExp(r'[/\\:]').hasMatch(value)) {
+    throw const FormatException('Invalid source reference metadata');
+  }
+  return value;
 }
 
 enum BookPageTemplate {
