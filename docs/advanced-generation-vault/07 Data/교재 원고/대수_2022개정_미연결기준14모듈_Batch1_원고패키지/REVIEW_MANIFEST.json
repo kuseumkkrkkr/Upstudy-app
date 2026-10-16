@@ -1,6 +1,6 @@
 {
   "bookdata_file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "548FBA0F431C78444AE28774EB2452AEE6182996088047C95E7EB82BB88B0B1D",
+  "bookdata_sha256": "C143520BB1B2D5452FA656260F156974F451B48FAE59EAF4CBF4834A59DBC4D9",
   "candidate_code_references": [
     "12대수01-01",
     "12대수01-02",
@@ -25,7 +25,7 @@
   "existing_candidate_code": [
     "12대수03-02"
   ],
-  "unresolved_formula_codes": [
+  "deferred_eqedit_batch2_codes": [
     "12대수03-03",
     "12대수03-04",
     "12대수03-05"
@@ -51,12 +51,12 @@
     }
   ],
   "example_content_status": "newly_authored synthetic examples",
-  "curriculum_review_status": "15 of 18 official codes have candidate tags; content and product scope review pending",
+  "curriculum_review_status": "15 of 18 codes in this batch set have candidate tags; EqEdit Batch2 supplies the remaining three candidate modules, while content and product scope review remain pending",
   "math_review_status": "arithmetic assertions passed for listed checks only; independent review pending",
   "teacher_review_status": "pending",
   "rights_status": "newly authored text pending rights decision; referenced HTML assets pending source review",
   "interactive_status": "HTML files remain separate; app execution and screen parity unverified",
-  "app_model_roundtrip_status": "passed: all 14 quiz payloads preserved exactly; student and teacher course-reader selection/feedback tests passed",
+  "app_model_roundtrip_status": "pending_current_hash_validation",
   "integration_status": "tag-driven unit integration output; source BookData page payloads preserved",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "pending_current_hash_validation",

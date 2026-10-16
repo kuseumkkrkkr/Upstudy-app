@@ -1963,11 +1963,11 @@
   ],
   "metadata": {
     "status": "review_pending",
-    "omitted_official_codes": [
+    "deferred_eqedit_codes": [
       "12대수03-03",
       "12대수03-04",
       "12대수03-05"
     ],
-    "omission_reason": "Official HWP extraction omits mathematical expressions in these criteria; no reconstruction attempted."
+    "deferred_reason": "Raw EqEdit scripts were recovered and are authored in a separate resumable Batch2."
   }
 }

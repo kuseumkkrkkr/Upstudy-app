@@ -1,0 +1,39 @@
+{
+  "bookdata_file": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "738F5F645B405E63C32FEC1B43BB6543250074DEA1CE92E496C93F9077EEFD75",
+  "candidate_code_references": [
+    "12대수03-03",
+    "12대수03-04",
+    "12대수03-05"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_criterion_table_and_raw_eqedit_records",
+  "official_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "recovered_eqedit_source_scripts": {
+    "12대수03-03": [
+      "n"
+    ],
+    "12대수03-04": [
+      "SMALLSUM"
+    ],
+    "12대수03-05": [
+      "n",
+      "sum _{k=1} ^{n} `k  ^{3} `",
+      "sum _{k=1} ^{n} k",
+      "sum _{k=1} ^{n} k  ^{2}"
+    ]
+  },
+  "module_count": 3,
+  "page_count": 15,
+  "native_activity_count": 3,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "spot_checks": "listed arithmetic checks passed only",
+  "teacher_review_status": "pending",
+  "math_review_status": "author spot checks passed; independent teacher review pending",
+  "rights_status": "new original examples; publication rights decision pending",
+  "curriculum_review_status": "codes and raw HWP EqEdit evidence verified; full scope and semester assignment pending",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
+}

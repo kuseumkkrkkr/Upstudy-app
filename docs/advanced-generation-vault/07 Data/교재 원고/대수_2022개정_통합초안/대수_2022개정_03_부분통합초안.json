@@ -1,5 +1,15 @@
 {
   "title": "대수 2022 개정 · 단원 코드 03 부분 통합 초안",
+  "curriculum_version": "2022",
+  "standard_codes": [
+    "12대수03-01",
+    "12대수03-02",
+    "12대수03-03",
+    "12대수03-04",
+    "12대수03-05",
+    "12대수03-06",
+    "12대수03-07"
+  ],
   "tags": [
     "대수",
     "2022 개정",
@@ -7,6 +17,450 @@
     "부분 통합 초안"
   ],
   "chapters": [
+    {
+      "title": "등비수열의 일반항과 합",
+      "pages": [
+        {
+          "title": "등비수열의 일반항과 합 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · HWP EqEdit 복구 기준 · 수열 · 신규 원고 후보 · 학기 배정 미확정 · 12대수03-03 · 12대수03-04 · 12대수03-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수03-03. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-03-01-001"
+        },
+        {
+          "id": "other22-12대수-03-01-002",
+          "template": "opening",
+          "title": "질문에서 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "등비수열의 일반항과 합"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측하기",
+              "text": "항의 규칙 또는 합의 범위를 말한 뒤 작은 값으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-01-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "등비수열의 일반항과 합",
+              "text": "첫째항이 a₁이고 공비가 r인 등비수열은 aₙ=a₁rⁿ⁻¹이다. r≠1이면 첫째항부터 n항까지의 합은 Sₙ=a₁(1−rⁿ)/(1−r)이고, r=1이면 Sₙ=na₁이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 HWP EqEdit 원문 스크립트",
+              "text": "n"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "항 번호, 합의 시작·끝 범위, 공식의 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-01-004",
+          "template": "example",
+          "title": "예제와 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "첫째항 5, 공비 2인 등비수열의 제5항을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예",
+              "text": "2, 6, 18, …에서 a₁=2, r=3이므로 a₆=2·3⁵=486이다. 첫 4항의 합은 2+6+18+54=80이며 공식으로도 2(1−3⁴)/(1−3)=80이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "작은 경우는 직접 더하거나 항을 대입해 결과를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-01-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "첫째항 5, 공비 2인 등비수열의 제5항을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제n항에서는 공비를 n−1번 곱합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "a₅=5·2⁴=80입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "a₅=5·2⁴=80입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algseq0303-quiz",
+                "kind": "quiz",
+                "prompt": "첫째항 3, 공비 2인 등비수열의 제4항은?",
+                "options": [
+                  "24",
+                  "12",
+                  "48"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 수열의 항이나 합을 확인했습니다.",
+                "incorrect_feedback": "항의 번호와 공식의 적용 범위를 다시 확인하세요.",
+                "hints": [
+                  "제n항에서는 공비를 n−1번 곱합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "첫째항이 a₁이고 공비가 r인 등비수열은 aₙ=a₁rⁿ⁻¹이다. r≠1이면 첫째항부터 n항까지의 합은 Sₙ=a₁(1−rⁿ)/(1−r)이고, r=1이면 Sₙ=na₁이다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "항의 규칙과 공식의 조건을 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수03-03"
+      ]
+    },
+    {
+      "title": "합의 기호 Σ",
+      "pages": [
+        {
+          "title": "합의 기호 Σ · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · HWP EqEdit 복구 기준 · 수열 · 신규 원고 후보 · 학기 배정 미확정 · 12대수03-03 · 12대수03-04 · 12대수03-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수03-04. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-03-02-001"
+        },
+        {
+          "id": "other22-12대수-03-02-002",
+          "template": "opening",
+          "title": "질문에서 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "합의 기호 Σ"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측하기",
+              "text": "항의 규칙 또는 합의 범위를 말한 뒤 작은 값으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-02-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "합의 기호 Σ",
+              "text": "기호 Σ는 정해진 시작값부터 끝값까지 항을 더한다는 뜻이다. 예를 들어 Σ(k=1부터 4까지) 2k는 2+4+6+8을 나타낸다. 항의 식, 시작값, 끝값을 각각 확인하고 필요한 값을 대입한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 HWP EqEdit 원문 스크립트",
+              "text": "SMALLSUM"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "항 번호, 합의 시작·끝 범위, 공식의 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-02-004",
+          "template": "example",
+          "title": "예제와 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "Σ(k=1부터 4까지) 3k의 값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예",
+              "text": "Σ(k=1부터 5까지)(k+1)=(2)+(3)+(4)+(5)+(6)=20이다. 항을 직접 나열하면 시작값과 끝값을 빠뜨리지 않았는지 확인할 수 있다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "작은 경우는 직접 더하거나 항을 대입해 결과를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-02-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "Σ(k=1부터 4까지) 3k의 값을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "k에 1, 2, 3을 차례로 대입해 더합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3+6+9+12=30입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "3+6+9+12=30입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algseq0304-quiz",
+                "kind": "quiz",
+                "prompt": "Σ(k=1부터 3까지) 2k를 풀어 쓴 것은?",
+                "options": [
+                  "2+4+6",
+                  "1+2+3",
+                  "2×3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 수열의 항이나 합을 확인했습니다.",
+                "incorrect_feedback": "항의 번호와 공식의 적용 범위를 다시 확인하세요.",
+                "hints": [
+                  "k에 1, 2, 3을 차례로 대입해 더합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "기호 Σ는 정해진 시작값부터 끝값까지 항을 더한다는 뜻이다. 예를 들어 Σ(k=1부터 4까지) 2k는 2+4+6+8을 나타낸다. 항의 식, 시작값, 끝값을 각각 확인하고 필요한 값을 대입한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "항의 규칙과 공식의 조건을 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수03-04"
+      ]
+    },
+    {
+      "title": "여러 수열의 합",
+      "pages": [
+        {
+          "title": "여러 수열의 합 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · HWP EqEdit 복구 기준 · 수열 · 신규 원고 후보 · 학기 배정 미확정 · 12대수03-03 · 12대수03-04 · 12대수03-05"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수03-05. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-03-03-001"
+        },
+        {
+          "id": "other22-12대수-03-03-002",
+          "template": "opening",
+          "title": "질문에서 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "여러 수열의 합"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측하기",
+              "text": "항의 규칙 또는 합의 범위를 말한 뒤 작은 값으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-03-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "여러 수열의 합",
+              "text": "자연수 거듭제곱의 합은 Σk=n(n+1)/2, Σk²=n(n+1)(2n+1)/6, Σk³=[n(n+1)/2]²이다. 식의 각 항을 분리해 알려진 합 공식에 대응시키고, n이 양의 정수인지 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 HWP EqEdit 원문 스크립트",
+              "text": "n; sum _{k=1} ^{n} `k  ^{3} `; sum _{k=1} ^{n} k; sum _{k=1} ^{n} k  ^{2}"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "항 번호, 합의 시작·끝 범위, 공식의 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-03-004",
+          "template": "example",
+          "title": "예제와 확인",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "1³+2³+…+10³의 값을 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이와 추가 예",
+              "text": "첫 5개 자연수 제곱의 합은 1²+2²+3²+4²+5²=5·6·11/6=55이다. 첫 5개 자연수 세제곱의 합은 (5·6/2)²=225이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "작은 경우는 직접 더하거나 항을 대입해 결과를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-03-005",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "1³+2³+…+10³의 값을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제곱합 공식에 n=4를 대입합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "[10·11/2]²=55²=3025입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "[10·11/2]²=55²=3025입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algseq0305-quiz",
+                "kind": "quiz",
+                "prompt": "1²+2²+3²+4²의 값은?",
+                "options": [
+                  "30",
+                  "20",
+                  "16"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 수열의 항이나 합을 확인했습니다.",
+                "incorrect_feedback": "항의 번호와 공식의 적용 범위를 다시 확인하세요.",
+                "hints": [
+                  "제곱합 공식에 n=4를 대입합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-03-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "자연수 거듭제곱의 합은 Σk=n(n+1)/2, Σk²=n(n+1)(2n+1)/6, Σk³=[n(n+1)/2]²이다. 식의 각 항을 분리해 알려진 합 공식에 대응시키고, n이 양의 정수인지 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "항의 규칙과 공식의 조건을 설명할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수03-05"
+      ]
+    },
     {
       "title": "수열의 뜻과 일반항",
       "pages": [
@@ -23,10 +477,10 @@
               "text": "성취기준 코드 후보: 12대수03-01. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-12대수-03-01-001"
+          "id": "other22-12대수-03-04-001"
         },
         {
-          "id": "other22-12대수-03-01-002",
+          "id": "other22-12대수-03-04-002",
           "template": "opening",
           "title": "질문으로 시작하기",
           "blocks": [
@@ -43,7 +497,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-01-003",
+          "id": "other22-12대수-03-04-003",
           "template": "concept",
           "title": "개념과 조건",
           "blocks": [
@@ -65,7 +519,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-01-004",
+          "id": "other22-12대수-03-04-004",
           "template": "example",
           "title": "예제와 풀이",
           "blocks": [
@@ -87,7 +541,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-01-005",
+          "id": "other22-12대수-03-04-005",
           "template": "practice",
           "title": "연습과 설명",
           "blocks": [
@@ -134,7 +588,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-01-006",
+          "id": "other22-12대수-03-04-006",
           "template": "summary",
           "title": "핵심 정리",
           "blocks": [
@@ -172,10 +626,10 @@
               "text": "성취기준 코드 후보: 12대수03-06. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-12대수-03-02-001"
+          "id": "other22-12대수-03-05-001"
         },
         {
-          "id": "other22-12대수-03-02-002",
+          "id": "other22-12대수-03-05-002",
           "template": "opening",
           "title": "질문으로 시작하기",
           "blocks": [
@@ -192,7 +646,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-02-003",
+          "id": "other22-12대수-03-05-003",
           "template": "concept",
           "title": "개념과 조건",
           "blocks": [
@@ -214,7 +668,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-02-004",
+          "id": "other22-12대수-03-05-004",
           "template": "example",
           "title": "예제와 풀이",
           "blocks": [
@@ -236,7 +690,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-02-005",
+          "id": "other22-12대수-03-05-005",
           "template": "practice",
           "title": "연습과 설명",
           "blocks": [
@@ -283,7 +737,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-02-006",
+          "id": "other22-12대수-03-05-006",
           "template": "summary",
           "title": "핵심 정리",
           "blocks": [
@@ -321,10 +775,10 @@
               "text": "성취기준 코드 후보: 12대수03-07. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-12대수-03-03-001"
+          "id": "other22-12대수-03-06-001"
         },
         {
-          "id": "other22-12대수-03-03-002",
+          "id": "other22-12대수-03-06-002",
           "template": "opening",
           "title": "질문으로 시작하기",
           "blocks": [
@@ -341,7 +795,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-03-003",
+          "id": "other22-12대수-03-06-003",
           "template": "concept",
           "title": "개념과 조건",
           "blocks": [
@@ -363,7 +817,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-03-004",
+          "id": "other22-12대수-03-06-004",
           "template": "example",
           "title": "예제와 풀이",
           "blocks": [
@@ -385,7 +839,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-03-005",
+          "id": "other22-12대수-03-06-005",
           "template": "practice",
           "title": "연습과 설명",
           "blocks": [
@@ -432,7 +886,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-03-006",
+          "id": "other22-12대수-03-06-006",
           "template": "summary",
           "title": "핵심 정리",
           "blocks": [
@@ -470,10 +924,10 @@
               "text": "성취기준 코드 후보: 12대수03-02. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-12대수-03-04-001"
+          "id": "other22-12대수-03-07-001"
         },
         {
-          "id": "other22-12대수-03-04-002",
+          "id": "other22-12대수-03-07-002",
           "template": "opening",
           "title": "8번째 줄 좌석 수를 바로 예측할 수 있을까?",
           "kicker": "반복 계산에서 규칙 찾기",
@@ -491,7 +945,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-04-003",
+          "id": "other22-12대수-03-07-003",
           "template": "experiment",
           "title": "첫째항과 공차를 움직이며 항 관찰",
           "kicker": "마지막 항은 순차 공개",
@@ -524,7 +978,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-04-004",
+          "id": "other22-12대수-03-07-004",
           "template": "experiment",
           "title": "양끝 항을 움직여 짝의 합 찾기",
           "kicker": "짝을 먼저 예상하고 한 쌍씩 공개",
@@ -592,7 +1046,7 @@
           ]
         },
         {
-          "id": "other22-12대수-03-04-005",
+          "id": "other22-12대수-03-07-005",
           "template": "practice",
           "title": "일반항으로 항을 계산하고 거꾸로 추론",
           "kicker": "값 대입 후 차이 검산",
@@ -643,6 +1097,9 @@
   "metadata": {
     "status": "partial_draft",
     "source_files": [
+      "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
+      "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
       "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
       "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
       "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
