@@ -1424,6 +1424,9 @@ class _BookmarkListPageState extends State<BookmarkListPage> {
 enum _ToolMode { none, pen, highlighter, eraser }
 
 class _BookWidgetState extends State<BookWidget> {
+  final _activityKeys = <String, GlobalKey>{};
+  final _activityStates = <String, Map<String, Object?>>{};
+  void _clearActivityState() { _activityKeys.clear(); _activityStates.clear(); }
   static const Color kPrimary = StudentDensityTokens.ink;
   static const Color kBg = StudentDensityTokens.background;
   static const Color kCanvas = Color(0xFFE9EAED);
@@ -1481,6 +1484,7 @@ class _BookWidgetState extends State<BookWidget> {
   @override
   void initState() {
     super.initState();
+    ApiClient.instance.sessionChanges.addListener(_clearActivityState);
     _initializeIfNeeded(attachListeners: true);
     if (widget.persistenceEnabled) {
       _loadBookmarks();
@@ -1501,6 +1505,7 @@ class _BookWidgetState extends State<BookWidget> {
     final entryChanged =
         widget.initialEntryIndex != oldWidget.initialEntryIndex;
     if (bookChanged || entryChanged) {
+      if (bookChanged) { _activityKeys.clear(); _activityStates.clear(); }
       _annotationSaveTimer?.cancel();
       unawaited(_persistAnnotations());
       _initialized = false;
@@ -1524,6 +1529,7 @@ class _BookWidgetState extends State<BookWidget> {
 
   @override
   void dispose() {
+    ApiClient.instance.sessionChanges.removeListener(_clearActivityState);
     _annotationSaveTimer?.cancel();
     _scrollThrottleTimer?.cancel();
     if (widget.persistenceEnabled) unawaited(_persistAnnotations());
@@ -2464,6 +2470,10 @@ class _BookWidgetState extends State<BookWidget> {
 
   @override
   Widget build(BuildContext context) {
+    return BookActivityKeyScope(keys: _activityKeys, states: _activityStates, bookId: _currentBookId, child: Builder(builder: _buildReader));
+  }
+
+  Widget _buildReader(BuildContext context) {
     _initializeIfNeeded();
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -4040,7 +4050,7 @@ class _BookContentBlockView extends StatelessWidget {
       return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         if (block.title.isNotEmpty) buildParagraph(block.title),
         if (block.text.isNotEmpty) buildParagraph(block.text),
-        BookActivityView(key: ValueKey(block.activity!.id), activity: block.activity!),
+        BookActivityView(key: BookActivityKeyScope.keyFor(context, block.activity!.id), activity: block.activity!),
       ]);
     }
     if (block.type == BookContentBlockType.formula) {

@@ -57,8 +57,8 @@ def test_supported_arithmetic_is_accepted(expression):
     validate_expression(expression, ['p'])
 
 
-@pytest.mark.parametrize('version', [1, 2])
-def test_import_retries_and_owner_scope(monkeypatch, version):
+@pytest.mark.parametrize('version,activity_kind', [(1, None), (2, 'quiz'), (2, 'discreteExperiment')])
+def test_import_retries_and_owner_scope(monkeypatch, version, activity_kind):
     module = importlib.import_module('api.index')
     secret = 'textbook-import-test-secret-32-chars-minimum'
     monkeypatch.setenv('OMJ_JWT_SECRET', secret)
@@ -89,9 +89,13 @@ def test_import_retries_and_owner_scope(monkeypatch, version):
         source_book = draft()
         if version == 2:
             source_book['schema_version'] = 2
+            activity = ({'id':'experiment-owner-scope','kind':'discreteExperiment','prompt':'Event frequency',
+                         'experiment':{'outcomes':[{'label':'A','success':True},{'label':'B','success':False}]}}
+                        if activity_kind == 'discreteExperiment' else
+                        {'id':'quiz-owner-scope','kind':'quiz','prompt':'Half?','answer':.5,
+                         'correct_feedback':'Yes','incorrect_feedback':'Retry'})
             source_book['chapters'][0]['pages'][0]['blocks'].append({
-                'type': 'activity', 'activity': {'id': 'quiz-owner-scope', 'kind': 'quiz',
-                    'prompt': 'Half?', 'answer': .5, 'correct_feedback': 'Yes', 'incorrect_feedback': 'Retry'}})
+                'type':'activity', 'activity':activity})
         payload = body(source_book)
         with ThreadPoolExecutor(max_workers=8) as pool:
             responses = list(pool.map(lambda _: client.post('/textbooks/import', json=payload, headers=headers('owner')), range(24)))

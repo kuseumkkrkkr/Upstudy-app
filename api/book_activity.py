@@ -41,6 +41,34 @@ def validate_activity(value):
             number(value.get('tolerance', 0))
             if value.get('tolerance', 0) < 0 or 'correct_index' in value:
                 raise ValueError('activity: invalid numeric answer')
+    elif kind == 'discreteExperiment':
+        fields(value, common + ' experiment')
+        experiment = value.get('experiment')
+        fields(experiment, 'outcomes max_trials batch_sizes')
+        outcomes = experiment.get('outcomes')
+        if not isinstance(outcomes, list) or not 2 <= len(outcomes) <= 32:
+            raise ValueError('activity: experiment requires 2..32 outcomes')
+        labels, total_weight = set(), 0
+        for outcome in outcomes:
+            fields(outcome, 'label weight success')
+            label = outcome.get('label')
+            text(label, 120)
+            weight = outcome.get('weight', 1)
+            number(weight)
+            if weight < 0 or type(outcome.get('success')) is not bool or label in labels:
+                raise ValueError('activity: invalid or duplicate outcome')
+            labels.add(label)
+            total_weight += weight
+        if total_weight <= 0:
+            raise ValueError('activity: positive total weight required')
+        maximum = experiment.get('max_trials', 10000)
+        if type(maximum) is not int or not 1 <= maximum <= 100000:
+            raise ValueError('activity: invalid trial limit')
+        batches = experiment.get('batch_sizes', [1])
+        if not isinstance(batches, list) or not 1 <= len(batches) <= 4:
+            raise ValueError('activity: invalid batch sizes')
+        if any(type(n) is not int or not 1 <= n <= min(1000, maximum) for n in batches) or len(set(batches)) != len(batches):
+            raise ValueError('activity: invalid or duplicate batch sizes')
     elif kind == 'steps':
         fields(value, common + ' steps')
         texts(value.get('steps'), 1, 12)

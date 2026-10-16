@@ -3,6 +3,55 @@ import 'dart:convert';
 import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
+import 'book_discrete_experiment_view.dart';
+
+/// Reader-owned keys reparent practice state across responsive shells. No storage.
+class BookActivityKeyScope extends InheritedWidget {
+  const BookActivityKeyScope({
+    super.key,
+    required this.keys,
+    required this.states,
+    required this.bookId,
+    required super.child,
+  });
+  final Map<String, GlobalKey> keys;
+  final Map<String, Map<String, Object?>> states;
+  final String bookId;
+  static Map<String, Object?>? read(
+    BuildContext context,
+    BookActivity activity,
+  ) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<BookActivityKeyScope>();
+    if (scope == null) return null;
+    final saved = scope.states['${scope.bookId}\u0000${activity.id}'];
+    return saved?['definition'] == jsonEncode(activity.toJson()) ? saved : null;
+  }
+
+  static void save(
+    BuildContext context,
+    BookActivity activity,
+    Map<String, Object?> value,
+  ) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<BookActivityKeyScope>();
+    if (scope == null) return;
+    scope.states['${scope.bookId}\u0000${activity.id}'] = {
+      'definition': jsonEncode(activity.toJson()),
+      ...value,
+    };
+  }
+
+  static Key keyFor(BuildContext context, String id) {
+    final scope = context
+        .dependOnInheritedWidgetOfExactType<BookActivityKeyScope>();
+    return scope?.keys.putIfAbsent(id, () => GlobalKey()) ?? ValueKey(id);
+  }
+
+  @override
+  bool updateShouldNotify(BookActivityKeyScope oldWidget) =>
+      !identical(keys, oldWidget.keys);
+}
 
 /// Disposable practice state; no student/OVR writes, author scripts, or autoplay.
 class BookActivityView extends StatefulWidget {
@@ -22,6 +71,7 @@ class _BookActivityViewState extends State<BookActivityView>
   int _step = 0, _hints = 0;
   int? _choice;
   String _feedback = '';
+  bool _restored = false;
   BookActivity get a => widget.activity;
   @override
   bool get wantKeepAlive => true;
@@ -60,6 +110,19 @@ class _BookActivityViewState extends State<BookActivityView>
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
+    if (!_restored && a.kind != 'discreteExperiment') {
+      _restored = true;
+      final saved = BookActivityKeyScope.read(context, a);
+      if (saved != null) {
+        _answer.text = saved['answer'] as String;
+        _choice = saved['choice'] as int?;
+        _feedback = saved['feedback'] as String;
+        _step = saved['step'] as int;
+        _hints = saved['hints'] as int;
+        _p = saved['p'] as double;
+        _x = saved['x'] as double;
+      }
+    }
     if (MediaQuery.disableAnimationsOf(context) ||
         !TickerMode.valuesOf(context).enabled) {
       _stop();
@@ -132,6 +195,18 @@ class _BookActivityViewState extends State<BookActivityView>
   @override
   Widget build(BuildContext context) {
     super.build(context);
+    if (a.kind == 'discreteExperiment') {
+      return BookDiscreteExperimentView(activity: a);
+    }
+    BookActivityKeyScope.save(context, a, {
+      'answer': _answer.text,
+      'choice': _choice,
+      'feedback': _feedback,
+      'step': _step,
+      'hints': _hints,
+      'p': _p,
+      'x': _x,
+    });
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

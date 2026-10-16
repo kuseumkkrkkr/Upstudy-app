@@ -121,9 +121,18 @@ void main() {
       await tester.tap(find.text('답 확인'));
       await tester.pump();
       expect(find.text('Correct'), findsOneWidget);
+      await tester.tap(find.text('힌트 한 단계'));
+      await tester.pump();
+      expect(find.text('Think first'), findsOneWidget);
       tester.view.physicalSize = const Size(1280, 900);
       await tester.pumpAndSettle();
       expect(find.byType(BookActivityView), findsOneWidget);
+      expect(find.text('Correct'), findsOneWidget);
+      expect(find.text('Think first'), findsOneWidget);
+      tester.view.physicalSize = const Size(390, 844);
+      await tester.pumpAndSettle();
+      expect(find.text('Correct'), findsOneWidget);
+      expect(find.text('Think first'), findsOneWidget);
       expect(tester.takeException(), isNull);
       await tester.pumpWidget(const SizedBox.shrink());
     },

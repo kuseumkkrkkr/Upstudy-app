@@ -1,3 +1,5 @@
+import 'book_discrete_experiment.dart';
+
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
   const BookActivity._(
@@ -14,6 +16,7 @@ class BookActivity {
     this.steps,
     this.p,
     this.x,
+    this.experiment,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -21,6 +24,7 @@ class BookActivity {
   final int? correctIndex;
   final double? answer;
   final double tolerance, p, x;
+  final BookDiscreteExperiment? experiment;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -50,6 +54,7 @@ class BookActivity {
     double? answer;
     double tolerance = 0, p = 2, x = 4;
     var correct = '', incorrect = '';
+    BookDiscreteExperiment? experiment;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -75,9 +80,18 @@ class BookActivity {
           index = candidate;
         } else {
           answer = number(json['answer']);
-          tolerance = number(json['tolerance'] ?? 0);
+          tolerance = number(
+            json.containsKey('tolerance') ? json['tolerance'] : 0,
+          );
           if (tolerance < 0 || json.containsKey('correct_index')) fail();
         }
+      case 'discreteExperiment':
+        allowed.add('experiment');
+        final payload = json['experiment'];
+        if (payload is! Map) fail();
+        experiment = BookDiscreteExperiment.fromJson(
+          Map<String, dynamic>.from(payload),
+        );
       case 'steps':
         allowed.add('steps');
         steps = texts(json['steps'], 1, 12);
@@ -94,7 +108,7 @@ class BookActivity {
       text(json['id'], 80),
       kind as String,
       text(json['prompt']),
-      texts(json['hints'] ?? [], 0, 8),
+      texts(json.containsKey('hints') ? json['hints'] : [], 0, 8),
       options,
       index,
       answer,
@@ -104,6 +118,7 @@ class BookActivity {
       steps,
       p,
       x,
+      experiment,
     );
   }
 
@@ -125,6 +140,7 @@ class BookActivity {
     },
     if (kind == 'steps') 'steps': steps,
     if (kind == 'parabolaDistance') ...{'p': p, 'x': x},
+    if (experiment != null) 'experiment': experiment!.toJson(),
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

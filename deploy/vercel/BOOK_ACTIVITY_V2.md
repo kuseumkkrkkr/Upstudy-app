@@ -2,6 +2,26 @@
 
 Status: implemented locally; candidate/browser verification required before release.
 
+## Native experiment and responsive reader follow-up
+
+- `discreteExperiment` is implemented, not a future-placeholder type. Contract
+  and per-source gaps: `BOOK_ACTIVITY_CAPABILITIES.md`. Python55 passed;
+  Flutter11 passed with concurrency1; seven scoped Dart files analyze clean.
+- Actual candidate source SHA256 `6F20989F43BD809CE7C825636696A9DB293F8C589F5DE63B5F083027C64BDF7E`
+  loaded locally through BookData into the real BookWidget (24 source pages,
+  37 split reader pages). No student API write or manuscript publication.
+- Found/fixed multipage responsive teardown losing local activity state.
+  Reader-local snapshots check book/activity/definition; clear on account/book
+  replacement, die with reader. No disk/server/timer/RNG serialization.
+  At34/37, Enter produced6, count1, even1/1=1.000; first hint retained through
+  1280x900 ->390x844 ->1280x900. Reset cleared counters/hints. At33/37,
+  1/3 answer, explanation and hint also survived both directions.
+  `candidate-reader-after-390.png` / `candidate-reader-after-1280.png` and
+  `candidate-quiz-after-390.png` under the capabilities evidence folder record it.
+  Earlier key-only failed capture was superseded, not counted as a pass.
+- Full106-source migration, all-page visual parity, live PostgreSQL persistence
+  and load tests remain incomplete. Do not promote unreviewed manuscripts.
+
 ## 2026-10-16 checkpoint
 
 - Source checkpoint `8caf0127657798d813c811196d3862b358dd007f` pushed to hotfix.
@@ -153,6 +173,7 @@ Each activity occupies one indivisible `pages[].blocks[]` entry:
 | both quizzes | required `correct_feedback`, `incorrect_feedback` | No answer exposed before submission; hints revealed one at a time |
 | `steps` | `steps` 1–12 nonempty strings | Previous/next, disabled endpoints, reset; one step can be a Socratic question |
 | `parabolaDistance` | `p` .5–3; `x` -4–4 | Trusted native `y=x²/(4p)`, draggable P, keyboard-accessible sliders, focus/directrix distances, explicit 5-second play/stop/reset |
+| `discreteExperiment` (implemented locally, not deployed) | Nested finite-outcome definition, weights/event flags, bounded trial batches | Actual local sampling/counts/frequency/reset; see `BOOK_ACTIVITY_CAPABILITIES.md` for the full contract, focused tests and pending asset migrations |
 
 Common: `id` nonempty max80, unique in book; `prompt` nonempty max2000;
 optional `hints` at most8 strings max2000. No asset IDs, author JavaScript,
@@ -163,8 +184,9 @@ standalone HTML interactions are supported.
 ## State and safety
 
 - `_answer`, `_choice`, `_feedback`, `_step`, `_hints`, `_p`, `_x` belong to the
-  mounted reader activity only. Reset clears them; disposal/account-driven
-  reader removal discards them. No learner answer persistence or exam/OVR write.
+  reader session only. Reset clears them; reader disposal/account or book change
+  discards snapshots. Responsive child remount restores them. No disk/server
+  learner answer persistence or exam/OVR write.
 - `_p` is focus ordinate, `_x` point abscissa in graph units. Values originate
   from validated author defaults and bounded local controls. Curves and metrics
   are calculated natively; no eval/parser is required.
