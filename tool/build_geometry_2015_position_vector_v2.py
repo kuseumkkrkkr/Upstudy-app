@@ -62,6 +62,25 @@ def build_book() -> dict[str, object]:
     }
 
 
+def preserve_runtime_validation(manifest: dict[str, object]) -> None:
+    manifest_path = PACKAGE / "REVIEW_MANIFEST.json"
+    if not manifest_path.is_file():
+        return
+    try:
+        previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    new_sources = manifest.get("source_files", [])
+    old_sources = previous.get("source_files", [])
+    same_candidate = bool(new_sources and old_sources) and (
+        new_sources[0].get("sha256") == old_sources[0].get("sha256")
+    )
+    if same_candidate:
+        for key in ("runtime_import_status", "runtime_validator_head", "runtime_validator_command"):
+            if previous.get(key):
+                manifest[key] = previous[key]
+
+
 def main() -> None:
     if not OFFICIAL_SOURCE.is_file():
         raise FileNotFoundError(f"Official curriculum text is required: {OFFICIAL_SOURCE}")
@@ -73,6 +92,7 @@ def main() -> None:
     output.write_text(json.dumps(build_book(), ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     PACKAGE.mkdir(parents=True, exist_ok=True)
     manifest = {"source_files":[{"source_file":OUTPUT_NAME,"sha256":canonical_file_sha256(output),"curriculum_version":"2015","standard_codes":[CODE],"page_count":4,"content_elements":["concept_explanation","worked_example","practice","answer_explanations","native_quiz"],"content_status":"authored_candidate; independent review pending","math_review_status":"pending_independent_review","teacher_review_status":"pending","rights_status":"pending_review"}],"official_source_file":"work/official-curriculum/2015_appendix8_math.txt","official_source_sha256":hashlib.sha256(official_bytes).hexdigest().upper(),"official_standard":{"code":CODE,"text":STANDARD},"curriculum_review_status":"code_and_statement_checked; content alignment review pending","math_review_status":"pending_independent_review","teacher_review_status":"pending","rights_status":"pending_review","publication_eligibility":"not_eligible","runtime_import_status":"pending_current_hash_validation"}
+    preserve_runtime_validation(manifest)
     (PACKAGE / "REVIEW_MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (PACKAGE / "README.md").write_text(f"# 기하 2015 개정 · 위치벡터와 좌표 부분 원고\n\n`{OUTPUT_NAME}`는 공식 기준 `{CODE}`에 대한 정의, 풀이 예제, 세 연습과 해설, native quiz를 담은 부분 후보입니다. 독립 수학·교사 검수와 rights 확인 전이며, 전체 상품의 충족 또는 출판 적격을 뜻하지 않습니다.\n", encoding="utf-8")
     print(f"Generated 4-page, review-pending V2 candidate for {CODE}: {output}")

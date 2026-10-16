@@ -134,6 +134,25 @@ def build_book() -> dict[str, object]:
     }
 
 
+def preserve_runtime_validation(manifest: dict[str, object]) -> None:
+    manifest_path = PACKAGE / "REVIEW_MANIFEST.json"
+    if not manifest_path.is_file():
+        return
+    try:
+        previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return
+    new_sources = manifest.get("source_files", [])
+    old_sources = previous.get("source_files", [])
+    same_candidate = bool(new_sources and old_sources) and (
+        new_sources[0].get("sha256") == old_sources[0].get("sha256")
+    )
+    if same_candidate:
+        for key in ("runtime_import_status", "runtime_validator_head", "runtime_validator_command"):
+            if previous.get(key):
+                manifest[key] = previous[key]
+
+
 def main() -> None:
     if not OFFICIAL_SOURCE.is_file():
         raise FileNotFoundError(f"Official curriculum text is required: {OFFICIAL_SOURCE}")
@@ -169,6 +188,7 @@ def main() -> None:
         "publication_eligibility": "not_eligible",
         "runtime_import_status": "pending_current_hash_validation",
     }
+    preserve_runtime_validation(manifest)
     (PACKAGE / "REVIEW_MANIFEST.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (PACKAGE / "README.md").write_text(
         "# 기하 2015 개정 · 벡터의 뜻 부분 원고\n\n"

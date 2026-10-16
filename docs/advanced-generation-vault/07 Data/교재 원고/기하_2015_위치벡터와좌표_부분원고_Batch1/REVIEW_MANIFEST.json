@@ -32,5 +32,7 @@
   "teacher_review_status": "pending",
   "rights_status": "pending_review",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation"
+  "runtime_import_status": "passed_flutter_activity_compatibility_suite",
+  "runtime_validator_head": "2a3bf71d61dfe8d0079941d73bd4eeb674c95fe5",
+  "runtime_validator_command": "flutter test test/textbook_activity_compatibility_test.dart"
 }
