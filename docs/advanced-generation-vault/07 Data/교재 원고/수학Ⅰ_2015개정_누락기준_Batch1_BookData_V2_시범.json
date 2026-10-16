@@ -1,0 +1,1378 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅰ · 미연결 기준 보완 10모듈 후보",
+  "subtitle": "지수·로그, 탄젠트 그래프, 수열의 합·귀납 정의",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "tags": [
+    "수학Ⅰ",
+    "2015 개정",
+    "추가 원고 후보",
+    "가상 예시",
+    "학기 배정 미확정",
+    "12수학Ⅰ01-01",
+    "12수학Ⅰ01-02",
+    "12수학Ⅰ01-03",
+    "12수학Ⅰ01-05",
+    "12수학Ⅰ01-07",
+    "12수학Ⅰ01-08",
+    "12수학Ⅰ02-02",
+    "12수학Ⅰ03-04",
+    "12수학Ⅰ03-05",
+    "12수학Ⅰ03-06"
+  ],
+  "standard_codes": [
+    "12수학Ⅰ01-01",
+    "12수학Ⅰ01-02",
+    "12수학Ⅰ01-03",
+    "12수학Ⅰ01-05",
+    "12수학Ⅰ01-07",
+    "12수학Ⅰ01-08",
+    "12수학Ⅰ02-02",
+    "12수학Ⅰ03-04",
+    "12수학Ⅰ03-05",
+    "12수학Ⅰ03-06"
+  ],
+  "chapters": [
+    {
+      "title": "거듭제곱과 거듭제곱근",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-01에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10101-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "거듭제곱과 거듭제곱근"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10101-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "거듭제곱은 같은 수의 반복 곱으로 정의한다. n제곱근은 n제곱해 a가 되는 수이며, 짝수 지수에서 실수 범위의 주값은 0 이상이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10101-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "√144와 ⁵√32를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "√81=9이고 ³√(−8)=−2이다. (−2)³=−8로 확인한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10101-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "√144와 ⁵√32를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "제곱근의 주값은 음이 아닌 수이고, 홀수 차수의 음수 근은 음수일 수 있습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "12와 2"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12와 2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10101-quiz",
+                "kind": "quiz",
+                "prompt": "√144와 ⁵√32를 구하세요.",
+                "options": [
+                  "12와 2",
+                  "−12와 2",
+                  "12와 −2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "제곱근의 주값은 음이 아닌 수이고, 홀수 차수의 음수 근은 음수일 수 있습니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "제곱근의 주값은 음이 아닌 수이고, 홀수 차수의 음수 근은 음수일 수 있습니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10101-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "거듭제곱과 거듭제곱근"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "유리수·실수 지수",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-02에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10102-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "유리수·실수 지수"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10102-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "양수 a에 대해 유리수 지수는 거듭제곱근을 이용해 확장한다. 실수 지수는 양의 밑에서 지수함수의 연속적인 변화로 직관적으로 이해한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10102-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "27^(2/3)을 거듭제곱근으로 바꾸어 계산하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "8^(2/3)=(³√8)²=2²=4이다. 밑이 양수일 때 이 확장을 일관되게 적용할 수 있다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10102-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "27^(2/3)을 거듭제곱근으로 바꾸어 계산하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "분모 3을 세제곱근으로, 분자 2를 제곱으로 해석합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "9"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "9"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10102-quiz",
+                "kind": "quiz",
+                "prompt": "27^(2/3)을 거듭제곱근으로 바꾸어 계산하세요.",
+                "options": [
+                  "9",
+                  "6",
+                  "18"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "분모 3을 세제곱근으로, 분자 2를 제곱으로 해석합니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "분모 3을 세제곱근으로, 분자 2를 제곱으로 해석합니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10102-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "유리수·실수 지수"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수법칙으로 식 간단히 하기",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-03에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10103-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "지수법칙으로 식 간단히 하기"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10103-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "같은 양의 밑에 대해 곱셈에서는 지수를 더하고, 나눗셈에서는 빼며, 거듭제곱의 거듭제곱에서는 지수를 곱한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10103-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3⁵·3²/3⁴을 간단히 하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "2³·2⁴/2⁵=2^(3+4−5)=2²=4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10103-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "3⁵·3²/3⁴을 간단히 하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "같은 밑이므로 지수를 더하고 빼세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "27"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "27"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10103-quiz",
+                "kind": "quiz",
+                "prompt": "3⁵·3²/3⁴을 간단히 하세요.",
+                "options": [
+                  "27",
+                  "3",
+                  "81"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "같은 밑이므로 지수를 더하고 빼세요.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "같은 밑이므로 지수를 더하고 빼세요.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10103-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "지수법칙으로 식 간단히 하기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "상용로그와 자릿수 해석",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-05에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10105-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "상용로그와 자릿수 해석"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10105-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "상용로그는 밑이 10인 로그다. log₁₀N=k는 N=10^k와 동치이며, 로그 성질을 이용해 양수의 크기와 자릿수를 해석할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10105-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "log₁₀(100000)을 구하고 이를 지수식으로 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "log₁₀(1000)=3이고 log₁₀(0.01)=−2이다. 이는 1000=10³, 0.01=10⁻²와 같다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10105-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "log₁₀(100000)을 구하고 이를 지수식으로 확인하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "10의 몇 제곱이 진수인지 찾습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "5이며 10⁵=100000"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5이며 10⁵=100000"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10105-quiz",
+                "kind": "quiz",
+                "prompt": "log₁₀(100000)을 구하고 이를 지수식으로 확인하세요.",
+                "options": [
+                  "5",
+                  "4",
+                  "6"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "10의 몇 제곱이 진수인지 찾습니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "10의 몇 제곱이 진수인지 찾습니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10105-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "상용로그와 자릿수 해석"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수·로그함수 그래프의 성질",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-07에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10107-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "지수·로그함수 그래프의 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10107-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "a>0, a≠1일 때 y=a^x는 정의역이 실수 전체이고 치역이 양수다. y=log_a x는 그 역함수로 정의역은 양수, 치역은 실수이며 두 그래프는 y=x에 대칭이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10107-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "y=3^x의 그래프가 반드시 지나는 점과 치역을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "y=2^x는 (0,1),(1,2)를 지나고 x축을 점근선으로 갖는다. y=log₂x는 이에 y=x 대칭인 역함수 그래프다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10107-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=3^x의 그래프가 반드시 지나는 점과 치역을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "3⁰=1이고 양의 밑의 거듭제곱값은 항상 양수입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(0,1)을 지나며 치역은 y>0"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(0,1)을 지나며 치역은 y>0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10107-quiz",
+                "kind": "quiz",
+                "prompt": "y=3^x의 그래프가 반드시 지나는 점과 치역을 쓰세요.",
+                "options": [
+                  "(0,1), y>0",
+                  "(1,0), 모든 실수",
+                  "(0,0), y≥0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "3⁰=1이고 양의 밑의 거듭제곱값은 항상 양수입니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "3⁰=1이고 양의 밑의 거듭제곱값은 항상 양수입니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10107-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "지수·로그함수 그래프의 성질"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수·로그함수로 변화 모델링",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ01-08에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10108-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "지수·로그함수로 변화 모델링"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10108-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "지수함수는 일정한 시간 간격마다 같은 비율로 변하는 양을 모델링한다. 로그함수는 목표량에 도달하는 시간 등 지수 관계의 입력을 찾을 때 사용한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ01-08"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10108-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "처음 50단위인 양이 4시간마다 두 배가 된다. 8시간 뒤의 양을 모델로 계산하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "가상의 배양액이 3일마다 두 배가 되고 처음 100단위라면 P(t)=100·2^(t/3)이다. 6일 뒤에는 100·2²=400단위다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10108-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "처음 50단위인 양이 4시간마다 두 배가 된다. 8시간 뒤의 양을 모델로 계산하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "8시간은 4시간 구간 두 번이므로 두 배가 두 번 적용됩니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "200단위"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "200단위"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10108-quiz",
+                "kind": "quiz",
+                "prompt": "처음 50단위인 양이 4시간마다 두 배가 된다. 8시간 뒤의 양을 모델로 계산하세요.",
+                "options": [
+                  "200단위",
+                  "100단위",
+                  "400단위"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "8시간은 4시간 구간 두 번이므로 두 배가 두 번 적용됩니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "8시간은 4시간 구간 두 번이므로 두 배가 두 번 적용됩니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10108-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "지수·로그함수로 변화 모델링"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "탄젠트함수의 그래프",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ02-02에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10202-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "탄젠트함수의 그래프"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10202-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "단위원에서 tan x=sin x/cos x이며 cos x=0인 곳에서는 정의되지 않는다. 탄젠트 그래프는 주기가 π이고 x=π/2+kπ에서 수직점근선을 갖는다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ02-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10202-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "tan x의 한 주기 길이와 x=π/2에서의 상태를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "tan(π/4)=1, tan(0)=0이다. tan x는 x=π/2에서는 정의되지 않고 π만큼 이동하면 같은 값이 반복된다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10202-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "tan x의 한 주기 길이와 x=π/2에서의 상태를 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "탄젠트는 사인/코사인이므로 코사인이 0인 곳을 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "주기는 π이고 x=π/2에서 정의되지 않는다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "주기는 π이고 x=π/2에서 정의되지 않는다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10202-quiz",
+                "kind": "quiz",
+                "prompt": "tan x의 한 주기 길이와 x=π/2에서의 상태를 쓰세요.",
+                "options": [
+                  "π, 정의되지 않음",
+                  "2π, 0",
+                  "π/2, 1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "탄젠트는 사인/코사인이므로 코사인이 0인 곳을 확인하세요.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "탄젠트는 사인/코사인이므로 코사인이 0인 곳을 확인하세요.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10202-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "탄젠트함수의 그래프"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "시그마 기호와 합의 성질",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ03-04에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10304-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "시그마 기호와 합의 성질"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10304-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "Σ는 일정한 규칙을 따르는 항을 인덱스 범위에 따라 더한다. 상수배와 합·차를 항별로 나누어 합을 계산할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10304-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "Σ(k=1부터3까지)(k+2)를 전개해 계산하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "Σ(k=1부터4까지)(2k+1)=3+5+7+9=24이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10304-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "Σ(k=1부터3까지)(k+2)를 전개해 계산하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "k에 1,2,3을 차례로 대입해 더합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "12"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "12"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10304-quiz",
+                "kind": "quiz",
+                "prompt": "Σ(k=1부터3까지)(k+2)를 전개해 계산하세요.",
+                "options": [
+                  "12",
+                  "9",
+                  "15"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "k에 1,2,3을 차례로 대입해 더합니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "k에 1,2,3을 차례로 대입해 더합니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10304-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "시그마 기호와 합의 성질"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "여러 수열의 합과 규칙 찾기",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ03-05에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10305-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "여러 수열의 합과 규칙 찾기"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10305-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "간단한 수열의 부분합은 항의 구조를 이용해 구할 수 있다. 첫 n개의 홀수 합은 각 단계에서 다음 홀수를 더해 정사각형을 만들며 n²이 된다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10305-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "첫 5개 홀수의 합을 구하고 n에 대한 식으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "1+3+5+7=16=4²이다. n번째 정사각형에 바깥쪽 L자 모양 점을 더하면 다음 정사각형이 된다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10305-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "첫 5개 홀수의 합을 구하고 n에 대한 식으로 나타내세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "홀수 항을 차례로 더하거나 n번째 정사각형의 점 개수를 생각합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "25이며 일반적으로 n²"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "25이며 일반적으로 n²"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10305-quiz",
+                "kind": "quiz",
+                "prompt": "첫 5개 홀수의 합을 구하고 n에 대한 식으로 나타내세요.",
+                "options": [
+                  "25, n²",
+                  "20, 2n²",
+                  "15, n(n+1)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "홀수 항을 차례로 더하거나 n번째 정사각형의 점 개수를 생각합니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "홀수 항을 차례로 더하거나 n번째 정사각형의 점 개수를 생각합니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10305-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "여러 수열의 합과 규칙 찾기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "수열의 귀납적 정의",
+      "intro": [
+        "교육부 고시 제2015-74호 별책 8의 공식 기준 12수학Ⅰ03-06에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 만든 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "m10306-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "수열의 귀납적 정의"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 변수의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10306-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "귀납적 정의는 첫 항과 앞 항에서 다음 항을 만드는 규칙을 함께 제시한다. 규칙을 반복해 필요한 항을 순서대로 계산한다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준 후보",
+              "text": "12수학Ⅰ03-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "밑·정의역·단위·인덱스 범위 중 필요한 조건을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10306-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "a₁=4, aₙ₊₁=2aₙ일 때 a₄를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "a₁=2, aₙ₊₁=aₙ+3이면 항은 2,5,8,11,…이다. 각 항은 바로 앞 항에 3을 더해 얻는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "결과를 처음 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10306-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a₁=4, aₙ₊₁=2aₙ일 때 a₄를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "a₂, a₃, a₄를 차례로 앞 항의 두 배로 구합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "32"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "32"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10306-quiz",
+                "kind": "quiz",
+                "prompt": "a₁=4, aₙ₊₁=2aₙ일 때 a₄를 구하세요.",
+                "options": [
+                  "32",
+                  "16",
+                  "64"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "a₂, a₃, a₄를 차례로 앞 항의 두 배로 구합니다.",
+                "incorrect_feedback": "정의의 조건과 계산 과정을 확인한 뒤 원래 식에 대입해 보세요.",
+                "hints": [
+                  "a₂, a₃, a₄를 차례로 앞 항의 두 배로 구합니다.",
+                  "단위와 범위 또는 항의 순서를 먼저 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10306-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "수열의 귀납적 정의"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "개념의 조건과 풀이 근거를 설명하고 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

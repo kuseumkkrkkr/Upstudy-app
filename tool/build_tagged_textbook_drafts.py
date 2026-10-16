@@ -33,6 +33,8 @@ GENERATORS = [
     ("build_geometry_2022_draft.py", "main"),
     ("build_geometry_2022_remaining_v2_batch1.py", "main"),
     ("build_geometry_2015_vector_drafts.py", "main"),
+    ("build_math1_2015_existing_candidate_tags.py", "main"),
+    ("build_math1_2015_remaining_v2_batch1.py", "main"),
     ("build_math_1_2015_draft.py", "main"),
     ("build_math_2_2015_draft.py", "main"),
     ("build_probability_statistics_2015_draft.py", "main"),

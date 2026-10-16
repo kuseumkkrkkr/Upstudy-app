@@ -1,0 +1,79 @@
+{
+  "source_bookdata_files": [
+    {
+      "bookdata_file": "대수_지수와로그_BookData_시범.json",
+      "bookdata_sha256": "3ECB0D9B5378A4BCE2277A45F036877ACC2D63B0C019A4953606F29626ECE0E9",
+      "candidate_standard_codes": [
+        "12수학Ⅰ01-04",
+        "12수학Ⅰ01-06"
+      ]
+    },
+    {
+      "bookdata_file": "수학Ⅰ_삼각함수_BookData_시범.json",
+      "bookdata_sha256": "088C1115B915EAE93CD11B656B24268F4B6DF80F57C53CA72289F312D2ADE023",
+      "candidate_standard_codes": [
+        "12수학Ⅰ02-01",
+        "12수학Ⅰ02-02"
+      ]
+    },
+    {
+      "bookdata_file": "수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json",
+      "bookdata_sha256": "6F7AF0CF7D0A2DDD5C9A55BD69E1E12A63E11CDF461B8519F35709E70D88382C",
+      "candidate_standard_codes": [
+        "12수학Ⅰ02-03"
+      ]
+    },
+    {
+      "bookdata_file": "수학Ⅰ_수열_BookData_시범.json",
+      "bookdata_sha256": "19B3298FF4C81CD647F34479D36A6BF7CA3C4B1AE95243F20F34E567FB51085D",
+      "candidate_standard_codes": [
+        "12수학Ⅰ03-01",
+        "12수학Ⅰ03-02",
+        "12수학Ⅰ03-03",
+        "12수학Ⅰ03-07",
+        "12수학Ⅰ03-08"
+      ]
+    }
+  ],
+  "candidate_code_reference_type": "2015_moe_appendix8_math_criteria_table",
+  "candidate_code_references": [
+    "12수학Ⅰ01-04",
+    "12수학Ⅰ01-06",
+    "12수학Ⅰ02-01",
+    "12수학Ⅰ02-02",
+    "12수학Ⅰ02-03",
+    "12수학Ⅰ03-01",
+    "12수학Ⅰ03-02",
+    "12수학Ⅰ03-03",
+    "12수학Ⅰ03-07",
+    "12수학Ⅰ03-08"
+  ],
+  "preliminary_module_alignment": {
+    "12수학Ⅰ01-04": "candidate_partial_log_definition_and_inverse_relation",
+    "12수학Ⅰ01-06": "candidate_partial_function_definition_graph_scope_incomplete",
+    "12수학Ⅰ02-01": "candidate_mapping_general_angle_and_radian",
+    "12수학Ⅰ02-02": "candidate_partial_tangent_graph_missing",
+    "12수학Ⅰ02-03": "candidate_mapping_law_examples_and_triangle_applications_review_pending",
+    "12수학Ⅰ03-01": "candidate_mapping_sequence_terms",
+    "12수학Ⅰ03-02": "candidate_mapping_arithmetic_sequence_and_sum",
+    "12수학Ⅰ03-03": "candidate_mapping_geometric_sequence_and_sum",
+    "12수학Ⅰ03-07": "candidate_partial_induction_principle",
+    "12수학Ⅰ03-08": "candidate_partial_induction_proof_needs_full_review"
+  },
+  "curriculum_review_status": "official_codes_and_edition_checked; module_content_review_pending",
+  "math_review_status": "pending_independent_teacher_review",
+  "teacher_review_status": "pending",
+  "rights_status": "unknown_for_existing_drafts; project_rights_decision_pending",
+  "integration_status": "source_pages_preserved; candidate_tags_only",
+  "publication_eligibility": "not_eligible",
+  "compatibility_normalization": {
+    "legacy_example_to_solutionStep_blocks": 2
+  },
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "d64f05551e69bbb1b31f262b91d41f163abad66",
+  "notes": [
+    "Unsupported legacy example block types were mapped to the supported solutionStep type without changing page text.",
+    "The trigonometric-function draft does not contain a tangent graph; 12수학Ⅰ02-02 remains partial until the addendum is independently reviewed.",
+    "Candidate tags are not content approval."
+  ]
+}
