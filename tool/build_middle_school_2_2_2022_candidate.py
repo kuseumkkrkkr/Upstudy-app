@@ -99,6 +99,20 @@ def main() -> None:
                                  item["opening"], item["concept"], item["example"], item["solution"],
                                  item["practice"], item["answer"], item["summary"])
         ch["pages"][-2]["blocks"].append({"type": "activity", "activity": item["quiz"]})
+        if item["kind"] == "probability":
+            ch["pages"][-2]["blocks"].append({"type": "activity", "activity": {
+                "id": "ms22-discrete-probability-experiment", "kind": "discreteExperiment",
+                "prompt": "공정한 주사위를 반복해서 던져 짝수 눈의 상대도수가 어떻게 달라지는지 관찰하세요.",
+                "hints": ["짝수 사건은 2, 4, 6입니다.", "시행 횟수와 짝수 눈의 누적 횟수로 상대도수를 계산합니다."],
+                "experiment": {"outcomes": [
+                    {"label": "1", "weight": 1, "success": False},
+                    {"label": "2", "weight": 1, "success": True},
+                    {"label": "3", "weight": 1, "success": False},
+                    {"label": "4", "weight": 1, "success": True},
+                    {"label": "5", "weight": 1, "success": False},
+                    {"label": "6", "weight": 1, "success": True},
+                ], "max_trials": 10000, "batch_sizes": [1]},
+            }})
         chapters.append(ch)
 
     tags = ["중학수학 2-2", "2022 개정", "학기 배정 후보", "공식 학기 배열 아님", "교사 검수 대기",
@@ -129,19 +143,39 @@ def main() -> None:
 
     source_hwp = ROOT / "work/official-curriculum/2022_appendix8_math.hwp"
     source_zip = ROOT / "work/official-curriculum/2022_math_standards_bundle.zip"
+    book_hash = hashlib.sha256((OUT / BOOK_FILE).read_bytes()).hexdigest().upper()
+    manifest_path = OUT / "중학수학2-2_2022개정_원고매니페스트.json"
+    try:
+        previous = json.loads(manifest_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        previous = {}
+    validation_current = previous.get("bookdata_sha256") == book_hash
+    activity_kinds = sorted({block["activity"]["kind"] for chapter in chapters
+                             for page_item in chapter["pages"] for block in page_item["blocks"]
+                             if block.get("type") == "activity"})
     manifest = {"target": book["title"], "status": "candidate_partial_draft",
                 "semester_assignment": "editorial_candidate_not_officially_confirmed", "standards": codes,
+                "bookdata_file": BOOK_FILE,
+                "bookdata_sha256": book_hash,
+                "activity_kinds": activity_kinds,
+                "runtime_import_status": previous.get("runtime_import_status", "pending_current_hash_validation") if validation_current else "pending_current_hash_validation",
+                "runtime_validator_head": previous.get("runtime_validator_head") if validation_current else None,
+                "curriculum_review": "official_hwp_table_mapped; teacher_review_pending",
+                "teacher_review": "pending",
                 "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
                 "source_hwp_sha256": hashlib.sha256(source_hwp.read_bytes()).hexdigest().upper(),
                 "source_archive_sha256": hashlib.sha256(source_zip.read_bytes()).hexdigest().upper(),
                 "content_rights": "newly authored draft; publication rights decision pending",
+                "publication_eligibility": "not_eligible",
                 "math_review": "examples checked manually; independent teacher review pending",
                 "features": [{"standard": x["code"], "html": x["html"], "type": x["kind"],
-                              "runtime": "standalone source asset; not app-integrated"} for x in SPECS]}
-    (OUT / "중학수학2-2_2022개정_원고매니페스트.json").write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+                              "runtime": ("native discreteExperiment covers dice outcomes and relative frequency; HTML remains a separate source reference with partial feature parity"
+                                          if x["kind"] == "probability" else "standalone source asset; not app-integrated")} for x in SPECS]}
+    manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (OUT / "README.md").write_text("# 중학수학 2-2 개념서 · 2022 개정 후보 시범\n\n"
-        "4개 모듈·24쪽의 오리지널 부분 초안, V2 퀴즈 4개, 별도 HTML 체험 자산 4개를 생성합니다. "
-        "성취기준은 학년군 코드이며 학기 배정은 편집 후보입니다. 교사 검수·권리 결정·앱 통합은 대기입니다.\n\n"
+        "4개 모듈·24쪽의 오리지널 부분 초안입니다. V2 quiz 4개와 `discreteExperiment` 1개를 포함합니다. "
+        "주사위 확률 실험은 원본 HTML의 시행·상대도수 기능을 네이티브로 부분 대응하며 HTML 파일은 근거 자산으로 보존합니다. "
+        "성취기준은 학년군 코드이고 학기 배정은 편집 후보입니다. HTML/native 화면 parity, 교사 검수, 권리 결정, 앱 게시 승인은 대기입니다.\n\n"
         "재생성: `python tool/build_middle_school_2_2_2022_candidate.py`\n", encoding="utf-8")
     print(f"Built candidate: {len(chapters)} modules, {sum(len(x['pages']) for x in chapters)} pages, 4 HTML assets, schema v2.")
 

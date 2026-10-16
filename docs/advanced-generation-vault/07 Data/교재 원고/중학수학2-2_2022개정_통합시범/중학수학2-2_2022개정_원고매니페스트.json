@@ -8,10 +8,21 @@
     "9수04-05",
     "9수04-06"
   ],
+  "bookdata_file": "중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json",
+  "bookdata_sha256": "6F20989F43BD809CE7C825636696A9DB293F8C589F5DE63B5F083027C64BDF7E",
+  "activity_kinds": [
+    "discreteExperiment",
+    "quiz"
+  ],
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "1c28c3038c0eac48de5f3e6bd2581dbf7d486b24",
+  "curriculum_review": "official_hwp_table_mapped; teacher_review_pending",
+  "teacher_review": "pending",
   "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
   "source_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
   "source_archive_sha256": "B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146",
   "content_rights": "newly authored draft; publication rights decision pending",
+  "publication_eligibility": "not_eligible",
   "math_review": "examples checked manually; independent teacher review pending",
   "features": [
     {
@@ -36,7 +47,7 @@
       "standard": "9수04-06",
       "html": "중학수학2-2_2022개정_확률실험_체험형_시범.html",
       "type": "probability",
-      "runtime": "standalone source asset; not app-integrated"
+      "runtime": "native discreteExperiment covers dice outcomes and relative frequency; HTML remains a separate source reference with partial feature parity"
     }
   ]
 }

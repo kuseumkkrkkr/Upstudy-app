@@ -9,6 +9,8 @@ ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "tool"
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 GENERATORS = [
+    ("convert_2022_curriculum_hwp_to_xhtml.py", "main"),
+    ("extract_2022_curriculum_xhtml.py", "main"),
     ("export_tagged_concept_textbooks.py", "export"),
     ("build_middle_school_2015_domain_drafts.py", "main"),
     ("build_middle_school_1_1_2022_sample.py", "main"),
@@ -18,6 +20,7 @@ GENERATORS = [
     ("build_middle_school_3_1_2022_candidate.py", "main"),
     ("build_middle_school_3_2_2022_candidate.py", "main"),
     ("build_common_math_1_2022_draft.py", "main"),
+    ("build_probability_2022_missing_units_v2.py", "main"),
     ("build_other_2022_course_drafts.py", "main"),
     ("build_calculus_1_2022_draft.py", "main"),
     ("build_calculus_2_2022_draft.py", "main"),
@@ -41,6 +44,7 @@ GENERATORS = [
     ("build_math_lower_combinations_sample.py", "main"),
     ("build_math_lower_rational_function_sample.py", "main"),
     ("build_math_lower_irrational_function_sample.py", "main"),
+    ("build_common_math1_missing_units_v2.py", "main"),
     ("build_math_upper_complex_numbers_sample.py", "main"),
     ("build_math_upper_quadratic_complex_roots_sample.py", "main"),
     ("build_math_upper_quadratic_function_roots_sample.py", "main"),
@@ -59,6 +63,9 @@ GENERATORS = [
     ("build_math_upper_parallel_perpendicular_lines_sample.py", "main"),
     ("build_math_upper_compound_linear_inequalities_sample.py", "main"),
     ("build_math_2015_split_books.py", "main"),
+    ("build_curriculum_code_inventory.py", "main"),
+    ("build_textbook_scope_coverage.py", "main"),
+    ("build_html_asset_inventory.py", "main"),
 ]
 
 

@@ -836,6 +836,56 @@
                   "유리한 경우의 수를 가능한 전체 결과 수로 나눕니다."
                 ]
               }
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-discrete-probability-experiment",
+                "kind": "discreteExperiment",
+                "prompt": "공정한 주사위를 반복해서 던져 짝수 눈의 상대도수가 어떻게 달라지는지 관찰하세요.",
+                "hints": [
+                  "짝수 사건은 2, 4, 6입니다.",
+                  "시행 횟수와 짝수 눈의 누적 횟수로 상대도수를 계산합니다."
+                ],
+                "experiment": {
+                  "outcomes": [
+                    {
+                      "label": "1",
+                      "weight": 1,
+                      "success": false
+                    },
+                    {
+                      "label": "2",
+                      "weight": 1,
+                      "success": true
+                    },
+                    {
+                      "label": "3",
+                      "weight": 1,
+                      "success": false
+                    },
+                    {
+                      "label": "4",
+                      "weight": 1,
+                      "success": true
+                    },
+                    {
+                      "label": "5",
+                      "weight": 1,
+                      "success": false
+                    },
+                    {
+                      "label": "6",
+                      "weight": 1,
+                      "success": true
+                    }
+                  ],
+                  "max_trials": 10000,
+                  "batch_sizes": [
+                    1
+                  ]
+                }
+              }
             }
           ]
         },

@@ -346,7 +346,7 @@
   let question = 0, wrong = 0;
   const prompts = [
     { text: 'u−v를 만들 때, v를 어떤 벡터로 바꾸어 u에 더해야 할까요?', choices: [['uv', 'u+v'], ['u-negv', 'u+(−v)'], ['neguv', '(−u)+v']], answer: 'u-negv', wrong: '뺄셈은 두 번째 벡터의 방향을 그대로 두는 연산일까요?', hint: 'u−v=u+(−v)입니다. v와 크기는 같고 방향이 반대인 벡터를 찾아보세요.', success: '맞아요. v를 −v로 바꾸어 u에 더합니다.' },
-    { text: 'α를 2에서 −2로 바꾸면 αu의 방향과 길이는 어떻게 될까요?', choices: [['same', '같은 방향, 같은 길이'], ['opposite-double', '반대 방향, 두 배 길이'], ['same-double', '같은 방향, 두 배 길이']], answer: 'opposite-double', wrong: '계수의 부호와 절댓값을 따로 살펴보세요.', hint: '음수는 방향을 뒤집고, |−2|=2는 길이를 두 배로 합니다.', success: '맞아요. 방향은 반대가 되고 길이는 두 배입니다.' },
+    { text: 'α를 2에서 −2로 바꾸면 αu의 방향과 길이는 어떻게 될까요?', choices: [['same', '같은 방향, 같은 길이'], ['opposite-same', '반대 방향, 같은 길이'], ['opposite-double', '반대 방향, 두 배 길이']], answer: 'opposite-same', wrong: '계수의 부호와 절댓값을 따로 비교해 보세요.', hint: '부호가 바뀌어 방향은 반대가 됩니다. |2|=|−2|이므로 길이는 같습니다.', success: '맞아요. 방향은 반대가 되고 길이는 같습니다.' },
   ];
   function renderQuestion() {
     const prompt = prompts[question];

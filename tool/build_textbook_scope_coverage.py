@@ -54,11 +54,16 @@ def main() -> None:
             match.group(1): re.sub(r"\s+", " ", match.group(2)).strip()
             for match in re.finditer(r"\[([^\]\s]+-\d{2})\]\s*([^\r\n]*)", text)
         }
+    standards["2022_appendix8_math.txt"] = {
+        row["code"]: row["criterion"]
+        for row in json.loads((SOURCES / "2022_math_standards.json").read_text(encoding="utf-8"))["standards"]
+    }
 
-    tagged: dict[str, list[str]] = defaultdict(list)
+    tagged: dict[str, list[tuple[str, str]]] = defaultdict(list)
     untagged_by_prefix: dict[str, list[str]] = defaultdict(list)
-    bookdata_files = sorted(MANUSCRIPTS.glob("*BookData*.json"))
-    for path in bookdata_files:
+    source_bookdata_files = sorted(MANUSCRIPTS.glob("*BookData*.json"))
+    candidate_bookdata_files = sorted(MANUSCRIPTS.rglob("*BookData*.json"))
+    for path in candidate_bookdata_files:
         data = json.loads(path.read_text(encoding="utf-8"))
         raw = data.get("standard_codes", [])
         codes = raw if isinstance(raw, list) else [raw]
@@ -67,25 +72,28 @@ def main() -> None:
         codes = [str(code).strip() for code in codes if str(code).strip()]
         if not codes:
             untagged_by_prefix[str(data.get("curriculum_version") or "판본 미기록")].append(path.name)
+        edition = str(data.get("curriculum_version") or "edition-unverified")
         for code in codes:
-            tagged[code].append(path.name)
+            tagged[code].append((path.name, edition))
 
     lines = [
         "# 26종 교재 성취기준·콘텐츠 적용 범위 원장",
         "",
-        "목적: 현재 공식 텍스트 추출물의 기준 코드와 BookData에 명시된 `standard_code(s)`를 대조해 적용 근거와 공백을 드러낸다. 이 표는 수학적 충족 판정이나 교사 승인이 아니다.",
+        "목적: 2015 PDF 및 2022 HWP 성취기준 본표에서 추출한 공식 코드와 BookData 태그를 대조한다. 태그는 내용 충족의 증거가 아니다.",
         "",
         "## 해석 규칙",
         "",
-        "- `직접 태그 있음`은 BookData 필드에 같은 코드가 적혀 있다는 뜻뿐이다. 본문 설명·예제·연습·정답이 기준을 충족하는지 검토하지 않았다.",
-        "- `명시 매핑 없음`은 해당 코드가 태그된 BookData를 현재 찾지 못했다는 뜻이다. 원고 내용이 없다는 확정 판정은 아니다.",
-        "- 2022 HWP 텍스트 변환에서 표 전체 복구 여부가 검증되지 않았다. 2022 기준은 관측 코드 목록으로 표시하며, 누락 코드를 완전한 미작성 범위로 간주하지 않는다.",
+        "- 재귀 원고 인벤토리의 exact BookData code tag는 매핑 후보 수로만 센다. 태그만으로 설명·예제·연습·해설의 충족을 판정하지 않는다.",
+        "- 2022 HWP XHTML 본표에서 추출한 코드를 공식 기준 baseline으로 삼는다. 해설 참고 ID는 이 집합과 분리한다.",
+        "- `edition-unverified` 태그는 같은 코드 문자열이 보여도 특정 교육과정 판본에 연결하지 않는다.",
         "- 중학교 학년군 기준은 학기별로 배분하지 않는다. 2015 수학(상)/(하) 분권도 공식 경계가 아니므로 각 기준을 양쪽 상품에 동시에 완료 처리하지 않는다.",
-        "- 원고에 실제로 붙일 기준 코드와 학기 근거가 확인되기 전에는 `미확인`으로 둔다.",
+        "- 권리·수학·교사 검토와 게시 적격성은 별도 상태다.",
         "",
         "## 상품별 집계",
         "",
-        "| # | 상품 | 코드 원문 | 관측 코드 | BookData 직접 태그가 있는 코드 | 직접 태그 없는 코드 | 범위 상태 |",
+        "동일 판본 prefix tag 수는 재귀 BookData에서 확인한 고유 기준 코드 수다. 중학교 9수는 학년군 기준이므로 개별 학기·상품에 배분한 수치가 아니다.",
+        "",
+        "| # | 상품 | 증거 종류 | 공식 기준 항목 | 동일 판본 prefix tag 코드 수 | 상태 |",
         "|---:|---|---|---:|---:|---:|---|",
     ]
     per_product: dict[int, list[tuple[str, str]]] = {}
@@ -93,21 +101,24 @@ def main() -> None:
         codes = sorted(code for code in standards[filename] if code.startswith(prefix))
         if not codes:
             raise RuntimeError(f"No observed codes for #{number} prefix {prefix}")
-        matched = sum(bool(tagged.get(code)) for code in codes)
-        missing = len(codes) - matched
-        per_product[number] = [(code, standards[filename][code]) for code in codes]
-        lines.append(
-            f"| {number} | {catalog[number]} | `{filename}` / `{prefix}` | {len(codes)} | {matched} | {missing} | 미완 · {boundary} |"
-        )
+        if filename.startswith("2015"):
+            per_product[number] = [(code, standards[filename][code]) for code in codes]
+            edition = "2015"
+        else:
+            per_product[number] = [(code, standards[filename][code]) for code in codes]
+            edition = "2022"
+        matched = sum(any(tag_edition == edition for _, tag_edition in tagged.get(code, [])) for code in codes)
+        lines.append(f"| {number} | {catalog[number]} | {edition} 공식 성취기준 | {len(codes)} | {matched} | 미완 · {boundary}; 내용 검수 필요 |")
 
     lines += ["", "## 코드별 연결 근거", ""]
     for number, (filename, prefix, boundary) in PRODUCTS.items():
+        edition = "2015" if filename.startswith("2015") else "2022"
         lines += [f"### {number}. {catalog[number]}", "", f"원문: `{filename}`, prefix `{prefix}`. {boundary}.", "",
-                  "| 기준 코드 | 원문 발췌 | BookData 근거 | 상태 |", "|---|---|---|---|"]
+                  f"| {edition} 기준 코드 | 공식 기준 문구 | same-edition BookData tag | 상태 |", "|---|---|---|---|"]
         for code, description in per_product[number]:
-            sources = tagged.get(code, [])
+            sources = [name for name, tag_edition in tagged.get(code, []) if tag_edition == edition]
             evidence = ", ".join(f"`{name}`" for name in sources) if sources else "—"
-            status = "직접 태그 있음 · 내용 검수 필요" if sources else "명시 매핑 없음 · 원고 검색/작성 필요"
+            status = "tag 있음 · 내용 검수 필요" if sources else "same-edition tag 없음 · 원고 대조 필요"
             excerpt = description.replace("|", "\\|")[:180]
             lines.append(f"| `{code}` | {excerpt} | {evidence} | {status} |")
         lines.append("")
@@ -140,16 +151,16 @@ def main() -> None:
         "",
         f"현재 재귀 인벤토리: BookData `{len(recursive_bookdata)}`개(그중 V2 `{len(v2_files)}`개), 선언형 activity `{sum(activity_kinds.values())}`개({kind_summary}), 독립 HTML `{len(html_files)}`개.",
         "",
-        "실제 앱 계약은 guarded `Upstudy-hotfix`의 `deploy/vercel/BOOK_ACTIVITY_V2.md`에서 확인했다(HEAD `7b36e0ed0b42793caff251f422601022cf2b6769`). V2 activity block은 등록된 `quiz`, `steps`, `parabolaDistance`만 지원한다. 현재 원고 인벤토리의 V2 activity는 모두 `quiz`다.",
-        "독립 HTML/JavaScript 자산은 V2 activity로 임베드되거나 자동 실행되지 않는다. HTML 자산과 BookData 연결별 화면·기능 패리티는 미검수다. 일반 드래그 도형, 확률 시뮬레이션, 범용 애니메이션, 자유서술 의미 채점은 현재 등록 activity 계약 밖이며, 지원되는 것처럼 평탄화하지 않는다.",
+        "실제 앱 계약은 guarded `Upstudy-hotfix`의 `api/book_activity.py`와 `deploy/vercel/BOOK_ACTIVITY_V2.md`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`다. `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며, 학생결과 사전 입력이나 API 저장은 허용하지 않는다.",
+        "독립 HTML/JavaScript 자산은 V2 activity로 임베드되거나 자동 실행되지 않는다. 이산실험은 native discreteExperiment로 일부 기능을 대응할 수 있으나 원본 HTML과 화면·기능 패리티는 별도 검수 대상이다. 범용 드래그 도형, 범용 애니메이션, 자유서술 의미 채점은 등록 계약 밖이다.",
         "V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다. 실제 서버 저장, 페이지별 UI 패리티, 교사 검수, 권리 승인 단계는 별도로 남아 있다.",
         "",
         "## 확인된 매핑 한계",
         "",
-        "기존 대수 초안의 `[12대수03-02]` 후보는 현재 HWP 텍스트 추출에서 발견되지 않았다. 표 누락 가능성 때문에 공식 코드가 아니라고 단정하지 않으며, 원문 표 확인 전까지 미검증 태그로 남긴다.",
+        "2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.",
         "",
-        f"현재 검색 대상은 `{len(bookdata_files)}`개 원본 BookData JSON이다. 그중 기준 코드 태그가 하나 이상 있는 파일은 `{sum(1 for p in bookdata_files if (json.loads(p.read_text(encoding='utf-8')).get('standard_codes') or json.loads(p.read_text(encoding='utf-8')).get('standard_code')))}`개다.",
-        "태그되지 않은 원고도 파일명과 태그로 판본·학기·상품에 자동 귀속하지 않았다. 해당 내용은 별도 편집자 매핑 후 이 원장을 갱신해야 한다.",
+        f"현재 검색 대상은 원본 BookData `{len(source_bookdata_files)}`개, 재귀 후보·패키지 BookData `{len(candidate_bookdata_files)}`개다. 기준 code tag가 있는 재귀 파일은 `{sum(1 for p in candidate_bookdata_files if (json.loads(p.read_text(encoding='utf-8')).get('standard_codes') or json.loads(p.read_text(encoding='utf-8')).get('standard_code')))}`개다.",
+        "태그되지 않은 원고도 파일명으로 판본·학기·상품에 자동 귀속하지 않았다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계했다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.",
         "",
         "자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.",
         "",
@@ -157,7 +168,7 @@ def main() -> None:
         "",
     ]
     OUT.write_text("\n".join(lines), encoding="utf-8")
-    print(f"Wrote scope ledger for {len(PRODUCTS)} products, {sum(map(len, per_product.values()))} observed code rows, and {len(bookdata_files)} BookData sources.")
+    print(f"Wrote scope ledger for {len(PRODUCTS)} products, {sum(map(len, per_product.values()))} product-standard rows, and {len(source_bookdata_files)} source BookData files.")
 
 
 if __name__ == "__main__":
