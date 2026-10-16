@@ -2,6 +2,8 @@ part of 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 enum _ToolMode { pen, eraser, pan }
 
+enum _CompactExamViewAction { focusQuestion, fitPage }
+
 const double _paperWidth = 794;
 const double _paperHeight = _paperWidth * 297 / 210;
 const double _eraserRadius = 26;
