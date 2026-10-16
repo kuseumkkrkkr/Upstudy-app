@@ -201,6 +201,10 @@ def main() -> None:
         "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
         "curriculum_review_status": "official_codes_mapped; semester_and_full_scope_pending",
         "math_review_status": "pending_full_review", "math_arithmetic_check_status": "pass_for_listed_examples_only",
+        "preliminary_module_alignment": {
+            code: ("pending_first_class_statistics_tool" if code == "12확통03-07" else "content_mapped_pending_teacher_review")
+            for code in EXPECTED
+        },
         "teacher_review_status": "pending", "rights_status": "newly_authored; publication_rights_decision_pending",
         "integration_status": "not_merged_into_master_book", "publication_eligibility": "not_eligible",
         "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same_hash else "pending_current_hash_validation",
@@ -210,7 +214,8 @@ def main() -> None:
     (PACKAGE / "README.md").write_text(
         f"# {book['title']}\n\n"
         "신규 집필 8모듈·40쪽의 재개 가능한 V2 후보입니다. 모든 조사와 수치는 개념 연습을 위해 직접 만든 가상 예시이며 상업 교재의 문장·문제·그림·데이터를 복사하지 않았습니다. "
-        "공식 HWP 코드와 개별 모듈을 연결했지만 과목 전체 완료, 학기 배정, 전체 수학·교사 검토, 출판 권리 결정은 대기 중입니다.\n\n"
+        "7개 모듈은 기준과 초안 본문을 예비 대조했으나 교사 검토는 남아 있습니다. `12확통03-07`은 공학 도구 기준으로 전용 계산 상호작용이 없어 연동 후보이며, first-class statisticsEstimator 계약이 준비되기 전까지 완료로 세지 않습니다. "
+        "과목 전체 완료, 학기 배정, 권리 결정도 대기 중입니다.\n\n"
         f"BookData: [`{OUT.name}`](../{OUT.name})\n",
         encoding="utf-8",
     )

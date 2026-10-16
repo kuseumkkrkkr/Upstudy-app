@@ -22,6 +22,16 @@
   "curriculum_review_status": "official_codes_mapped; semester_and_full_scope_pending",
   "math_review_status": "pending_full_review",
   "math_arithmetic_check_status": "pass_for_listed_examples_only",
+  "preliminary_module_alignment": {
+    "12확통01-01": "content_mapped_pending_teacher_review",
+    "12확통01-02": "content_mapped_pending_teacher_review",
+    "12확통01-03": "content_mapped_pending_teacher_review",
+    "12확통03-03": "content_mapped_pending_teacher_review",
+    "12확통03-04": "content_mapped_pending_teacher_review",
+    "12확통03-05": "content_mapped_pending_teacher_review",
+    "12확통03-06": "content_mapped_pending_teacher_review",
+    "12확통03-07": "pending_first_class_statistics_tool"
+  },
   "teacher_review_status": "pending",
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "integration_status": "not_merged_into_master_book",
