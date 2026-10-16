@@ -1,0 +1,46 @@
+{
+  "target": "중학수학 1-2 개념서 · 2022 개정",
+  "schema_version": 2,
+  "status": "candidate_partial_draft",
+  "semester_assignment": "editorial_candidate_not_officially_confirmed",
+  "standards": [
+    "9수03-01",
+    "9수03-03",
+    "9수03-05",
+    "9수04-01"
+  ],
+  "standard_source": "교육부 고시 제2022-33호 별책8 수학과 교육과정, NCIC official record",
+  "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
+  "source_file": "NCIC [별책8] 수학과 교육과정.pdf official record; PDF download failed, so the official HWP bundle entry was extracted locally with hwp5txt",
+  "source_archive_sha256": "B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146",
+  "source_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "extraction_tool": "hwp5txt from hwp5 0.1b15",
+  "content_rights": "newly authored draft; no commercial textbook content or external assets used; publication rights decision pending",
+  "math_review": "automated arithmetic checked; teacher review pending",
+  "features": [
+    {
+      "standard": "9수03-01",
+      "html": "중학수학1-2_2022개정_점선면과각_체험형_시범.html",
+      "type": "angle",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수03-03",
+      "html": "중학수학1-2_2022개정_삼각형작도_체험형_시범.html",
+      "type": "triangle",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수03-05",
+      "html": "중학수학1-2_2022개정_다각형각과대각선_체험형_시범.html",
+      "type": "polygon",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수04-01",
+      "html": "중학수학1-2_2022개정_대푯값_체험형_시범.html",
+      "type": "stats",
+      "runtime": "standalone source asset; not app-integrated"
+    }
+  ]
+}

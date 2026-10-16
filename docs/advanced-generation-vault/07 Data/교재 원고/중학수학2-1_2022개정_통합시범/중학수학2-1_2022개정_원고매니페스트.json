@@ -1,0 +1,42 @@
+{
+  "target": "중학수학 2-1 개념서 · 2022 개정 후보 시범",
+  "status": "candidate_partial_draft",
+  "semester_assignment": "editorial_candidate_not_officially_confirmed",
+  "standards": [
+    "9수03-07",
+    "9수03-09",
+    "9수03-11",
+    "9수04-03"
+  ],
+  "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
+  "source_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "source_archive_sha256": "B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146",
+  "content_rights": "newly authored draft; no commercial textbook content or external assets; publication rights decision pending",
+  "math_review": "authored examples arithmetically checked; teacher review pending",
+  "features": [
+    {
+      "standard": "9수03-07",
+      "html": "중학수학2-1_2022개정_입체도형관찰_체험형_시범.html",
+      "type": "solids",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수03-09",
+      "html": "중학수학2-1_2022개정_이등변삼각형증명_체험형_시범.html",
+      "type": "isosceles",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수03-11",
+      "html": "중학수학2-1_2022개정_사각형대각선_체험형_시범.html",
+      "type": "quadrilaterals",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수04-03",
+      "html": "중학수학2-1_2022개정_상대도수비교_체험형_시범.html",
+      "type": "relative-frequency",
+      "runtime": "standalone source asset; not app-integrated"
+    }
+  ]
+}

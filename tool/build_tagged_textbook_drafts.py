@@ -12,6 +12,8 @@ GENERATORS = [
     ("export_tagged_concept_textbooks.py", "export"),
     ("build_middle_school_2015_domain_drafts.py", "main"),
     ("build_middle_school_1_1_2022_sample.py", "main"),
+    ("build_middle_school_1_2_2022_candidate.py", "main"),
+    ("build_middle_school_2_1_2022_candidate.py", "main"),
     ("build_common_math_1_2022_draft.py", "main"),
     ("build_other_2022_course_drafts.py", "main"),
     ("build_calculus_1_2022_draft.py", "main"),
