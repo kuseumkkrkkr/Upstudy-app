@@ -1,0 +1,18 @@
+{
+  "head": "aaf65ac3c3a70f0321ccb5ca66799930484686ac",
+  "application_sources": {
+    "lib/sessions/textbook/ui/widgets/book_activity_view.dart": "2b15e0f28ac073e84e3c35e970aa759c46f9834c",
+    "lib/sessions/textbook/ui/widgets/book_discrete_experiment_view.dart": "c633204258567a38ffe0a481dca919e0118ce19e",
+    "lib/sessions/textbook/ui/widgets/book_statistics_estimator_view.dart": "56ef01d730efc64925ecd2edf96f94bc3b43f116",
+    "lib/shared/data/models/book_activity.dart": "b63e4ffacfb14799e04618e2233f1f18d7171127",
+    "lib/shared/data/models/book_discrete_experiment.dart": "65fb0a71bc399c9b8cb3db09aea72cbaa2c79a32",
+    "lib/shared/data/models/book_statistics_estimator.dart": "037c97abb5d22e88339d2eb0bc16494e1c7fdd72",
+    "tool/book_activity_isolated_preview.dart": "755aade30333a6fef6319d9ecb9420dc4850bdba"
+  },
+  "bytes": 2628909,
+  "sha256": "FD8BFEF7E5846D21BBDF684ABC68DD6535F31A0F34B87F0ED1AB24E7C0417291",
+  "product_api_included": false,
+  "actual_bookwidget_included": false,
+  "full_checkout_clean": false,
+  "project_dependency_config_has_unrelated_dirty_changes": true
+}
