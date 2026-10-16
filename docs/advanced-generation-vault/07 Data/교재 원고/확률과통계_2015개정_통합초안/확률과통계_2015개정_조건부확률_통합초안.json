@@ -23,10 +23,10 @@
               "text": "기존 2015 개정 시범 원고 지면을 학습합니다."
             }
           ],
-          "id": "probstat15-02-01-001"
+          "id": "probstat15-05-01-001"
         },
         {
-          "id": "probstat15-02-01-002",
+          "id": "probstat15-05-01-002",
           "template": "opening",
           "title": "첫 공을 알고 나면 다음 확률도 달라질까?",
           "kicker": "조건을 적용하기 전 예측",
@@ -44,7 +44,7 @@
           ]
         },
         {
-          "id": "probstat15-02-01-003",
+          "id": "probstat15-05-01-003",
           "template": "experiment",
           "title": "조건에 맞춰 주머니 다시 세기",
           "kicker": "전체 표본공간에서 조건부 표본공간으로",
@@ -77,7 +77,7 @@
           ]
         },
         {
-          "id": "probstat15-02-01-004",
+          "id": "probstat15-05-01-004",
           "template": "practice",
           "title": "새 주머니 조건으로 계산하기",
           "kicker": "도구 없이 전이",

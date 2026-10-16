@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import re
 from collections import Counter, OrderedDict
 from pathlib import Path
 
@@ -22,18 +23,38 @@ def signature(page: dict) -> str:
 def main() -> None:
     grouped: OrderedDict[str, list[dict]] = OrderedDict()
     original: Counter[str] = Counter()
-    for path in sorted(MANUSCRIPTS.glob("확률과통계_2015개정*_BookData_시범.json")):
+    unit_by_standard = {"01": "순열과 조합", "02": "확률", "03": "통계"}
+    code_pattern = re.compile(r"12확통(\d{2})-\d{2}")
+    generic_unit_tags = {"보완 원고 후보", "추가 원고 후보"}
+    for path in sorted(MANUSCRIPTS.glob("확률과통계_2015개정*_BookData*_시범.json")):
         book = json.loads(path.read_text(encoding="utf-8"))
         tags = book.get("tags", [])
         if len(tags) < 3 or tags[:2] != ["확률과 통계", "2015 개정"]:
             raise RuntimeError(f"Unexpected edition tags in {path.name}")
-        unit = tags[2]
-        pages = [page for chapter in book.get("chapters", []) for page in chapter.get("pages", [])]
-        if not pages:
-            raise RuntimeError(f"No content pages in {path.name}")
-        for page in pages:
-            original[signature(page)] += 1
-        grouped.setdefault(unit, []).append({"file": path.name, "book": book, "pages": pages, "tags": tags})
+        standard_codes = book.get("standard_codes", [])
+        chapters = book.get("chapters", [])
+        if not isinstance(standard_codes, list) or not isinstance(chapters, list):
+            raise RuntimeError(f"Invalid candidate structure in {path.name}")
+        if tags[2] not in generic_unit_tags:
+            chapter_units = [tags[2]] * len(chapters)
+        else:
+            if len(standard_codes) != len(chapters):
+                raise RuntimeError(f"Cannot map candidate chapters to standards in {path.name}")
+            chapter_units = []
+            for code in standard_codes:
+                match = code_pattern.fullmatch(str(code))
+                unit = unit_by_standard.get(match.group(1)) if match else None
+                if unit is None:
+                    raise RuntimeError(f"Unmapped 2015 probability standard {code!r} in {path.name}")
+                chapter_units.append(unit)
+        for chapter, unit in zip(chapters, chapter_units, strict=True):
+            pages = chapter.get("pages", [])
+            if not pages:
+                raise RuntimeError(f"No content pages in {path.name}/{chapter.get('title', '')}")
+            for page in pages:
+                original[signature(page)] += 1
+            chapter_book = {**book, "chapters": [chapter]}
+            grouped.setdefault(unit, []).append({"file": path.name, "book": chapter_book, "pages": pages, "tags": tags})
     if not grouped:
         raise RuntimeError("No 2015 Probability and Statistics source modules")
 
