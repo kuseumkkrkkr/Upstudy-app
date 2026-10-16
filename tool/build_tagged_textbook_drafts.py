@@ -106,8 +106,16 @@ GENERATORS = [
 
 def verify_bookdata_references() -> int:
     source_files = list(MANUSCRIPTS.glob("*BookData*.json"))
-    output_dirs = [readme.parent for readme in MANUSCRIPTS.rglob("README.md") if readme.parent != MANUSCRIPTS]
+    output_readmes = [readme for readme in MANUSCRIPTS.rglob("README.md") if readme.parent != MANUSCRIPTS]
+    output_dirs = [readme.parent for readme in output_readmes]
     generated_text = []
+    # A package README can reference a root-level BookData sibling via ../name;
+    # searching only the README's own subtree misses that valid package link.
+    for readme in output_readmes:
+        try:
+            generated_text.append(readme.read_text(encoding="utf-8"))
+        except (UnicodeDecodeError, OSError):
+            continue
     for directory in output_dirs:
         for path in directory.rglob("*"):
             if path.is_file():

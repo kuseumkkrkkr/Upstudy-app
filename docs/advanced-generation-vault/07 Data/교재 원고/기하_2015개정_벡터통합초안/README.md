@@ -10,6 +10,7 @@
   - 3장 · 평면벡터의 내적: 3장 · 평면벡터의 내적 (`고등수학_기하_2015개정_개념서_시범_BookData.json`)
   - 위치벡터: 위치벡터 (`고등수학_기하_위치벡터와좌표_BookData_시범.json`)
   - 내적: 내적 (`고등수학_기하_평면벡터내적_BookData_시범.json`)
+  - 내적 V2 compatibility candidate: [`고등수학_기하_평면벡터내적_BookData_V2_시범.json`](../고등수학_기하_평면벡터내적_BookData_V2_시범.json) — activity round-trip and student reader validation recorded; independent math/teacher review and HTML parity pending.
   - 벡터를 이용한 직선과 원의 방정식: 벡터를 이용한 직선과 원의 방정식 (`기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json`)
 - [벡터 통합 초안](기하_2015개정_벡터_통합초안.json)
   - 벡터의 덧셈: 벡터의 덧셈 (`고등수학_기하_벡터의덧셈과실수배_BookData_시범.json`)
