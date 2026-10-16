@@ -30,7 +30,8 @@
   ],
   "spot_checks": "listed arithmetic checks passed only",
   "example_question_alignment_status": "explicit_example_question_map_for_all_3_codes; independent review pending",
-  "app_model_roundtrip_status": "pending_current_hash_validation",
+  "app_model_roundtrip_status": "passed: flutter test test/textbook_activity_compatibility_test.dart",
+  "student_reader_interaction_status": "passed: three EqEdit Batch2 quizzes submitted and feedback verified",
   "teacher_reader_interaction_status": "pending_current_hash_validation",
   "validation_test": "test/textbook_activity_compatibility_test.dart",
   "teacher_review_status": "pending",
@@ -38,8 +39,8 @@
   "rights_status": "new original examples; publication rights decision pending",
   "curriculum_review_status": "codes and raw HWP EqEdit evidence verified; full scope and semester assignment pending",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null,
-  "runtime_validation_command": null,
-  "runtime_validator_candidate_sha256": null
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "543d5db",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (44 tests passed; Algebra EqEdit Batch2 round-trip and all three student quizzes verified)",
+  "runtime_validator_candidate_sha256": "0EBF437D7C47C598FDD8F7BB6EEFCF9DCBE761004E24AB62A668D4112DE1955F"
 }
