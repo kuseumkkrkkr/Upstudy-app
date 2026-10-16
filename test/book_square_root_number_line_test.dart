@@ -16,7 +16,6 @@ void main() {
     await tester.pumpWidget(MaterialApp(home: Scaffold(body: SizedBox(width: 390,
       child: BookActivityView(activity: BookActivity.fromJson(json))))));
     final slider = tester.widget<Slider>(find.byType(Slider));
-    expect(slider.semanticFormatterCallback!(9), '9');
     expect(slider.label, isNull); // The permanent readout replaces an overlapping tooltip.
     final before = tester.getTopLeft(find.byKey(const ValueKey('square-root-position')));
     expect(find.text('n = 1 · √1 = 1'), findsOneWidget);
@@ -25,6 +24,13 @@ void main() {
     expect(find.text('n = 9 · √9 = 3'), findsOneWidget);
     final after = tester.getTopLeft(find.byKey(const ValueKey('square-root-position')));
     expect(after.dx, greaterThan(before.dx));
+    await tester.tap(find.byTooltip('n을 1 늘리기'));
+    await tester.pump();
+    expect(find.text('n = 10 · √10 ≈ 3.162'), findsOneWidget);
+    slider.onChanged!(25);
+    await tester.pump();
+    expect(tester.widget<IconButton>(find.widgetWithIcon(IconButton, Icons.add)).onPressed, isNull);
+    expect(find.text('n = 25 · √25 = 5'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 }

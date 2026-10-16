@@ -25,13 +25,25 @@ class _SquareRootState extends State<BookSquareRootNumberLineView> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         Text(widget.activity.prompt, style: const TextStyle(fontSize: 14, height: 1.5)),
         const SizedBox(height: 12),
-        Text('n = $_n · $label', style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
-        Slider(
-          min: 1, max: 25, divisions: 24, value: _n.toDouble(),
-          // Numeric values are required by Flutter web's range semantics.
-          semanticFormatterCallback: (value) => '${value.round()}',
-          onChanged: (value) => setState(() => _n = value.round()),
-        ),
+        Semantics(liveRegion: true, child: Text('n = $_n · $label',
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700))),
+        Row(children: [
+          IconButton(tooltip: 'n을 1 줄이기',
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            onPressed: _n > 1 ? () => setState(() => _n--) : null,
+            icon: const Icon(Icons.remove)),
+          // Flutter web exposes an uninitialized native range value before
+          // focus. Explicit bounded buttons + live readout are the accessible
+          // keyboard path; pointer users retain the same continuous control.
+          Expanded(child: ExcludeFocus(child: ExcludeSemantics(child: Slider(
+            min: 1, max: 25, divisions: 24, value: _n.toDouble(),
+            onChanged: (value) => setState(() => _n = value.round()),
+          )))),
+          IconButton(tooltip: 'n을 1 늘리기',
+            constraints: const BoxConstraints(minWidth: 44, minHeight: 44),
+            onPressed: _n < 25 ? () => setState(() => _n++) : null,
+            icon: const Icon(Icons.add)),
+        ]),
         Semantics(label: '$label, 0부터 5까지 수직선 위의 위치', child: LayoutBuilder(
           builder: (context, constraints) {
             final position = 8 + (constraints.maxWidth - 16) * root / 5;
