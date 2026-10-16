@@ -46,6 +46,15 @@ def test_exact_source_and_known_structure_are_preserved():
         validate_book(unsupported)
 
 
+def test_import_sha256_is_canonical_across_lf_and_crlf():
+    source = json.dumps(draft(), ensure_ascii=False, indent=2)
+    crlf_source = source.replace("\n", "\r\n")
+    canonical_digest = hashlib.sha256(source.encode("utf-8")).hexdigest()
+    book, digest = parse_import(crlf_source, canonical_digest)
+    assert book == draft()
+    assert digest == canonical_digest
+
+
 @pytest.mark.parametrize('expression', ["window.alert(1)", "x.constructor", "__import__('os')", "[x][0]", "x if x else 2", "(lambda:1)()", "sin(x, x=2)", "True", "1; alert(1)"])
 def test_graph_rejects_executable_or_unknown_expression(expression):
     with pytest.raises(ValueError):
@@ -57,7 +66,7 @@ def test_supported_arithmetic_is_accepted(expression):
     validate_expression(expression, ['p'])
 
 
-@pytest.mark.parametrize('version,activity_kind', [(1, None), (2, 'quiz'), (2, 'discreteExperiment')])
+@pytest.mark.parametrize('version,activity_kind', [(1, None), (2, 'quiz'), (2, 'discreteExperiment'), (2, 'statisticsEstimator')])
 def test_import_retries_and_owner_scope(monkeypatch, version, activity_kind):
     module = importlib.import_module('api.index')
     secret = 'textbook-import-test-secret-32-chars-minimum'
@@ -94,6 +103,9 @@ def test_import_retries_and_owner_scope(monkeypatch, version, activity_kind):
                         if activity_kind == 'discreteExperiment' else
                         {'id':'quiz-owner-scope','kind':'quiz','prompt':'Half?','answer':.5,
                          'correct_feedback':'Yes','incorrect_feedback':'Retry'})
+            if activity_kind == 'statisticsEstimator':
+                activity = {'id':'statistics-owner-scope','kind':'statisticsEstimator','prompt':'Sample mean',
+                            'statistics':{'mode':'mean','sample_values':[2,4,6]}}
             source_book['chapters'][0]['pages'][0]['blocks'].append({
                 'type':'activity', 'activity':activity})
         payload = body(source_book)

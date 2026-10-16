@@ -208,7 +208,7 @@ def validate_book(book):
 def parse_import(source, expected_sha256):
     if not isinstance(source, str) or len(source.encode('utf-8')) > MAX_SOURCE_BYTES:
         raise ValueError('source: UTF-8 JSON must not exceed 512 KiB')
-    digest = hashlib.sha256(source.encode('utf-8')).hexdigest()
+    digest = hashlib.sha256(source.replace('\r\n', '\n').encode('utf-8')).hexdigest()
     if not isinstance(expected_sha256, str) or digest != expected_sha256.lower():
         raise ValueError('source: SHA-256 mismatch')
     try:
