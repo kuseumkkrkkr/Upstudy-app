@@ -1,0 +1,36 @@
+{
+  "source_files": [
+    {
+      "source_file": "고등수학_기하_벡터의뜻_BookData_V2_시범.json",
+      "sha256": "8FD3C0A10789F55F2A1296B05E659EC77089DB3ABB5552821F3ED8983C375B13",
+      "curriculum_version": "2015",
+      "standard_codes": [
+        "12기하02-01"
+      ],
+      "page_count": 5,
+      "content_elements": [
+        "concept_explanation",
+        "worked_example",
+        "practice",
+        "answer_explanations",
+        "native_quiz"
+      ],
+      "content_status": "authored_candidate; independent review pending",
+      "math_review_status": "pending_independent_review",
+      "teacher_review_status": "pending",
+      "rights_status": "pending_review"
+    }
+  ],
+  "official_source_file": "work/official-curriculum/2015_appendix8_math.txt",
+  "official_source_sha256": "09E14FA7A5D34E0B1CA586F6768B3F774BDC64040670D8FEEA2345A1FB5BC1B5",
+  "official_standard": {
+    "code": "12기하02-01",
+    "text": "벡터의 뜻을 안다."
+  },
+  "curriculum_review_status": "code_and_statement_checked; content alignment review pending",
+  "math_review_status": "pending_independent_review",
+  "teacher_review_status": "pending",
+  "rights_status": "pending_review",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pending_current_hash_validation"
+}

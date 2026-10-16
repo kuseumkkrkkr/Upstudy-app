@@ -16,6 +16,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_space_BookData_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_vector_BookData_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의뜻_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -167,6 +168,36 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.textContaining('αu=('), findsOneWidget);
     expect(find.textContaining('계수가 음수'), findsOneWidget);
+  });
+
+  testWidgets('vector meaning V2 practice runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의뜻_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    expect(source['standard_codes'], contains('12기하02-01'));
+    final activity = _activities(source).single;
+    expect(activity['kind'], 'quiz');
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('크기가 같고 방향이 반대인 두 벡터'), findsOneWidget);
+    await tester.tap(find.text('서로 반대벡터이며 같은 벡터는 아니다'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('맞아요. 크기는 같지만 방향이 반대이므로 반대벡터입니다.'), findsOneWidget);
   });
 
   testWidgets('vector operations V2 Socratic quiz runs in the student reader', (
