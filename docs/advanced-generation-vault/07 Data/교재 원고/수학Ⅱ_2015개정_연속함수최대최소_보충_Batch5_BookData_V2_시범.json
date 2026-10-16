@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅱ · 연속함수의 최댓값·최솟값 보충 Batch5",
+  "subtitle": "2015 개정 기준 12수학Ⅱ01-04 · 기존 사이값 정리 사례에 최대·최소 정리 적용 보완",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12수학Ⅱ01-04"
+  ],
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정",
+    "연속함수의 성질 보충",
+    "추가 원고 후보",
+    "12수학Ⅱ01-04"
+  ],
+  "chapters": [
+    {
+      "title": "닫힌구간에서의 최댓값과 최솟값",
+      "intro": [
+        "공식 성취기준 12수학Ⅱ01-04에 연결한 보충 후보입니다.",
+        "Batch1의 사이값 정리 예시를 보존하고 최대·최소 정리 적용을 추가합니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-extrema-b5-open",
+          "template": "opening",
+          "title": "연속이면 구간 안에서 가장 크고 작은 값을 찾을 수 있을까?",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "닫힌구간에서 연속인 함수가 최댓값과 최솟값을 실제로 갖는다는 성질을 적용해 봅니다."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 조건 확인",
+              "text": "정리의 결론을 말하기 전에 구간이 닫혀 있는지, 함수가 그 구간 전체에서 연속인지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m2-extrema-b5-concept",
+          "template": "concept",
+          "title": "최대·최소 정리의 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정리",
+              "text": "함수 f가 닫힌구간 [a,b]의 모든 점에서 연속이면 그 구간에서 최댓값과 최솟값을 각각 적어도 한 번 갖는다. 정리는 극값의 존재를 보장하며, 극값의 위치와 값을 찾으려면 함수와 구간을 추가로 살펴야 한다."
+            },
+            {
+              "type": "formula",
+              "title": "조건 점검",
+              "text": "연속 on [a,b] ⇒ max f([a,b])와 min f([a,b])가 존재"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "닫힌구간 조건이나 구간 전체의 연속 조건을 빼고 정리를 적용하지 않는다. 열린구간 (0,1)의 f(x)=x는 연속이지만 최댓값과 최솟값을 갖지 않는다."
+            }
+          ]
+        },
+        {
+          "id": "m2-extrema-b5-example",
+          "template": "example",
+          "title": "최댓값과 최솟값 예제",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=(x−2)²를 [-1,3]에서 살펴본다. 정리가 적용되는지 확인하고 최댓값과 최솟값을 구하라."
+            },
+            {
+              "type": "graph",
+              "title": "구간 위의 연속함수",
+              "text": "다항함수이므로 [-1,3] 전체에서 연속이고 구간은 닫혀 있다. 따라서 최댓값과 최솟값이 모두 존재한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "continuous-extrema",
+                    "type": "function",
+                    "label": "f(x)=(x−2)²",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "(x-2)^2"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -2,
+                    "right": 4,
+                    "top": 10,
+                    "bottom": -1
+                  },
+                  "parameters": []
+                }
+              }
+            },
+            {
+              "type": "solutionStep",
+              "title": "후보 비교",
+              "text": "꼭짓점 x=2에서 f(2)=0이다. 양 끝에서는 f(-1)=9, f(3)=1이다. 따라서 최솟값은 0, 최댓값은 9이다."
+            },
+            {
+              "type": "verification",
+              "title": "정리와 계산 구별",
+              "text": "최대·최소 정리는 두 값의 존재를 보장하고, 꼭짓점과 양 끝의 값을 비교해 실제 값을 찾았다."
+            }
+          ]
+        },
+        {
+          "id": "m2-extrema-b5-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=−x²+4x를 [0,3]에서 살펴본다. 연속함수의 최대·최소 정리가 적용되는지 확인하고 최댓값과 최솟값을 구하라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "다항함수의 연속성과 닫힌구간 조건을 먼저 확인한 다음, 꼭짓점과 양 끝의 함수값을 비교한다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "다항함수이고 [0,3]은 닫힌구간이므로 정리가 적용된다. f(0)=0, f(3)=3, 꼭짓점 x=2에서 f(2)=4이므로 최솟값은 0, 최댓값은 4이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "정리 적용 가능, 최댓값 4, 최솟값 0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-extrema-b5-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=−x²+4x의 [0,3]에서 최댓값은?",
+                "options": [
+                  "4",
+                  "3",
+                  "0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. 꼭짓점 x=2에서 함수값은 4입니다.",
+                "incorrect_feedback": "양 끝과 꼭짓점의 함수값을 비교하면 가장 큰 값은 4입니다.",
+                "hints": [
+                  "꼭짓점은 x=2입니다.",
+                  "f(0)=0, f(2)=4, f(3)=3을 비교합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-extrema-b5-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "풀이 순서",
+              "text": "닫힌구간과 연속 조건을 확인한다. 정리가 보장하는 것은 최댓값·최솟값의 존재이며, 함수값은 구간 내부의 후보와 양 끝을 비교해 찾는다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "함수가 구간 전체에서 연속인지 확인했다.",
+                "구간이 닫힌구간인지 확인했다.",
+                "정리의 존재 결론과 실제 극값 계산을 구별했다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "supplement_only": true,
+    "publication_eligibility": "not_eligible",
+    "teacher_review_status": "pending",
+    "math_review_status": "independent_review_pending",
+    "rights_status": "publication_decision_pending"
+  }
+}

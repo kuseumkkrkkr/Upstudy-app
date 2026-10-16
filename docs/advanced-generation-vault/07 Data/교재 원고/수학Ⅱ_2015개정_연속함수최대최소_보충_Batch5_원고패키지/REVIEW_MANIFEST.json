@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_연속함수최대최소_보충_Batch5_BookData_V2_시범.json",
+  "bookdata_sha256": "089CD29B099269A268CF039981451E8284C9F06D6923A909A913A4AB321D99AA",
+  "candidate_code_references": [
+    "12수학Ⅱ01-04"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "continuous_extrema_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; prior_intermediate_value_theorem_candidate_preserved"
+}
