@@ -4,6 +4,7 @@
   "source_asset_count": 106,
   "all_sources_ported": false,
   "kinds": {
+    "coordinateWalk": {"implemented": true, "persistence": "reader_session_only_paused_restore", "source_asset": "html-7bbc2e50f5387d53", "migration_status": "not_ported", "actual_candidate_reader_verified": false, "duration_ms": 1500, "contract": "deploy/vercel/BOOK_COORDINATE_WALK.md", "preview_deployment": "dpl_8BsKJ29CiQ5MD7YbNviZ6RGYRxCy", "preview_bundle_sha256": "5713FF5DF66360210BC6304B16969DD6F3E39F377F37684594BB5262BE25FD73"},
     "coordinatePoint": {"implemented": true, "persistence": "reader_session_only", "source_asset": "html-3050dd8407807a29", "source_asset_sha256": "4235767CFF3D3BBBEA8585712BE8B3F35FAA791D4DC74E7594A3EA1AED568D9E", "migration_status": "not_ported", "actual_candidate_reader_verified": false, "coordinate_integer_bounds": [-5,5], "contract": "deploy/vercel/BOOK_COORDINATE_POINT.md"},
     "rightTriangle": {"implemented": true, "persistence": "reader_session_only", "source_asset": "html-a10eb6a3240af7e0", "source_asset_sha256": "E8662454327247D3406A8BAA5780F40DF3BDC40825BD5B4FC58BAEA838B305E6", "migration_status": "not_ported", "actual_candidate_reader_verified": false, "leg_integer_bounds": [1,12], "contract": "deploy/vercel/BOOK_RIGHT_TRIANGLE.md"},
     "quiz": {"implemented": true, "persistence": "reader_session_only"},
@@ -15,7 +16,7 @@
   "unsupported_families": ["cartesian_point_drag", "parameter_dependent_metrics", "vector_transformations", "conics_3d_distance", "set_relation_diagrams", "algebra_area_partitions", "calculus_scenes", "timed_statistical_trajectories", "adaptive_socratic_sequences"],
   "partial_family_support": {"parameter_dependent_metrics": "rightTriangle only; not arbitrary derived metrics or executable formulas", "cartesian_point_drag": "coordinatePoint only; integer grid, keyboard and direct pointer/touch; no arbitrary curve constraints"},
   "live_v2_persistence_verified": false,
-  "focused_verification": {"python_passed":115,"flutter_passed":20,"clean_feature_archive_flutter_passed":4,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true,"latest_batch":"coordinatePoint","latest_feature_commit":"6c0845e9a6a2a2ddeae9f44f101d18097b8afec4"},
+  "focused_verification": {"python_passed":130,"flutter_passed":24,"clean_feature_archive_flutter_passed":4,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true,"latest_batch":"coordinateWalk","latest_feature_commit":"4855c1dfd18ac5a71ca7ad6f22ab0a8fa5f1f9c9"},
   "production_manuscript_publication": false,
   "clean_source_release_verified": false
 }

@@ -5618,6 +5618,18 @@
     },
     {
       "asset_id": "html-7bbc2e50f5387d53",
+      "native_capability_batch": {
+        "kind": "coordinateWalk",
+        "source_digest_rechecked": true,
+        "source_animation_api": "Element.animate",
+        "source_duration_ms": 1500,
+        "covered_behaviors": ["coordinate_swap", "horizontal_then_vertical_walk", "reduced_motion", "point_drag", "arrow_keys", "reset"],
+        "native_additions": ["pause_resume", "single_controller", "cancel_stale_playback", "paused_session_restore"],
+        "contract": "deploy/vercel/BOOK_COORDINATE_WALK.md",
+        "whole_asset_migrated": false,
+        "quiz_hint_exercise_mapping": "explicit_authoring_required",
+        "teacher_rights_review": "pending"
+      },
       "path": "중학교수학_2015개정_순서쌍과좌표_체험형.html",
       "sha256": "fff800df2a8542e610a9d2de1cc2ccbb041ef72efd793829feb1718c8db0de40",
       "bytes": 9788,
