@@ -335,3 +335,5 @@
 - 릴리스 계약 회귀 검증: 현재 `Upstudy-hotfix`의 `ad4a763`에서 bookdata create contract/import, public-textbook release gates, author compatibility, graph math security 5개 suite가 `51 passed`로 통과했다. Starlette/httpx deprecation warning 1건이 있다. 이는 승인 누락 거부 동작을 검증하며, 승인 대상이 생겼거나 배포·DB·실사용이 완료됐다는 증거는 아니다.
 - 미연결 원본 중 명시적 2015 후보 5개를 source-level 산술·범위 기준으로 점검했다: 벡터 내적의 −5/6, 수열극한 1·3, 직사각형 합 12와 삼각형 넓이 18, 이항확률 3/8·평균 2, 조건부확률 2/3은 기재 계산과 일치한다. 수열극한·면적·이항분포는 기준 범위가 부분만 확인되어 감사표에 partial candidate로 남겼다.
 - 5개 중 native `vectorInnerProduct`만 학생 리더 activity로 확인됐다. 나머지 4개의 시각 조작은 별도 HTML이며 BookData에서 자동 실행되지 않는다. HTML 전체 화면·동작 패리티는 미검증이다. 이 산술 점검은 교사·독립 수학검수가 아니다.
+
+- 추가 페이지 대조로 2015 수학(하) 여집합·차집합 원본을 `10수학03-03` 부분 후보로 연결했다. 표본 계산은 맞지만 합집합·교집합 범위는 이 파일에 없어 partial로 유지한다. 따라서 43개 중 candidate link는 32, 상·하 감사표 직접 후보 없음은 2, 판본/기준 미확정은 9로 갱신했다.

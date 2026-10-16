@@ -11,8 +11,8 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 
 ## Results
 
-- Candidate link recorded: 31 files (includes partial and review-pending links).
-- No direct match in the current 2015 상·하 audit: 3 files.
+- Candidate link recorded: 32 files (includes partial and review-pending links).
+- No direct match in the current 2015 상·하 audit: 2 files.
 - Edition/criterion unresolved: 9 files.
 
 | Recursive source BookData | Classification | Candidate official code(s) | Evidence / limitation |
@@ -49,7 +49,7 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | `수학하_2015개정_초안/수학하_2015개정_명제와조건_BookData_초안.json` | 2015 상·하 topic candidate | 10수학03-04 | Partial: quantified statements (“all/some”) are not evidenced in existing page audit. |
 | `수학하_2015개정_초안/수학하_2015개정_무리함수_BookData_초안.json` | 2015 상·하 topic candidate | 10수학04-05 | Topic/title candidate; verify domain and graph requirements. |
 | `수학하_2015개정_초안/수학하_2015개정_순열_BookData_초안.json` | 2015 상·하 topic candidate | 10수학05-02 | Topic/title match; still needs page-level and math review. |
-| `수학하_2015개정_초안/수학하_2015개정_여집합과차집합_BookData_초안.json` | No direct candidate | — | No direct topic match in the current 41-code 상·하 audit; do not infer a code from adjacent coverage. |
+| `수학하_2015개정_초안/수학하_2015개정_여집합과차집합_BookData_초안.json` | Partial topic candidate | 10수학03-03 | Source pages define and calculate complement and set difference; the official criterion is broader set operations, so union/intersection coverage remains outside this file. |
 | `수학하_2015개정_초안/수학하_2015개정_유리함수_BookData_초안.json` | 2015 상·하 topic candidate | 10수학04-04 | Topic/title candidate; verify full criterion scope. |
 | `수학하_2015개정_초안/수학하_2015개정_조합_BookData_초안.json` | 2015 상·하 topic candidate | 10수학05-03 | Topic/title match; still needs page-level and math review. |
 | `수학하_2015개정_초안/수학하_2015개정_집합의합집합과교집합_BookData_초안.json` | 2015 상·하 topic candidate | 10수학03-03 | Topic/title candidate; page-level completeness remains unverified. |
@@ -61,7 +61,7 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | `확률과통계_2015개정_이항분포_BookData_시범.json` | Partial topic candidate; review pending | 12확통03-03 | Binomial probabilities and mean are shown; the official criterion also names standard deviation, which is absent. |
 | `확률과통계_2015개정_조건부확률_BookData_시범.json` | 2015 candidate; page/course review pending | 12확통02-05 | 2015 tag + conditional-probability topic. Candidate only. |
 
-## Five explicit 2015 candidates: arithmetic and scope spot check
+## Selected source-level arithmetic and scope spot checks
 
 | Source / candidate | Arithmetic or boundary checked | Scope / app compatibility |
 |---|---|---|
@@ -71,6 +71,7 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | Probability binomial · `12확통03-03` | `C(4,2)(1/2)^4=3/8`; `np=2` | Values are consistent. The official criterion also includes standard deviation, absent from this sample. Interaction remains standalone HTML. |
 | Probability conditional · `12확통02-05` | `(5−1)/(5+2−1)=2/3`; the general red-first denominator is nonzero for the stated `R,B≥1` controls | One without-replacement case and the conditional formula are shown. Interaction remains standalone HTML; no app execution or full HTML parity is established. |
 
+| High school lower · complement/difference · `10수학03-03` | `Aᶜ={3,5}`, `A∖B={1,4}`, `B∖A={d}` in the worked examples; practice gives `Pᶜ={2,4,6}`, `P∖Q={1}`, `Q∖P={4}` | Listed set operations are correct. This file does not cover union/intersection, so keep the standard link partial. |
 These are source-level arithmetic and scope checks, not independent teacher review or release approval. For the four standalone HTML samples, BookData does not automatically execute the HTML controls; visual/interaction parity remains unverified.
 ## Next review steps
 
