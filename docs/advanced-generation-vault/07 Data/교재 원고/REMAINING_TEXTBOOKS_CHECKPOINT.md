@@ -19,8 +19,8 @@
 - 2015 확률과 통계 공식 코드 `12확통02-05` 조건부확률, `12확통03-03` 이항분포를 기준 원문과 대조해 새 오리지널 V2 후보 2모듈/10쪽/퀴즈 2개를 추가했다. importer 통과, 17개 기준 중 2개만 매핑이며 전체 과목·교사·권리 검토는 미완료다.
 - 2022 기하에서 앞서 미작성으로 기록된 9개 공식 기준 `12기하02-01~03`, `02-05`, `03-01~05`에 V2 후보 9모듈/45쪽/quiz 9개를 추가했다. guarded hotfix HEAD `aaf65ac3c3a70f0321ccb5ca66799930484686ac`에서 재귀 schema-v2 BookData 14개 importer 통과; 새 2개 후보 manifest의 runtime importer 상태를 pass로 기록했다. 기하 14개 기준 모두 tag 후보가 있으나 본문 충분성·교사 검토·권리 판단은 미완료다.
 - 전체 파이프라인은 64단계 성공, 원본 BookData 96개 참조 검증. 최신 재귀 인벤토리는 BookData 132개(V2 15), 선언형 activity 76개(quiz 73, statisticsEstimator 2, discreteExperiment 1), 독립 HTML 106개다. 총 파일은 폴더 38개, JSON 217개다. 2015+2022 상품 반복 집계는 1,038 상품-기준 행이며 고유 기준 수가 아니다.
-- canonical BookData SHA-256 매니페스트 10개와 schema-v2 후보 15개를 대조했다. guarded hotfix HEAD `aaf65ac3c3a70f0321ccb5ca66799930484686ac`에서 schema-v2 후보 15개가 importer 통과했다.
-- Reader 회귀 근거: `build/temp/bookdata-resize-test.log`의 초기 실패는 `Section prose survives` 보충 설명이 reader에 나타나지 않은 오류였다. 현재 uncommitted Upstudy-hotfix working tree에서는 본문·보충자료 표시를 반영한 `test/bookdata_import_preservation_test.dart` 4/4, `test/book_activity_v2_test.dart` 6/6이 재실행 통과했다. 전자는 섹션 텍스트·페이지 전환, 후자는 일반 V2 activity reader 경로를 확인한다. 이는 새 18모듈 콘텐츠의 전체 화면별 검수나 깨끗한 HEAD 빌드를 뜻하지 않는다.
+- canonical BookData SHA-256 매니페스트 10개와 schema-v2 후보 15개를 대조했다. guarded hotfix HEAD `b310fd112e0b3e1e92f0b571d5ecd586bbe54a76`에서 schema-v2 후보 15개 importer 통과했다.
+- Reader 회귀 근거: `build/temp/bookdata-resize-test.log`의 초기 실패는 `Section prose survives` 보충 설명이 reader에 나타나지 않은 오류였다. 이후 guarded hotfix HEAD `b310fd1`의 현재 working tree에서 `test/bookdata_import_preservation_test.dart` 4/4 및 `test/book_activity_v2_test.dart` 6/6을 재실행해 통과했다. 첫 테스트는 섹션 텍스트·페이지 전환, 두 번째는 일반 V2 activity reader 경로를 확인한다. 두 테스트는 dirty working tree의 reader 변경도 포함하며 새 18모듈 전체 화면별 검수나 깨끗한 HEAD 빌드를 뜻하지 않는다.
 
 ## 현재 근거
 
