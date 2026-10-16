@@ -17,6 +17,8 @@ GENERATORS = [
     ("build_middle_school_2015_domain_drafts.py", "main"),
     ("build_middle_school_1_1_2022_sample.py", "main"),
     ("build_middle_school_1_2_2022_candidate.py", "main"),
+    ("build_middle_school_linear_system_2022_candidate.py", "main"),
+    ("build_middle_school_algebra_2022_candidate.py", "main"),
     ("build_middle_school_2_1_2022_candidate.py", "main"),
     ("build_middle_school_2_2_2022_candidate.py", "main"),
     ("build_middle_school_3_1_2022_candidate.py", "main"),

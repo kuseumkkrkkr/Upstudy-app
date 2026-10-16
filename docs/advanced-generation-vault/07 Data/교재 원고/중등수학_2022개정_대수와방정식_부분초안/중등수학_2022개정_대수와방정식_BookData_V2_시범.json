@@ -1,0 +1,1293 @@
+{
+  "schema_version": 2,
+  "title": "중등수학 2022 개정 · 대수와 방정식 부분 후보",
+  "subtitle": "공식 학년군 기준별 개념·예제·연습·native quiz",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "standard_codes": [
+    "9수02-08",
+    "9수02-09",
+    "9수02-10",
+    "9수02-11",
+    "9수02-12",
+    "9수02-13"
+  ],
+  "standard_coverage": "partial",
+  "grade_semester_status": "not_assigned",
+  "tags": [
+    "중등수학",
+    "2022 개정",
+    "학년군 기준",
+    "학년·학기 미배정",
+    "부분 원고 후보",
+    "교사·수학 검수 대기",
+    "권리 검토 대기",
+    "성취기준 후보: 9수02-08",
+    "성취기준 후보: 9수02-09",
+    "성취기준 후보: 9수02-10",
+    "성취기준 후보: 9수02-11",
+    "성취기준 후보: 9수02-12",
+    "성취기준 후보: 9수02-13"
+  ],
+  "chapters": [
+    {
+      "title": "지수법칙과 식의 간단히 하기",
+      "intro": [
+        "공식 기준: 9수02-08 지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-08 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-08. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-exponent-laws-opening",
+          "template": "opening",
+          "title": "지수법칙과 식의 간단히 하기의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "지수법칙과 식의 간단히 하기의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "지수법칙과 식의 간단히 하기의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-exponent-laws-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-exponent-laws-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "0이 아닌 수 a와 자연수 m,n에 대해 aᵐ×aⁿ=aᵐ⁺ⁿ이고, (aᵐ)ⁿ=aᵐⁿ입니다. 같은 밑의 곱에서는 지수를 더하고, 거듭제곱의 거듭제곱에서는 지수를 곱합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-08"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-exponent-laws-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "2³×2²을 간단히 하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "밑이 2로 같으므로 지수를 더해 2⁵=32입니다. 직접 곱해도 8×4=32입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-exponent-laws-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "3²×3³을 하나의 거듭제곱으로 나타내고 값을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "3⁵=243입니다. 같은 밑의 곱에서 지수를 더합니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "3⁵=243입니다. 같은 밑의 곱에서 지수를 더합니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0208-quiz",
+                "kind": "quiz",
+                "prompt": "x⁴×x³은 무엇인가요?",
+                "options": [
+                  "x⁷",
+                  "x¹²",
+                  "2x⁷"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "같은 밑의 곱이므로 지수 4와 3을 더합니다.",
+                "incorrect_feedback": "밑을 그대로 두고 지수를 더하세요.",
+                "hints": [
+                  "aᵐ×aⁿ=aᵐ⁺ⁿ입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-exponent-laws-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "지수법칙과 식의 간단히 하기의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "지수법칙과 식의 간단히 하기의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "다항식의 덧셈과 뺄셈",
+      "intro": [
+        "공식 기준: 9수02-09 다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-09 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-09. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-polynomial-add-subtract-opening",
+          "template": "opening",
+          "title": "다항식의 덧셈과 뺄셈의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "다항식의 덧셈과 뺄셈의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "다항식의 덧셈과 뺄셈의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-polynomial-add-subtract-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-polynomial-add-subtract-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "다항식의 덧셈과 뺄셈에서는 같은 문자 부분을 가진 항끼리 계수를 계산합니다. 뺄셈은 빼는 다항식의 각 항의 부호를 바꾸어 더하면 실수를 줄일 수 있습니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-09"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-polynomial-add-subtract-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "(3x+2)+(x−5)를 간단히 하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "x항은 3x+x=4x이고 상수항은 2−5=−3이므로 4x−3입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-polynomial-add-subtract-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(5a−4)−(2a+3)을 간단히 하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "괄호 앞의 빼기를 분배하면 5a−4−2a−3입니다. 같은 항끼리 계산해 3a−7입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "괄호 앞의 빼기를 분배하면 5a−4−2a−3입니다. 같은 항끼리 계산해 3a−7입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0209-quiz",
+                "kind": "quiz",
+                "prompt": "(2x+1)+(3x−4)를 간단히 하면 무엇인가요?",
+                "options": [
+                  "5x−3",
+                  "5x+5",
+                  "x−3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "2x+3x=5x이고 1−4=−3입니다.",
+                "incorrect_feedback": "문자항과 상수항을 따로 계산하세요.",
+                "hints": [
+                  "x항끼리, 상수항끼리 묶습니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-polynomial-add-subtract-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "다항식의 덧셈과 뺄셈의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "다항식의 덧셈과 뺄셈의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "단항식과 다항식의 곱셈·나눗셈",
+      "intro": [
+        "공식 기준: 9수02-10 ‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-10 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-10. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-monomial-polynomial-opening",
+          "template": "opening",
+          "title": "단항식과 다항식의 곱셈·나눗셈의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "단항식과 다항식의 곱셈·나눗셈의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "단항식과 다항식의 곱셈·나눗셈의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-monomial-polynomial-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-monomial-polynomial-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "단항식을 다항식에 곱할 때는 분배법칙으로 각 항에 곱합니다. 단항식끼리 나눌 때는 계수와 같은 문자 거듭제곱을 각각 나누며, 분모가 0이 되지 않는 범위에서 계산합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-10"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-monomial-polynomial-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "2x(3x−4)를 전개하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "분배법칙에 따라 2x×3x−2x×4=6x²−8x입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-monomial-polynomial-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "12x²y를 3xy로 나누세요. 단, x와 y는 0이 아닙니다."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "계수는 12÷3=4이고 x²÷x=x, y÷y=1이므로 4x입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "계수는 12÷3=4이고 x²÷x=x, y÷y=1이므로 4x입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0210-quiz",
+                "kind": "quiz",
+                "prompt": "3a(2a+5)를 전개하면 무엇인가요?",
+                "options": [
+                  "6a²+15a",
+                  "6a+15",
+                  "5a²+8a"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "3a를 두 항에 각각 곱하면 6a²+15a입니다.",
+                "incorrect_feedback": "분배법칙을 적용해 괄호 안의 각 항에 곱하세요.",
+                "hints": [
+                  "3a×2a와 3a×5를 따로 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-monomial-polynomial-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "단항식과 다항식의 곱셈·나눗셈의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "단항식과 다항식의 곱셈·나눗셈의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "부등식의 성질과 해",
+      "intro": [
+        "공식 기준: 9수02-11 부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-11 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-11. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-inequality-properties-opening",
+          "template": "opening",
+          "title": "부등식의 성질과 해의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "부등식의 성질과 해의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "부등식의 성질과 해의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-inequality-properties-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-inequality-properties-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "부등식 양변에 같은 수를 더하거나 빼도 부등호 방향은 유지됩니다. 양변에 양수를 곱하거나 나누어도 방향은 유지되지만, 음수를 곱하거나 나누면 부등호 방향을 반대로 바꾸어야 합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-11"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-inequality-properties-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "−2x+3<7에서 양변을 정리할 때 부등호 방향을 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "양변에서 3을 빼면 −2x<4입니다. 양변을 −2로 나누므로 부등호를 뒤집어 x>−2입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-inequality-properties-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "−3y≤12를 y에 대한 부등식으로 나타내세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "양변을 −3으로 나누며 방향을 바꾸므로 y≥−4입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "양변을 −3으로 나누며 방향을 바꾸므로 y≥−4입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0211-quiz",
+                "kind": "quiz",
+                "prompt": "−4x>8을 풀면 무엇인가요?",
+                "options": [
+                  "x<−2",
+                  "x>−2",
+                  "x<2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "음수 −4로 나눌 때 부등호를 바꾸어 x<−2입니다.",
+                "incorrect_feedback": "음수로 나누면 부등호 방향이 반대가 됩니다.",
+                "hints": [
+                  "양변을 −4로 나눈 뒤 방향을 확인하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-inequality-properties-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "부등식의 성질과 해의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "부등식의 성질과 해의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "일차부등식 풀기와 활용",
+      "intro": [
+        "공식 기준: 9수02-12 일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-12 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-12. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-linear-inequality-opening",
+          "template": "opening",
+          "title": "일차부등식 풀기와 활용의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "일차부등식 풀기와 활용의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "일차부등식 풀기와 활용의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-inequality-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-inequality-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "일차부등식은 미지수의 차수가 1인 부등식입니다. 등식처럼 항을 정리하되, 음수로 곱하거나 나누는 단계에서는 부등호 방향을 바꾸고, 구한 해가 문제의 조건에 맞는지 확인합니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-12"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-inequality-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "3x−5≤7을 푸세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "양변에 5를 더해 3x≤12, 양변을 양수 3으로 나누어 x≤4입니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-inequality-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "한 장에 800원인 공책을 사고 500원을 남기려 합니다. 가진 돈이 4,500원 이하일 때 살 수 있는 최대 권수를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "권수를 n이라 하면 800n+500≤4500입니다. 800n≤4000이므로 n≤5입니다. 최대 5권입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "권수를 n이라 하면 800n+500≤4500입니다. 800n≤4000이므로 n≤5입니다. 최대 5권입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0212-quiz",
+                "kind": "quiz",
+                "prompt": "2x+1<9의 해는 무엇인가요?",
+                "options": [
+                  "x<4",
+                  "x>4",
+                  "x<5"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "2x<8이므로 x<4입니다.",
+                "incorrect_feedback": "먼저 양변에서 1을 빼고 2로 나눕니다.",
+                "hints": [
+                  "2x+1<9에서 상수항을 먼저 옮깁니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-inequality-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "일차부등식 풀기와 활용의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "일차부등식 풀기와 활용의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "두 미지수 연립일차방정식",
+      "intro": [
+        "공식 기준: 9수02-13 미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다",
+        "교육부 고시 제2022-33호 별책8의 9수02-13 관련 후보 시범입니다. 성취기준 코드는 중학교 학년군에 제시되며 학기 귀속은 확인되지 않았습니다."
+      ],
+      "sections": [
+        {
+          "title": "학습 기준과 자산",
+          "paragraphs": [
+            "기준 후보: 9수02-13. 학년군 기준이며 학기 귀속은 미배정입니다.",
+            "이 책은 새로 쓴 검토용 초안입니다. 교육과정 원문 표현이나 상업 교재의 설명·문제·그림을 옮기지 않았습니다."
+          ]
+        }
+      ],
+      "pages": [
+        {
+          "id": "ms22-linear-system-opening",
+          "template": "opening",
+          "title": "두 미지수 연립일차방정식의 규칙을 식과 예제로 설명해 보세요.",
+          "kicker": "먼저 예측하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 미지수 연립일차방정식의 규칙을 식과 예제로 설명해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "생각 열기",
+              "text": "관찰한 사실과 추측을 구분해 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "대상을 하나씩 표시하고, 무엇이 바뀌지 않는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "오늘의 목표",
+              "text": "두 미지수 연립일차방정식의 기준을 말과 그림으로 설명합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-system-experiment",
+          "template": "experiment",
+          "title": "직접 바꾸며 확인하기",
+          "kicker": "체험 도구",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 계산하고 확인하기",
+              "text": "예제의 식을 한 줄씩 변형하고, 각 단계가 주어진 조건을 만족하는지 확인합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "관찰 질문",
+              "text": "어떤 항끼리 묶거나 어떤 성질을 적용했나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "한 번에 한 단계만 바꾸고, 바꾸기 전후의 식을 비교하세요."
+            },
+            {
+              "type": "answer",
+              "title": "활동 범위",
+              "text": "외부 시뮬레이션 파일 없이 앱 내 지면과 native quiz를 제공합니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-system-concept",
+          "template": "concept",
+          "title": "핵심 개념",
+          "kicker": "정의와 이유",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기억할 내용",
+              "text": "연립일차방정식의 해는 두 방정식을 모두 참으로 만드는 순서쌍입니다. 한 식을 다른 식에서 빼거나 더해 미지수 하나를 없애는 방법으로 해를 구한 뒤 두 원래 식에 대입해 확인할 수 있습니다."
+            },
+            {
+              "type": "formula",
+              "title": "표현",
+              "text": "9수02-13"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "그림의 겉모양만으로 결론을 내리지 말고 주어진 조건과 정의를 확인하세요."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 말하기",
+              "text": "",
+              "items": [
+                "정의나 규칙을 말로 설명한다.",
+                "그림·표·수식이 같은 내용을 나타내는지 확인한다."
+              ]
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-system-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "kicker": "근거를 적기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "2x+y=7, x−y=2를 풀어 해를 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이 1",
+              "text": "두 식을 더하면 3x=9이므로 x=3입니다. x−y=2에 대입하면 y=1입니다. 첫째 식은 6+1=7, 둘째 식은 3−1=2로 모두 성립합니다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "조건을 다시 대입하거나 다른 표현으로 바꾸어 답을 확인합니다."
+            },
+            {
+              "type": "answer",
+              "title": "결론",
+              "text": "답뿐 아니라 사용한 정의와 이유를 함께 적습니다."
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-system-practice",
+          "template": "practice",
+          "title": "혼자 풀기",
+          "kicker": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "어른 표 값을 a원, 청소년 표 값을 c원이라 하자. 어른 2장과 청소년 1장은 17,000원, 어른 1장과 청소년 2장은 13,000원일 때 각 표 값을 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "어떤 조건을 먼저 확인했고, 그 조건이 왜 필요한가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "예제에서 쓴 조건을 하나씩 점검하고, 필요한 계산을 분리하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2a+c=17,  a+2c=13 (단위: 천 원)입니다. 첫 식에서 c=17−2a를 두 번째 식에 대입하면 a+34−4a=13이므로 a=7, c=3입니다. 어른 표는 7,000원, 청소년 표는 3,000원입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "2a+c=17,  a+2c=13 (단위: 천 원)입니다. 첫 식에서 c=17−2a를 두 번째 식에 대입하면 a+34−4a=13이므로 a=7, c=3입니다. 어른 표는 7,000원, 청소년 표는 3,000원입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ms22-0213-quiz",
+                "kind": "quiz",
+                "prompt": "x+y=7, x−y=1의 해는 무엇인가요?",
+                "options": [
+                  "(4, 3)",
+                  "(3, 4)",
+                  "(5, 2)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 식을 더해 2x=8, x=4를 얻고 y=3입니다.",
+                "incorrect_feedback": "두 식을 더해 y를 없앤 다음 첫째 식에 대입하세요.",
+                "hints": [
+                  "두 식을 더하면 2x=8입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ms22-linear-system-summary",
+          "template": "summary",
+          "title": "한 줄로 정리하기",
+          "kicker": "마무리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심",
+              "text": "두 미지수 연립일차방정식의 규칙을 설명한다. · 계산 결과를 원래 식이나 조건에 대입해 확인한다."
+            },
+            {
+              "type": "checklist",
+              "title": "점검",
+              "text": "",
+              "items": [
+                "두 미지수 연립일차방정식의 규칙을 설명한다.",
+                "계산 결과를 원래 식이나 조건에 대입해 확인한다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "candidate_partial_draft",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "rights_status": "pending",
+    "publication_eligibility": "not_eligible",
+    "standard_source": "교육부 고시 제2022-33호 별책8 공식 기준 인덱스",
+    "content_rights": "newly authored candidate; independent rights decision pending",
+    "semester_assignment": "not assigned; middle-school codes are grade-band standards",
+    "external_interactive_assets": []
+  }
+}

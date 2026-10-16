@@ -75,6 +75,15 @@ def main() -> None:
             [item["title"] + "의 관계를 식과 그래프로 설명한다.", "찾은 점을 원래 식에 대입해 확인한다."],
         )
         chapter["intro"][0] = f"공식 기준: {item['code']} {official[item['code']]}"
+        chapter["sections"][0]["paragraphs"][0] = (
+            f"기준 후보: {item['code']}. 앱 내 지면과 native quiz를 연결한 부분 원고입니다."
+        )
+        chapter["pages"][1]["blocks"] = [
+            {"type": "lead", "title": "직접 확인하기", "text": "예제의 관계를 표와 식으로 나타내고, 각 단계가 원래 조건을 만족하는지 확인하세요."},
+            {"type": "thinking", "title": "관찰 질문", "text": "입력·좌표·식 중 무엇을 바꾸어도 같은 관계가 유지되나요?"},
+            {"type": "hint", "title": "힌트", "text": "한 번에 하나의 값을 대입해 좌변과 우변을 비교하세요."},
+            {"type": "answer", "title": "활동 범위", "text": "이 시범에는 외부 시뮬레이션 파일이 없습니다. 앱 내 native quiz와 풀이 지면을 제공합니다."},
+        ]
         chapter["pages"][-2]["blocks"].append({"type": "activity", "activity": item["quiz"]})
         chapters.append(chapter)
 

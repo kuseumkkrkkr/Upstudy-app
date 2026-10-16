@@ -1,0 +1,35 @@
+{
+  "status": "candidate_partial_draft",
+  "standard_codes": [
+    "9수02-08",
+    "9수02-09",
+    "9수02-10",
+    "9수02-11",
+    "9수02-12",
+    "9수02-13"
+  ],
+  "official_criteria": {
+    "9수02-08": "지수법칙을 이해하고, 이를 이용하여 식을 간단히 할 수 있다",
+    "9수02-09": "다항식의 덧셈과 뺄셈의 원리를 이해하고, 그 계산을 할 수 있다",
+    "9수02-10": "‘ (단항식) (다항식) ’, ‘( 다항식) (단항식) ’ 과 같은 곱셈과 나눗셈의 원리를 이해하고, 그 계산을 할 수 있다",
+    "9수02-11": "부등식과 그 해의 뜻을 알고, 부등식의 성질을 설명할 수 있다",
+    "9수02-12": "일차부등식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다",
+    "9수02-13": "미지수가 2개인 연립일차방정식을 풀 수 있고, 이를 활용하여 문제를 해결할 수 있다"
+  },
+  "module_count": 6,
+  "page_count": 36,
+  "native_quiz_ids": [
+    "ms22-0208-quiz",
+    "ms22-0209-quiz",
+    "ms22-0210-quiz",
+    "ms22-0211-quiz",
+    "ms22-0212-quiz",
+    "ms22-0213-quiz"
+  ],
+  "arithmetic_checks": "passed",
+  "teacher_review": "pending",
+  "independent_math_review": "pending",
+  "rights_review": "pending",
+  "publication_eligibility": "not_eligible",
+  "semester_assignment": "not assigned"
+}
