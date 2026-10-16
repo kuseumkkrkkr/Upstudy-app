@@ -1,0 +1,40 @@
+{
+  "bookdata_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "701E24B38624C1F9EB1B8C1F42B4E80880A7101B783C6CFEDA74659AFC405321",
+  "candidate_code_references": [
+    "10공수1-01-01",
+    "10공수1-01-02",
+    "10공수1-01-03",
+    "10공수1-02-01",
+    "10공수1-02-02",
+    "10공수1-02-03",
+    "10공수1-02-04",
+    "10공수1-02-05",
+    "10공수1-02-06",
+    "10공수1-02-09",
+    "10공수1-02-10",
+    "10공수1-02-11",
+    "10공수1-03-01",
+    "10공수1-03-02",
+    "10공수1-03-03",
+    "10공수1-04-01"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_criterion_table",
+  "module_count": 16,
+  "page_count": 80,
+  "native_activity_count": 16,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending",
+  "math_review_status": "pending_full_teacher_review",
+  "math_arithmetic_check_status": "pass_for_listed_examples_only",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored; publication_rights_decision_pending",
+  "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
+  "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "b310fd112e0b3e1e92f0b571d5ecd586bbe54a76"
+}

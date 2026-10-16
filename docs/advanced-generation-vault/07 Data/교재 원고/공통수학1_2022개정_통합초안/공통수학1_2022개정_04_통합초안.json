@@ -1,0 +1,332 @@
+{
+  "title": "공통수학1 단원 코드 04 · 후보 묶음",
+  "tags": [
+    "공통수학1",
+    "2022 개정",
+    "10공수1-04",
+    "자동 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "2×2 행렬의 연산",
+      "pages": [
+        {
+          "id": "cm1-04-01-001",
+          "title": "2×2 행렬의 연산 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "기준 후보 10공수1-04-02",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-002",
+          "template": "opening",
+          "title": "행과 열을 어떻게 곱할까?",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "두 행렬 A, B의 곱 AB에서 첫째 행 둘째 열의 값은 어떻게 정할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "예측",
+              "text": "A의 어느 줄과 B의 어느 줄을 짝지어야 할지 행·열로 표현해 보세요."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-003",
+          "template": "concept",
+          "title": "같은 위치끼리, 행과 열끼리",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "기본 연산",
+              "text": "덧셈과 뺄셈은 같은 위치의 성분끼리 계산하고, 실수배는 모든 성분에 실수를 곱합니다."
+            },
+            {
+              "type": "visual",
+              "title": "곱셈 규칙",
+              "text": "AB의 (i,j) 성분은 A의 i번째 행과 B의 j번째 열을 곱해 더합니다.",
+              "formula": "(AB)ᵢⱼ=Σₖ aᵢₖbₖⱼ"
+            },
+            {
+              "type": "misconception",
+              "title": "곱의 순서",
+              "text": "행렬의 곱은 일반적으로 순서를 바꾸면 값이 달라집니다. AB와 BA를 따로 계산해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-004",
+          "template": "example",
+          "title": "연산을 차례로 계산하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A=[[1,2],[0,−1]], B=[[3,−1],[2,4]]일 때 A+B, A−B, 2A, AB를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "성분별 연산",
+              "text": "A+B=[[4,1],[2,3]], A−B=[[−2,3],[−2,−5]], 2A=[[2,4],[0,−2]]입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "행과 열의 곱",
+              "text": "AB의 첫째 행은 [1,2]입니다. B의 두 열과 계산하면 첫째 행은 [1·3+2·2, 1·(−1)+2·4]=[7,7]입니다."
+            },
+            {
+              "type": "answer",
+              "title": "곱의 결과",
+              "text": "둘째 행까지 계산하면 AB=[[7,7],[−2,−4]]입니다."
+            },
+            {
+              "type": "verification",
+              "title": "순서 비교",
+              "text": "BA=[[3,7],[2,0]]이므로 AB와 BA는 서로 다릅니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-005",
+          "template": "practice",
+          "title": "곱의 한 성분 계산하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "같은 A, B에서 AB의 첫째 행 둘째 열 성분을 계산하고, 사용한 행과 열을 적으세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "A의 첫째 행 [1,2]와 B의 둘째 열 [−1,4]를 짝지어 곱하고 더합니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답과 검산",
+              "text": "1·(−1)+2·4=7입니다. 전체 곱 AB의 첫째 행 둘째 열과 일치합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-006",
+          "template": "experiment",
+          "title": "곱의 성분 확인",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "직접 확인",
+              "text": "AB의 첫째 행 둘째 열 성분을 입력합니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm1-220402-ab12",
+                "kind": "quiz",
+                "prompt": "A=[[1,2],[0,−1]], B=[[3,−1],[2,4]]일 때 AB의 첫째 행 둘째 열 성분을 입력하세요.",
+                "answer": 7,
+                "tolerance": 0,
+                "correct_feedback": "맞습니다. 첫째 행 [1,2]와 둘째 열 [−1,4]의 곱의 합은 7입니다.",
+                "incorrect_feedback": "AB의 해당 성분에는 A의 첫째 행과 B의 둘째 열이 필요합니다.",
+                "hints": [
+                  "1×(−1)+2×4를 계산합니다.",
+                  "행렬 곱은 같은 위치끼리 곱하는 연산이 아닙니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-01-007",
+          "template": "summary",
+          "title": "연산 규칙을 구분하기",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "핵심 정리",
+              "text": "덧셈·뺄셈은 같은 자리, 실수배는 모든 성분, 곱셈은 행과 열의 곱의 합으로 계산합니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 점검",
+              "text": "AB를 계산할 때 각 결과 성분에 사용한 행과 열을 표시했나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-04-02"
+      ]
+    },
+    {
+      "title": "행렬로 실생활 자료 표현",
+      "pages": [
+        {
+          "id": "cm1-04-02-001",
+          "title": "행렬로 실생활 자료 표현 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "기준 후보 10공수1-04-01",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 매장의 상품별 판매량을 행렬에 담으면 특정 행·열의 값은 무엇을 뜻할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "문제의 조건과 필요한 수학적 관계를 표시하고 풀이 방법을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-02-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "행렬은 수나 기호를 행과 열로 배열한 것이다. 행·열의 순서와 각 위치의 의미를 먼저 정하면 표 형태의 실생활 자료를 행렬로 나타낼 수 있다. 같은 크기의 행렬이라도 행·열의 의미가 다르면 자료 해석이 달라진다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수1-04-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 부호, 정의역 또는 순서의 구별을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 매장의 상품별 판매량을 행렬에 담으면 특정 행·열의 값은 무엇을 뜻할까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "행은 매장 A,B, 열은 연필, 공책이라고 정한다. 판매량 행렬 [[12,8],[9,10]]에서 둘째 행 첫째 열의 9는 매장 B의 연필 판매량이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "행·열 순서를 기록하고 행렬의 각 값을 상황에 맞게 해석한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "행은 월(1월,2월), 열은 상품(X,Y)인 행렬 [[4,7],[6,5]]에서 2월 상품 Y의 값을 해석하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "행 번호 2는 매장 B입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2월 Y 상품 판매량은 5입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2월 Y 상품 판매량은 5입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm10401-quiz",
+                "kind": "quiz",
+                "prompt": "행이 매장 A,B, 열이 연필·공책일 때 [[12,8],[9,10]]의 둘째 행 첫째 열은?",
+                "options": [
+                  "매장 B의 연필 9개",
+                  "매장 A의 공책 8개",
+                  "매장 B의 공책 10개"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "둘째 행은 매장 B, 첫째 열은 연필입니다.",
+                "incorrect_feedback": "먼저 행과 열의 약속을 확인한 뒤 위치를 읽으세요.",
+                "hints": [
+                  "행 번호 2는 매장 B입니다.",
+                  "열 번호 1은 연필입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm1-04-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "행렬로 실생활 자료 표현"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-04-01"
+      ]
+    }
+  ],
+  "metadata": {
+    "standard_code_status": "candidate_from_source_tags",
+    "source_files": [
+      "공통수학1_2022개정_누락기준3단원_BookData_V2_시범.json",
+      "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json"
+    ]
+  }
+}

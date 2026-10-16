@@ -10,7 +10,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 OUTPUT = MANUSCRIPTS / "공통수학1_2022개정_통합초안"
-CODE = re.compile(r"10공수1-(\d{2})-\d{2}")
+CODE = re.compile(r"10공수1-(\d{2})-(\d{2})")
+UNIT = re.compile(r"10공수1-(\d{2})")
 
 
 def signature(page: dict) -> str:
@@ -18,23 +19,38 @@ def signature(page: dict) -> str:
 
 
 def main() -> None:
-    source_files = sorted(MANUSCRIPTS.glob("공통수학1*_BookData_시범.json"))
+    source_files = sorted(MANUSCRIPTS.glob("공통수학1*_BookData*_시범.json"))
     grouped: OrderedDict[str, list[dict]] = OrderedDict()
     expected: Counter[str] = Counter()
     for path in source_files:
         book = json.loads(path.read_text(encoding="utf-8"))
-        codes = sorted(set(CODE.findall(" ".join(book.get("tags", [])))))
-        if not codes:
-            continue
-        if len(codes) != 1:
-            raise RuntimeError(f"Ambiguous unit tags in {path.name}: {codes}")
+        full_codes = sorted(set(match.group(0) for match in CODE.finditer(" ".join(book.get("tags", [])))))
+        unit_codes = sorted(set(match.group(1) for match in UNIT.finditer(" ".join(book.get("tags", [])))))
+        standard_codes = book.get("standard_codes", [])
         chapters = book.get("chapters", [])
-        pages = [page for chapter in chapters for page in chapter.get("pages", [])]
-        if not pages:
+        if not full_codes and not unit_codes and not standard_codes:
+            continue
+        if len(standard_codes) == len(chapters) and chapters:
+            chapter_codes = standard_codes
+        elif len(full_codes) == len(chapters) and chapters:
+            chapter_codes = full_codes
+        elif len(unit_codes) == 1:
+            chapter_codes = [None] * len(chapters)
+        else:
+            raise RuntimeError(f"Cannot map source chapters to unit codes in {path.name}: {unit_codes}")
+        if not chapters:
             raise RuntimeError(f"Missing pages in {path.name}")
-        for page in pages:
-            expected[signature(page)] += 1
-        grouped.setdefault(codes[0], []).append({"file": path.name, "book": book, "pages": pages})
+        for chapter, code in zip(chapters, chapter_codes):
+            pages = chapter.get("pages", [])
+            if not pages:
+                raise RuntimeError(f"Missing pages in {path.name}: {chapter.get('title', '')}")
+            unit_match = re.fullmatch(r"10공수1-(\d{2})-\d{2}", code or "")
+            unit = unit_match.group(1) if unit_match else (unit_codes[0] if len(unit_codes) == 1 else None)
+            if unit is None:
+                raise RuntimeError(f"Missing exact unit for source chapter in {path.name}: {code}")
+            for page in pages:
+                expected[signature(page)] += 1
+            grouped.setdefault(unit, []).append({"file": path.name, "book": book, "chapter": chapter, "pages": pages, "code": code})
     if not grouped:
         raise RuntimeError("No tagged Common Mathematics 1 source samples found")
 
@@ -46,14 +62,15 @@ def main() -> None:
         chapters = []
         for module_index, module in enumerate(modules, 1):
             src = module["book"]
-            subunit_title = " / ".join(ch.get("title", "") for ch in src["chapters"])
+            subunit_title = module["chapter"].get("title", "")
             tags = src.get("tags", [])
+            path_text = f"기준 후보 {module['code']}" if module["code"] else " · ".join(tags)
             opening = {
                 "id": f"cm1-{unit_code}-{module_index:02d}-opening",
                 "title": f"{subunit_title} · 원본 태그와 기준 후보",
                 "template": "opening",
                 "kicker": "기존 BookData 모듈",
-                "blocks": [{"type": "lead", "title": "태그 경로", "text": " · ".join(tags), "formula": "", "items": [], "rows": []}],
+                "blocks": [{"type": "lead", "title": "태그 경로", "text": path_text, "formula": "", "items": [], "rows": []}],
             }
             pages = [opening] + module["pages"]
             for page_index, page in enumerate(pages, 1):
@@ -61,7 +78,7 @@ def main() -> None:
                 all_ids.append(page["id"])
                 if page is not opening:
                     actual[signature(page)] += 1
-            chapters.append({"title": subunit_title, "pages": pages, "source_file": module["file"]})
+            chapters.append({"title": subunit_title, "pages": pages, "source_file": module["file"], "candidate_standard_codes": [module["code"]] if module["code"] else []})
         unit_title = f"공통수학1 단원 코드 {unit_code} · 후보 묶음"
         unit_book = {
             "title": unit_title,

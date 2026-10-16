@@ -8,18 +8,18 @@
   ],
   "chapters": [
     {
-      "title": "나머지는 f(k)",
+      "title": "다항식의 사칙연산",
       "pages": [
         {
           "id": "cm1-01-01-001",
-          "title": "나머지는 f(k) · 원본 태그와 기준 후보",
+          "title": "다항식의 사칙연산 · 원본 태그와 기준 후보",
           "template": "opening",
           "kicker": "기존 BookData 모듈",
           "blocks": [
             {
               "type": "lead",
               "title": "태그 경로",
-              "text": "공통수학1 · 2022개정 · 10공수1-01-02 · 부분시범 · 교사검수대기",
+              "text": "기준 후보 10공수1-01-01",
               "formula": "",
               "items": [],
               "rows": []
@@ -28,6 +28,456 @@
         },
         {
           "id": "cm1-01-01-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 다항식을 더하고 곱할 때 동류항과 분배법칙을 어떻게 적용할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "문제의 조건과 필요한 수학적 관계를 표시하고 풀이 방법을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "다항식의 덧셈·뺄셈은 동류항끼리 계수를 계산한다. 곱셈은 분배법칙을 적용하고, 나눗셈은 나누는 다항식이 0이 아닌 범위에서 몫과 나머지를 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수1-01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 부호, 정의역 또는 순서의 구별을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 다항식을 더하고 곱할 때 동류항과 분배법칙을 어떻게 적용할까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "(2x²−x+3)+(x²+4x−1)=3x²+3x+2이다. (x²+3x+2)÷(x+1)=x+2는 (x+1)(x+2)=x²+3x+2로 검산한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "나눗셈 결과를 나누는 식과 곱해 피제수와 같은지 검산한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "(x²−2x+1)(x+2)를 전개하고, x²−1을 x−1로 나누세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "다항식을 곱으로 인수분해해 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "곱은 x³−3x+2이고, 나눗셈의 몫은 x+1입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "곱은 x³−3x+2이고, 나눗셈의 몫은 x+1입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm10101-quiz",
+                "kind": "quiz",
+                "prompt": "(x²+3x+2)÷(x+1)의 몫은?",
+                "options": [
+                  "x+2",
+                  "x−2",
+                  "x²+2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "(x+1)(x+2)=x²+3x+2입니다.",
+                "incorrect_feedback": "몫에 x+1을 곱해 원래 다항식이 되는지 확인하세요.",
+                "hints": [
+                  "다항식을 곱으로 인수분해해 보세요.",
+                  "x²+3x+2=(x+1)(x+2)입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "다항식의 사칙연산"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-01"
+      ]
+    },
+    {
+      "title": "항등식과 나머지정리",
+      "pages": [
+        {
+          "id": "cm1-01-02-001",
+          "title": "항등식과 나머지정리 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "기준 후보 10공수1-01-02",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "다항식을 x−a로 나눈 나머지를 긴 나눗셈 없이 어떻게 찾을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "문제의 조건과 필요한 수학적 관계를 표시하고 풀이 방법을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "모든 x에서 성립하는 식을 항등식이라 한다. 다항식 f(x)를 x−a로 나눈 나머지는 f(a)이다. 항등식의 계수를 비교하거나 적절한 x값을 대입해 미지수를 구할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수1-01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 부호, 정의역 또는 순서의 구별을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "다항식을 x−a로 나눈 나머지를 긴 나눗셈 없이 어떻게 찾을까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x³−2x+1을 x−1로 나눈 나머지는 f(1)=1−2+1=0이다. 따라서 x−1은 f(x)의 인수다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "인수정리에서 f(a)=0이면 x−a가 인수임을 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=2x²−3x+4를 x+2로 나눌 때 나머지를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "나누는 식을 x−a 꼴로 읽습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x+2=x−(−2)이므로 나머지는 f(−2)=2·4+6+4=18입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x+2=x−(−2)이므로 나머지는 f(−2)=2·4+6+4=18입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm10102-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x³−2x+1을 x−1로 나눈 나머지는?",
+                "options": [
+                  "0",
+                  "1",
+                  "−1"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "나머지정리에 따라 f(1)=0입니다.",
+                "incorrect_feedback": "x−a에서 a=1을 찾아 f(1)을 계산하세요.",
+                "hints": [
+                  "나누는 식을 x−a 꼴로 읽습니다.",
+                  "x−1의 a는 1입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "항등식과 나머지정리"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-02"
+      ]
+    },
+    {
+      "title": "다항식의 인수분해",
+      "pages": [
+        {
+          "id": "cm1-01-03-001",
+          "title": "다항식의 인수분해 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "기준 후보 10공수1-01-03",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "다항식의 공통 구조를 찾아 곱으로 나타내면 어떤 문제를 쉽게 풀 수 있을까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "문제의 조건과 필요한 수학적 관계를 표시하고 풀이 방법을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "인수분해는 다항식을 인수들의 곱으로 나타내는 것이다. 공통인수, 곱셈공식, 묶어내기 등을 사용하고, 전개해 원래 식으로 돌아오는지 확인한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수1-01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 부호, 정의역 또는 순서의 구별을 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "다항식의 공통 구조를 찾아 곱으로 나타내면 어떤 문제를 쉽게 풀 수 있을까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "x²−5x+6은 곱이 6, 합이 −5인 두 수 −2, −3을 찾아 (x−2)(x−3)으로 인수분해한다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "인수들의 곱을 전개해 처음 다항식과 일치하는지 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "x³−4x를 인수분해하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "6의 인수쌍을 적습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "공통인수 x를 먼저 묶으면 x(x²−4)=x(x−2)(x+2)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "공통인수 x를 먼저 묶으면 x(x²−4)=x(x−2)(x+2)입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm10103-quiz",
+                "kind": "quiz",
+                "prompt": "x²−5x+6의 인수분해는?",
+                "options": [
+                  "(x−2)(x−3)",
+                  "(x+2)(x+3)",
+                  "(x−1)(x−6)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 상수의 곱은 6, 합은 −5입니다.",
+                "incorrect_feedback": "곱이 6이고 합이 −5인 두 수를 찾으세요.",
+                "hints": [
+                  "6의 인수쌍을 적습니다.",
+                  "−2와 −3의 곱은 6, 합은 −5입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "다항식의 인수분해"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-03"
+      ]
+    },
+    {
+      "title": "나머지는 f(k)",
+      "pages": [
+        {
+          "id": "cm1-01-04-001",
+          "title": "나머지는 f(k) · 원본 태그와 기준 후보",
+          "template": "opening",
+          "kicker": "기존 BookData 모듈",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "태그 경로",
+              "text": "기준 후보 10공수1-01-02",
+              "formula": "",
+              "items": [],
+              "rows": []
+            }
+          ]
+        },
+        {
+          "id": "cm1-01-04-002",
           "template": "opening",
           "title": "긴 나눗셈 없이 나머지를 찾을 수 있을까?",
           "kicker": "나누는 식부터 0으로 만들기",
@@ -45,7 +495,7 @@
           ]
         },
         {
-          "id": "cm1-01-01-003",
+          "id": "cm1-01-04-003",
           "template": "concept",
           "title": "나눗셈 항등식에 대입하기",
           "kicker": "몫 항을 0으로 만들기",
@@ -72,7 +522,7 @@
           ]
         },
         {
-          "id": "cm1-01-01-004",
+          "id": "cm1-01-04-004",
           "template": "experiment",
           "title": "나누는 값과 나머지 높이 연결하기",
           "kicker": "계수 조작 → 점 읽기 → 항등식 검산",
@@ -163,7 +613,7 @@
           ]
         },
         {
-          "id": "cm1-01-01-005",
+          "id": "cm1-01-04-005",
           "template": "example",
           "title": "x²+x−2를 x−2로 나누기",
           "kicker": "대입과 항등식 두 번 확인",
@@ -190,7 +640,7 @@
           ]
         },
         {
-          "id": "cm1-01-01-006",
+          "id": "cm1-01-04-006",
           "template": "practice",
           "title": "다른 나누는 값에 적용하기",
           "kicker": "대입값을 먼저 적고 검산",
@@ -222,13 +672,16 @@
           ]
         }
       ],
-      "source_file": "공통수학1_나머지정리_BookData_시범.json"
+      "source_file": "공통수학1_나머지정리_BookData_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-02"
+      ]
     },
     {
       "title": "동류항을 정렬해 다항식 더하고 빼기",
       "pages": [
         {
-          "id": "cm1-01-02-001",
+          "id": "cm1-01-05-001",
           "title": "동류항을 정렬해 다항식 더하고 빼기 · 원본 태그와 기준 후보",
           "template": "opening",
           "kicker": "기존 BookData 모듈",
@@ -236,7 +689,7 @@
             {
               "type": "lead",
               "title": "태그 경로",
-              "text": "공통수학1 · 2022개정 · 10공수1-01-01 · 부분시범 · 교사검수대기",
+              "text": "기준 후보 10공수1-01-01",
               "formula": "",
               "items": [],
               "rows": []
@@ -244,7 +697,7 @@
           ]
         },
         {
-          "id": "cm1-01-02-002",
+          "id": "cm1-01-05-002",
           "template": "opening",
           "title": "어떤 항끼리 계산할까?",
           "kicker": "문자와 차수부터 확인",
@@ -267,7 +720,7 @@
           ]
         },
         {
-          "id": "cm1-01-02-003",
+          "id": "cm1-01-05-003",
           "template": "concept",
           "title": "동류항은 계수만 계산",
           "kicker": "같은 차수끼리 한 줄에",
@@ -290,7 +743,7 @@
           ]
         },
         {
-          "id": "cm1-01-02-004",
+          "id": "cm1-01-05-004",
           "template": "experiment",
           "title": "계수를 움직여 계산하기",
           "kicker": "조작 → 정렬 → 한 단계씩 확인",
@@ -323,7 +776,7 @@
           ]
         },
         {
-          "id": "cm1-01-02-005",
+          "id": "cm1-01-05-005",
           "template": "practice",
           "title": "새 계수로 독립 연습",
           "kicker": "도구를 닫고 계산",
@@ -360,7 +813,7 @@
           ]
         },
         {
-          "id": "cm1-01-02-006",
+          "id": "cm1-01-05-006",
           "template": "summary",
           "title": "한 문장으로 정리",
           "kicker": "차수별 계수 계산",
@@ -387,13 +840,16 @@
           ]
         }
       ],
-      "source_file": "공통수학1_다항식_동류항계산_BookData_시범.json"
+      "source_file": "공통수학1_다항식_동류항계산_BookData_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-01"
+      ]
     },
     {
       "title": "정사각형 넓이로 완전제곱식 이해하기",
       "pages": [
         {
-          "id": "cm1-01-03-001",
+          "id": "cm1-01-06-001",
           "title": "정사각형 넓이로 완전제곱식 이해하기 · 원본 태그와 기준 후보",
           "template": "opening",
           "kicker": "기존 BookData 모듈",
@@ -401,7 +857,7 @@
             {
               "type": "lead",
               "title": "태그 경로",
-              "text": "공통수학1 · 2022개정 · 10공수1-01-03 · 부분시범 · 교사검수대기",
+              "text": "기준 후보 10공수1-01-03",
               "formula": "",
               "items": [],
               "rows": []
@@ -409,7 +865,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-002",
+          "id": "cm1-01-06-002",
           "template": "opening",
           "title": "먼저 예측하기",
           "kicker": "가운데 항을 예상해 보자",
@@ -427,7 +883,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-003",
+          "id": "cm1-01-06-003",
           "template": "concept",
           "title": "네 조각의 넓이가 식이 된다",
           "kicker": "전체와 부분은 같은 넓이",
@@ -456,7 +912,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-004",
+          "id": "cm1-01-06-004",
           "template": "experiment",
           "title": "넓이 조각을 직접 움직이기",
           "kicker": "예측 → 조작 → 설명",
@@ -494,7 +950,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-005",
+          "id": "cm1-01-06-005",
           "template": "example",
           "title": "세 항이 같은 구조인지 확인",
           "kicker": "제곱근과 가운데 항을 함께 검사",
@@ -527,7 +983,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-006",
+          "id": "cm1-01-06-006",
           "template": "practice",
           "title": "부호와 구조 연습",
           "kicker": "답을 보기 전에 직접 풀기",
@@ -569,7 +1025,7 @@
           ]
         },
         {
-          "id": "cm1-01-03-007",
+          "id": "cm1-01-06-007",
           "template": "summary",
           "title": "한 줄로 설명하고 마치기",
           "kicker": "도구 없이 다시 떠올리기",
@@ -596,12 +1052,18 @@
           ]
         }
       ],
-      "source_file": "공통수학1_인수분해_완전제곱식_BookData_시범.json"
+      "source_file": "공통수학1_인수분해_완전제곱식_BookData_시범.json",
+      "candidate_standard_codes": [
+        "10공수1-01-03"
+      ]
     }
   ],
   "metadata": {
     "standard_code_status": "candidate_from_source_tags",
     "source_files": [
+      "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
+      "공통수학1_2022개정_미연결기준16모듈_Batch2_BookData_V2_시범.json",
       "공통수학1_나머지정리_BookData_시범.json",
       "공통수학1_다항식_동류항계산_BookData_시범.json",
       "공통수학1_인수분해_완전제곱식_BookData_시범.json"
