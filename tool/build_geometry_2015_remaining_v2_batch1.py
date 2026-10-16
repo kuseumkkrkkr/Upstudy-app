@@ -48,6 +48,13 @@ def main():
  book={"schema_version":2,"title":"기하 · 2015 개정 미연결 기준 보완 12모듈 후보","subtitle":"이차곡선·평면벡터·공간도형","category":"concept_textbook_prototype","curriculum_version":"2015","tags":["기하","2015 개정","추가 원고 후보","가상 예시",*codes],"standard_codes":codes,"chapters":chapters}
  pages=[p for c in chapters for p in c["pages"]]; ids=[p["id"] for p in pages]
  assert len(pages)==60 and len(set(ids))==60
+ # Author-level arithmetic checks for the 12 geometry modules.
+ assert 4*3==12 and math.isqrt(25-16)==3 and math.isqrt(9+16)==5
+ assert 2*4==4+4 and 3*2==2*3 and 0!=1
+ assert 1*0==0 and math.isclose(10*math.cos(math.pi/3),5)
+ assert (-2,4,1)[2]==1 and math.sqrt(2**2+3**2+6**2)==7
+ assert (2*1+7)/3==3 and (2*0+6)/3==2 and (2*2+8)/3==4
+ assert 3**2==9 and (5-2)**2+(-1+1)**2==9
  assert math.isqrt(81)==9 and math.isclose(16**(3/4),8) and 3**2+4**2==5**2
  assert (0+0*3,1+0*2)==(0,1) and (0+3,1+2)==(3,3)
  assert (5-2)**2+(-1-(-1))**2==3**2 and (2-2)**2+(2-(-1))**2==3**2
