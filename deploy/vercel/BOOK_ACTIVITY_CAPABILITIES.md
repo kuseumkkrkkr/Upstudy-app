@@ -26,7 +26,7 @@ HTML/JS is copied into the app or executed by an activity renderer.
 |---|---|---|
 | `html-4f713a1ae26d9f06` 中2-2 probability experiment | Uniform die roll, even-event count, n, relative frequency, last result, reset | New `discreteExperiment` preserves this functional family; author migration/full-page parity still pending |
 | `html-361c3fa29514eca0` statistical probability | Event is face6; cumulative curve vs1/6,10–1000 requested trials, capped5000, interval play/stop/add, reduced-motion handling, steps/hints/quiz | Discrete sampling/counting only is reusable; trajectory plot, timed run/stop and connected scene are NOT yet ported |
-| `html-a10eb6a3240af7e0` Pythagoras | a/b range inputs1–12; sqrt(a²+b²) numeric result | Missing input-bound derived-metric activity; do not replace with a static quiz |
+| `html-a10eb6a3240af7e0` Pythagoras | a/b range inputs1–12; sqrt(a²+b²) numeric result | New bounded `rightTriangle` preserves controls/calculation; proportional native diagram is an addition, author migration/approval still pending; see `BOOK_RIGHT_TRIANGLE.md` |
 | `html-002d8074c7ebb2fb` vector sum/scalar | Mode selection, component inputs, stage-dependent arrows, result length, adaptive question sequence with wrong-count hint and500ms advance | Missing vector scene and adaptive Socratic sequence. Content issue sent to author; not eligible for blind conversion |
 | `html-3a28d8d04e3fa616` parabola | p/x controls, focal/directrix equality, explicit playback, steps and two checks | Existing `parabolaDistance`/quiz/steps can represent parts, but original V1 pages are not auto-converted; source itself has no direct point dragging |
 

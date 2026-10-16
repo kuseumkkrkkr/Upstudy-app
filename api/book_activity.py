@@ -88,6 +88,12 @@ def validate_activity(value):
                 raise ValueError('activity: invalid sample counts')
         else:
             raise ValueError('activity: unsupported estimation mode')
+    elif kind == 'rightTriangle':
+        fields(value, common + ' a b')
+        for name in ('a', 'b'):
+            number(value.get(name))
+            if type(value[name]) is not int or not 1 <= value[name] <= 12:
+                raise ValueError('activity: triangle legs require integers 1..12')
     elif kind == 'steps':
         fields(value, common + ' steps')
         texts(value.get('steps'), 1, 12)

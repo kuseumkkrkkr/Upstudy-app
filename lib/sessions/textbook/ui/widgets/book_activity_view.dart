@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
 import 'book_discrete_experiment_view.dart';
 import 'book_statistics_estimator_view.dart';
+import 'book_right_triangle_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -112,7 +113,11 @@ class _BookActivityViewState extends State<BookActivityView>
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (!_restored &&
-        !{'discreteExperiment', 'statisticsEstimator'}.contains(a.kind)) {
+        !{
+          'discreteExperiment',
+          'statisticsEstimator',
+          'rightTriangle',
+        }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
       if (saved != null) {
@@ -202,6 +207,9 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'statisticsEstimator') {
       return BookStatisticsEstimatorView(activity: a);
+    }
+    if (a.kind == 'rightTriangle') {
+      return BookRightTriangleView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,

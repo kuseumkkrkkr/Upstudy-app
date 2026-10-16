@@ -19,6 +19,8 @@ class BookActivity {
     this.x,
     this.experiment,
     this.statistics,
+    this.legA,
+    this.legB,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -28,6 +30,7 @@ class BookActivity {
   final double tolerance, p, x;
   final BookDiscreteExperiment? experiment;
   final BookStatisticsEstimator? statistics;
+  final int legA, legB;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -59,6 +62,7 @@ class BookActivity {
     var correct = '', incorrect = '';
     BookDiscreteExperiment? experiment;
     BookStatisticsEstimator? statistics;
+    var legA = 6, legB = 8;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -103,6 +107,14 @@ class BookActivity {
         statistics = BookStatisticsEstimator.fromJson(
           Map<String, dynamic>.from(payload),
         );
+      case 'rightTriangle':
+        allowed.addAll({'a', 'b'});
+        int leg(dynamic value) {
+          if (value is! int || value < 1 || value > 12) fail();
+          return value;
+        }
+        legA = leg(json['a']);
+        legB = leg(json['b']);
       case 'steps':
         allowed.add('steps');
         steps = texts(json['steps'], 1, 12);
@@ -131,6 +143,8 @@ class BookActivity {
       x,
       experiment,
       statistics,
+      legA,
+      legB,
     );
   }
 
@@ -154,6 +168,7 @@ class BookActivity {
     if (kind == 'parabolaDistance') ...{'p': p, 'x': x},
     if (experiment != null) 'experiment': experiment!.toJson(),
     if (statistics != null) 'statistics': statistics!.toJson(),
+    if (kind == 'rightTriangle') ...{'a': legA, 'b': legB},
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.
