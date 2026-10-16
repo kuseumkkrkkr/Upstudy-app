@@ -368,3 +368,9 @@
 - manifest가 지목하는 BookData 및 source BookData 32개 SHA-256 참조를 현재 파일과 대조했다. CRLF 정규화 해시 또는 raw 해시 기준 32/32 일치했다. 해시 일치는 현재 파일의 내용 식별만 증명하며, manifest의 미승인 상태를 승인으로 바꾸지 않는다.
 - 원고 인벤토리 178개 중 manifest를 가진 패키지가 30개뿐이라는 점도 구분한다. 나머지 148개는 manifest 승인 증거가 없으며 BookData metadata 역시 승인으로 확인되지 않는다.
 - 런타임 검증 provenance도 분리했다: 30개 manifest 중 11개는 `runtime_validator_candidate_sha256`가 현재 BookData manifest SHA와 일치하는 pass, 10개는 pass 표시는 있으나 후보 SHA 결속이 없다. 나머지 9개는 pending 또는 unspecified다. 전부 `not_eligible`이며, hash-bound pass도 사람/권리 승인으로 승격되지 않는다.
+
+## 2026-10-17 전체 BookData 검수 큐 재집계
+
+- 현재 `main`의 187개 BookData와 39개 `REVIEW_MANIFEST.json`을 기준으로 [검수 대기 목록](REMAINING_TEXTBOOKS_REVIEW_QUEUE.md)을 생성했다. manifest가 BookData를 직접 연결하는 경우는 34개, 연결 없는 BookData는 153개이며, manifest 중 5개는 `bookdata_file`도 지정하지 않는다.
+- 연결된 34개 BookData 해시는 원시 바이트 또는 CRLF 정규화 기준으로 모두 일치했다(29 normalized, 5 raw; 실제 불일치 0). 다섯 검토 게이트가 모두 명시 승인된 BookData는 0개이며, 기존 39개 manifest는 모두 `not_eligible`, 교사 검토 `pending`이다.
+- 새 인벤토리는 `tool/build_textbook_review_queue.py`로 재생성 가능하며, 미지정 상태와 manifest 부재를 별도 표기한다. 해시 일치나 생성기 검사만으로 교사·독립 수학·교육과정·권리 승인을 추정하지 않는다. 승인 근거가 없으므로 배포하지 않았다.
