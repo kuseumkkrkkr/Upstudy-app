@@ -3,6 +3,12 @@
 기준일: 2026-10-17
 상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
+## 2026-10-17 vectorInnerProduct reader 연결 업데이트
+
+- hotfix의 한정된 `BookActivity` 모델·네이티브 activity renderer를 main에 가져와 `TextbookActivityBlock`이 `vectorOperation`/`vectorInnerProduct`를 안전한 parser 통과 시 실행하도록 연결했다. 알 수 없거나 잘못된 payload는 기존 unsupported fallback에 남는다. 서버/시험 점수 저장은 추가하지 않았다.
+- 기존 평면벡터 내적 BookData는 보존하고 `고등수학_기하_평면벡터내적_BookData_V2_시범.json` 후보를 추가했다. 내적 activity는 기존 실험 페이지에 연결했으며 앱 importer 왕복과 학생 `BookWidget`의 u=3, v=4, θ=60° 값(6.00), 부호 선택, 단계 및 힌트 상호작용이 검증됐다. `html-2a9ff578cf62178d`는 `ported_pending_review`로 갱신했다.
+- 이는 standalone HTML 전체 parity 증명이나 교사/독립 수학 검수, 권리 허가가 아니다. 독립 HTML 원본을 보존했고 26개 상품은 계속 `partial`, 출판/배포 부적격이다. `vectorOperation`에는 아직 이 V2 후보 연결이 없다.
+
 ## 2026-10-17 최신 재검증
 
 기준 커밋 `fb8f4cae67b615a291166483e282632055850a59`의 격리 worktree에서 `python tool/build_tagged_textbook_drafts.py` 전체 실행을 완료했다. 78/78 단계가 성공했고, 생성 패키지 참조 검증은 원본 BookData 107개 전체에서 통과했다. 공식 교육과정 입력을 복사한 별도 worktree에서 실행했으며 원본 체크아웃의 미관련 dirty files는 보존했다. 파이프라인 로그: 34 unit books, 109 subunits, 199 concepts, 1,594 existing pages; 최신 coverage ledger: 26 products, 1,038 product-standard rows, 107 source BookData; HTML index: 106 standalone assets, 143 BookData files. 후보 생성/태그 집계는 수학·교사·권리 승인이나 전체범위 충족을 뜻하지 않는다.
@@ -16,7 +22,7 @@
 - 공통수학2 신규 후보는 Batch1 14모듈/70쪽/quiz 14개와 Batch2 3모듈/15쪽/quiz 3개다. Batch2는 원본 HWP raw `EqEdit`에서 `10공수2-01-07`의 x, y, y=x; `10공수2-03-04`의 유리함수 기본형; `10공수2-03-05`의 무리함수 기본형을 복구해 기록했다. 기존 두 BookData를 포함한 단원 그룹 초안은 19모듈, 원본 지면 94개를 보존했으며, 태그 후보는 공식 20/20이다. 배치별 예제 검산과 페이지 보존 검사는 통과했지만 전체 과목 범위·수학 내용·교사 검수·권리 결정은 미완료다. 출판 부적격이며 앱 통합/배포는 하지 않았다.
 - 수학Ⅰ(2015) 기존 4개 BookData의 코드 후보 10개를 예비 연결하고, 누락 9개 공식 코드와 기존 삼각함수 원고의 탄젠트 그래프 보완 1모듈을 신규 V2 10모듈/50쪽/quiz 10개로 작성했다. 2015 원문 지면은 23쪽 보존, 기존+신규 14모듈/73쪽이 3개 단원 통합 초안에 들어갔다. strict importer가 기존 4개와 신규 V2 1개를 모두 통과했고, validator HEAD `d64f05551e69bbb1b31f262b91d41f163abad66`; 신규 SHA-256 `bfaff24de6d646a90a44177ea462a46987d03a4a657d77846a25c3dfccb1cb33`다. 이 19/19는 후보 태그 수이며, 01-04/01-06, 02-02, 03-07/03-08의 본문은 부분 후보라 독립 교사 검수·권리 결정 전 출판 부적격이다. 기존 HTML은 독립 자산으로 남아 앱 parity 미검증이다.
 - 2022 공식 HWP raw record에서 EqEdit 스크립트를 직접 복구해 16개 기준 행에 기록했다. 추출 XHTML은 해당 객체를 시각적 수식으로 표현하지 않지만 JSON에는 원문 script가 있다. 원고 작성 시 script를 추적하고, 해석·표기 검토는 교과 검토 단계에서 한다.
-- Interactive-source inventory: hotfix `vectorOperation` 원본 HTML 2개(`html-002d8074c7ebb2fb`, `html-5f1d5700e9fa1fc1`)와 `vectorInnerProduct` 원본 HTML 1개(`html-2a9ff578cf62178d`)를 식별했다. 두 activity는 `migration_status=not_ported`다. main `TextbookActivityBlock`은 `quiz`만 실행하고 나머지 kind는 payload를 보존하면서 unsupported fallback으로 표시한다. 그러므로 vector 활동은 현재 main reader에서 실행되지 않으며, HTML 상호작용 패리티도 확인되지 않았다.
+- 이전 interactive-source 검증 시점에는 hotfix `vectorOperation` 원본 HTML 2개(`html-002d8074c7ebb2fb`, `html-5f1d5700e9fa1fc1`)와 `vectorInnerProduct` 원본 HTML 1개(`html-2a9ff578cf62178d`)가 이관되지 않았고 main reader도 해당 kind를 실행하지 않았다. 위의 최신 업데이트에서 `vectorInnerProduct`만 V2 후보에 연결했다. `vectorOperation` BookData 후보 연결 및 두 독립 HTML과의 상호작용 패리티는 여전히 미확인이다.
 - 앱 범위 회귀: 원고 폴더의 파일 수를 재집계해 Markdown 107, BookData 이름을 포함한 JSON 107, 전체 JSON 112, HTML 86으로 대시보드 요약과 16개 first-tag 집계를 갱신했다. `flutter test --reporter compact test/concept_textbook_prototype_json_test.dart test/textbook_bookdata_inventory_roundtrip_test.dart` 154/154 통과. 그중 기존 스위트에 열거된 86개 BookData의 모든 지면이 앱 모델을 통과하고 BookWidget에서 데스크톱/모바일 렌더됐다. 신규 왕복 테스트는 107개 전체 BookData의 `fromJson→toJson→fromJson` 및 전체 모델 JSON 동일성을 확인했다. 이는 미지원 vector 활동의 실행 검증이 아니며 교사 수학검토와 개별 HTML 동작 패리티도 남아 있다.
 이전 parser-only 27개 파일 검사는 activity 왕복 보존을 증명하지 못했다. 이후 `BookContentBlock.activity` 직렬화와 공용 quiz UI/reader 렌더를 구현했다. Algebra V2 14개, Geometry 2015 V2 12개, Geometry 2022 space/vector V2 9개 등 총 35개 quiz payload의 `fromJson→toJson` 동일성, 학생 BookWidget 선택/피드백, 실제 2022 Geometry V2 원고를 teacher course-reader에서 스크롤·선택·제출하는 동작이 통과했다. 전용 Flutter 테스트 9건 및 변경 Dart 파일 analyzer 통과. 서버/DB 저장 API와 독립 HTML 실행·화면 패리티는 검증하지 않았으며 수학·교사·권리 검토와 게시 승인은 대기 중이다. 운영 반입/배포는 하지 않았다.
 

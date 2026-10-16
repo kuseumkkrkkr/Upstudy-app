@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
+import 'package:s11/shared/data/models/book_activity.dart';
 
-/// Renders quiz activities and keeps an explicit, readable fallback for kinds
-/// that this app does not execute yet. The model retains the original payload.
+/// Renders supported practice activities and keeps an explicit fallback for
+/// unsupported kinds. The containing model retains the original payload.
 class TextbookActivityBlock extends StatefulWidget {
   const TextbookActivityBlock({super.key, required this.activity});
 
@@ -40,6 +42,13 @@ class _TextbookActivityBlockState extends State<TextbookActivityBlock> {
         options.length >= 2 &&
         correctIndex >= 0 &&
         correctIndex < options.length;
+    if (kind == 'vectorOperation' || kind == 'vectorInnerProduct') {
+      try {
+        return BookActivityView(activity: BookActivity.fromJson(activity));
+      } on FormatException {
+        // Keep malformed or future payloads visible without executing them.
+      }
+    }
     final colors = Theme.of(context).colorScheme;
 
     return Card(

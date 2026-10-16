@@ -93,6 +93,51 @@ void main() {
     expect(find.text('원래 prompt는 표시되어야 합니다.'), findsOneWidget);
   });
 
+  test('vector inner product V2 draft imports and round-trips', () {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_평면벡터내적_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final activity = _activities(source).single;
+    expect(activity['kind'], 'vectorInnerProduct');
+    expect(_activities(book.toJson()), [activity]);
+  });
+
+  testWidgets('vector inner product runs in the student BookWidget', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_평면벡터내적_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activity = _activities(source).single;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('내적 u·v = 6.00'), findsOneWidget);
+    expect(find.text('현재 θ=60°에서 u·v의 부호는?'), findsOneWidget);
+    await tester.ensureVisible(find.text('양수'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('양수'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('맞아요.'), findsOneWidget);
+    await tester.tap(find.text('다음 단계'));
+    await tester.pumpAndSettle();
+    expect(find.textContaining('부호 있는 길이는'), findsOneWidget);
+    await tester.tap(find.text('힌트 한 단계'));
+    await tester.pumpAndSettle();
+    expect(find.text('θ가 90°보다 작으면 cosθ는 양수입니다.'), findsOneWidget);
+  });
+
   testWidgets('student BookWidget displays and runs page-based quiz blocks', (
     tester,
   ) async {
@@ -223,6 +268,32 @@ void main() {
     expect(find.text(activity['correct_feedback'] as String), findsOneWidget);
   });
 }
+
+BookData _activityBook(Map<String, dynamic> activity) => BookData(
+  id: 'activity-book',
+  title: 'Activity 호환성 교재',
+  subtitle: '',
+  chapters: [
+    BookChapter(
+      title: '벡터 단원',
+      intro: const [],
+      sections: const [],
+      pages: [
+        BookPage(
+          id: 'vector-page',
+          template: BookPageTemplate.practice,
+          title: '내적 체험',
+          blocks: [
+            BookContentBlock(
+              type: BookContentBlockType.activity,
+              activity: activity,
+            ),
+          ],
+        ),
+      ],
+    ),
+  ],
+);
 
 BookData _quizBook() => BookData(
   id: 'quiz-book',
