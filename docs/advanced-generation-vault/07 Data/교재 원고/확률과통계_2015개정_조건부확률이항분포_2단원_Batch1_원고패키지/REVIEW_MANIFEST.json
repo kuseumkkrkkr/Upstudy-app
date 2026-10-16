@@ -1,0 +1,26 @@
+{
+  "bookdata_file": "확률과통계_2015개정_조건부확률이항분포_2단원_Batch1_BookData_V2_시범.json",
+  "bookdata_sha256": "1A6E6D152EE643F8AD7FD50CC0664615878F94E4E414E2BDC5F0BFEA00B9D7EA",
+  "candidate_code_references": [
+    "12확통02-05",
+    "12확통03-03"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_text",
+  "module_count": 2,
+  "page_count": 10,
+  "native_activity_count": 2,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "official_2015_codes_verified; product_scope_pending",
+  "math_review_status": "pending_full_teacher_review",
+  "math_arithmetic_check_status": "pass_for_listed_examples_only",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored; publication_rights_decision_pending",
+  "source_interaction_status": "existing independent HTML retained; native UI parity not claimed",
+  "integration_status": "not_merged_into_master_book",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
+}

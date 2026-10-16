@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2022개정_기본확률1단원_Batch4_BookData_V2_시범.json",
-  "bookdata_sha256": "AAAF9A97F6CFE3CD6ED08AB66D65678458A9FE12940DB0E897B96E5A0F5948AC",
+  "bookdata_sha256": "C70D4EA232E313B020C13923E0969260B4B762725D8B3A935F4DACD0F32A47E2",
   "candidate_code_references": [
     "12확통02-01"
   ],
@@ -20,5 +20,5 @@
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "df06017b80fbb00dd7b307e0b348df9a3fe8f1b8"
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
 }

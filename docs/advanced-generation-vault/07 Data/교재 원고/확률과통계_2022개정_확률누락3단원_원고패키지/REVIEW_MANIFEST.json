@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2022개정_확률누락3단원_BookData_V2_시범.json",
-  "bookdata_sha256": "BCDCAB7A2F77828FAF71938A82D43CBBBF2C6CA2D68E1A178CF9A03B8B6AD49F",
+  "bookdata_sha256": "F200146B72392D11DD51A1BE5D1091AF783DCAA0C33C4EFE11A69AA7E6CB2399",
   "candidate_code_references": [
     "12확통02-02",
     "12확통02-03",
@@ -21,5 +21,5 @@
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "79af5fbd9cd7ee54a5cfac77df74670d6751f729"
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
 }

@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json",
-  "bookdata_sha256": "45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC",
+  "bookdata_sha256": "28EDFE3363CC976BF899F41AFBCE31C1CE10FF71B547F262915D5449DE4276FA",
   "candidate_code_references": [
     "12확통01-01",
     "12확통01-02",
@@ -33,13 +33,13 @@
     "12확통03-06": "content_mapped_pending_teacher_review",
     "12확통03-07": "candidate_statistics_estimator_qa_passed_pending_teacher_review"
   },
-  "statistics_estimator_qa_status": "passed_api_import_32_python_9_flutter",
-  "statistics_estimator_qa_head": "df06017b80fbb00dd7b307e0b348df9a3fe8f1b8",
+  "statistics_estimator_qa_status": "passed_api_import_34_python_9_flutter",
+  "statistics_estimator_qa_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59",
   "statistics_estimator_qa_page_id": "ps0307-practice",
   "teacher_review_status": "pending",
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "df06017b80fbb00dd7b307e0b348df9a3fe8f1b8"
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
 }

@@ -5,16 +5,19 @@
 
 ## 2026-10-16 이어서 확인한 사항
 
-- 2022 공식 HWP 본문을 pyhwp XHTML로 변환한 결과에서 성취기준 표 190개 고유 코드를 추출했다. 이 중 중학교 9수 60개, 고등학교 해당 과목 기준 130개다. 추출 JSON은 `work/official-curriculum/2022_math_standards.json`; 생성 파이프라인 61단계가 HWP→XHTML→기준 추출→초안→coverage→HTML 자산 인덱스 순서로 동작한다.
+- 2022 공식 HWP 본문을 pyhwp XHTML로 변환한 결과에서 성취기준 표 190개 고유 코드를 추출했다. 이 중 중학교 9수 60개, 고등학교 해당 과목 기준 130개다. 추출 JSON은 `work/official-curriculum/2022_math_standards.json`; 생성 파이프라인 62단계가 HWP→XHTML→기준 추출→초안→coverage→HTML 자산 인덱스 순서로 동작한다.
 - 26개 상품 기준 장부는 2015 PDF 및 2022 HWP 표의 공식 코드를 baseline으로 집계한다. BookData exact tag는 내용 충족이 아니며 학기 배정·상품 전체 coverage·검수는 별도다. 상세 행은 [REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md](REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md) 참조.
 - 공통수학1 추가 3단원 원고의 `10공수1-02-07`, `-02-08`, `-04-02`는 본표 표 23/25의 정식 기준 및 문구와 대조되어 BookData `standard_codes`로 기록했다. guarded hotfix HEAD `79af5fbd9cd7ee54a5cfac77df74670d6751f729` importer 통과, 3모듈/18쪽/quiz 3개. 교사·수학 검토 대기, 권리 상태 unknown, master 미병합, 게시 부적격.
 - 중학수학 2-2 확률 후보에 `discreteExperiment`를 추가했다: 공정 주사위 6면·짝수 성공·누적 상대도수·최대 10,000회. 해당 V2 원고는 importer 통과(4모듈/24쪽/quiz 4개+실험 1개). 원본 HTML은 보존하며 기능 부분 대응이다. HTML↔native 실제 화면 parity와 학기 배정은 미검증이다.
-- 확률과 통계 2022는 추가 V2 후보 16모듈/80쪽(16개 기준)을 작성했다. Batch1–3의 15모듈/75쪽과 Batch4 `12확통02-01` 기본 확률 보완 1모듈/5쪽을 포함한다. 02-01의 예전 통계적 확률 후보는 상대도수 중심이라 기본 성질을 직접 다루지 않아 보완 원고를 추가했다. Batch3 8모듈 중 7개는 본문과 기준을 예비 대조했고, `12확통03-07`에는 mean/proportion `statisticsEstimator` 활동 두 개를 추가했다. 현재 guarded hotfix HEAD `df06017b80fbb00dd7b307e0b348df9a3fe8f1b8`의 importer, Python 32개 activity/import 테스트, Flutter 9개 estimator/V2 reader 테스트가 통과했다. 원고 JSON의 페이지 ID는 `ps0307-practice`, BookData SHA-256은 `45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC`다. 이는 후보 importer/reader widget 검증이며 라이브 배포/실제 브라우저 페이지 캡처 증거가 아니다. 전 모듈 교사 검토·권리 결정·상품 전체 대조는 여전히 대기 중.
-- 전체 파이프라인은 61단계 성공, 92개 원본 BookData 패키지 참조 검증. 재귀 인벤토리 BookData 128개(그중 V2 11), activity 47개(quiz 44, statisticsEstimator 2, discreteExperiment 1), 독립 HTML 106개. 2015+2022 상품 반복 집계는 1,038 상품-기준 행이며 고유 기준 수가 아니다.
+- 확률과 통계 2022는 추가 V2 후보 16모듈/80쪽(16개 기준)을 작성했다. Batch1–3의 15모듈/75쪽과 Batch4 `12확통02-01` 기본 확률 보완 1모듈/5쪽을 포함한다. 02-01의 예전 통계적 확률 후보는 상대도수 중심이라 기본 성질을 직접 다루지 않아 보완 원고를 추가했다. Batch3 8모듈 중 7개는 본문과 기준을 예비 대조했고, `12확통03-07`에는 mean/proportion `statisticsEstimator` 활동 두 개를 추가했다. 현재 guarded hotfix HEAD `06790094dcfbe226b3106e0ebf371b26dd9f0f59`의 importer, Python 32개 activity/import 테스트, Flutter 9개 estimator/V2 reader 테스트가 통과했다. 원고 JSON의 페이지 ID는 `ps0307-practice`, 정규화 BookData SHA-256은 `28EDFE3363CC976BF899F41AFBCE31C1CE10FF71B547F262915D5449DE4276FA`다 (Windows raw SHA-256 `45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC`는 CRLF 때문에 다르며 API/importer와 manifest는 CRLF→LF canonical digest를 사용한다). 이는 후보 importer/reader widget 검증이며 라이브 배포/실제 브라우저 페이지 캡처 증거가 아니다. 전 모듈 교사 검토·권리 결정·상품 전체 대조는 여전히 대기 중.
+- 전체 파이프라인은 62단계 성공, 93개 원본 BookData 패키지 참조 검증. 재귀 인벤토리 BookData 129개(그중 V2 12), activity 49개(quiz 46, statisticsEstimator 2, discreteExperiment 1), 독립 HTML 106개. 2015+2022 상품 반복 집계는 1,038 상품-기준 행이며 고유 기준 수가 아니다.
 
 - 미적분Ⅱ 2022 수열·급수 기준 `12미적Ⅱ-01-01~05`에 새 V2 후보 5모듈/25쪽/퀴즈 5개를 추가했다. 공식 추출 코드 매핑, 극한·급수 계산 assertion, guarded importer가 통과했다. 과목 기준 23개 중 5개 코드만 tag 연결된 후보이며 나머지 18개와 과목 전체 범위는 미완성이다.
 
 - Coverage 재검증은 공식 기준 16개 전체 tag 행과 Batch1 미적분Ⅱ 5개 기준 행을 분리해 확인했다. 이전 임시 assertion은 prefix 전체가 5개라고 잘못 가정해 실패했으며, 판정식을 원장 행/파일 참조 기준으로 고쳐 재검증했다.
+
+- 2015 확률과 통계 공식 코드 `12확통02-05` 조건부확률, `12확통03-03` 이항분포를 기준 원문과 대조해 새 오리지널 V2 후보 2모듈/10쪽/퀴즈 2개를 추가했다. importer 통과, 17개 기준 중 2개만 매핑이며 전체 과목·교사·권리 검토는 미완료다.
+- BookData digest를 CRLF→LF UTF-8 canonical SHA-256으로 통일했다. 재생성된 8개 후보 manifest digest를 canonical 바이트와 대조했고, V2 후보 12개를 importer로 다시 검증했다.
 
 ## 현재 근거
 
@@ -55,7 +58,7 @@
 | 14 | 수학(하) · 2015 | partial | 집합 합집합·교집합 4쪽 등 일부 시범; 공식 `<수학>` 41개 코드 중 하권 배분 및 나머지 집합·명제·함수·경우의 수 필요 | 별책8 10수학01–05 인덱스; 자체 분권 범위 미승인 | BookData 지면; 체험 자산 미확인 | 권리 미기록; 초안 |
 | 15 | 수학Ⅰ · 2015 | partial | 4모듈/23쪽, 3개 단원 태그 패키지; 공식 과목 19개 코드에 본문 단위 대응 필요 | 별책8 12수학Ⅰ01–03 코드 인덱스 | 그래프/시각자료 일부; HTML 연결 미확인 | 권리 미기록; 초안 |
 | 16 | 수학Ⅱ · 2015 | partial | 4모듈/12쪽, 극한·연속·미분·정적분 부분 시범; 21개 공식 코드의 전 범위 필요 | 별책8 12수학Ⅱ01–03 코드 인덱스 | 그래프 시범; HTML 연결 미확인 | 권리 미기록; 초안 |
-| 17 | 확률과 통계 · 2015 | partial | 이항분포·조건부확률 2모듈/6쪽; 17개 공식 코드에 해당하는 과목 전 범위 필요 | 별책8 12확통01–03 코드 인덱스 | HTML 체험 시범 존재, BookData 연동 미확인 | 권리 미기록; 초안 |
+| 17 | 확률과 통계 · 2015 | partial | 기존 조건부확률·이항분포 2모듈/6쪽 및 신규 V2 후보 2모듈/10쪽; 17개 공식 코드 중 2개 매핑 | `12확통02-05`, `12확통03-03`; 15개 기준과 상품 범위 대조 필요 | V2 quiz 2개 importer 통과; 기존 HTML 자산은 별도이며 parity 미확인 | 교사·권리 검토 대기 |
 | 18 | 미적분 · 2015 | partial | 수열의 극한 1모듈/3쪽; 27개 공식 코드 중 미분·적분 등 나머지 필요 | 별책8 12미적01–03 코드 인덱스 | 그래프/HTML 연결 미확인 | 권리 미기록; 초안 |
 | 19 | 기하 · 2015 | partial | 6모듈/18쪽, 벡터 영역; 16개 공식 코드 중 이차곡선·공간도형 등 나머지 필요 | 별책8 12기하01–03 코드 인덱스 | 그래프/HTML 원본은 있을 수 있으나 상품 링크 미확인 | 권리 미기록; 초안 |
 | 20 | 공통수학1 · 2022 | partial | 기존 7모듈/37쪽에 별도 후보 3모듈/18쪽 추가; 전체 과목 범위는 미완성 | 10공수1-02-07/02-08/04-02 본표 문구 직접 대조 | 추가 후보 quiz 3개 importer 통과; 기존 HTML 매핑 미확인 | 권리 unknown; 교사·수학 검토 pending; 통합본 미병합 |

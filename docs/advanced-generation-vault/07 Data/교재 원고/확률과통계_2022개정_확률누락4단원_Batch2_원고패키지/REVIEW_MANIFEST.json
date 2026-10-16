@@ -1,6 +1,6 @@
 {
   "bookdata_file": "확률과통계_2022개정_확률누락4단원_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "2106DD2AC8299B7F4FAA97C4A30AEDF3F1C3930AC8FEA39952643B7EE8E3E7CD",
+  "bookdata_sha256": "398475D130B2712980A0FA9041A81A2CE26A22E537F2378ED2264F50259FB465",
   "candidate_code_references": [
     "12확통02-05",
     "12확통02-06",
@@ -23,5 +23,5 @@
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "79af5fbd9cd7ee54a5cfac77df74670d6751f729"
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
 }

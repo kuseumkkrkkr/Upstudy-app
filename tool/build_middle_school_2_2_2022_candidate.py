@@ -6,6 +6,7 @@ import hashlib
 import importlib.util
 import json
 from pathlib import Path
+from textbook_digest import canonical_file_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 OUT = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고/중학수학2-2_2022개정_통합시범"
@@ -143,7 +144,7 @@ def main() -> None:
 
     source_hwp = ROOT / "work/official-curriculum/2022_appendix8_math.hwp"
     source_zip = ROOT / "work/official-curriculum/2022_math_standards_bundle.zip"
-    book_hash = hashlib.sha256((OUT / BOOK_FILE).read_bytes()).hexdigest().upper()
+    book_hash = canonical_file_sha256(OUT / BOOK_FILE)
     manifest_path = OUT / "중학수학2-2_2022개정_원고매니페스트.json"
     try:
         previous = json.loads(manifest_path.read_text(encoding="utf-8"))

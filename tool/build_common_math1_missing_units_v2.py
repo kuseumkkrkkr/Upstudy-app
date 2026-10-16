@@ -4,6 +4,7 @@ from __future__ import annotations
 import json
 import hashlib
 from pathlib import Path
+from textbook_digest import canonical_file_sha256
 from tempfile import NamedTemporaryFile
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -204,7 +205,7 @@ def main() -> None:
         "삼·사차방정식, 연립이차방정식, 행렬 연산의 새 집필 초안이다. 공식 HWP XHTML 본표에서 확인한 성취기준 3개와 연결했다. 18쪽과 네이티브 quiz activity 3개를 담았고 기존 통합 교재에는 아직 병합하지 않았다. 교사·수학·권리 검토는 별도 승인 전까지 대기한다.\n",
         encoding="utf-8",
     )
-    book_hash = hashlib.sha256(OUT.read_bytes()).hexdigest().upper()
+    book_hash = canonical_file_sha256(OUT)
     manifest_path = PACKAGE / "REVIEW_MANIFEST.json"
     previous_manifest = {}
     if manifest_path.is_file():

@@ -4,6 +4,7 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+from textbook_digest import canonical_file_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
@@ -129,7 +130,7 @@ def main() -> None:
     assert abs((1 - (5 / 6) ** 2) - 11 / 36) < 1e-12
     OUT.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     PACKAGE.mkdir(parents=True, exist_ok=True)
-    book_hash = hashlib.sha256(OUT.read_bytes()).hexdigest().upper()
+    book_hash = canonical_file_sha256(OUT)
     old_path = PACKAGE / "REVIEW_MANIFEST.json"
     try:
         old_manifest = json.loads(old_path.read_text(encoding="utf-8"))

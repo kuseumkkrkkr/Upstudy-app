@@ -9,13 +9,13 @@
     "9수04-06"
   ],
   "bookdata_file": "중학수학2-2_2022개정_측정과가능성_BookData_V2_시범.json",
-  "bookdata_sha256": "6F20989F43BD809CE7C825636696A9DB293F8C589F5DE63B5F083027C64BDF7E",
+  "bookdata_sha256": "79D5FB92C1450C6A4C01B2E7F3DDD0DC43C31BF49413F8D03A8FEE9F4FBB6083",
   "activity_kinds": [
     "discreteExperiment",
     "quiz"
   ],
   "runtime_import_status": "passed",
-  "runtime_validator_head": "79af5fbd9cd7ee54a5cfac77df74670d6751f729",
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59",
   "curriculum_review": "official_hwp_table_mapped; teacher_review_pending",
   "teacher_review": "pending",
   "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",

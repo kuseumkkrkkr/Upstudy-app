@@ -1,6 +1,6 @@
 {
   "bookdata_file": "미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "13240378335F4577DC323B0F8CB3F606E1DD146A492709897C460043E1F85E72",
+  "bookdata_sha256": "AD171C5B98CABCD07D3DBDC291C0D1C51AE12693066151D8400C3757D4253E9F",
   "candidate_code_references": [
     "12미적Ⅱ-01-01",
     "12미적Ⅱ-01-02",
@@ -24,5 +24,5 @@
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "passed",
-  "runtime_validator_head": "df06017b80fbb00dd7b307e0b348df9a3fe8f1b8"
+  "runtime_validator_head": "06790094dcfbe226b3106e0ebf371b26dd9f0f59"
 }

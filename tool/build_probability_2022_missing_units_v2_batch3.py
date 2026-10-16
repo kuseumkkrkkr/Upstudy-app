@@ -5,6 +5,7 @@ import hashlib
 import json
 import math
 from pathlib import Path
+from textbook_digest import canonical_file_sha256
 
 ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
@@ -200,7 +201,7 @@ def main() -> None:
     assert 18 / 50 == 0.36 and sum([18, 19, 21, 22]) / 4 == 20
     OUT.write_text(json.dumps(book, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     PACKAGE.mkdir(parents=True, exist_ok=True)
-    digest = hashlib.sha256(OUT.read_bytes()).hexdigest().upper()
+    digest = canonical_file_sha256(OUT)
     manifest_path = PACKAGE / "REVIEW_MANIFEST.json"
     try:
         old = json.loads(manifest_path.read_text(encoding="utf-8"))
