@@ -20,6 +20,8 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_위치벡터와좌표_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_수열극한급수5단원_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -277,6 +279,38 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('정답입니다: 0'), findsOneWidget);
   });
+
+  testWidgets(
+    'Calculus II 2022 Batch2 quiz imports and runs in the student reader',
+    (tester) async {
+      const path =
+          'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅱ_2022개정_미분적분18기준_Batch2_BookData_V2_시범.json';
+      final source =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final activities = _activities(source);
+      expect(activities, hasLength(18));
+      final activity = activities.singleWhere(
+        (activity) => activity['id'] == 'calc20201-quiz',
+      );
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookWidget(
+            book: _activityBook(activity),
+            initialEntryIndex: 0,
+            persistenceEnabled: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('(5ˣ)\'는?'), findsOneWidget);
+      await tester.tap(find.text('5ˣ ln 5'));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('정답 확인'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('밑 a의 지수함수 미분은 aˣ ln a'), findsOneWidget);
+    },
+  );
 
   test('2015 Calculus V2 worked examples match their practice prompts', () {
     const path =
