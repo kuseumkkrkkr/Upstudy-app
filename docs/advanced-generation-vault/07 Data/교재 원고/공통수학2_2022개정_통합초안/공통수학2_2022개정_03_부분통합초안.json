@@ -8,6 +8,304 @@
   ],
   "chapters": [
     {
+      "title": "합성함수의 뜻과 계산",
+      "pages": [
+        {
+          "title": "합성함수의 뜻과 계산 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-03-02. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--03-01-001"
+        },
+        {
+          "id": "other22-10공수2--03-01-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "합성함수의 뜻과 계산"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "함수의 합성을 이해하고 합성함수의 함숫값을 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x+2, g(x)=3x이면 (g∘f)(1)=g(3)=9이고 (f∘g)(1)=5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "6"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20302-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요.",
+                "options": [
+                  "6",
+                  "7",
+                  "8"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "합성함수의 뜻과 계산"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-03-02"
+      ]
+    },
+    {
+      "title": "역함수의 존재와 구하기",
+      "pages": [
+        {
+          "title": "역함수의 존재와 구하기 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-03-03. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--03-02-001"
+        },
+        {
+          "id": "other22-10공수2--03-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "역함수의 존재와 구하기"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "역함수의 존재 조건을 확인하고 역함수를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x+5의 역함수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x²는 실수 전체에서 일대일이 아니지만 x≥0으로 정의역을 제한하면 역함수 √x를 갖는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x+5의 역함수를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "y=x+5에서 x와 y를 바꾸고 y를 정리합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "f⁻¹(x)=x−5"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "f⁻¹(x)=x−5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20303-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x+5의 역함수를 구하세요.",
+                "options": [
+                  "x−5",
+                  "x+5",
+                  "5−x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "y=x+5에서 x와 y를 바꾸고 y를 정리합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "y=x+5에서 x와 y를 바꾸고 y를 정리합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--03-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "역함수의 존재와 구하기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-03-03"
+      ]
+    },
+    {
       "title": "함수의 대응 관계",
       "pages": [
         {
@@ -23,10 +321,10 @@
               "text": "성취기준 코드 후보: 10공수2-03-01. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-10공수2--03-01-001"
+          "id": "other22-10공수2--03-03-001"
         },
         {
-          "id": "other22-10공수2--03-01-002",
+          "id": "other22-10공수2--03-03-002",
           "template": "opening",
           "title": "함수일지 먼저 예측하기",
           "kicker": "입력과 출력",
@@ -44,7 +342,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-003",
+          "id": "other22-10공수2--03-03-003",
           "template": "experiment",
           "title": "대응 화살표를 바꾸기",
           "kicker": "하나씩 바꾸고 비교",
@@ -97,7 +395,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-004",
+          "id": "other22-10공수2--03-03-004",
           "template": "experiment",
           "title": "대응표를 좌표 그래프로 읽기",
           "kicker": "다른 함수의 세 표현 연결",
@@ -182,7 +480,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--03-01-005",
+          "id": "other22-10공수2--03-03-005",
           "template": "practice",
           "title": "정의역·치역·공역 구별하기",
           "kicker": "새 대응에서 설명",
@@ -227,6 +525,8 @@
   "metadata": {
     "status": "partial_draft",
     "source_files": [
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
       "공통수학2_함수의대응_BookData_시범.json"
     ]
   }

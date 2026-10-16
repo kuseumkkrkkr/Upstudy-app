@@ -1,0 +1,1922 @@
+{
+  "schema_version": 2,
+  "title": "공통수학2 · 추출 가능 기준 보완 14모듈 후보",
+  "subtitle": "좌표기하·집합과 명제·함수",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "tags": [
+    "공통수학2",
+    "2022 개정",
+    "추가 원고 후보",
+    "가상 예시",
+    "학기 배정 미확정",
+    "10공수2-01-01",
+    "10공수2-01-02",
+    "10공수2-01-03",
+    "10공수2-01-04",
+    "10공수2-01-05",
+    "10공수2-01-06",
+    "10공수2-02-01",
+    "10공수2-02-02",
+    "10공수2-02-03",
+    "10공수2-02-06",
+    "10공수2-02-07",
+    "10공수2-02-08",
+    "10공수2-03-02",
+    "10공수2-03-03"
+  ],
+  "standard_codes": [
+    "10공수2-01-01",
+    "10공수2-01-02",
+    "10공수2-01-03",
+    "10공수2-01-04",
+    "10공수2-01-05",
+    "10공수2-01-06",
+    "10공수2-02-01",
+    "10공수2-02-02",
+    "10공수2-02-03",
+    "10공수2-02-06",
+    "10공수2-02-07",
+    "10공수2-02-08",
+    "10공수2-03-02",
+    "10공수2-03-03"
+  ],
+  "chapters": [
+    {
+      "title": "선분의 내분과 좌표",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-01에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20101-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "선분의 내분과 좌표"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20101-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "수직선에서 A(0), B(6)을 1:2로 내분하는 점은 P(2)이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20101-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "AP:PB=1:2이면 P는 A에서 B까지 거리의 1/3 지점이므로 좌표는 0+(6−0)/3=2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20101-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "P(1)"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "P(1)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20101-quiz",
+                "kind": "quiz",
+                "prompt": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요.",
+                "options": [
+                  "1",
+                  "4",
+                  "7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20101-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "선분의 내분과 좌표"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "두 직선의 평행과 수직",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-02에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20102-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 직선의 평행과 수직"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20102-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "기울기가 같은 두 직선은 평행하고, 기울기의 곱이 −1인 두 직선은 수직이다(수직선 예외 포함)."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20102-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "기울기 2인 직선과 기울기 −1/2인 직선은 기울기의 곱이 −1이므로 서로 수직이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20102-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "두 기울기의 곱이 −1이 되도록 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "−1/3"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−1/3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20102-quiz",
+                "kind": "quiz",
+                "prompt": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요.",
+                "options": [
+                  "−1/3",
+                  "1/3",
+                  "−3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 기울기의 곱이 −1이 되도록 합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "두 기울기의 곱이 −1이 되도록 합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20102-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "두 직선의 평행과 수직"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "점과 직선 사이의 거리",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-03에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20103-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "점과 직선 사이의 거리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20103-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "점 (x₁,y₁)에서 직선 ax+by+c=0까지의 거리는 |ax₁+by₁+c|/√(a²+b²)이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20103-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "점 (1,2)와 직선 3x+4y−10=0 사이의 거리는 |3+8−10|/5=1/5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20103-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20103-quiz",
+                "kind": "quiz",
+                "prompt": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요.",
+                "options": [
+                  "2",
+                  "5",
+                  "10"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20103-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "점과 직선 사이의 거리"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "원의 방정식과 그래프",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-04에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20104-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "원의 방정식과 그래프"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20104-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "중심이 (a,b), 반지름이 r인 원의 방정식은 (x−a)²+(y−b)²=r²이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20104-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "중심 (2,−1), 반지름 3인 원은 (x−2)²+(y+1)²=9이고 중심으로부터 거리 3인 점을 지난다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20104-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "중심 좌표의 부호에 유의해 표준형에 대입합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(x+1)²+(y−2)²=16"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x+1)²+(y−2)²=16"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20104-quiz",
+                "kind": "quiz",
+                "prompt": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요.",
+                "options": [
+                  "(x+1)²+(y−2)²=16",
+                  "(x−1)²+(y+2)²=16",
+                  "(x+1)²+(y−2)²=4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "중심 좌표의 부호에 유의해 표준형에 대입합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "중심 좌표의 부호에 유의해 표준형에 대입합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20104-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "원의 방정식과 그래프"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "원과 직선의 위치 관계",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-05에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20105-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "원과 직선의 위치 관계"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20105-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "원의 중심에서 직선까지의 거리와 반지름을 비교해 교점의 수를 판단한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20105-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "원 x²+y²=25와 직선 y=3에서 중심까지 거리는 3, 반지름은 5이므로 두 점에서 만난다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20105-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "중심에서 직선까지 거리가 반지름 3보다 큽니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "0개"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "0개"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20105-quiz",
+                "kind": "quiz",
+                "prompt": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?",
+                "options": [
+                  "0개",
+                  "1개",
+                  "2개"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "중심에서 직선까지 거리가 반지름 3보다 큽니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "중심에서 직선까지 거리가 반지름 3보다 큽니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20105-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "원과 직선의 위치 관계"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "평행이동",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-01-06에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20106-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "평행이동"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20106-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "점 (x,y)를 벡터 (a,b)만큼 평행이동하면 (x+a,y+b)가 된다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20106-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "점 (−1,4)를 (3,−2)만큼 평행이동하면 (2,2)이다. 모든 점에 같은 벡터를 더해 도형 전체를 옮긴다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20106-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x좌표끼리, y좌표끼리 이동량을 더합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(−2,2)"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(−2,2)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20106-quiz",
+                "kind": "quiz",
+                "prompt": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요.",
+                "options": [
+                  "(−2,2)",
+                  "(6,−8)",
+                  "(−2,−8)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x좌표끼리, y좌표끼리 이동량을 더합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "x좌표끼리, y좌표끼리 이동량을 더합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20106-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "평행이동"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "집합의 개념과 표현",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-01에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20201-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "집합의 개념과 표현"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20201-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "집합은 대상을 분명하게 구별할 수 있는 모임이며 원소나 조건제시법으로 나타낼 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20201-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={x∈Z | 0<x<4}를 원소나열법으로 나타내면 {1,2,3}이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20201-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "{2,4}"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "{2,4}"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20201-quiz",
+                "kind": "quiz",
+                "prompt": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요.",
+                "options": [
+                  "{2,4}",
+                  "{0,2,4}",
+                  "{2,4,6}"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20201-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "집합의 개념과 표현"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "두 집합 사이의 포함 관계",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-02에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20202-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 집합 사이의 포함 관계"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20202-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "A의 모든 원소가 B에 속하면 A는 B의 부분집합이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20202-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={1,2}, B={1,2,3}이면 A⊂B이고 B⊄A이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20202-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "A⊂B"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "A⊂B"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20202-quiz",
+                "kind": "quiz",
+                "prompt": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요.",
+                "options": [
+                  "A⊂B",
+                  "B⊂A",
+                  "A=B"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20202-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "두 집합 사이의 포함 관계"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "집합의 연산과 벤 다이어그램",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-03에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20203-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "집합의 연산과 벤 다이어그램"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20203-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "합집합은 한 집합 이상에 속하는 원소, 교집합은 두 집합 모두에 속하는 원소로 이룬다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20203-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={1,2,3}, B={3,4}이면 A∪B={1,2,3,4}, A∩B={3}이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20203-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "A−B는 A에는 있고 B에는 없는 원소를 남깁니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "{1}"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "{1}"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20203-quiz",
+                "kind": "quiz",
+                "prompt": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요.",
+                "options": [
+                  "{1}",
+                  "{2,4}",
+                  "{1,2,3,4}"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "A−B는 A에는 있고 B에는 없는 원소를 남깁니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "A−B는 A에는 있고 B에는 없는 원소를 남깁니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20203-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "집합의 연산과 벤 다이어그램"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "충분조건과 필요조건",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-06에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20206-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "충분조건과 필요조건"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20206-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "p이면 q일 때 p는 q이기 위한 충분조건이고 q는 p이기 위한 필요조건이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20206-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "정수 n이 4의 배수이면 짝수이다. 따라서 ‘4의 배수’는 ‘짝수’이기 위한 충분조건이고, ‘짝수’는 ‘4의 배수’이기 위한 필요조건이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20206-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "충분조건"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "충분조건"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20206-quiz",
+                "kind": "quiz",
+                "prompt": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?",
+                "options": [
+                  "충분조건",
+                  "필요조건",
+                  "필요충분조건"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20206-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "충분조건과 필요조건"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "대우와 귀류법을 이용한 증명",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-07에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20207-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "대우와 귀류법을 이용한 증명"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20207-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "명제의 대우가 참임을 보여 원래 명제를 증명하거나, 결론의 부정을 가정해 모순을 이끌어 귀류법으로 증명한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20207-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "정수 n=2k+1이면 n²=2(2k²+2k)+1이 홀수이다. 따라서 ‘n²이 짝수이면 n은 짝수’의 대우가 참이고 원래 명제도 참이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20207-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "p이면 q의 대우는 q가 아니면 p가 아니다입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "n이 짝수이면 n²은 짝수이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "n이 짝수이면 n²은 짝수이다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20207-quiz",
+                "kind": "quiz",
+                "prompt": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요.",
+                "options": [
+                  "n이 짝수이면 n²은 짝수이다",
+                  "n이 홀수이면 n²은 홀수이다",
+                  "n²이 짝수이면 n은 짝수이다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "p이면 q의 대우는 q가 아니면 p가 아니다입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "p이면 q의 대우는 q가 아니면 p가 아니다입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20207-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "대우와 귀류법을 이용한 증명"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "절대부등식의 증명",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-02-08에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20208-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "절대부등식의 증명"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20208-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "변수의 범위에서 항상 성립하는 부등식을 절대부등식이라 하며, 제곱의 비음수성을 이용해 간단한 부등식을 증명할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-08"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20208-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "모든 실수 x에 대해 (x−3)²≥0이므로 x²−6x+9≥0이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20208-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²+4x+4=(x+2)²≥0"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+4x+4=(x+2)²≥0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20208-quiz",
+                "kind": "quiz",
+                "prompt": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요.",
+                "options": [
+                  "(x+2)²≥0",
+                  "(x−2)²≤0",
+                  "x²+4≥0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20208-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "절대부등식의 증명"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "합성함수의 뜻과 계산",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-03-02에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20302-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "합성함수의 뜻과 계산"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20302-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "함수의 합성을 이해하고 합성함수의 함숫값을 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20302-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x+2, g(x)=3x이면 (g∘f)(1)=g(3)=9이고 (f∘g)(1)=5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20302-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "6"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "6"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20302-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x−1, g(x)=2x일 때 (g∘f)(4)를 구하세요.",
+                "options": [
+                  "6",
+                  "7",
+                  "8"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "먼저 안쪽 함수 f에 4를 넣고, 그 결과를 g에 넣습니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20302-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "합성함수의 뜻과 계산"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "역함수의 존재와 구하기",
+      "intro": [
+        "2022 교육과정 공식 기준 10공수2-03-03에 연결한 신규 후보입니다.",
+        "예시와 수치는 직접 작성한 가상 자료입니다."
+      ],
+      "pages": [
+        {
+          "id": "cm20303-open",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "역함수의 존재와 구하기"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20303-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "역함수의 존재 조건을 확인하고 역함수를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20303-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=x+5의 역함수를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "f(x)=x²는 실수 전체에서 일대일이 아니지만 x≥0으로 정의역을 제한하면 역함수 √x를 갖는다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "cm20303-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=x+5의 역함수를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "y=x+5에서 x와 y를 바꾸고 y를 정리합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "f⁻¹(x)=x−5"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "f⁻¹(x)=x−5"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20303-quiz",
+                "kind": "quiz",
+                "prompt": "f(x)=x+5의 역함수를 구하세요.",
+                "options": [
+                  "x−5",
+                  "x+5",
+                  "5−x"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "y=x+5에서 x와 y를 바꾸고 y를 정리합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "y=x+5에서 x와 y를 바꾸고 y를 정리합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "cm20303-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "역함수의 존재와 구하기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -36,6 +36,14 @@ def main() -> None:
         tags = book.get("tags", [])
         if tags[:len(item["expected"])] != item["expected"]:
             raise RuntimeError(f"Tags changed for {source.name}: {tags}")
+        has_edition_evidence = bool(book.get("curriculum_version")) or any(
+            tag in {"2015 개정", "2015 개정 후보", "2022 개정", "2022 개정 후보"}
+            for tag in tags
+        )
+        if "미확인" in item["edition"] and has_edition_evidence:
+            # The source now has explicit edition provenance and is packaged by
+            # its edition-aware generator; do not duplicate it under unknown edition.
+            continue
         item["book"] = book
         item["tags"] = tags
         item["source"] = source

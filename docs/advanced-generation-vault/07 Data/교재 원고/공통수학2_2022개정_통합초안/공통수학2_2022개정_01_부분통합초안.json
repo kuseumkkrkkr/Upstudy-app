@@ -1,0 +1,916 @@
+{
+  "title": "공통수학2 2022 개정 · 단원 코드 01 부분 통합 초안",
+  "tags": [
+    "공통수학2",
+    "2022 개정",
+    "10공수2-01",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "선분의 내분과 좌표",
+      "pages": [
+        {
+          "title": "선분의 내분과 좌표 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-01. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-01-001"
+        },
+        {
+          "id": "other22-10공수2--01-01-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "선분의 내분과 좌표"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-01-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "수직선에서 A(0), B(6)을 1:2로 내분하는 점은 P(2)이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "AP:PB=1:2이면 P는 A에서 B까지 거리의 1/3 지점이므로 좌표는 0+(6−0)/3=2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-01-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "P(1)"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "P(1)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20101-quiz",
+                "kind": "quiz",
+                "prompt": "A(−2), B(10)을 AP:PB=1:3으로 내분하는 점 P의 좌표를 구하세요.",
+                "options": [
+                  "1",
+                  "4",
+                  "7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "내분점은 A에서 전체 길이의 1/(1+3)만큼 이동합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "선분의 내분과 좌표"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-01"
+      ]
+    },
+    {
+      "title": "두 직선의 평행과 수직",
+      "pages": [
+        {
+          "title": "두 직선의 평행과 수직 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-02. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-02-001"
+        },
+        {
+          "id": "other22-10공수2--01-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 직선의 평행과 수직"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-02-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "기울기가 같은 두 직선은 평행하고, 기울기의 곱이 −1인 두 직선은 수직이다(수직선 예외 포함)."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "기울기 2인 직선과 기울기 −1/2인 직선은 기울기의 곱이 −1이므로 서로 수직이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "두 기울기의 곱이 −1이 되도록 합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "−1/3"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "−1/3"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20102-quiz",
+                "kind": "quiz",
+                "prompt": "기울기 3인 직선에 수직인 직선의 기울기를 구하세요.",
+                "options": [
+                  "−1/3",
+                  "1/3",
+                  "−3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 기울기의 곱이 −1이 되도록 합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "두 기울기의 곱이 −1이 되도록 합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "두 직선의 평행과 수직"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-02"
+      ]
+    },
+    {
+      "title": "점과 직선 사이의 거리",
+      "pages": [
+        {
+          "title": "점과 직선 사이의 거리 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-03. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-03-001"
+        },
+        {
+          "id": "other22-10공수2--01-03-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "점과 직선 사이의 거리"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-03-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "점 (x₁,y₁)에서 직선 ax+by+c=0까지의 거리는 |ax₁+by₁+c|/√(a²+b²)이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-03-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "점 (1,2)와 직선 3x+4y−10=0 사이의 거리는 |3+8−10|/5=1/5이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-03-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20103-quiz",
+                "kind": "quiz",
+                "prompt": "점 (0,0)에서 직선 3x+4y−10=0까지의 거리를 구하세요.",
+                "options": [
+                  "2",
+                  "5",
+                  "10"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "분자의 절댓값은 10이고 분모는 √(3²+4²)=5입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "점과 직선 사이의 거리"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-03"
+      ]
+    },
+    {
+      "title": "원의 방정식과 그래프",
+      "pages": [
+        {
+          "title": "원의 방정식과 그래프 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-04. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-04-001"
+        },
+        {
+          "id": "other22-10공수2--01-04-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "원의 방정식과 그래프"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-04-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "중심이 (a,b), 반지름이 r인 원의 방정식은 (x−a)²+(y−b)²=r²이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-04-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "중심 (2,−1), 반지름 3인 원은 (x−2)²+(y+1)²=9이고 중심으로부터 거리 3인 점을 지난다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-04-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "중심 좌표의 부호에 유의해 표준형에 대입합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(x+1)²+(y−2)²=16"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(x+1)²+(y−2)²=16"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20104-quiz",
+                "kind": "quiz",
+                "prompt": "중심 (−1,2), 반지름 4인 원의 방정식을 쓰세요.",
+                "options": [
+                  "(x+1)²+(y−2)²=16",
+                  "(x−1)²+(y+2)²=16",
+                  "(x+1)²+(y−2)²=4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "중심 좌표의 부호에 유의해 표준형에 대입합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "중심 좌표의 부호에 유의해 표준형에 대입합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-04-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "원의 방정식과 그래프"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-04"
+      ]
+    },
+    {
+      "title": "원과 직선의 위치 관계",
+      "pages": [
+        {
+          "title": "원과 직선의 위치 관계 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-05. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-05-001"
+        },
+        {
+          "id": "other22-10공수2--01-05-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "원과 직선의 위치 관계"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-05-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "원의 중심에서 직선까지의 거리와 반지름을 비교해 교점의 수를 판단한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-05-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "원 x²+y²=25와 직선 y=3에서 중심까지 거리는 3, 반지름은 5이므로 두 점에서 만난다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-05-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "중심에서 직선까지 거리가 반지름 3보다 큽니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "0개"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "0개"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20105-quiz",
+                "kind": "quiz",
+                "prompt": "원 x²+y²=9와 직선 y=4의 교점은 몇 개인가요?",
+                "options": [
+                  "0개",
+                  "1개",
+                  "2개"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "중심에서 직선까지 거리가 반지름 3보다 큽니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "중심에서 직선까지 거리가 반지름 3보다 큽니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-05-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "원과 직선의 위치 관계"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-05"
+      ]
+    },
+    {
+      "title": "평행이동",
+      "pages": [
+        {
+          "title": "평행이동 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-01-06. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--01-06-001"
+        },
+        {
+          "id": "other22-10공수2--01-06-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "평행이동"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-06-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "점 (x,y)를 벡터 (a,b)만큼 평행이동하면 (x+a,y+b)가 된다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-01-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-06-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "점 (−1,4)를 (3,−2)만큼 평행이동하면 (2,2)이다. 모든 점에 같은 벡터를 더해 도형 전체를 옮긴다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-06-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x좌표끼리, y좌표끼리 이동량을 더합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(−2,2)"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(−2,2)"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20106-quiz",
+                "kind": "quiz",
+                "prompt": "점 (2,−3)을 벡터 (−4,5)만큼 평행이동한 좌표를 구하세요.",
+                "options": [
+                  "(−2,2)",
+                  "(6,−8)",
+                  "(−2,−8)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "x좌표끼리, y좌표끼리 이동량을 더합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "x좌표끼리, y좌표끼리 이동량을 더합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--01-06-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "평행이동"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-01-06"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json"
+    ]
+  }
+}

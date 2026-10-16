@@ -8,6 +8,900 @@
   ],
   "chapters": [
     {
+      "title": "집합의 개념과 표현",
+      "pages": [
+        {
+          "title": "집합의 개념과 표현 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-01. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-01-001"
+        },
+        {
+          "id": "other22-10공수2--02-01-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "집합의 개념과 표현"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-01-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "집합은 대상을 분명하게 구별할 수 있는 모임이며 원소나 조건제시법으로 나타낼 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={x∈Z | 0<x<4}를 원소나열법으로 나타내면 {1,2,3}이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-01-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "{2,4}"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "{2,4}"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20201-quiz",
+                "kind": "quiz",
+                "prompt": "B={x∈Z | 0<x≤5, x는 짝수}를 원소나열법으로 나타내세요.",
+                "options": [
+                  "{2,4}",
+                  "{0,2,4}",
+                  "{2,4,6}"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "정수 중 조건을 만족하는 원소를 빠짐없이 적습니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "집합의 개념과 표현"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-01"
+      ]
+    },
+    {
+      "title": "두 집합 사이의 포함 관계",
+      "pages": [
+        {
+          "title": "두 집합 사이의 포함 관계 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-02. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-02-001"
+        },
+        {
+          "id": "other22-10공수2--02-02-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 집합 사이의 포함 관계"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-02-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "A의 모든 원소가 B에 속하면 A는 B의 부분집합이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={1,2}, B={1,2,3}이면 A⊂B이고 B⊄A이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "A⊂B"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "A⊂B"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20202-quiz",
+                "kind": "quiz",
+                "prompt": "A={a,b}, B={a,b,c}일 때 참인 포함 관계를 고르세요.",
+                "options": [
+                  "A⊂B",
+                  "B⊂A",
+                  "A=B"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "포함 관계는 A의 모든 원소가 B에도 있는지 확인합니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "두 집합 사이의 포함 관계"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-02"
+      ]
+    },
+    {
+      "title": "집합의 연산과 벤 다이어그램",
+      "pages": [
+        {
+          "title": "집합의 연산과 벤 다이어그램 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-03. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-03-001"
+        },
+        {
+          "id": "other22-10공수2--02-03-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "집합의 연산과 벤 다이어그램"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-03-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "합집합은 한 집합 이상에 속하는 원소, 교집합은 두 집합 모두에 속하는 원소로 이룬다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-03-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A={1,2,3}, B={3,4}이면 A∪B={1,2,3,4}, A∩B={3}이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-03-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "A−B는 A에는 있고 B에는 없는 원소를 남깁니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "{1}"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "{1}"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20203-quiz",
+                "kind": "quiz",
+                "prompt": "A={1,2,4}, B={2,3,4}일 때 A−B를 구하세요.",
+                "options": [
+                  "{1}",
+                  "{2,4}",
+                  "{1,2,3,4}"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "A−B는 A에는 있고 B에는 없는 원소를 남깁니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "A−B는 A에는 있고 B에는 없는 원소를 남깁니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "집합의 연산과 벤 다이어그램"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-03"
+      ]
+    },
+    {
+      "title": "충분조건과 필요조건",
+      "pages": [
+        {
+          "title": "충분조건과 필요조건 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-06. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-04-001"
+        },
+        {
+          "id": "other22-10공수2--02-04-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "충분조건과 필요조건"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-04-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "p이면 q일 때 p는 q이기 위한 충분조건이고 q는 p이기 위한 필요조건이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-04-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "정수 n이 4의 배수이면 짝수이다. 따라서 ‘4의 배수’는 ‘짝수’이기 위한 충분조건이고, ‘짝수’는 ‘4의 배수’이기 위한 필요조건이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-04-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "충분조건"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "충분조건"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20206-quiz",
+                "kind": "quiz",
+                "prompt": "정수 n이 6의 배수이면 3의 배수이다. ‘6의 배수’는 ‘3의 배수’이기 위한 어떤 조건인가요?",
+                "options": [
+                  "충분조건",
+                  "필요조건",
+                  "필요충분조건"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "6의 배수이면 항상 3의 배수이지만, 모든 3의 배수가 6의 배수인 것은 아닙니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-04-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "충분조건과 필요조건"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-06"
+      ]
+    },
+    {
+      "title": "대우와 귀류법을 이용한 증명",
+      "pages": [
+        {
+          "title": "대우와 귀류법을 이용한 증명 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-07. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-05-001"
+        },
+        {
+          "id": "other22-10공수2--02-05-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "대우와 귀류법을 이용한 증명"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-05-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "명제의 대우가 참임을 보여 원래 명제를 증명하거나, 결론의 부정을 가정해 모순을 이끌어 귀류법으로 증명한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-07"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-05-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "정수 n=2k+1이면 n²=2(2k²+2k)+1이 홀수이다. 따라서 ‘n²이 짝수이면 n은 짝수’의 대우가 참이고 원래 명제도 참이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-05-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "p이면 q의 대우는 q가 아니면 p가 아니다입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "n이 짝수이면 n²은 짝수이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "n이 짝수이면 n²은 짝수이다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20207-quiz",
+                "kind": "quiz",
+                "prompt": "‘정수 n의 제곱이 홀수이면 n은 홀수이다’의 대우를 쓰세요.",
+                "options": [
+                  "n이 짝수이면 n²은 짝수이다",
+                  "n이 홀수이면 n²은 홀수이다",
+                  "n²이 짝수이면 n은 짝수이다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "p이면 q의 대우는 q가 아니면 p가 아니다입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "p이면 q의 대우는 q가 아니면 p가 아니다입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-05-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "대우와 귀류법을 이용한 증명"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-07"
+      ]
+    },
+    {
+      "title": "절대부등식의 증명",
+      "pages": [
+        {
+          "title": "절대부등식의 증명 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 공통수학2 · 2022 개정 · 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 10공수2-01-01 · 10공수2-01-02 · 10공수2-01-03 · 10공수2-01-04 · 10공수2-01-05 · 10공수2-01-06 · 10공수2-02-01 · 10공수2-02-02 · 10공수2-02-03 · 10공수2-02-06 · 10공수2-02-07 · 10공수2-02-08 · 10공수2-03-02 · 10공수2-03-03"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 10공수2-02-08. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-10공수2--02-06-001"
+        },
+        {
+          "id": "other22-10공수2--02-06-002",
+          "template": "opening",
+          "title": "상황과 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "절대부등식의 증명"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 대상의 범위를 표시하고 사용할 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-06-003",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "변수의 범위에서 항상 성립하는 부등식을 절대부등식이라 하며, 제곱의 비음수성을 이용해 간단한 부등식을 증명할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "10공수2-02-08"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정의역, 포함 관계, 순서 또는 중복 여부를 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-06-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "모든 실수 x에 대해 (x−3)²≥0이므로 x²−6x+9≥0이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "원래 조건에 결과를 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-06-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "x²+4x+4=(x+2)²≥0"
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "x²+4x+4=(x+2)²≥0"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "cm20208-quiz",
+                "kind": "quiz",
+                "prompt": "모든 실수 x에 대해 x²+4x+4≥0임을 제곱식으로 설명하세요.",
+                "options": [
+                  "(x+2)²≥0",
+                  "(x−2)²≤0",
+                  "x²+4≥0"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다.",
+                "incorrect_feedback": "조건과 계산 순서를 다시 확인하고 보기의 값을 대입해 검산하세요.",
+                "hints": [
+                  "식을 완전제곱식으로 바꾸면 제곱은 항상 0 이상입니다.",
+                  "정의역·조건을 먼저 확인한 뒤 계산합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-10공수2--02-06-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "절대부등식의 증명"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "조건과 계산 근거를 설명하고 결과를 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "10공수2-02-08"
+      ]
+    },
+    {
       "title": "원래 명제·역·대우는 어떻게 다를까?",
       "pages": [
         {
@@ -23,10 +917,10 @@
               "text": "성취기준 코드 후보: 10공수2-02-04, 10공수2-02-05. 공식 기준과 대조 전 후보입니다."
             }
           ],
-          "id": "other22-10공수2--02-01-001"
+          "id": "other22-10공수2--02-07-001"
         },
         {
-          "id": "other22-10공수2--02-01-002",
+          "id": "other22-10공수2--02-07-002",
           "template": "opening",
           "title": "짝수이면 4의 배수일까?",
           "kicker": "답을 고르기 전에 반례를 찾아보기",
@@ -44,7 +938,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--02-01-003",
+          "id": "other22-10공수2--02-07-003",
           "template": "experiment",
           "title": "조건의 방향을 바꾸고 반례 찾기",
           "kicker": "범위와 명제 방향을 직접 조정",
@@ -82,7 +976,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--02-01-004",
+          "id": "other22-10공수2--02-07-004",
           "template": "experiment",
           "title": "대우와 원래 명제 비교하기",
           "kicker": "조건을 부정하고 순서를 바꾸기",
@@ -115,7 +1009,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--02-01-005",
+          "id": "other22-10공수2--02-07-005",
           "template": "experiment",
           "title": "‘모든’과 ‘어떤’을 반례와 예로 확인하기",
           "kicker": "반례 하나와 예 하나를 직접 찾기",
@@ -153,7 +1047,7 @@
           ]
         },
         {
-          "id": "other22-10공수2--02-01-006",
+          "id": "other22-10공수2--02-07-006",
           "template": "practice",
           "title": "조건·명제·역 구분하기",
           "kicker": "기호화하고 반례로 설명",
@@ -221,6 +1115,12 @@
   "metadata": {
     "status": "partial_draft",
     "source_files": [
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
+      "공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json",
       "공통수학2_명제와조건_BookData_시범.json"
     ]
   }

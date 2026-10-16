@@ -12,7 +12,7 @@ MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 COURSES = [
     {
         "name": "공통수학2",
-        "glob": "공통수학2*_BookData_시범.json",
+        "glob": "공통수학2*_BookData*_시범.json",
         "code": re.compile(r"10공수2-(\d{2})-(\d{2})"),
         "folder": "공통수학2_2022개정_통합초안",
         "code_prefix": "10공수2-",
@@ -36,20 +36,28 @@ def build_course(config: dict) -> dict | None:
     expected: Counter[str] = Counter()
     for path in sorted(MANUSCRIPTS.glob(config["glob"])):
         book = json.loads(path.read_text(encoding="utf-8"))
-        matches = config["code"].finditer(" ".join(book.get("tags", [])))
-        codes = sorted({(match.group(1), match.group(2)) for match in matches})
-        if not codes:
+        book_codes = sorted({(match.group(1), match.group(2)) for match in config["code"].finditer(" ".join(book.get("tags", [])))})
+        if not book_codes:
             continue
-        units = {unit for unit, _ in codes}
-        if len(units) != 1:
-            raise RuntimeError(f"Source spans multiple units: {path.name}: {codes}")
-        pages = [page for chapter in book.get("chapters", []) for page in chapter.get("pages", [])]
-        if not pages:
-            raise RuntimeError(f"No pages in {path.name}")
-        for page in pages:
-            expected[signature(page)] += 1
-        unit = next(iter(units))
-        grouped.setdefault(unit, []).append({"file": path.name, "book": book, "pages": pages, "codes": codes})
+        for chapter in book.get("chapters", []):
+            chapter_text = " ".join([chapter.get("title", ""), *chapter.get("intro", [])])
+            codes = sorted({(match.group(1), match.group(2)) for match in config["code"].finditer(chapter_text)})
+            # A single-unit legacy source can use its book-level codes; multi-unit
+            # batches must identify each chapter's own standards explicitly.
+            if not codes and len({unit for unit, _ in book_codes}) == 1:
+                codes = book_codes
+            if not codes:
+                continue
+            units = {unit for unit, _ in codes}
+            if len(units) != 1:
+                raise RuntimeError(f"Chapter spans multiple units: {path.name}/{chapter.get('title')}: {codes}")
+            pages = chapter.get("pages", [])
+            if not pages:
+                raise RuntimeError(f"No pages in {path.name}/{chapter.get('title')}")
+            for page in pages:
+                expected[signature(page)] += 1
+            unit = next(iter(units))
+            grouped.setdefault(unit, []).append({"file": path.name, "title": chapter.get("title", ""), "book": book, "pages": pages, "codes": codes})
     if not grouped:
         return None
 
@@ -61,7 +69,7 @@ def build_course(config: dict) -> dict | None:
     for unit, modules in sorted(grouped.items()):
         chapters = []
         for module_index, module in enumerate(modules, 1):
-            title = " / ".join(ch.get("title", "") for ch in module["book"]["chapters"])
+            title = module["title"]
             tags = module["book"].get("tags", [])
             page_list = [{
                 "title": f"{title} · 원본 태그와 기준 후보",
@@ -86,7 +94,7 @@ def build_course(config: dict) -> dict | None:
     for filename, unit, modules in rows:
         lines.append(f"- [{unit} 단원 통합 초안]({filename})")
         for module in modules:
-            title = " / ".join(ch.get("title", "") for ch in module["book"]["chapters"])
+            title = module["title"]
             code_text = ", ".join(f"{config['code_prefix']}{u}-{s}" for u, s in module["codes"])
             lines.append(f"  - {title}: {code_text} (`{module['file']}`)")
     lines += ["", "현재 후보 태그가 있는 시범만 포함합니다. 과목 전체 범위, 공식 원문 대조, 교사 검수와 앱 통합은 완료되지 않았습니다.", "", "재생성: `python tool/build_other_2022_course_drafts.py`", ""]
