@@ -1801,8 +1801,12 @@ class ApiClient {
     Map<String, dynamic> body, {
     T Function(dynamic)? parser,
     Map<String, String>? extraHeaders,
+    int? expectedSessionGeneration,
   }) async {
     await _ensureToken();
+    if (expectedSessionGeneration != null && expectedSessionGeneration != _sessionChanges.value) {
+      throw ApiException(statusCode: 409, message: 'Login changed; reopen the page');
+    }
     final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
     final res = await _httpClient.post(
@@ -1810,6 +1814,9 @@ class ApiClient {
       headers: <String, String>{..._headers, ...?extraHeaders},
       body: jsonEncode(body),
     );
+    if (expectedSessionGeneration != null && expectedSessionGeneration != _sessionChanges.value) {
+      throw ApiException(statusCode: 409, message: 'Login changed; reopen the page');
+    }
     await _clearTokenOnUnauthorized(res);
     return _parse(res, parser);
   }
@@ -5711,6 +5718,8 @@ extension ApiClientLegacyCompat on ApiClient {
     String? questTitle,
     String? flow,
     String? ocr,
+    List<Map<String, String>> history = const [],
+    List<Map<String, dynamic>> graphContext = const [],
   }) async {
     final res = await _post<ServerChatMessage>(
       ApiPaths.serverChatMessage,
@@ -5725,7 +5734,10 @@ extension ApiClientLegacyCompat on ApiClient {
           'quest_title': questTitle.trim(),
         if (flow != null && flow.trim().isNotEmpty) 'flow': flow.trim(),
         if (ocr != null && ocr.trim().isNotEmpty) 'ocr': ocr.trim(),
+        if (history.isNotEmpty) 'history': history,
+        if (graphContext.isNotEmpty) 'graph_context': graphContext,
       },
+      expectedSessionGeneration: _sessionChanges.value,
       parser: (d) =>
           ServerChatMessage.fromJson(Map<String, dynamic>.from(d as Map)),
     );

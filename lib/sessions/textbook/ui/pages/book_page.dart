@@ -18,6 +18,8 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'package:s11/sessions/graph_tools/ui/widgets/jsx_graph_embed.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
+import 'package:s11/sessions/graph_tools/shared/graph_parameter_observation.dart';
+import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 
 // 필요 변수: 교재 목록·선택 태그·카테고리와 화면 폭.
 // 작동 원리: 모바일은 둥근 전폭 교재 시트, PC는 기존 블러 대화상자를 연다.
@@ -1467,6 +1469,10 @@ class _BookWidgetState extends State<BookWidget> {
   List<double> _sectionOffsets = <double>[];
   int _activeEntryIndex = 0;
   int _activeReaderPageIndex = 0;
+  final Map<AiFlowGraphDocument, Map<String, double>> _observedGraphs = {};
+  Object? _graphObservationBook;
+  int _graphObservationEpoch = -1;
+  int _graphObservationPage = -1;
   final ValueNotifier<int> _activeEntryNotifier = ValueNotifier<int>(0);
 
   _ToolMode _toolMode = _ToolMode.none;
@@ -2470,7 +2476,94 @@ class _BookWidgetState extends State<BookWidget> {
 
   @override
   Widget build(BuildContext context) {
-    return BookActivityKeyScope(keys: _activityKeys, states: _activityStates, bookId: _currentBookId, child: Builder(builder: _buildReader));
+    return BookActivityKeyScope(keys: _activityKeys, states: _activityStates, bookId: _currentBookId, child: Builder(builder: (context) {
+      _initializeIfNeeded();
+      final epoch = ApiClient.instance.sessionChanges.value;
+      final book = _currentBook;
+      final page = _activeReaderPageIndex;
+      if (_graphObservationBook != _currentBook || _graphObservationEpoch != epoch || _graphObservationPage != page) {
+        _observedGraphs.clear();
+        _graphObservationBook = _currentBook;
+        _graphObservationEpoch = epoch;
+        _graphObservationPage = page;
+      }
+      return _ReaderGraphScope(onAsk: _askAboutCurrentPage, onObserved: (document, values) {
+        if (!_graphPageCurrent(book, page, epoch)) return;
+        final checked = validateGraphParameters(document, values);
+        if (checked != null) _observedGraphs[document] = checked;
+      }, child: Builder(builder: _buildReader));
+    }));
+  }
+
+  /// Attaches only the explicitly selected page.
+
+  bool _graphPageCurrent(BookData? book, int page, int generation) =>
+      mounted && identical(_currentBook, book) &&
+      _activeReaderPageIndex == page &&
+      ApiClient.instance.sessionChanges.value == generation;
+
+  void _askAboutCurrentPage() {
+    if (_readerPages.isEmpty) return;
+    final epoch = ApiClient.instance.sessionChanges.value;
+    final book = _currentBook;
+    final pageIndex = _activeReaderPageIndex;
+    if (!_graphPageCurrent(book, pageIndex, epoch)) return;
+    final page =
+        _readerPages[_activeReaderPageIndex.clamp(0, _readerPages.length - 1)];
+    final graphs = [
+      if (page.graph != null) page.graph!,
+      if (page.editorialPage != null)
+        for (final block in page.editorialPage!.blocks)
+          if (block.graph != null) block.graph!,
+    ];
+    final graphContext = <Map<String, dynamic>>[
+      if (_graphObservationEpoch == epoch && _graphObservationPage == _activeReaderPageIndex && _graphObservationBook == _currentBook)
+        for (var i = 0; i < graphs.length && i < 4; i++)
+          if (_observedGraphs[graphs[i]] case final values?)
+            graphTutorObservation(graphs[i], values, 'page-${_activeReaderPageIndex + 1}-graph-$i'),
+    ];
+    final text = [
+      '교재: $_currentBookTitle',
+      '페이지: ${page.title}',
+      ...page.paragraphs,
+      if (page.editorialPage != null)
+        ..._editorialPageSearchText(page.editorialPage!),
+      if (page.graph != null)
+        '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(page.graph!.toJson())}',
+      if (page.editorialPage != null)
+        for (final block in page.editorialPage!.blocks)
+          if (block.graph != null)
+            '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(block.graph!.toJson())}',
+    ].join('\n');
+    final excerpt = text.length <= 3700
+        ? text
+        : '${text.substring(0, 3700)}\n[현재 페이지 문맥 길이 제한으로 일부 생략]';
+    final title = '$_currentBookTitle · ${page.title}';
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ValueListenableBuilder<int>(
+          valueListenable: ApiClient.instance.sessionChanges,
+          builder: (_, __, ___) => !_graphPageCurrent(book, pageIndex, epoch)
+              ? const Scaffold(
+                  body: Center(child: Text('로그인 상태가 바뀌었습니다. 교재에서 다시 열어 주세요.')),
+                )
+              : ServerChatPage(
+                  standalone: true,
+                  ephemeral: true,
+                  initialMode: 'socratic',
+                  initialContext: {
+                    'graph_context': graphContext,
+                    'quest_title': title.length <= 500
+                        ? title
+                        : title.substring(0, 500),
+                    'answer_riddle': excerpt,
+                    'all_formulas':
+                        '교재 ID: $_currentBookId · 페이지 ${_activeReaderPageIndex + 1}',
+                  },
+                ),
+        ),
+      ),
+    );
   }
 
   Widget _buildReader(BuildContext context) {
@@ -3722,6 +3815,14 @@ class _ParsedBookPage {
 
 /// 필요한 변수는 절의 JSXGraph 문서다.
 /// 작동 원리는 실제 지면 안에 그래프와 조작 안내를 함께 배치해 설명과 실험을 한 시야에서 연결하는 것이다.
+class _ReaderGraphScope extends InheritedWidget {
+  const _ReaderGraphScope({required this.onObserved, required this.onAsk, required super.child});
+  final void Function(AiFlowGraphDocument, Map<String, double>) onObserved;
+  final VoidCallback onAsk;
+  @override
+  bool updateShouldNotify(_ReaderGraphScope oldWidget) => true;
+}
+
 class _TextbookGraphCard extends StatelessWidget {
   const _TextbookGraphCard({required this.document});
 
@@ -3731,7 +3832,11 @@ class _TextbookGraphCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final compact = MediaQuery.sizeOf(context).width < 640;
     return Container(
-      height: compact ? 192 : 228,
+      // Keep the graph's 120px minimum plus toolbar/status/parameter controls
+      // inside the iframe; the old 192px card clipped its slider off-screen.
+      height:
+          (compact ? 280.0 : 320.0) +
+          (document.settings.parameters.isEmpty ? 0 : 88),
       decoration: BoxDecoration(
         color: const Color(0xFFF7F7F8),
         borderRadius: BorderRadius.circular(12),
@@ -3749,15 +3854,15 @@ class _TextbookGraphCard extends StatelessWidget {
                 bottom: BorderSide(color: StudentDensityTokens.line),
               ),
             ),
-            child: const Row(
+            child: Row(
               children: [
-                Icon(
+                const Icon(
                   Icons.tune_rounded,
                   size: 15,
                   color: StudentDensityTokens.ink,
                 ),
-                SizedBox(width: 7),
-                Text(
+                const SizedBox(width: 7),
+                const Text(
                   'INTERACTIVE FIGURE',
                   style: TextStyle(
                     fontSize: 10,
@@ -3766,8 +3871,8 @@ class _TextbookGraphCard extends StatelessWidget {
                     color: StudentDensityTokens.ink,
                   ),
                 ),
-                SizedBox(width: 10),
-                Expanded(
+                const SizedBox(width: 10),
+                const Expanded(
                   child: Text(
                     '슬라이더로 그래프의 변화를 관찰하세요.',
                     overflow: TextOverflow.ellipsis,
@@ -3777,10 +3882,15 @@ class _TextbookGraphCard extends StatelessWidget {
                     ),
                   ),
                 ),
+                if (context.getInheritedWidgetOfExactType<_ReaderGraphScope>() case final scope?)
+                  IconButton(tooltip: '그래프 질문하기', onPressed: scope.onAsk,
+                    icon: const Icon(Icons.chat_bubble_outline, size: 20)),
               ],
             ),
           ),
-          Expanded(child: buildJsxGraphEmbed(document)),
+          Expanded(child: buildJsxGraphEmbed(document,
+            onParametersChanged: (values) => context.getInheritedWidgetOfExactType<_ReaderGraphScope>()?.onObserved(document, values),
+          )),
         ],
       ),
     );

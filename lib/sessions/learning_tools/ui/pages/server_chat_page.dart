@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_math_fork/flutter_math.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/tutor_history.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
@@ -47,13 +48,21 @@ class _ServerChatPageState extends State<ServerChatPage> {
   final ScrollController _scrollController = ScrollController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
 
+  final TutorHistory _history = TutorHistory();
+  int _conversationEpoch = 0;
+  bool _contextValid = true;
+
   bool _sending = false;
   DateTime? _blockedUntil;
   Timer? _blockTimer;
 
-  String? get _questTitle => widget.initialContext?['quest_title']?.toString();
+  String? get _questTitle {
+    if (!_contextValid) return null;
+    return widget.initialContext?['quest_title']?.toString();
+  }
 
   String? get _flow {
+    if (!_contextValid) return null;
     final answer = widget.initialContext?['answer_riddle']?.toString() ?? '';
     final formulas = widget.initialContext?['all_formulas']?.toString() ?? '';
     return [
@@ -67,6 +76,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   @override
   void initState() {
     super.initState();
+    ApiClient.instance.sessionChanges.addListener(_discardConversation);
     _messages.add(
       _ChatMessage(
         text: widget.initialContext == null
@@ -81,10 +91,28 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 작동 원리: 화면 종료 시 장기 참조를 모두 해제해 메모리 누수를 막는다.
   @override
   void dispose() {
+    ApiClient.instance.sessionChanges.removeListener(_discardConversation);
+    _conversationEpoch++;
+    _history.clear();
     _blockTimer?.cancel();
     _controller.dispose();
     _scrollController.dispose();
     super.dispose();
+  }
+
+  void _discardConversation() {
+    _conversationEpoch++;
+    _history.clear();
+    _blockTimer?.cancel();
+    _controller.clear();
+    setState(() {
+      _contextValid = false;
+      _sending = false;
+      _blockedUntil = null;
+      _messages
+        ..clear()
+        ..add(const _ChatMessage(text: '로그인 상태가 바뀌었습니다. 새 대화를 시작해 주세요.', isUser: false));
+    });
   }
 
   bool get _inputBlocked {
@@ -120,6 +148,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
       return;
     }
 
+    final epoch = _conversationEpoch;
     setState(() {
       _sending = true;
       _messages.add(_ChatMessage(text: text, isUser: true));
@@ -130,13 +159,16 @@ class _ServerChatPageState extends State<ServerChatPage> {
     try {
       final response = await ApiClient.instance.sendServerChatMessage(
         message: text,
-        mode: widget.initialMode == 'problem' ? 'problem' : 'chat',
+        mode: widget.initialMode == 'socratic' ? 'socratic' : widget.initialMode == 'problem' ? 'problem' : 'chat',
         ephemeral: widget.ephemeral,
         includeUserData: includeUserData,
         questTitle: _questTitle,
         flow: _flow,
+        history: _history.snapshot,
+        graphContext: _contextValid ? List<Map<String, dynamic>>.from(widget.initialContext?['graph_context'] ?? const []) : const [],
       );
-      if (!mounted) return;
+      if (!mounted || epoch != _conversationEpoch) return;
+      _history.rememberExchange(text, response.assistantMessage);
       setState(() {
         _messages.add(
           _ChatMessage(text: response.assistantMessage, isUser: false),
@@ -144,7 +176,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
       });
       _scrollToBottom();
     } catch (error) {
-      if (!mounted) return;
+      if (!mounted || epoch != _conversationEpoch) return;
       _applyRateBlock(error);
       final message = _friendlyError(error);
       setState(() {
@@ -152,7 +184,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
       });
       _scrollToBottom();
     } finally {
-      if (mounted) setState(() => _sending = false);
+      if (mounted && epoch == _conversationEpoch) setState(() => _sending = false);
     }
   }
 

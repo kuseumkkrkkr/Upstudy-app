@@ -158,6 +158,7 @@ String buildAiFlowGraphHtml(
         display: none;
       }
       body.direct-drawing .toolbar {
+        display: none;
         position: absolute;
         right: 12px;
         top: 12px;
@@ -251,8 +252,8 @@ String buildAiFlowGraphHtml(
           function: '#1B402B',
           line: '#245CFF',
           scatter: '#8B5CF6',
-          grid: '#d9e6dd',
-          axis: '#4a6257',
+          grid: document.body.classList.contains('direct-drawing') ? '#e2e2e6' : '#d9e6dd',
+          axis: document.body.classList.contains('direct-drawing') ? '#77777d' : '#4a6257',
         };
 
         function setStatus(message) {
@@ -439,7 +440,8 @@ String buildAiFlowGraphHtml(
           const items = Array.isArray(payload?.items) ? payload.items : [];
           const viewport = getViewport(payload);
           const params = settings.parameters || [];
-          parameterValues = buildFormulaMap();
+          // Keep the same observed slider values as the main renderer.
+          // applyGraphPayload alone initializes them from author defaults.
           const { width, height, ratio } = ensureFallbackCanvasSize();
           const ctx = fallbackCanvasElement.getContext('2d');
           if (!ctx) {
@@ -589,7 +591,7 @@ String buildAiFlowGraphHtml(
             keepAspectRatio: false,
             axis: settings.showAxes !== false,
             showCopyright: false,
-            grid: settings.showGrid !== false,
+            grid: { visible: settings.showGrid !== false, strokeColor: palette.grid, strokeWidth: 1 },
             showNavigation: __AIFLOW_GRAPH_SHOW_NAVIGATION__,
             zoomX: settings.lockViewport !== true,
             zoomY: settings.lockViewport !== true,
@@ -607,8 +609,9 @@ String buildAiFlowGraphHtml(
             return null;
           }
           board = JXG.JSXGraph.initBoard('board', options);
-          board.renderer.container.style.background = 'white';
+          board.renderer.container.style.background = document.body.classList.contains('direct-drawing') ? '#fafafb' : 'white';
           initialViewport = [viewport.left, viewport.top, viewport.right, viewport.bottom];
+          board.on('boundingbox', publishViewport);
           setRenderMode(false);
           return board;
         }
@@ -673,6 +676,7 @@ String buildAiFlowGraphHtml(
               parameterValues[paramId] = next;
               valueLabel.textContent = formatFixed(next);
               renderCurrentGraph();
+              publishParameters();
             });
 
             controlsElement.appendChild(row);
@@ -682,14 +686,16 @@ String buildAiFlowGraphHtml(
         function applyAxesStyle() {
           if (!board) return;
           for (const axisId of ['xaxis', 'yaxis']) {
-            const axis = board[axisId];
+            const axis = board.defaultAxes?.[axisId === 'xaxis' ? 'x' : 'y'] || board[axisId];
             if (axis) {
               axis.setAttribute({
+                visible: currentPayload.settings?.showAxes !== false,
                 strokeColor: palette.axis,
-                strokeWidth: 1.4,
+                strokeWidth: 1,
               });
               if (axis.defaultTicks) {
                 axis.defaultTicks.setAttribute({
+                  visible: currentPayload.settings?.showAxes !== false,
                   strokeColor: palette.axis,
                 });
               }
@@ -706,6 +712,9 @@ String buildAiFlowGraphHtml(
           clearElements();
 
           const settings = currentPayload.settings || {};
+          for (const grid of board.grids || []) grid.setAttribute({ visible: settings.showGrid !== false });
+          if (board.attr.pan) board.attr.pan.enabled = settings.lockViewport !== true;
+          if (board.attr.zoom) board.attr.zoom.wheel = settings.lockViewport !== true;
           const items = currentPayload.items || [];
           const functionItems = [];
           let hasRenderable = false;
@@ -845,6 +854,10 @@ String buildAiFlowGraphHtml(
             renderCurrentGraph();
             window.requestAnimationFrame(refreshBoardSize);
           } else {
+            const view = getViewport(currentPayload);
+            const desired = [view.left, view.top, view.right, view.bottom];
+            const actual = board.getBoundingBox();
+            if (desired.some((value, index) => Math.abs(value - actual[index]) > 1e-8)) board.setBoundingBox(desired, false);
             renderCurrentGraph();
           }
         }
@@ -948,10 +961,40 @@ String buildAiFlowGraphHtml(
           setStatus('초기 뷰로 되돌렸습니다.');
         });
 
+        function publishParameters() {
+          const revision = currentPayload._observationRevision;
+          if (!Number.isInteger(revision)) return;
+          const data = {type: 'aiflow-parameters', revision, values: {...parameterValues}};
+          if (window.parent !== window) window.parent.postMessage(JSON.stringify(data), '*');
+          window.flutter_inappwebview?.callHandler('aiflowParameters', data);
+        }
+
+        function publishViewport() {
+          if (!board || !board.getBoundingBox) return;
+          const box = board.getBoundingBox();
+          if (!box.every(Number.isFinite)) return;
+          const data = { type: 'aiflow-viewport', left: box[0], top: box[1], right: box[2], bottom: box[3] };
+          if (window.parent !== window) window.parent.postMessage(JSON.stringify(data), '*');
+          window.flutter_inappwebview?.callHandler('aiflowViewport', data);
+        }
+
+        window.applyGraphCommand = function(command) {
+          if (!board || currentPayload.settings?.lockViewport === true && command !== 'reset') return;
+          if (command === 'zoomIn') board.zoomIn();
+          else if (command === 'zoomOut') board.zoomOut();
+          else if (command === 'reset' && initialViewport) board.setBoundingBox(initialViewport, false);
+          else return;
+          publishViewport();
+        };
+
         window.addEventListener('message', (event) => {
           if (event.source !== window.parent) return;
-          if (!event || !event.data) return;
-          applyGraphPayload(event.data, false);
+          if (!event || event.source !== window.parent || !event.data) return;
+          let data;
+          try { data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data; } catch (_) { return; }
+          if (!data || typeof data !== 'object') return;
+          if (data.type === 'aiflow-command') window.applyGraphCommand(data.command);
+          else if (Array.isArray(data.items) && data.settings && typeof data.settings === 'object') applyGraphPayload(data, false);
         });
       })();
     </script>
