@@ -1274,6 +1274,11 @@
 
 현재 재귀 인벤토리: BookData `152`개(그중 V2 `31`개), 선언형 activity `257`개(`discreteExperiment` 1, `quiz` 251, `squareRootNumberLine` 1, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
 
+## 게시·권리·사람 검토 게이트 인벤토리
+
+재귀 BookData `152`개 metadata 집계: 게시 적격성 `not_eligible` 5, `unspecified` 147; 권리 상태 `pending` 5, `unspecified` 147; 교사 검토 `pending` 5, `unspecified` 147; 수학 검토 `author_checks_recorded_independent_review_pending` 4, `pending` 1, `unspecified` 147.
+`unspecified`는 승인이나 미승인을 뜻하지 않고 증거가 없는 상태다. `not_eligible` 및 검수 대기 문서만으로는 출판 승인할 수 없다. 이 집계는 원고 metadata 인벤토리이며 권리 문서·교사 서명·독립 수학검토 산출물을 대체하지 않는다.
+
 실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
 `statisticsEstimator`는 표본 값 입력으로 평균을 계산하거나 성공 수÷표본 크기로 비율을 계산하고, 결과 해석·수정·초기화·힌트를 제공한다. 상태는 reader-session에 한정된다. `12확통03-07` 후보에는 mean/proportion 두 모드를 넣었다. 전체 BookData importer, Python activity/import 32개, Flutter estimator/V2 reader 9개가 guarded hotfix HEAD에서 통과했으나, 교사 수학검토·권리승인은 남아 있다.
 독립 HTML/JavaScript 자산은 V2 activity로 임베드되거나 자동 실행되지 않는다. 이산실험은 native discreteExperiment로 일부 기능을 대응할 수 있으나 원본 HTML과 화면·기능 패리티는 별도 검수 대상이다. 범용 드래그 도형, 범용 애니메이션, 자유서술 의미 채점은 등록 계약 밖이다.
