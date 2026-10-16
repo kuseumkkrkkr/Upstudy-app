@@ -1,0 +1,432 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅰ 2015 개정 · 지수·로그 보충 2모듈 후보",
+  "subtitle": "기존 부분 원고의 로그 성질과 지수·로그함수 정의 보완",
+  "category": "concept_textbook",
+  "curriculum_version": "2015",
+  "tags": [
+    "수학Ⅰ",
+    "2015 개정",
+    "보충 V2 후보",
+    "12수학Ⅰ01-04",
+    "12수학Ⅰ01-06"
+  ],
+  "standard_codes": [
+    "12수학Ⅰ01-04",
+    "12수학Ⅰ01-06"
+  ],
+  "chapters": [
+    {
+      "title": "로그의 성질과 계산",
+      "standard_codes": [
+        "12수학Ⅰ01-04"
+      ],
+      "tags": [
+        "수학Ⅰ",
+        "2015 개정",
+        "12수학Ⅰ01-04",
+        "보충 V2 후보",
+        "로그",
+        "로그의 성질",
+        "곱의 로그",
+        "몫의 로그",
+        "거듭제곱의 로그"
+      ],
+      "intro": [
+        "2015 별책 8 기준 12수학Ⅰ01-04의 기존 시범 원고에서 확인되지 않은 요소를 보충하는 후보입니다.",
+        "예시·수치는 직접 작성했습니다."
+      ],
+      "pages": [
+        {
+          "id": "m10104-open",
+          "template": "opening",
+          "title": "질문에서 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "log₂(8·4)와 log₂(8)+log₂(4)가 같은 값을 갖는지 성질과 계산으로 확인하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "밑과 진수의 조건을 표시하고, 지수식과 로그식 사이의 대응을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10104-concept",
+          "template": "concept",
+          "title": "로그의 성질과 계산",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "a>0, a≠1이고 M,N>0일 때 log_a(MN)=log_a M+log_a N, log_a(M/N)=log_a M−log_a N, log_a(M^r)=r log_a M입니다. 이 성질은 log_a M=x를 a^x=M으로 바꾸어 지수법칙을 적용하면 얻습니다. 밑과 진수 조건을 먼저 확인합니다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12수학Ⅰ01-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "밑의 범위와 진수의 양수 조건을 먼저 확인한 뒤 식을 변형하세요."
+            }
+          ]
+        },
+        {
+          "id": "m10104-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "log₂(8·4)와 log₂(8)+log₂(4)가 같은 값을 갖는지 성질과 계산으로 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "곱의 로그 성질에 따르면 log₂(8·4)=log₂8+log₂4입니다.",
+                "8=2³, 4=2²이므로 오른쪽은 3+2=5입니다.",
+                "왼쪽도 8·4=32=2⁵이므로 log₂32=5입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "두 식 모두 5"
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "변형한 식을 지수와 로그의 정의 또는 원래 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10104-practice",
+          "template": "practice",
+          "title": "연습하고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "log₃(81/3)+2log₃(3)을 계산하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "곱의 로그를 합으로 바꾸거나 4·8을 2의 거듭제곱으로 쓰세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "items": [
+                "log₃(81/3)=log₃27=3입니다.",
+                "log₃3=1이므로 2log₃3=2입니다.",
+                "두 값을 더하면 5입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "5"
+            },
+            {
+              "type": "question",
+              "title": "독립 연습",
+              "text": "log₃(1/27)을 구하고 3의 거듭제곱으로 확인하세요. 정답: 3⁻³=1/27이므로 −3."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10104-quiz",
+                "kind": "quiz",
+                "prompt": "log₂(4·8)은 얼마인가요?",
+                "options": [
+                  "5",
+                  "6",
+                  "12"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "log₂4+log₂8=2+3=5입니다.",
+                "incorrect_feedback": "곱의 로그를 합으로 바꾸거나 4·8을 2의 거듭제곱으로 쓰세요.",
+                "hints": [
+                  "곱의 로그를 합으로 바꾸거나 4·8을 2의 거듭제곱으로 쓰세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10104-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "로그의 성질과 계산",
+              "text": "a>0, a≠1이고 M,N>0일 때 log_a(MN)=log_a M+log_a N, log_a(M/N)=log_a M−log_a N, log_a(M^r)=r log_a M입니다. 이 성질은 log_a M=x를 a^x=M으로 바꾸어 지수법칙을 적용하면 얻습니다. 밑과 진수 조건을 먼저 확인합니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의역·치역 또는 로그 성질의 조건을 설명하고 답을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "지수함수와 로그함수의 뜻",
+      "standard_codes": [
+        "12수학Ⅰ01-06"
+      ],
+      "tags": [
+        "수학Ⅰ",
+        "2015 개정",
+        "12수학Ⅰ01-06",
+        "보충 V2 후보",
+        "지수함수",
+        "로그함수",
+        "역함수",
+        "함수의 정의역",
+        "함수 그래프"
+      ],
+      "intro": [
+        "2015 별책 8 기준 12수학Ⅰ01-06의 기존 시범 원고에서 확인되지 않은 요소를 보충하는 후보입니다.",
+        "예시·수치는 직접 작성했습니다."
+      ],
+      "pages": [
+        {
+          "id": "m10106-open",
+          "template": "opening",
+          "title": "질문에서 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "f(x)=2^x와 g(x)=log₂x에 대하여 f(3), g(8)을 구하고 두 함수의 관계를 설명하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "밑과 진수의 조건을 표시하고, 지수식과 로그식 사이의 대응을 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10106-concept",
+          "template": "concept",
+          "title": "지수함수와 로그함수의 뜻",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "a>0, a≠1일 때 y=a^x를 지수함수라 합니다. 정의역은 모든 실수이고 치역은 양수입니다. y=log_a x는 a^y=x를 만족하는 y를 주는 로그함수로, 정의역은 양수이고 치역은 모든 실수입니다. 두 함수는 서로 역함수이므로 그래프는 y=x에 대하여 대칭입니다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12수학Ⅰ01-06"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "밑의 범위와 진수의 양수 조건을 먼저 확인한 뒤 식을 변형하세요."
+            },
+            {
+              "type": "graph",
+              "title": "두 함수와 y=x 비교",
+              "graph": {
+                "items": [
+                  {
+                    "id": "exp-base-2",
+                    "type": "function",
+                    "label": "y=2^x",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "2^x"
+                  },
+                  {
+                    "id": "log-base-2",
+                    "type": "function",
+                    "label": "y=log₂x",
+                    "colorHex": "#D35F2E",
+                    "enabled": true,
+                    "expression": "log(x)/log(2)"
+                  },
+                  {
+                    "id": "identity-line",
+                    "type": "function",
+                    "label": "y=x",
+                    "colorHex": "#508A56",
+                    "enabled": true,
+                    "expression": "x"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -4,
+                    "right": 8,
+                    "top": 8,
+                    "bottom": -4
+                  }
+                }
+              }
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10106-log-power-explorer",
+                "kind": "logarithmPowerExplorer",
+                "prompt": "밑과 지수를 바꾸며 a^x와 log_a(a^x)의 관계를 확인하세요.",
+                "hints": [
+                  "밑 a=1이면 1^x는 x와 관계없이 1이어서 로그가 지수를 하나로 정할 수 없습니다."
+                ],
+                "explorer": {
+                  "bases": [
+                    0.5,
+                    0.8,
+                    1.2,
+                    1.5,
+                    2.0,
+                    3.0
+                  ],
+                  "initial_base": 2.0,
+                  "initial_exponent": 2.0,
+                  "min_exponent": -2.0,
+                  "max_exponent": 2.0,
+                  "step": 0.25
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10106-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "f(x)=2^x와 g(x)=log₂x에 대하여 f(3), g(8)을 구하고 두 함수의 관계를 설명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "items": [
+                "f(3)=2³=8입니다.",
+                "g(8)=log₂8=3입니다.",
+                "f(3)=8과 g(8)=3처럼 입력과 출력이 바뀌므로 두 함수는 서로 역함수입니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "답",
+              "text": "f(3)=8, g(8)=3이며 서로 역함수"
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "변형한 식을 지수와 로그의 정의 또는 원래 조건에 대입해 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "m10106-practice",
+          "template": "practice",
+          "title": "연습하고 확인하기",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "f(x)=3^x와 g(x)=log₃x의 정의역과 치역을 각각 쓰세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "음의 지수는 역수 관계를 나타내고, 로그는 그 지수를 되찾습니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "items": [
+                "3^x는 모든 실수 x에서 정의되고 값은 항상 양수입니다.",
+                "log₃x는 x>0에서 정의되며 결과값은 모든 실수가 될 수 있습니다."
+              ]
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "f: 정의역 R, 치역 (0,∞); g: 정의역 (0,∞), 치역 R"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m10106-quiz",
+                "kind": "quiz",
+                "prompt": "2⁻²의 값과 log₂(1/4)를 고르세요.",
+                "options": [
+                  "4, 2",
+                  "1/4, −2",
+                  "−4, 1/2"
+                ],
+                "correct_index": 1,
+                "correct_feedback": "맞아요. 2⁻²=1/4이고 log₂(1/4)=−2입니다.",
+                "incorrect_feedback": "음의 지수는 역수 관계를 나타내고, 로그는 그 지수를 되찾습니다.",
+                "hints": [
+                  "음의 지수는 역수 관계를 나타내고, 로그는 그 지수를 되찾습니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m10106-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "지수함수와 로그함수의 뜻",
+              "text": "a>0, a≠1일 때 y=a^x를 지수함수라 합니다. 정의역은 모든 실수이고 치역은 양수입니다. y=log_a x는 a^y=x를 만족하는 y를 주는 로그함수로, 정의역은 양수이고 치역은 모든 실수입니다. 두 함수는 서로 역함수이므로 그래프는 y=x에 대하여 대칭입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "정의역·치역 또는 로그 성질의 조건을 설명하고 답을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "authored_partial_draft",
+    "publication_eligibility": "not_eligible",
+    "rights_status": "pending",
+    "teacher_review_status": "pending",
+    "math_review_status": "author_checks_recorded_independent_review_pending",
+    "curriculum_review_status": "official_code_text_verified; content_and_product_scope_review_pending",
+    "source_basis": "2015 Appendix 8 official achievement-standard statements",
+    "native_interaction_status": "base_and_exponent_controls_staged_guides_reset_hint_and_quiz_ported; visual_parity_review_pending",
+    "source_interactive_asset": "대수_지수와로그_체험형_시범.html",
+    "external_interactive_assets": [
+      {
+        "path": "대수_지수와로그_체험형_시범.html",
+        "compatibility_status": "base_and_exponent_controls_staged_guides_reset_hint_and_quiz_mapped_to_native_activity"
+      }
+    ],
+    "integration_status": "separate_supplement_not_merged_into_master_book"
+  }
+}

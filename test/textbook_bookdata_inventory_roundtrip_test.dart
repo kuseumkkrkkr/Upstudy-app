@@ -22,7 +22,7 @@ void main() {
                 RegExp(r'BookData.*\.json$').hasMatch(file.path),
           )
           .toList();
-      expect(files, hasLength(174));
+      expect(files, hasLength(175));
 
       var activities = 0;
       for (final file in files) {
@@ -104,6 +104,13 @@ void main() {
         final expression = item.expression;
         if (item.type.name != 'function' || expression == null) continue;
         functionItems++;
+        if (reason.contains('수학Ⅰ_2015개정_지수로그누락기준_Batch2')) {
+          expect(
+            buildAiFlowGraphHtml(graph),
+            contains('renderCurrentGraph()'),
+            reason: reason,
+          );
+        }
         final symbols = RegExp(
           r'\b[A-Za-z_][A-Za-z0-9_]*\b',
         ).allMatches(expression).map((match) => match.group(0)!).toSet();
@@ -135,8 +142,8 @@ void main() {
         }
       }
     }
-    expect(files, hasLength(174));
-    expect(functionItems, 97);
+    expect(files, hasLength(175));
+    expect(functionItems, 100);
   });
 
   test('2015 quadratic graph coefficient control survives graph generation', () {

@@ -210,3 +210,17 @@
 - 생성기 `tool/build_math_2015_partial_criteria_completion_v2.py`를 resumable draft pipeline stage 87/91에 추가하고, 2015 고교 audit에 보충 파일/코드/대상 범위 표를 추가했다. 보충은 기존 통합본과 분리돼 있으며 자동으로 상품 완료 처리하지 않는다.
 - 생성기 산술·집합·명제 assert와 4쪽·코드·quiz 구조 검증 통과. `flutter test --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart` 3/3 통과; `flutter test --reporter compact test/textbook_activity_compatibility_test.dart` 113/113 통과. 두 테스트에 새 BookData 왕복과 학생 BookWidget quiz 제출/피드백을 포함했다.
 - 최신 재생성 원장: 26개 상품/1,038 product-standard 행/111 root source BookData; 392 official edition-code 쌍 중 same-edition tag 369, chapter exact-code 323, 단일-code 단일-chapter 21, 구조 신호 없음 52. 재귀 BookData 174개 중 출판 부적격 29, 권리·교사 검토 pending 29, 미지정 145; 신규 8개 포함. 독립 수학검토·권리 확인이 남아 배포하지 않았다.
+
+## 2026-10-17 수학Ⅰ 로그·함수 보충 V2
+
+- 최신 코드-챕터 원장에서 2015 수학Ⅰ `12수학Ⅰ01-04`, `01-06`은 기존 BookData의 root code tag는 있으나 chapter code anchor가 없었다. 기존 로그 시범은 로그의 뜻·밑 조건을 다루지만 로그 성질의 연습은 부족했고, 지수·로그함수의 정의역·치역과 역함수 관계를 별도 chapter에서 제시하지 않았다. 공식 PDF 추출문구와 기존 본문을 대조해 두 기준의 보충 필요를 확인했다.
+- 두 기준별 5쪽 native BookData chapter를 생성했다. 로그의 곱·몫·거듭제곱 성질과 정의역 조건을 설명하고, 지수함수·로그함수 정의·정의역/치역·역함수 관계를 예제와 연습으로 보강했다. 두 chapter에는 native quiz, 함수 관계 chapter에는 `y=2^x`, `y=log₂x`, `y=x`의 native graph를 넣었다. 기존 HTML visual parity는 주장하지 않는다.
+- `tool/build_math1_2015_log_completion_v2.py`를 resumable pipeline stage로 등록했다(총 92단계). 공식 코드 문구, 로그 항등식·역함수, 정의역 조건 assert 및 BookData 구조 검사 통과. 재귀 전체 왕복·그래프 검사 3/3; student BookWidget quiz 제출·피드백 포함 activity 호환성 115/115 통과.
+- scope 원장 최신 수치: 26개 상품/1,038 product-standard 행/112 root source BookData/175 재귀 BookData. 392 판본-기준 쌍 중 same-edition tag 369, chapter exact-code 325, 단일-code 단일-chapter 21, 구조 신호 없음 50. 게시 부적격 30, 권리·교사 검토 pending 30, 미지정 145. 새 후보는 독립 수학·교사·권리 검토 대기이며 배포하지 않았다.
+
+## 2026-10-17 2015 수학Ⅰ 지수·로그 기준 보완 Batch2
+
+- 실제 내용 gap인 `12수학Ⅰ01-04`(로그 성질) 및 `12수학Ⅰ01-06`(지수·로그함수 정의/역관계)을 대상으로 2개 장, 10쪽, 퀴즈 2개, native graph 1개, HTML 체험 조작을 옮긴 `logarithmPowerExplorer` 1개를 생성했다. 생성기를 두 번 실행한 BookData SHA-256은 동일했다.
+- 새 activity payload는 제한된 숫자 설정만 허용하며, 학생 뷰에서 밑 선택·지수 조절·단계별 그래프 안내·힌트·초기화를 제공한다. 원 HTML의 구체적인 밑/지수 범위, 퀴즈 및 독립 연습을 대응시켰다. 화면 시각 parity는 승인 검토 전이다.
+- 호환성: BookData round-trip 3/3, 전체 textbook activity compatibility 116/116 통과. Python 생성기 compile, `git diff --check` 통과. scope ledger는 26개 상품/1,038 기준 행, 재귀 BookData 175개/선언형 activity 322개이며 구조 신호 없음 50개다.
+- pipeline stage 44/92에 등록했다. 신규 원고는 publication `not_eligible`, rights·teacher review pending이며 배포하지 않았다. 독립 수학 검토도 남아 있다.

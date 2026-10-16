@@ -1,0 +1,25 @@
+{
+  "bookdata_file": "수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json",
+  "bookdata_sha256": "45D810E5F5596D60B6D793DCDD8541302E4185BEBC90117F3EA733877C0C4A94",
+  "candidate_code_references": [
+    "12수학Ⅰ01-04",
+    "12수학Ⅰ01-06"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_pdf_criterion_text",
+  "module_count": 2,
+  "page_count": 10,
+  "native_activity_count": 3,
+  "native_activity_kinds": [
+    "logarithmPowerExplorer",
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "math_arithmetic_check_status": "pass_for_listed_identity_examples_only",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "curriculum_review_status": "official_code_text_verified; full_scope_and_product_alignment_pending",
+  "rights_status": "newly_authored_examples; publication_rights_decision_pending",
+  "native_interaction_status": "base_and_exponent_controls_staged_guides_reset_hint_and_quiz_mapped_to_native_explorer; visual_parity_review_pending",
+  "source_interactive_asset": "대수_지수와로그_체험형_시범.html",
+  "publication_eligibility": "not_eligible"
+}

@@ -9,6 +9,7 @@ import 'book_right_triangle_view.dart';
 import 'book_coordinate_point_view.dart';
 import 'book_vector_operations_view.dart';
 import 'book_vector_inner_product_view.dart';
+import 'book_logarithm_power_explorer_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -228,6 +229,12 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'vectorInnerProduct') {
       return BookVectorInnerProductView(activity: a);
+    }
+    if (a.kind == 'logarithmPowerExplorer' &&
+        a.logarithmPowerExplorer != null) {
+      return BookLogarithmPowerExplorerView(
+        explorer: a.logarithmPowerExplorer!,
+      );
     }
     if (a.kind == 'squareRootNumberLine') {
       final root = math.sqrt(_sqrtN);

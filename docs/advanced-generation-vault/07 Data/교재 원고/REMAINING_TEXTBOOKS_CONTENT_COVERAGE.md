@@ -961,9 +961,9 @@
 | `12수학Ⅰ01-01` | 거듭제곱과 거듭제곱근의 뜻을 알고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ01-02` | 지수가 유리수, 실수까지 확장될 수 있음을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ01-03` | 지수법칙을 이해하고, 이를 이용하여 식을 간단히 나타낼 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-04` | 로그의 뜻을 알고, 그 성질을 이해한다. | `대수_지수와로그_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-04` | 로그의 뜻을 알고, 그 성질을 이해한다. | `대수_지수와로그_BookData_시범.json`, `수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ01-05` | 상용로그를 이해하고, 이를 활용할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
-| `12수학Ⅰ01-06` | 지수함수와 로그함수의 뜻을 안다. | `대수_지수와로그_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
+| `12수학Ⅰ01-06` | 지수함수와 로그함수의 뜻을 안다. | `대수_지수와로그_BookData_시범.json`, `수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:logarithmPowerExplorer`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `graph`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ01-07` | 지수함수와 로그함수의 그래프를 그릴 수 있고, 그 성질을 이해한다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ01-08` | 지수함수와 로그함수를 활용하여 문제를 해결할 수 있다. | `수학Ⅰ_2015개정_누락기준_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12수학Ⅰ02-01` | 일반각과 호도법의 뜻을 안다. | `수학Ⅰ_삼각함수_BookData_시범.json` | no exact-code chapter anchor | tag 있음 · 내용 검수 필요 |
@@ -1268,7 +1268,7 @@
 
 ## 기준-챕터 매핑 신호 감사
 
-고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `369`개, exact code가 chapter 안에 있는 쌍은 `323`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 어느 구조 신호도 없는 쌍은 `52`개다.
+고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `369`개, exact code가 chapter 안에 있는 쌍은 `325`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 어느 구조 신호도 없는 쌍은 `50`개다.
 아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.
 
 | # | 상품 | 기준 수 | chapter 연결 신호 없음 |
@@ -1287,7 +1287,7 @@
 | 12 | 중학수학 3-2 개념서 · 2022 개정 | 60 | 13 |
 | 13 | 수학(상) 개념서 · 2015 개정 | 41 | 23 |
 | 14 | 수학(하) 개념서 · 2015 개정 | 41 | 23 |
-| 15 | 수학Ⅰ 개념서 · 2015 개정 | 19 | 8 |
+| 15 | 수학Ⅰ 개념서 · 2015 개정 | 19 | 6 |
 | 16 | 수학Ⅱ 개념서 · 2015 개정 | 21 | 0 |
 | 17 | 확률과 통계 개념서 · 2015 개정 | 17 | 0 |
 | 18 | 미적분 개념서 · 2015 개정 | 27 | 0 |
@@ -1306,11 +1306,11 @@
 
 ## 앱 인터랙션 호환성 인벤토리
 
-현재 재귀 인벤토리: BookData `174`개(그중 V2 `53`개), 선언형 activity `319`개(`discreteExperiment` 1, `quiz` 313, `squareRootNumberLine` 1, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
+현재 재귀 인벤토리: BookData `175`개(그중 V2 `54`개), 선언형 activity `322`개(`discreteExperiment` 1, `logarithmPowerExplorer` 1, `quiz` 315, `squareRootNumberLine` 1, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
 
 ## 게시·권리·사람 검토 게이트 인벤토리
 
-재귀 BookData `174`개 metadata 집계: 게시 적격성 `not_eligible` 29, `unspecified` 145; 권리 상태 `pending` 29, `unspecified` 145; 교사 검토 `pending` 29, `unspecified` 145; 수학 검토 `author_checks_recorded_independent_review_pending` 28, `pending` 1, `unspecified` 145.
+재귀 BookData `175`개 metadata 집계: 게시 적격성 `not_eligible` 30, `unspecified` 145; 권리 상태 `pending` 30, `unspecified` 145; 교사 검토 `pending` 30, `unspecified` 145; 수학 검토 `author_checks_recorded_independent_review_pending` 29, `pending` 1, `unspecified` 145.
 `unspecified`는 승인이나 미승인을 뜻하지 않고 증거가 없는 상태다. `not_eligible` 및 검수 대기 문서만으로는 출판 승인할 수 없다. 이 집계는 원고 metadata 인벤토리이며 권리 문서·교사 서명·독립 수학검토 산출물을 대체하지 않는다.
 
 실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
@@ -1324,7 +1324,7 @@ V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다
 
 2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.
 
-현재 검색 대상은 원본 BookData `111`개, 재귀 후보·패키지 BookData `174`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `131`개다.
+현재 검색 대상은 원본 BookData `112`개, 재귀 후보·패키지 BookData `175`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `132`개다.
 태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.
 
 자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.

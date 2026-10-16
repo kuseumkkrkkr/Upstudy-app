@@ -7,10 +7,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
 import 'package:s11/sessions/course/session/teacher_course_textbook_reader_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
+import 'package:s11/shared/data/models/book_activity.dart';
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/ui/components/textbook_activity_block.dart';
 
 const _additionalReaderValidationPaths = <String>[
+  'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json',
@@ -178,6 +181,54 @@ void main() {
       }
     });
   }
+
+  testWidgets(
+    '2015 logarithm HTML controls map to native base, exponent, steps, hint, and reset',
+    (tester) async {
+      const path =
+          'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json';
+      final source =
+          jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+      final explorerData = _activities(
+        source,
+      ).singleWhere((item) => item['kind'] == 'logarithmPowerExplorer');
+      final activity = BookActivity.fromJson(explorerData);
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: SingleChildScrollView(
+              child: BookActivityView(activity: activity),
+            ),
+          ),
+        ),
+      );
+
+      expect(find.text('현재 관계  2.0^2 = 4'), findsOneWidget);
+      expect(find.text('log_2.0(4) = 2'), findsOneWidget);
+      final exponent = tester.widget<Slider>(
+        find.byKey(const ValueKey('log-power-explorer-exponent')),
+      );
+      exponent.onChanged!(-1);
+      await tester.pump();
+      expect(find.text('현재 관계  2.0^-1 = 0.5'), findsOneWidget);
+      expect(find.text('log_2.0(0.5) = -1'), findsOneWidget);
+
+      await tester.tap(find.byKey(const ValueKey('log-power-explorer-next')));
+      await tester.tap(find.byKey(const ValueKey('log-power-explorer-next')));
+      await tester.tap(find.byKey(const ValueKey('log-power-explorer-next')));
+      await tester.pump();
+      expect(find.text('3단계 · 거꾸로 읽으면 log_2.0(0.5)=-1입니다.'), findsOneWidget);
+      await tester.tap(
+        find.byKey(const ValueKey('log-power-explorer-hint-toggle')),
+      );
+      await tester.pump();
+      expect(find.textContaining('1^x는 x가 무엇이든 1'), findsOneWidget);
+      await tester.tap(find.byKey(const ValueKey('log-power-explorer-reset')));
+      await tester.pump();
+      expect(find.text('현재 관계  2.0^2 = 4'), findsOneWidget);
+      expect(find.text('시작: 밑과 지수를 정하고 결과를 먼저 예측하세요.'), findsOneWidget);
+    },
+  );
 
   testWidgets('quiz supports selection, feedback, hints, and retry', (
     tester,

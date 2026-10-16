@@ -1,16 +1,16 @@
 # 독립 HTML 체험 자산 정적 인덱스
 
-검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `174`개를 대상으로 전체 파일명 문자열을 확인했다.
+검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `175`개를 대상으로 전체 파일명 문자열을 확인했다.
 
 이 자료는 정적 인벤토리다. 스크립트는 실행하지 않았으므로 컨트롤/이벤트/신호는 source text에서 검출한 후보이지 실제 동작 검증이 아니다. `asset_id`는 상대 경로 SHA-256 앞 16자리이며, 콘텐츠 SHA와 inline script SHA도 함께 기록한다.
 BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조만 보여 준다. 이것은 학생용 상품 ID 귀속 또는 앱 runtime 연결 증거가 아니다. 앱 V2 importer는 HTML/JavaScript 실행을 지원하지 않으며, 독립 파일은 activity로 자동 임베드되지 않는다.
 네트워크 신호는 inline source에서의 `fetch`/XHR/WebSocket 정적 검색이다. 외부 `<script src>` 값은 별도 열에 기록한다. 보안/저작권/수학 검토를 대체하지 않는다.
 
-정적 신호 검출 파일 수(중복 가능): random `2`, pointer/drag `2`, JavaScript timer API `13`, CSS animation `51`, reduced-motion `86`, network-call `0`. HTML 파일명이 BookData 본문에 정확히 언급된 자산은 `27`개다. 이 숫자는 상품 소유·실행 연결 수가 아니다.
+정적 신호 검출 파일 수(중복 가능): random `2`, pointer/drag `2`, JavaScript timer API `13`, CSS animation `51`, reduced-motion `86`, network-call `0`. HTML 파일명이 BookData 본문에 정확히 언급된 자산은 `28`개다. 이 숫자는 상품 소유·실행 연결 수가 아니다.
 
 ## BookData 참조 문맥
 
-정확한 HTML 파일명 참조 `27`개를 JSON 경로별로 분류했다. 이 중 `external_interactive_assets` metadata에도 기록된 자산은 `1`개, 같은 chapter에 선언형 native activity가 함께 있는 자산은 `20`개다. 이는 정적 연결 증거일 뿐 HTML 실행·시각·시간 동작 parity를 뜻하지 않는다.
+정확한 HTML 파일명 참조 `28`개를 JSON 경로별로 분류했다. 이 중 `external_interactive_assets` metadata에도 기록된 자산은 `2`개, 같은 chapter에 선언형 native activity가 함께 있는 자산은 `20`개다. 이는 정적 연결 증거일 뿐 HTML 실행·시각·시간 동작 parity를 뜻하지 않는다.
 
 | Asset ID | HTML 상대 경로 | BookData 파일 | 파일명이 나온 JSON 경로 | 같은 chapter의 native activity 종류 |
 |---|---|---|---|---|
@@ -19,6 +19,7 @@ BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조�
 | `html-ab03d4f241f01b9c` | `공통수학1_다항식_동류항계산_체험형.html` | `공통수학1_다항식_동류항계산_BookData_시범.json` | `chapters/0/pages/2/blocks/0/text` | 동류항을 정렬해 다항식 더하고 빼기: no native activity |
 | `html-6fdeba15e95f60c2` | `공통수학1_인수분해_완전제곱식_체험형_시범.html` | `공통수학1_인수분해_완전제곱식_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 정사각형 넓이로 완전제곱식 이해하기: no native activity |
 | `html-be106f51101bf936` | `대수_등차수열_체험형_시범.html` | `대수_등차수열_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 공차를 이용해 n번째 항 예측하기: no native activity |
+| `html-e3f34e30ed4c49be` | `대수_지수와로그_체험형_시범.html` | `수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json` | `metadata/source_interactive_asset`, `metadata/external_interactive_assets/0/path` | no matching chapter |
 | `html-53bf8449d3ae8654` | `수학Ⅰ_삼각함수_단위원과그래프_체험형_시범.html` | `수학Ⅰ_삼각함수_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 단위원에서 그래프까지: no native activity |
 | `html-f548d98e61e76003` | `수학Ⅰ_삼각함수_사인법칙코사인법칙_체험형_시범.html` | `수학Ⅰ_삼각함수_사인법칙코사인법칙_BookData_시범.json` | `chapters/0/pages/3/blocks/2/text` | 삼각형의 길이를 찾는 두 법칙: no native activity |
 | `html-d2b2053ceb1fb473` | `중학교수학_2015개정_다항식의곱셈과인수분해_체험형.html` | `중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json` | `chapters/0/pages/2/blocks/1/text` | 전개와 인수분해를 서로 거꾸로 읽기: no native activity |
@@ -71,7 +72,7 @@ BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조�
 | `html-45189dc298f7f99b` | `기하_포물선접선_체험형_시범.html` | 8942 | `1CCD8BE93752070209D44C21D30D1F7F845F24AAE4E2FA53A0C1822A22FF8F5B` | `A8196FE2B94CF4B5DEC03F3D2F7A8F68CB95A93AE8BBD7523DD48BF55F235E1B` | button×5, input:radio×3, input:range×2, svg×1 | `input#p, input#m, button#prev, button#next, button#restart, button#check-answer, button#hint` | click, input | random=0, pointer=0, timer=0, css_animation=1, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |
 | `html-1f4f6b0f7068c4dc` | `대수_등비수열_체험형_시범.html` | 7155 | `1737AF2B6A281C0233BD0597C501A8DA6BC3DFE123B9FB2035A5F2CCCF2E86FE` | `C611C401E3E273FF1B1EC172EC9BC1668251D397EFA4FB70AD476D775A7FFF25` | button×5, input:range×3, svg×1 | `input#first, input#ratio, input#count, button#step, button#reset` | click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=0, network=0 | unresolved | none detected | source_review_required |
 | `html-be106f51101bf936` | `대수_등차수열_체험형_시범.html` | 11317 | `7BACEB36A0745E8CD1246EE2D44C8EDB9E88524E814E6D85C2B2E2412050B0D4` | `2071EC70568DC8CEAFD778BBDD900001045770CA34BC12E3CF6BCF0BF4786BCE` | button×12, input:range×3, svg×1 | `input#first, input#diff, input#count, button#step, button#reset, button#pairStep, button#pairReset, button#sumExampleNext, button#sumExampleReset` | click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=0, network=0 | `대수_등차수열_BookData_시범.json` | none detected | source_review_required |
-| `html-e3f34e30ed4c49be` | `대수_지수와로그_체험형_시범.html` | 8839 | `55B5B2CBB2067E7B5E2CCE014B6B3A7841EEC69B3D50E551704FB511222EF235` | `B0A7150C0E9CE108C7D13D33A2BF3A8037FB45BB91BA62E67E0B1211A12DDCFA` | button×4, input:radio×3, input:range×1, select×1, svg×1 | `svg#plot, select#base, input#power, button#animation, button#reset, button#check, button#hint` | change, click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |
+| `html-e3f34e30ed4c49be` | `대수_지수와로그_체험형_시범.html` | 8839 | `55B5B2CBB2067E7B5E2CCE014B6B3A7841EEC69B3D50E551704FB511222EF235` | `B0A7150C0E9CE108C7D13D33A2BF3A8037FB45BB91BA62E67E0B1211A12DDCFA` | button×4, input:radio×3, input:range×1, select×1, svg×1 | `svg#plot, select#base, input#power, button#animation, button#reset, button#check, button#hint` | change, click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=1, network=0 | `수학Ⅰ_2015개정_지수로그누락기준_Batch2_BookData_V2_시범.json` | none detected | source_review_required |
 | `html-77d5da41adc1eef8` | `미적분_2015개정_수열의극한_체험형_시범.html` | 9997 | `6F04BDC32A6EE9A48780C6AE24E4002CDF6D8F72F23617F35D890D6897313502` | `10BC1289A8D8617AA21845522105CFDA657B8E4B3030639F2C4B3F28E9F9E21A` | button×5, input:number×1, input:range×1, svg×1 | `svg#chart, input#n, button#prev, button#next, button#reset, button#hint, input#quiz, button#check` | click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |
 | `html-917682c59a43f485` | `미적분Ⅰ_x의n제곱_체험형_시범.html` | 9495 | `D6D9CEAFABCDC6D22F47E9A3AA2F3A85F65E1CA8727F91C2CE95980D47E0B18B` | `68D74B69740E8A9A59EA1575315336B7B59AE716E375C7992E69539D426DF8B4` | button×5, input:radio×2, input:range×3, select×1, svg×1 | `input#n, input#a, select#side, input#d, button#prev, button#next, button#reset, button#quizPreset, button#check` | click, input | random=0, pointer=0, timer=0, css_animation=1, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |
 | `html-90344ec0c158ae49` | `미적분Ⅰ_극대극소와그래프개형_체험형_시범.html` | 6986 | `F2D7A696AF63C71BAA54D594E94B97EC2D0CD045BB5F14146C236D77DB0B35A4` | `F178EC4D5417621572189662D188F069E7A3C046DC8090C74E1E3EC328C324C6` | button×5, input:range×1, svg×1 | `input#x, button#previous, button#next` | click, input | random=0, pointer=0, timer=0, css_animation=0, reduced_motion=1, network=0 | unresolved | none detected | source_review_required |

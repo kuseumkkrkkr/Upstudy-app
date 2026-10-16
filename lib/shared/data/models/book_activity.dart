@@ -3,6 +3,7 @@ import 'book_statistics_estimator.dart';
 import 'book_coordinate_point.dart';
 import 'book_vector_operation.dart';
 import 'book_vector_inner_product.dart';
+import 'book_logarithm_power_explorer.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -27,6 +28,7 @@ class BookActivity {
     this.point,
     this.vectorOperation,
     this.vectorInnerProduct,
+    this.logarithmPowerExplorer,
     this.walkDurationMs,
     this.numberLineMin,
     this.numberLineMax,
@@ -43,6 +45,7 @@ class BookActivity {
   final BookCoordinatePoint? point;
   final BookVectorOperation? vectorOperation;
   final BookVectorInnerProduct? vectorInnerProduct;
+  final BookLogarithmPowerExplorer? logarithmPowerExplorer;
   final int walkDurationMs;
   final int numberLineMin, numberLineMax;
 
@@ -80,6 +83,7 @@ class BookActivity {
     BookCoordinatePoint? point;
     BookVectorOperation? vectorOperation;
     BookVectorInnerProduct? vectorInnerProduct;
+    BookLogarithmPowerExplorer? logarithmPowerExplorer;
     var walkDurationMs = 0;
     var numberLineMin = 1, numberLineMax = 25;
     switch (kind) {
@@ -140,6 +144,13 @@ class BookActivity {
       case 'vectorInnerProduct':
         allowed.addAll({'u_length', 'v_length', 'angle_deg'});
         vectorInnerProduct = BookVectorInnerProduct.fromJson(json);
+      case 'logarithmPowerExplorer':
+        allowed.add('explorer');
+        final payload = json['explorer'];
+        if (payload is! Map) fail();
+        logarithmPowerExplorer = BookLogarithmPowerExplorer.fromJson(
+          Map<String, dynamic>.from(payload),
+        );
       case 'rightTriangle':
         allowed.addAll({'a', 'b'});
         int leg(dynamic value) {
@@ -186,6 +197,7 @@ class BookActivity {
       point,
       vectorOperation,
       vectorInnerProduct,
+      logarithmPowerExplorer,
       walkDurationMs,
       numberLineMin,
       numberLineMax,
@@ -216,6 +228,8 @@ class BookActivity {
     if (point != null) ...point!.toJson(),
     if (vectorOperation != null) ...vectorOperation!.toJson(),
     if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),
+    if (logarithmPowerExplorer != null)
+      'explorer': logarithmPowerExplorer!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
     if (kind == 'squareRootNumberLine') ...{
       'min': numberLineMin,
