@@ -258,9 +258,9 @@ class BookPage {
       if (block.activity != null) ...[
         block.activity!.prompt,
         ...block.activity!.options,
+        ...block.activity!.hints,
         if (block.activity!.kind == 'disclosure') ...[
           block.activity!.disclosureContent,
-          ...block.activity!.hints,
         ],
       ],
       ...block.items,

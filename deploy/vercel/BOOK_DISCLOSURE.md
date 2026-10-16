@@ -7,7 +7,7 @@
 - `BookActivity.disclosureContent`: immutable text from server/source, serialized only for this kind. No changes to older activity JSON.
 - Existing `_step` stores 0=closed/1=open; BookActivityKeyScope fingerprints complete definition and book/activity identity for reader-session restore. Changed definition resets state and changes ExpansionTile key. No student/OVR/disk/server write. Nonempty hints remain visible in the revealed body.
 - This is plain-text details only, not arbitrary nested rich media, forms, adaptive pedagogy or executable markup.
-- `BookPage.contextText` preserves prior page text extraction order and includes disclosure body/hints in the current page's search/tutor definition context. The reader delegates its existing extractor to this getter; other pages and learner runtime state are not included. This is authored page context, not a claim that a live AI response succeeded. Mixed uncommitted reader integration is preserved; only this delegation hunk enters the candidate snapshot.
+- `BookPage.contextText` preserves prior page text extraction order and includes all authored activity hints plus disclosure body in the current page's search/tutor definition context. Independent review caught coordinate hints omitted by the first disclosure-only condition; regression coverage now includes an authored axis case. The reader delegates its existing extractor to this getter; other pages and learner runtime state are not included. This is authored page context, not a claim that a live AI response succeeded. Mixed uncommitted reader integration is preserved; only this delegation hunk enters the candidate snapshot.
 
 ## Reviewed coordinate source
 

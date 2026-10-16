@@ -24,6 +24,17 @@ void main() {
               'template': 'experiment',
               'blocks': [
                 {'type': 'activity', 'activity': definition()},
+                {
+                  'type': 'activity',
+                  'activity': {
+                    'id': 'point-context',
+                    'kind': 'coordinatePoint',
+                    'prompt': 'Synthetic coordinate prompt',
+                    'x': -2,
+                    'y': 3,
+                    'hints': ['Authored axis case'],
+                  },
+                },
               ],
             },
             {
@@ -39,7 +50,11 @@ void main() {
     final book = BookData.fromJson(data);
     expect(
       book.chapters.single.pages.first.contextText,
-      containsAll([definition()['prompt'], definition()['content']]),
+      containsAll([
+        definition()['prompt'],
+        definition()['content'],
+        'Authored axis case',
+      ]),
     );
     expect(
       book.chapters.single.pages.first.contextText,
