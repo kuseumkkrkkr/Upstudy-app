@@ -1,6 +1,6 @@
 {
   "bookdata_file": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "4553FF4ED9C69187A348BE863EACB4EB343378D5D2EE04DE42AA02E8F5A54A6C",
+  "bookdata_sha256": "166F9B80C7B8B248ABC09FCB868F02A8DF97E55B0F6F8ABB8C7BD64448D1F892",
   "candidate_code_references": [
     "10공수2-01-07",
     "10공수2-03-04",
@@ -35,8 +35,8 @@
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "integration_status": "candidate_for_unit_grouping; master_not_app_integrated",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed_flutter_compatibility_suite",
-  "runtime_validator_head": "559b53e",
-  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (42 tests passed; Common Math 2 EqEdit Batch2 round-trip and all three student quizzes verified)",
-  "runtime_validator_candidate_sha256": "4553FF4ED9C69187A348BE863EACB4EB343378D5D2EE04DE42AA02E8F5A54A6C"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }

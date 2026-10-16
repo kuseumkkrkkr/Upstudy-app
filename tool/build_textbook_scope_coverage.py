@@ -151,19 +151,35 @@ def main() -> None:
                                 activity = block.get("activity")
                                 if isinstance(activity, dict):
                                     signal["blocks"].add(f"activity:{activity.get('kind', 'unknown')}")
-        candidate_codes = data.get("candidate_standard_codes", [])
-        if isinstance(candidate_codes, list):
-            for code in set(map(str, candidate_codes)) & valid_codes:
-                key = (edition, code)
-                for chapter in chapters if isinstance(chapters, list) else []:
-                    chapter_codes = chapter.get("candidate_standard_codes", []) if isinstance(chapter, dict) else []
-                    if not isinstance(chapter_codes, list) or code not in chapter_codes:
-                        continue
-                    candidate_signal = candidate_chapter_signals.setdefault(key, {"files": set(), "chapters": 0, "pages": 0})
-                    candidate_signal["files"].add(relative_path)
-                    candidate_signal["chapters"] += 1
-                    pages = chapter.get("pages", [])
-                    candidate_signal["pages"] += len(pages) if isinstance(pages, list) else 0
+        candidate_codes = set(map(str, data.get("candidate_standard_codes", []))) if isinstance(data.get("candidate_standard_codes", []), list) else set()
+        for tag in data.get("tags", []):
+            if isinstance(tag, str) and tag.startswith("성취기준 후보:"):
+                candidate_codes.update(exact_codes_from_tags([tag], valid_codes))
+        for chapter in chapters if isinstance(chapters, list) else []:
+            chapter_codes = chapter.get("candidate_standard_codes", []) if isinstance(chapter, dict) else []
+            if isinstance(chapter_codes, list):
+                candidate_codes.update(map(str, chapter_codes))
+        # Multiple standards in a single-chapter legacy BookData remain candidates
+        # for that chapter; they are never treated as exact or verified alignment.
+        if isinstance(chapters, list) and len(chapters) == 1:
+            candidate_codes.update(
+                code for code in codes
+                if (edition, code) not in explicit_chapter_anchors
+                and (edition, code) not in single_code_chapter_anchors
+            )
+        for code in candidate_codes & valid_codes:
+            key = (edition, code)
+            for chapter in chapters if isinstance(chapters, list) else []:
+                chapter_codes = chapter.get("candidate_standard_codes", []) if isinstance(chapter, dict) else []
+                chapter_candidate = isinstance(chapter_codes, list) and code in chapter_codes
+                single_chapter_candidate = isinstance(chapters, list) and len(chapters) == 1 and code in candidate_codes
+                if not chapter_candidate and not single_chapter_candidate:
+                    continue
+                candidate_signal = candidate_chapter_signals.setdefault(key, {"files": set(), "chapters": 0, "pages": 0})
+                candidate_signal["files"].add(relative_path)
+                candidate_signal["chapters"] += 1
+                pages = chapter.get("pages", [])
+                candidate_signal["pages"] += len(pages) if isinstance(pages, list) else 0
 
     lines = [
         "# 26종 교재 성취기준·콘텐츠 적용 범위 원장",

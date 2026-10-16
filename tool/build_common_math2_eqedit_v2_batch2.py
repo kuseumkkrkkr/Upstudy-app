@@ -106,7 +106,7 @@ def main() -> None:
             {"id": slug+"-practice", "template": "practice", "title": "연습과 해설", "blocks": [{"type": "question", "title": "연습", "text": spec["practice"]}, {"type": "hint", "title": "힌트", "text": spec["hint"]}, {"type": "solutionStep", "title": "해설", "text": spec["answer"]}, {"type": "answer", "title": "정답", "text": spec["answer"]}, make_quiz(spec, slug)]},
             {"id": slug+"-summary", "template": "summary", "title": "핵심 정리", "blocks": [{"type": "summary", "title": "기억할 점", "text": spec["concept"]}, {"type": "checklist", "title": "스스로 확인", "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"}]},
         ]
-        chapters.append({"title": spec["title"], "intro": [f"2022 교육과정 공식 기준 {code}에 연결한 신규 원고 후보입니다.", "교육부 HWP의 EqEdit 수식 개체 스크립트를 확인해 반영했습니다. 예시·문항은 새로 작성했습니다."], "pages": pages})
+        chapters.append({"title": spec["title"], "standard_codes": [code], "intro": [f"2022 교육과정 공식 기준 {code}에 연결한 신규 원고 후보입니다.", "교육부 HWP의 EqEdit 수식 개체 스크립트를 확인해 반영했습니다. 예시·문항은 새로 작성했습니다."], "pages": pages})
 
     book = {
         "schema_version": 2,
