@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'dart:convert';
+import 'dart:io';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:s11/shared/data/models/book_activity.dart';
 import 'package:s11/shared/data/models/textbook.dart';
@@ -30,6 +32,49 @@ Widget app(Map<String, dynamic> value, {bool reduced = false}) => MaterialApp(
 );
 
 void main() {
+  const sourcePath = String.fromEnvironment('BOOK_ACTIVITY_SOURCE');
+  if (sourcePath.isNotEmpty) {
+    test('external private manuscript V2 model round trip', () async {
+      final book = BookData.fromJson(
+        jsonDecode(await File(sourcePath).readAsString())
+            as Map<String, dynamic>,
+      );
+      expect(book.schemaVersion, 2);
+      final restored = BookData.fromJson(book.toJson());
+      expect(restored.toJson(), book.toJson());
+      final activities = book.chapters
+          .expand((c) => c.pages)
+          .expand((p) => p.blocks)
+          .where((b) => b.activity != null);
+      expect(activities.length, 4);
+    });
+  }
+  testWidgets('scrolling a lazy list does not discard practice answers', (
+    tester,
+  ) async {
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: ListView(
+            children: [
+              BookActivityView(activity: BookActivity.fromJson(quiz())),
+              const SizedBox(height: 2000),
+              const Text('Bottom'),
+            ],
+          ),
+        ),
+      ),
+    );
+    await tester.tap(find.text('B'));
+    await tester.tap(find.text('답 확인'));
+    await tester.pump();
+    expect(find.text('Correct'), findsOneWidget);
+    await tester.drag(find.byType(ListView), const Offset(0, -2400));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView), const Offset(0, 2400));
+    await tester.pumpAndSettle();
+    expect(find.text('Correct'), findsOneWidget);
+  });
   testWidgets(
     'V2 activity remains reachable in actual reader at mobile and desktop',
     (tester) async {

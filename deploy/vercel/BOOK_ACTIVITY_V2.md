@@ -39,6 +39,35 @@ Status: implemented locally; candidate/browser verification required before rele
 - Existing course/exam/problem-set deletion remains0 pending student-record
   scope and replacement readiness. Textbooks/level-test/user accounts untouched.
 
+## Final local-only verification
+
+- Native activity state is kept alive when its lazy-list/page parent scrolls it
+  out of view. Route disposal still discards the local state; nothing is saved
+  to student DB. Added actual2400px list scroll-out/back regression.
+- Final Python43 tests passed, including import/create ownership and graph/auth
+  regressions (20 pre-existing test/deprecation warnings). Final V2 Flutter7
+  tests passed; five scoped Dart files analyze with zero issues. These are
+  focused checks, NOT full-app analyze/test or a real DB200-connection test.
+- Final frozen source release build succeeded in255.1s on Flutter3.44.6,
+  Dart3.12.2, D: hotfix. Existing Cupertino font warning remains; no font copied.
+- Synthetic real browser: ArrowRight changes p2→2.5; both distances become4.10.
+  Choice2 yields correct feedback, hint is revealed, fraction1/2 grades correct,
+  step1→2 works. Verified390×844→1280×900 retains answers, hint and step.
+  Additional844×390 screenshot confirms narrow-height scrolling layout.
+- Proof images under `design/student/audits/evidence/2026-10-16-bookdata-import/`:
+  `activity-v2-final-answers-390.png`, `activity-v2-final-answers-1280.png`,
+  `activity-v2-final-landscape-844.png`. These show the separate synthetic native
+  widget harness, NOT production UI, HTML visual parity or live DB persistence.
+  Earlier `activity-v2-local-answers-390.png` captured a pre-fix reset and is NOT
+  a successful answer-proof image. Initial/fixed geometry captures are local QA.
+- Private new 중학수학2-2 V2 manuscript SHA256
+  `85EB8724D4095D2BB0E41D3CA143183DC32E831ABB0983CF28F8E53486AA51C3`
+  passed native BookData model round-trip with4 activities. Its actual24-page
+  rendered parity, teacher/rights review and server publication remain undone.
+  Source was not copied into this repository or uploaded.
+- Temporary browser viewport override, QA tab and local9133 server cleaned up.
+  No further deployment or alias promotion after candidate1 hold.
+
 V1 is the default when `schema_version` is absent. V2 explicitly sets
 `schema_version: 2`. Unknown future versions, unregistered kinds, duplicate
 activity IDs and executable/unknown fields are rejected at the import boundary.

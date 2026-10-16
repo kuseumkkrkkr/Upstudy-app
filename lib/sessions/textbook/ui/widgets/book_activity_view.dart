@@ -13,7 +13,9 @@ class BookActivityView extends StatefulWidget {
 }
 
 class _BookActivityViewState extends State<BookActivityView>
-    with WidgetsBindingObserver {
+    with
+        WidgetsBindingObserver,
+        AutomaticKeepAliveClientMixin<BookActivityView> {
   final _answer = TextEditingController();
   Timer? _timer;
   late double _p, _x;
@@ -21,6 +23,8 @@ class _BookActivityViewState extends State<BookActivityView>
   int? _choice;
   String _feedback = '';
   BookActivity get a => widget.activity;
+  @override
+  bool get wantKeepAlive => true;
   @override
   void initState() {
     super.initState();
@@ -126,113 +130,119 @@ class _BookActivityViewState extends State<BookActivityView>
   }
 
   @override
-  Widget build(BuildContext context) => Container(
-    padding: const EdgeInsets.all(12),
-    decoration: BoxDecoration(
-      border: Border.all(color: const Color(0xffd4d4d8)),
-    ),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        Text(
-          a.prompt,
-          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-        ),
-        const SizedBox(height: 8),
-        if (a.kind == 'parabolaDistance') ..._geometry(),
-        if (a.kind == 'quiz') ...[
-          if (a.options.isNotEmpty)
-            for (var i = 0; i < a.options.length; i++)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: OutlinedButton(
-                  onPressed: () => setState(() {
-                    _choice = i;
-                    _feedback = '';
-                  }),
-                  style: OutlinedButton.styleFrom(
-                    minimumSize: const Size(48, 48),
-                    backgroundColor: _choice == i
-                        ? const Color(0xffe4e4e7)
-                        : null,
-                  ),
-                  child: Row(
-                    children: [
-                      Icon(
-                        _choice == i
-                            ? Icons.radio_button_checked
-                            : Icons.radio_button_off,
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(child: Text(a.options[i])),
-                    ],
-                  ),
-                ),
-              )
-          else
-            TextField(
-              controller: _answer,
-              maxLength: 80,
-              keyboardType: const TextInputType.numberWithOptions(
-                decimal: true,
-                signed: true,
-              ),
-              decoration: const InputDecoration(
-                labelText: '답 입력',
-                hintText: '숫자 또는 분수 (예: 1/2)',
-              ),
-              onChanged: (_) => setState(() => _feedback = ''),
-              onSubmitted: (_) => _grade(),
-            ),
-          FilledButton(onPressed: _grade, child: const Text('답 확인')),
-          const Text(
-            '교재 연습: 시험 점수·등급에 반영되지 않아요.',
-            style: TextStyle(fontSize: 12),
+  Widget build(BuildContext context) {
+    super.build(context);
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xffd4d4d8)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            a.prompt,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
           ),
-        ],
-        if (a.kind == 'steps') ...[
-          Text('${_step + 1} / ${a.steps.length}'),
-          Text(a.steps[_step], style: const TextStyle(fontSize: 16)),
-          Row(
-            children: [
-              Expanded(
-                child: OutlinedButton(
-                  onPressed: _step == 0 ? null : () => setState(() => _step--),
-                  child: const Text('이전 단계'),
+          const SizedBox(height: 8),
+          if (a.kind == 'parabolaDistance') ..._geometry(),
+          if (a.kind == 'quiz') ...[
+            if (a.options.isNotEmpty)
+              for (var i = 0; i < a.options.length; i++)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 6),
+                  child: OutlinedButton(
+                    onPressed: () => setState(() {
+                      _choice = i;
+                      _feedback = '';
+                    }),
+                    style: OutlinedButton.styleFrom(
+                      minimumSize: const Size(48, 48),
+                      backgroundColor: _choice == i
+                          ? const Color(0xffe4e4e7)
+                          : null,
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _choice == i
+                              ? Icons.radio_button_checked
+                              : Icons.radio_button_off,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(child: Text(a.options[i])),
+                      ],
+                    ),
+                  ),
+                )
+            else
+              TextField(
+                controller: _answer,
+                maxLength: 80,
+                keyboardType: const TextInputType.numberWithOptions(
+                  decimal: true,
+                  signed: true,
                 ),
+                decoration: const InputDecoration(
+                  labelText: '답 입력',
+                  hintText: '숫자 또는 분수 (예: 1/2)',
+                ),
+                onChanged: (_) => setState(() => _feedback = ''),
+                onSubmitted: (_) => _grade(),
               ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: FilledButton(
-                  onPressed: _step == a.steps.length - 1
-                      ? null
-                      : () => setState(() => _step++),
-                  child: const Text('다음 단계'),
+            FilledButton(onPressed: _grade, child: const Text('답 확인')),
+            const Text(
+              '교재 연습: 시험 점수·등급에 반영되지 않아요.',
+              style: TextStyle(fontSize: 12),
+            ),
+          ],
+          if (a.kind == 'steps') ...[
+            Text('${_step + 1} / ${a.steps.length}'),
+            Text(a.steps[_step], style: const TextStyle(fontSize: 16)),
+            Row(
+              children: [
+                Expanded(
+                  child: OutlinedButton(
+                    onPressed: _step == 0
+                        ? null
+                        : () => setState(() => _step--),
+                    child: const Text('이전 단계'),
+                  ),
                 ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: FilledButton(
+                    onPressed: _step == a.steps.length - 1
+                        ? null
+                        : () => setState(() => _step++),
+                    child: const Text('다음 단계'),
+                  ),
+                ),
+              ],
+            ),
+          ],
+          if (_feedback.isNotEmpty)
+            Semantics(liveRegion: true, child: Text(_feedback)),
+          for (var i = 0; i < _hints; i++) Text(a.hints[i]),
+          Wrap(
+            spacing: 8,
+            children: [
+              if (_hints < a.hints.length)
+                TextButton(
+                  onPressed: () => setState(() => _hints++),
+                  child: const Text('힌트 한 단계'),
+                ),
+              TextButton(
+                onPressed: () => setState(_reset),
+                child: const Text('초기화'),
               ),
             ],
           ),
         ],
-        if (_feedback.isNotEmpty)
-          Semantics(liveRegion: true, child: Text(_feedback)),
-        for (var i = 0; i < _hints; i++) Text(a.hints[i]),
-        Wrap(
-          spacing: 8,
-          children: [
-            if (_hints < a.hints.length)
-              TextButton(
-                onPressed: () => setState(() => _hints++),
-                child: const Text('힌트 한 단계'),
-              ),
-            TextButton(
-              onPressed: () => setState(_reset),
-              child: const Text('초기화'),
-            ),
-          ],
-        ),
-      ],
-    ),
-  );
+      ),
+    );
+  }
+
   List<Widget> _geometry() {
     final y = _x * _x / (4 * _p);
     final distance = math.sqrt(_x * _x + math.pow(y - _p, 2));
