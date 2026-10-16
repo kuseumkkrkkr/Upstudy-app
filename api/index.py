@@ -28,6 +28,7 @@ from api.question_bank import (
     get_question_by_codebase_seed as _get_canonical_question_by_seed,
 )
 from api import content_admin
+from api.textbook_import import parse_import, validate_book
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
 from fastapi.middleware.cors import CORSMiddleware
@@ -689,6 +690,9 @@ class TextbookCreateRequest(BaseModel):
     tags: list[str] = Field(default_factory=list, max_length=32)
     chapters: list[dict[str, Any]] = Field(min_length=1, max_length=80)
     cover_color: int | None = Field(default=None, ge=0, le=4294967295)
+    category: str = Field(default='custom', max_length=64)
+    curriculum_version: str = Field(default='', max_length=40)
+    standard_codes: list[str] = Field(default_factory=list, max_length=32)
 
 
 class ServerChatMessageRequest(BaseModel):
@@ -5078,6 +5082,16 @@ _PRIVATE_TEXTBOOK_PREFIX = "textbook.private."
 _PRIVATE_TEXTBOOK_MAX_BYTES = 512 * 1024
 
 
+async def _read_textbook_body(request: Request, limit: int) -> bytes:
+    """Bound authenticated upload memory before copying incoming chunks."""
+    raw = bytearray()
+    async for chunk in request.stream():
+        if len(raw) + len(chunk) > limit:
+            raise HTTPException(413, 'textbook_too_large')
+        raw.extend(chunk)
+    return bytes(raw)
+
+
 def _load_private_textbooks(user_id: str) -> list[dict[str, Any]]:
     """학생별 KV 교재만 읽는다. 조회 실패는 빈 카탈로그로 숨기지 않는다."""
     try:
@@ -5138,11 +5152,10 @@ def list_textbooks(user_id: str = Depends(_current_user)) -> dict[str, list[Any]
 @app.post("/textbooks", status_code=status.HTTP_201_CREATED)
 async def create_textbook(request: Request, user_id: str = Depends(_current_user)) -> dict[str, Any]:
     """교재 편집기에서 만든 개인 교재를 소유자별 KV 행으로 저장한다."""
-    raw = await request.body()
-    if len(raw) > _PRIVATE_TEXTBOOK_MAX_BYTES:
-        raise HTTPException(status_code=413, detail="textbook_too_large")
+    raw = await _read_textbook_body(request, _PRIVATE_TEXTBOOK_MAX_BYTES)
     try:
         payload = TextbookCreateRequest.model_validate_json(raw)
+        validate_book(payload.model_dump(exclude_none=True))
     except (ValidationError, ValueError) as error:
         raise HTTPException(status_code=422, detail="invalid_textbook") from error
     title = payload.title.strip()
@@ -5158,7 +5171,9 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
         "textbook_id": textbook_id,
         "title": title,
         "subtitle": payload.subtitle.strip(),
-        "category": "custom",
+        "category": payload.category,
+        "curriculum_version": payload.curriculum_version,
+        "standard_codes": payload.standard_codes,
         "tags": [tag.strip() for tag in payload.tags if tag.strip()],
         "chapters": chapters,
         "cover_color": payload.cover_color,
@@ -5183,6 +5198,46 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="Textbook storage is unavailable") from error
     return book
+
+
+@app.post('/textbooks/import', status_code=201)
+async def import_textbook(request: Request, user_id: str = Depends(_current_user)):
+    """Import the exact UTF-8 source into this user's library; SHA gives retry identity.
+
+    A unique (user_id,key) insert ignores concurrent duplicates, never overwrites
+    an existing book or its progress, and returns the persisted winning record.
+    No public catalogue or administrator database is modified.
+    """
+    raw = await _read_textbook_body(request, _PRIVATE_TEXTBOOK_MAX_BYTES * 2 + 512)
+    try:
+        value = json.loads(raw)
+        if not isinstance(value, dict) or set(value) != {'source', 'sha256'}:
+            raise ValueError('source and sha256 are required')
+        draft, digest = parse_import(value['source'], value['sha256'])
+    except (ValueError, TypeError, RecursionError) as error:
+        raise HTTPException(422, str(error)[:300]) from error
+    textbook_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f'aiflow:private-textbook:{user_id}:{digest}'))
+    existing = _load_private_textbook(user_id, textbook_id)
+    if existing is not None:
+        if existing.get('source_sha256') != digest:
+            raise HTTPException(409, 'textbook_import_identity_conflict')
+        return existing
+    now = datetime.now(timezone.utc).isoformat()
+    book = {**draft, 'textbook_id': textbook_id, 'source_sha256': digest,
+            'created_by': user_id, 'created_at': now, 'updated_at': now,
+            'progress': 0, 'progress_label': '시작 전'}
+    try:
+        _data_api().request('POST', 'canary_user_kv',
+            query={'on_conflict': 'user_id,key'},
+            body={'user_id': user_id, 'key': _PRIVATE_TEXTBOOK_PREFIX + textbook_id,
+                  'value': json.dumps(book, ensure_ascii=False, separators=(',', ':'))},
+            prefer='resolution=ignore-duplicates,return=minimal')
+    except RuntimeError as error:
+        raise HTTPException(503, 'Textbook import unavailable; retry the same source') from error
+    persisted = _load_private_textbook(user_id, textbook_id)
+    if persisted is None or persisted.get('source_sha256') != digest:
+        raise HTTPException(503, 'Textbook import could not be verified; retry the same source')
+    return persisted
 
 
 @app.get('/textbooks/{textbook_id}')
