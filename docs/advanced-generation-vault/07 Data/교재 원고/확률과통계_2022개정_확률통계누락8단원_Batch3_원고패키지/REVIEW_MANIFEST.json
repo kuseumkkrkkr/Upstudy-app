@@ -1,0 +1,31 @@
+{
+  "bookdata_file": "확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json",
+  "bookdata_sha256": "38790E32E76B14B5939E4E98215AD7A8F90806E8799D39C312C6A18F12A842A8",
+  "candidate_code_references": [
+    "12확통01-01",
+    "12확통01-02",
+    "12확통01-03",
+    "12확통03-03",
+    "12확통03-04",
+    "12확통03-05",
+    "12확통03-06",
+    "12확통03-07"
+  ],
+  "candidate_code_reference_type": "official_hwp_criterion_table",
+  "module_count": 8,
+  "page_count": 40,
+  "native_activity_count": 8,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "official_codes_mapped; semester_and_full_scope_pending",
+  "math_review_status": "pending_full_review",
+  "math_arithmetic_check_status": "pass_for_listed_examples_only",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored; publication_rights_decision_pending",
+  "integration_status": "not_merged_into_master_book",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "df06017b80fbb00dd7b307e0b348df9a3fe8f1b8"
+}

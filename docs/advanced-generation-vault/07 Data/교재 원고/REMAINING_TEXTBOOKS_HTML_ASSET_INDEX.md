@@ -1,6 +1,6 @@
 # 독립 HTML 체험 자산 정적 인덱스
 
-검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `125`개를 대상으로 전체 파일명 문자열을 확인했다.
+검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `126`개를 대상으로 전체 파일명 문자열을 확인했다.
 
 이 자료는 정적 인벤토리다. 스크립트는 실행하지 않았으므로 컨트롤/이벤트/신호는 source text에서 검출한 후보이지 실제 동작 검증이 아니다. `asset_id`는 상대 경로 SHA-256 앞 16자리이며, 콘텐츠 SHA와 inline script SHA도 함께 기록한다.
 BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조만 보여 준다. 이것은 학생용 상품 ID 귀속 또는 앱 runtime 연결 증거가 아니다. 앱 V2 importer는 HTML/JavaScript 실행을 지원하지 않으며, 독립 파일은 activity로 자동 임베드되지 않는다.
