@@ -113,8 +113,11 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
     }
     if candidate_standard_codes != expected_volume_codes:
         raise RuntimeError(f"Candidate standard mapping mismatch in combined volume: {folder_name}")
-    tags.update(f"candidate-standard:{code}" for code in candidate_standard_codes)
     volume_label = "수학(상)" if folder_name.startswith("수학상") else "수학(하)"
+    if len(tags) > 64:
+        raise RuntimeError(
+            f"Book tag limit exceeded for {folder_name}: {len(tags)} > 64"
+        )
     book = {
         "title": f"{volume_label} 2015 개정 · 태그별 분권 통합 초안",
         "subtitle": "단원별 챕터와 소단원 페이지를 묶은 부분 원고",
@@ -147,7 +150,12 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
     readme_path = output_dir / "README.md"
     readme = readme_path.read_text(encoding="utf-8")
     link_line = f"- [{filename}]({filename}): {len(unit_records)}개 단원, {len(chapters)}개 소단원, {page_count}쪽 통합본"
-    if filename not in readme:
+    if filename in readme:
+        readme = "\n".join(
+            link_line if line.startswith(f"- [{filename}]") else line
+            for line in readme.splitlines()
+        )
+    else:
         readme += "\n## 단원별 통합 BookData\n\n" + link_line + "\n- 각 chapter에 단원명(unitTitle)을 기록했고 원본 소단원 JSON은 별도 보존했습니다.\n- 공식 기준 대조·교사 검수는 미완료입니다.\n"
     readme_path.write_text(readme.rstrip() + "\n", encoding="utf-8")
     print(f"Combined {volume_label}: {len(unit_records)} units, {len(chapters)} subunits, {page_count} pages.")
