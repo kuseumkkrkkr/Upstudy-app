@@ -1,5 +1,63 @@
 # Public, free textbook release — 2026-10-17 checkpoint
 
+## Latest empty-state / Preview checkpoint
+
+- Preview **dpl_FKGRwChvgRb84vCbuXB2ZgTcuTjN**:
+  <https://aiflow-web-canary-a912dehej-cw20208021-9200s-projects.vercel.app/>.
+  Default is an empty catalogue, not synthetic sale cards. `?auth=1` is an
+  explicitly synthetic 401 UI fixture; it is NOT live authentication validation.
+  `?sample=1` remains a clearly labelled synthetic reader fixture only.
+- Authenticated empty backend catalogue no longer queries ownership storage
+  unnecessarily. Added failure-to-empty and misleading-success regression checks.
+  New API code rejects missing item arrays, nonzero prices, invalid IDs and
+  malformed acquisition acknowledgements. UI distinguishes401 from list failures.
+- UI now checks that a confirmed acquisition appears in refreshed library results
+  before opening it; native offline fallback cannot falsely verify a new purchase.
+- Focused Python **38 passed**, Flutter public/API/native-store **13 passed**.
+  Native mock was explicitly extended with the new owned-catalogue endpoint;
+  an additional test checks public+personal merge and account isolation.
+- Actual browser390x844 and1280x900: empty message, no purchase buttons; synthetic
+  login-required text/action. Images `preview-empty-{390,1280}.png` and
+  `preview-auth-required-{390,1280}.png` in this audit's evidence folder. Vercel
+  toolbar overlay is not part of the app. Login route behavior is unit-tested,
+  not a working login service in this standalone Preview.
+- D: final synthetic build67.6s, Flutter3.44.6/Dart3.12.2. Source archive
+  `build/temp/public-textbooks-empty-preview-source.tar` SHA-256
+  `4638C5ABF1E2F1C4E1A0F9A2680606CC5D45DFA59555806FFC5493BD8938879E`.
+  Actual browser HTTP200 JS body **5,046,027 bytes**, SHA-256
+  `C6F66A3A6F421D9E0A8A7336DEF68CE93E5847832CFCF80C2DA0EEE97CE28687`,
+  identical to local output. Source snapshot includes existing dirty lib code,
+  not only the five public-UI files; no claim of clean HEAD reproducibility.
+- Upload guard checked69 static files, excluding root API/lib/data/test sources,
+  env files, Dart sources and source archives. First guard falsely rejected KaTeX
+  asset paths containing `/lib/`; corrected to reject root source directories,
+  not licensed packaged font assets. No secret-shaped strings found by the
+  limited sbp/sk-bk/sb_secret scan; this is not a comprehensive security audit.
+- No API backend, real manuscripts or credentials were uploaded. API client
+  transport is mocked to fail on any product request. Observed network buffer
+  was truncated; do not report its zero matches as exhaustive traffic evidence.
+- Canonical before/after still **dpl_HTYscDjA8dNT521Pjf91UeqJsaF2**.
+  No promote/alias commands used. CLI inspect exposes no alias list; a null
+  missing field is not proof of `aliases=[]`. Machine evidence is
+  `design/student/audits/public-textbooks-empty-preview-proof.json`.
+
+### Why this cannot be promoted or committed as five files alone
+
+The five UI/API files contain pre-existing grading, level-test, auth and layout
+changes, not just this feature. Current TextbookStore calls scoped LocalDb APIs;
+HEAD `local_db.dart` only has `getString(key)`, `setString(key,value)` and
+`delete(key)`, without scope/refresh parameters. Its web/io/stub implementations
+are also dirty outside the requested five-file set. Whole-file staging would
+include unrelated changes while excluding required dependencies. Those changes
+have NOT been silently added or rolled back. Public UI files remain uncommitted.
+
+Production path: review/isolate the required account/storage and reader source
+closure first; commit that closure intentionally; build the real app entrypoint
+and deploy the API with it; verify authenticated empty catalogue and ordinary
+marketplace; then enable only approved source/hash manifest entries. The static
+synthetic Preview must NEVER replace the whole student app. Canonical catalogue
+load failure cause is still unconfirmed; no live login/DB recovery is claimed.
+
 The user explicitly changed the target from private import to public publication
 of ALL newly authored textbooks. Price is fixed server-side at **0 coins**.
 This approval does not fabricate teacher/math/rights review results.

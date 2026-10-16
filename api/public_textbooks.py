@@ -87,6 +87,8 @@ def install(app, data_api, current_user):
 
     @app.get('/marketplace/textbooks')
     def catalogue(user_id: str = Depends(current_user)):
+        if not books():
+            return {'items': []}
         try:
             owned = owned_ids(data_api, user_id)
             return {'items': [{**headers(book), 'owned': key in owned}

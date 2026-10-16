@@ -150,3 +150,18 @@ def test_approved_but_invalid_runtime_blocks_the_release(tmp_path):
     manifest['files'][0]['path'] = '../outside.json'
     with pytest.raises(ValueError, match='outside the source root'):
         build(tmp_path, manifest)
+
+
+def test_empty_bundle_never_queries_ownership_storage(tmp_path, monkeypatch):
+    monkeypatch.setattr(public, 'BUNDLE', tmp_path / 'absent.json')
+    public.books.cache_clear()
+    def unavailable():
+        raise AssertionError('An empty catalogue does not require an ownership query')
+    app = FastAPI()
+    public.install(app, unavailable, lambda: 'owner-a')
+    try:
+        with TestClient(app) as client:
+            assert client.get('/marketplace/textbooks').json() == {'items': []}
+            assert client.get('/marketplace/textbooks/owned').json() == {'items': []}
+    finally:
+        public.books.cache_clear()
