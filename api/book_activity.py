@@ -69,6 +69,25 @@ def validate_activity(value):
             raise ValueError('activity: invalid batch sizes')
         if any(type(n) is not int or not 1 <= n <= min(1000, maximum) for n in batches) or len(set(batches)) != len(batches):
             raise ValueError('activity: invalid or duplicate batch sizes')
+    elif kind == 'statisticsEstimator':
+        fields(value, common + ' statistics')
+        statistics = value.get('statistics')
+        if not isinstance(statistics, dict):
+            raise ValueError('activity: statistics object required')
+        if statistics.get('mode') == 'mean':
+            fields(statistics, 'mode sample_values')
+            samples = statistics.get('sample_values')
+            if not isinstance(samples, list) or not 1 <= len(samples) <= 200:
+                raise ValueError('activity: sample requires 1..200 values')
+            for sample in samples:
+                number(sample)
+        elif statistics.get('mode') == 'proportion':
+            fields(statistics, 'mode successes trials')
+            successes, trials = statistics.get('successes'), statistics.get('trials')
+            if type(trials) is not int or not 1 <= trials <= 100000 or type(successes) is not int or not 0 <= successes <= trials:
+                raise ValueError('activity: invalid sample counts')
+        else:
+            raise ValueError('activity: unsupported estimation mode')
     elif kind == 'steps':
         fields(value, common + ' steps')
         texts(value.get('steps'), 1, 12)

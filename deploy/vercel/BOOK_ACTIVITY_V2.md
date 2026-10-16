@@ -1,6 +1,7 @@
 # BookData V2 native activity contract
 
-Status: implemented locally; candidate/browser verification required before release.
+Status: partial native support; integration Preview boot verified, clean-source
+release blocked. `BOOK_ACTIVITY_EXPERIMENT_RELEASE.md` distinguishes artifacts.
 
 ## Native experiment and responsive reader follow-up
 
@@ -173,7 +174,8 @@ Each activity occupies one indivisible `pages[].blocks[]` entry:
 | both quizzes | required `correct_feedback`, `incorrect_feedback` | No answer exposed before submission; hints revealed one at a time |
 | `steps` | `steps` 1–12 nonempty strings | Previous/next, disabled endpoints, reset; one step can be a Socratic question |
 | `parabolaDistance` | `p` .5–3; `x` -4–4 | Trusted native `y=x²/(4p)`, draggable P, keyboard-accessible sliders, focus/directrix distances, explicit 5-second play/stop/reset |
-| `discreteExperiment` (implemented locally, not deployed) | Nested finite-outcome definition, weights/event flags, bounded trial batches | Actual local sampling/counts/frequency/reset; see `BOOK_ACTIVITY_CAPABILITIES.md` for the full contract, focused tests and pending asset migrations |
+| `discreteExperiment` (integration Preview only, not promoted) | Nested finite-outcome definition, weights/event flags, bounded trial batches | Actual local sampling/counts/frequency/reset; see `BOOK_ACTIVITY_CAPABILITIES.md` for the full contract, focused tests and pending asset migrations |
+| `statisticsEstimator` (local reader verified, not deployed) | `statistics` mean values or proportion counts; strict bounded input | Editable sample estimate/interpretation/variability/reset/hints; contract `BOOK_STATISTICS_ESTIMATOR.md`; no confidence intervals/tests |
 
 Common: `id` nonempty max80, unique in book; `prompt` nonempty max2000;
 optional `hints` at most8 strings max2000. No asset IDs, author JavaScript,

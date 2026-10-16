@@ -1,0 +1,18 @@
+{
+  "schema_version": 2,
+  "source_inventory": "book-activity-source-inventory.json",
+  "source_asset_count": 106,
+  "all_sources_ported": false,
+  "kinds": {
+    "quiz": {"implemented": true, "persistence": "reader_session_only"},
+    "steps": {"implemented": true, "persistence": "reader_session_only"},
+    "parabolaDistance": {"implemented": true, "persistence": "reader_session_only", "resume_playback_after_remount": false},
+    "discreteExperiment": {"implemented": true, "actual_candidate_reader_verified": true, "persistence": "reader_session_only", "rng_serialized": false},
+    "statisticsEstimator": {"implemented": true, "actual_candidate_reader_verified": true, "candidate_sha256": "45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC", "source_page": "ps0307-practice", "reader_pages": [55,56], "persistence": "reader_session_only", "modes": ["mean", "proportion"], "confidence_intervals": false, "hypothesis_tests": false, "contract": "deploy/vercel/BOOK_STATISTICS_ESTIMATOR.md"}
+  },
+  "unsupported_families": ["cartesian_point_drag", "parameter_dependent_metrics", "vector_transformations", "conics_3d_distance", "set_relation_diagrams", "algebra_area_partitions", "calculus_scenes", "timed_statistical_trajectories", "adaptive_socratic_sequences"],
+  "live_v2_persistence_verified": false,
+  "focused_verification": {"python_passed":78,"flutter_passed":15,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true},
+  "production_manuscript_publication": false,
+  "clean_source_release_verified": false
+}

@@ -56,8 +56,34 @@
   secrets copied. Build-time API URL still points canonical; Preview API storage
   cannot be claimed verified. Never promote an env-empty Preview to Production.
 - Production/canary code release is authorized, but earlier --prod --skip-domain
-  unexpectedly changed a secondary generated alias. Resolve domain assignment
-  behavior or report that exact blocker before repeating the production path.
+  assigned a secondary generated alias. Follow-up deployment API inspection:
+  old `dpl_GA9cePH1LrCu1iNmykjx4RTnj8cD` belongs to this same project,
+  target=production, autoAssignCustomDomains=false, automaticAliases and alias
+  both contain only `aiflow-web-canary-cw20208021-9200s-projects.vercel.app`.
+  Project domain API lists only canonical `aiflow-web-canary.vercel.app`.
+  This distinguishes an automatic generated URL from an unrelated custom-domain
+  change; the old skip-domain did not move canonical. Before/after still required.
+- **Do not promote36e48ff or this integration Preview.** The bundle includes
+  pre-existing unreviewed dirty source. User-approved feature code is not blanket
+  approval for unrelated changes. Clean hotfix-source build is required first.
+  Source archive79af SHA256 `FAE7241008438F5913E24053AB3D8194C3D25E84029F63F5E903F912B5BA280C`
+  extracted only within ignored build/temp. Shell remains guarded root; no
+  branch/worktree change, stash, checkout or overwrite of user changes.
+  First package-root override failed Flutter native-assets project-root check
+  (local flutter_02.log). Root-mapped packageUri next required package_graph.json.
+  After supplying that diagnostic graph, an84.9s app build succeeded, but was
+  **not clean**: Flutter SDK `targets/web.dart:196` hardcodes its project-root
+  package_config for Dart2JS, ignoring the global override used by native-assets.
+  Its dart2js.d lists root dirty reader/widget/API files, not archived copies.
+  Do not deploy build/clean-79af-web or treat its name as source provenance.
+- Clean widget tests DO honor the package override and failed compiling both
+  test files (0passed): BookWidget.bookLoader missing, ApiClient.sessionChanges
+  missing, committed exam interaction/UI mixins reference undeclared focus,
+  marked-question and timer visibility fields. These are real uncommitted
+  integration dependencies, not expected-value/test-flakiness failures.
+  Required dependency code must be reviewed separately, never mass-staged.
+  No source/dependency config in the working root was replaced. Guarded cwd,
+  existing user changes and original package config remain intact.
 - All106 source HTML migrations, full parity, actual PostgreSQL concurrency,
   live V2 private persistence and teacher/rights review remain incomplete.
   Legacy deletion0; student records unchanged; manuscripts not published.

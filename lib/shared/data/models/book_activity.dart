@@ -1,4 +1,5 @@
 import 'book_discrete_experiment.dart';
+import 'book_statistics_estimator.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -17,6 +18,7 @@ class BookActivity {
     this.p,
     this.x,
     this.experiment,
+    this.statistics,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -25,6 +27,7 @@ class BookActivity {
   final double? answer;
   final double tolerance, p, x;
   final BookDiscreteExperiment? experiment;
+  final BookStatisticsEstimator? statistics;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -55,6 +58,7 @@ class BookActivity {
     double tolerance = 0, p = 2, x = 4;
     var correct = '', incorrect = '';
     BookDiscreteExperiment? experiment;
+    BookStatisticsEstimator? statistics;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -92,6 +96,13 @@ class BookActivity {
         experiment = BookDiscreteExperiment.fromJson(
           Map<String, dynamic>.from(payload),
         );
+      case 'statisticsEstimator':
+        allowed.add('statistics');
+        final payload = json['statistics'];
+        if (payload is! Map) fail();
+        statistics = BookStatisticsEstimator.fromJson(
+          Map<String, dynamic>.from(payload),
+        );
       case 'steps':
         allowed.add('steps');
         steps = texts(json['steps'], 1, 12);
@@ -119,6 +130,7 @@ class BookActivity {
       p,
       x,
       experiment,
+      statistics,
     );
   }
 
@@ -141,6 +153,7 @@ class BookActivity {
     if (kind == 'steps') 'steps': steps,
     if (kind == 'parabolaDistance') ...{'p': p, 'x': x},
     if (experiment != null) 'experiment': experiment!.toJson(),
+    if (statistics != null) 'statistics': statistics!.toJson(),
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.
