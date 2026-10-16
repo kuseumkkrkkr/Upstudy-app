@@ -80,6 +80,54 @@ Next: review preview-only deployment settings before another candidate; then
 test candidate backend V2 storage with an authorized test account. Do not promote
 candidate1 or substitute local synthetic UI evidence for that server check.
 
+## Read-only preview configuration audit (2026-10-16)
+
+- Starting HEAD and origin/hotfix both `e9028f9da180835d642863d49c09ebdf81341e5d`;
+  existing166 tracked dirty files retained. No app/runtime changes in this audit.
+- `vercel env ls`:14 encrypted variables, all Production only. Explicit
+  `vercel env ls preview`: zero variables. No values pulled or copied.
+- Authenticated GET project metadata: `autoAssignCustomDomains=true`, preview
+  protection `all_except_custom_domains`. Project domain list contains canonical
+  `aiflow-web-canary.vercel.app` with no branch/custom-environment binding.
+  These settings were NOT changed. A project production target ID is not proof
+  of where a specific custom alias points; alias listing still shows `hvv457edo`.
+- Standard CLI preview is `vercel deploy` without `--prod`, using its unique URL.
+  Official references: [environments](https://vercel.com/docs/deployments/environments),
+  [CLI deploy](https://vercel.com/docs/cli/deploy),
+  [environment variable scopes](https://vercel.com/docs/environment-variables).
+  Standard preview routing is available; a functioning isolated storage/auth
+  environment is NOT currently configured. No deployment attempted this audit.
+- Existing `public` is prebuilt with canonical `API_BASE_URL`, not preview-ready:
+  a plain upload would send V2 UI requests to the old canary backend. Runtime
+  Vercel environment variables do not rewrite Dart `String.fromEnvironment`.
+- Future preview web build must explicitly use its own API origin. Empty
+  `--dart-define=API_BASE_URL=` builds relative HTTP URLs without modifying product
+  defaults. `http` BrowserClient forwards request URI strings to browser fetch;
+  URI-builder test below checks no canonical host is inserted. Actual preview
+  browser transport/storage is still unverified. Do not repurpose that web-only
+  configuration as a native/mobile server URL.
+- Missing independent Preview configuration:
+  `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` from an approved isolated test DB;
+  an independent `OMJ_JWT_SECRET`; a test account belonging to that DB.
+  CORS must match the test origin if cross-origin requests are intentionally used.
+  Same-origin book QA needs no Kiln/Lightning/administrator secrets.
+- Do NOT copy Production DB/key/JWT into Preview, reuse the admin-only database,
+  create a new resource/access grant without authorization, or pretend instance-
+  local memory/SQLite is durable serverless storage. No production manuscript
+  uploads, user changes, legacy deletion, domain writes or alias operations.
+- Blocker is missing configured isolated storage/auth resources, not a proven
+  Vercel permission denial: read-only CLI/API access succeeded. Required resource
+  source/authorization must be supplied before create/list/detail live writes.
+- Validation command: `flutter test --no-pub --dart-define=API_BASE_URL= test/api_contract_isolated_preview_test.dart`.
+  Passed1 test. Default `test/api_contract_test.dart` separately passed1 test;
+  neither default origin nor OCR origin changed. Re-ran private import/V2
+  Python tests31 passed. This is URI-builder proof only, not deployed behavior
+  or persistence proof. The preview-specific test is explicitly inapplicable
+  (skipped) under a nonempty/default production origin configuration.
+- Rechecked local bundle `A31C64AE...`, canonical served bundle `7F54EE14...`.
+  Final local code/build/browser evidence above remains valid; no source rebuild
+  is needed for documentation/configuration tests alone.
+
 V1 is the default when `schema_version` is absent. V2 explicitly sets
 `schema_version: 2`. Unknown future versions, unregistered kinds, duplicate
 activity IDs and executable/unknown fields are rejected at the import boundary.
