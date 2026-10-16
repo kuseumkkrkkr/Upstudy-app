@@ -16,6 +16,8 @@ expected = {
     'lib/sessions/textbook/ui/widgets/book_discrete_experiment_view.dart',
     'lib/sessions/textbook/ui/widgets/book_statistics_estimator_view.dart',
     'lib/sessions/textbook/ui/widgets/book_right_triangle_view.dart',
+    'lib/shared/data/models/book_coordinate_point.dart',
+    'lib/sessions/textbook/ui/widgets/book_coordinate_point_view.dart',
 }
 assert root == Path('D:/AIFlow-Workspace/Projects/Aiflow/Upstudy-hotfix'), root
 depfile = Path(sys.argv[1]).resolve()

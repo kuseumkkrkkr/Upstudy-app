@@ -177,6 +177,7 @@ Each activity occupies one indivisible `pages[].blocks[]` entry:
 | `discreteExperiment` (integration Preview only, not promoted) | Nested finite-outcome definition, weights/event flags, bounded trial batches | Actual local sampling/counts/frequency/reset; see `BOOK_ACTIVITY_CAPABILITIES.md` for the full contract, focused tests and pending asset migrations |
 | `statisticsEstimator` (local reader verified, not deployed) | `statistics` mean values or proportion counts; strict bounded input | Editable sample estimate/interpretation/variability/reset/hints; contract `BOOK_STATISTICS_ESTIMATOR.md`; no confidence intervals/tests |
 | `rightTriangle` (bounded native extension; no production manuscript) | Required integer `a`,`b` in1..12 | Keyboard sliders, live sqrt(a²+b²), proportional diagram, local hints/reset; contract `BOOK_RIGHT_TRIANGLE.md`; broader derived-metric scenes unsupported |
+| `coordinatePoint` (bounded native extension; no production manuscript) | Required integer `x`,`y` in-5..5 | Direct point pointer/touch drag, arrow-key movement, sliders, quadrant/axis/origin, three movement stages; `BOOK_COORDINATE_POINT.md`; not arbitrary JSX |
 
 Common: `id` nonempty max80, unique in book; `prompt` nonempty max2000;
 optional `hints` at most8 strings max2000. No asset IDs, author JavaScript,

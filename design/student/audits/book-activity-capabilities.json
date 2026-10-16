@@ -4,6 +4,7 @@
   "source_asset_count": 106,
   "all_sources_ported": false,
   "kinds": {
+    "coordinatePoint": {"implemented": true, "persistence": "reader_session_only", "source_asset": "html-3050dd8407807a29", "source_asset_sha256": "4235767CFF3D3BBBEA8585712BE8B3F35FAA791D4DC74E7594A3EA1AED568D9E", "migration_status": "not_ported", "actual_candidate_reader_verified": false, "coordinate_integer_bounds": [-5,5], "contract": "deploy/vercel/BOOK_COORDINATE_POINT.md"},
     "rightTriangle": {"implemented": true, "persistence": "reader_session_only", "source_asset": "html-a10eb6a3240af7e0", "source_asset_sha256": "E8662454327247D3406A8BAA5780F40DF3BDC40825BD5B4FC58BAEA838B305E6", "migration_status": "not_ported", "actual_candidate_reader_verified": false, "leg_integer_bounds": [1,12], "contract": "deploy/vercel/BOOK_RIGHT_TRIANGLE.md"},
     "quiz": {"implemented": true, "persistence": "reader_session_only"},
     "steps": {"implemented": true, "persistence": "reader_session_only"},
@@ -12,7 +13,7 @@
     "statisticsEstimator": {"implemented": true, "actual_candidate_reader_verified": true, "candidate_sha256": "45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC", "source_page": "ps0307-practice", "reader_pages": [55,56], "persistence": "reader_session_only", "modes": ["mean", "proportion"], "confidence_intervals": false, "hypothesis_tests": false, "contract": "deploy/vercel/BOOK_STATISTICS_ESTIMATOR.md"}
   },
   "unsupported_families": ["cartesian_point_drag", "parameter_dependent_metrics", "vector_transformations", "conics_3d_distance", "set_relation_diagrams", "algebra_area_partitions", "calculus_scenes", "timed_statistical_trajectories", "adaptive_socratic_sequences"],
-  "partial_family_support": {"parameter_dependent_metrics": "rightTriangle only; not arbitrary derived metrics or executable formulas"},
+  "partial_family_support": {"parameter_dependent_metrics": "rightTriangle only; not arbitrary derived metrics or executable formulas", "cartesian_point_drag": "coordinatePoint only; integer grid, keyboard and direct pointer/touch; no arbitrary curve constraints"},
   "live_v2_persistence_verified": false,
   "focused_verification": {"python_passed":78,"flutter_passed":15,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true},
   "production_manuscript_publication": false,

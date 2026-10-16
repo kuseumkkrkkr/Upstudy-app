@@ -1,5 +1,6 @@
 import 'book_discrete_experiment.dart';
 import 'book_statistics_estimator.dart';
+import 'book_coordinate_point.dart';
 
 /// Registered V2 practice, not an exam/OVR grading authority. No executable data.
 class BookActivity {
@@ -21,6 +22,7 @@ class BookActivity {
     this.statistics,
     this.legA,
     this.legB,
+    this.point,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -31,6 +33,7 @@ class BookActivity {
   final BookDiscreteExperiment? experiment;
   final BookStatisticsEstimator? statistics;
   final int legA, legB;
+  final BookCoordinatePoint? point;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -63,6 +66,7 @@ class BookActivity {
     BookDiscreteExperiment? experiment;
     BookStatisticsEstimator? statistics;
     var legA = 6, legB = 8;
+    BookCoordinatePoint? point;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -107,6 +111,9 @@ class BookActivity {
         statistics = BookStatisticsEstimator.fromJson(
           Map<String, dynamic>.from(payload),
         );
+      case 'coordinatePoint':
+        allowed.addAll({'x', 'y'});
+        point = BookCoordinatePoint.fromJson({'x': json['x'], 'y': json['y']});
       case 'rightTriangle':
         allowed.addAll({'a', 'b'});
         int leg(dynamic value) {
@@ -145,6 +152,7 @@ class BookActivity {
       statistics,
       legA,
       legB,
+      point,
     );
   }
 
@@ -169,6 +177,7 @@ class BookActivity {
     if (experiment != null) 'experiment': experiment!.toJson(),
     if (statistics != null) 'statistics': statistics!.toJson(),
     if (kind == 'rightTriangle') ...{'a': legA, 'b': legB},
+    if (point != null) ...point!.toJson(),
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

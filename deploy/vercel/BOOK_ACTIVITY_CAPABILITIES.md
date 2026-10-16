@@ -38,7 +38,10 @@ Do not silently alter original author files here.
 ## Remaining implementation families (not claimed supported)
 
 - Cartesian direct point dragging and keyboard movement: source pointers in
-  `html-3050dd8407807a29` and `html-7bbc2e50f5387d53`; full handlers need review.
+  `html-3050dd8407807a29` and `html-7bbc2e50f5387d53` read fully. New
+  `coordinatePoint` covers the first source's bounded grid-point/keyboard/step
+  interaction. The second source's timed animation/swap is not implemented;
+  source-specific full manuscript migration/review remains pending.
 - Parameter-dependent metrics/number lines/algebra and invalid-domain feedback;
   current graph sliders alone do not reproduce connected numeric results.
 - Vector transformations, lengths/dot products, translated arrows and staged

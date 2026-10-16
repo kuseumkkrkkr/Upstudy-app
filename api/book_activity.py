@@ -88,6 +88,11 @@ def validate_activity(value):
                 raise ValueError('activity: invalid sample counts')
         else:
             raise ValueError('activity: unsupported estimation mode')
+    elif kind == 'coordinatePoint':
+        fields(value, common + ' x y')
+        for name in ('x', 'y'):
+            if type(value.get(name)) is not int or not -5 <= value[name] <= 5:
+                raise ValueError('activity: coordinates require integers -5..5')
     elif kind == 'rightTriangle':
         fields(value, common + ' a b')
         for name in ('a', 'b'):
