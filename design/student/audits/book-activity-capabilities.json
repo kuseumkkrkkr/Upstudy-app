@@ -15,7 +15,7 @@
   "unsupported_families": ["cartesian_point_drag", "parameter_dependent_metrics", "vector_transformations", "conics_3d_distance", "set_relation_diagrams", "algebra_area_partitions", "calculus_scenes", "timed_statistical_trajectories", "adaptive_socratic_sequences"],
   "partial_family_support": {"parameter_dependent_metrics": "rightTriangle only; not arbitrary derived metrics or executable formulas", "cartesian_point_drag": "coordinatePoint only; integer grid, keyboard and direct pointer/touch; no arbitrary curve constraints"},
   "live_v2_persistence_verified": false,
-  "focused_verification": {"python_passed":78,"flutter_passed":15,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true},
+  "focused_verification": {"python_passed":115,"flutter_passed":20,"clean_feature_archive_flutter_passed":4,"flutter_concurrency":1,"scoped_analyze_issues":0,"integration_working_source_only":true,"latest_batch":"coordinatePoint","latest_feature_commit":"6c0845e9a6a2a2ddeae9f44f101d18097b8afec4"},
   "production_manuscript_publication": false,
   "clean_source_release_verified": false
 }

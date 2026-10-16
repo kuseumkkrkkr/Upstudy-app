@@ -58,7 +58,7 @@ Do not label either whole original manuscript ported/reviewed/published.
 | Name | Meaning / lifetime / side effects |
 |---|---|
 | BookCoordinatePoint.fromJson | Strict x/y definition ->immutable point, FormatException on invalid input |
-| bounded/move | Internal pointer/key movement ->clamped integer grid coordinate; no formula evaluation |
+| bounded/snapped/move | Internal movement ->clamped integer grid; snapped matches source Math.round ties toward +infinity, not Dart negative-tie rounding; no formula evaluation |
 | quadrant/horizontal/vertical | Derived current point text; origin is distinct from axes, axes not quadrants |
 | _point | Current user coordinate; initially definition then drag/key/slider, reader session only |
 | _step |0..2; manually cycles live coordinate explanation; never a timer/animation |
@@ -102,3 +102,69 @@ source appearance parity, manuscript approval, clean full app or production use.
 
 All106 source assets remain not_ported pending explicit author mapping and full
 educational/math/rights review. A reusable seventh kind is not106 published books.
+
+## Final live synthetic BookWidget Preview
+
+2026-10-17. Feature `8adda86f74fdc8e413aafedbd69d201aebbb5763`, point semantic
+target fix `e0bc17074481259c6f8d4c63894da07dd6c2e814`, negative-y label/tick
+collision fix `6c0845e9a6a2a2ddeae9f44f101d18097b8afec4`, all pushed on hotfix.
+The initial test fixture syntax and later test SemanticsHandle disposal ordering
+were corrected; final tests were rerun, not waived. Golden baselines cover both
+initial point and negative-y scene. Original point coordinates and script were
+not changed; native label placement avoids overlap with x-axis ticks.
+
+- Latest static Preview: **dpl_AUvDLJmeAps4ynYznMZ7mDMAtjP7**,
+  https://aiflow-web-canary-aljw3pxsr-cw20208021-9200s-projects.vercel.app
+  target=null, alias=[], meta.featureCommit=6c0845e..., previewKind=
+  dirty-synthetic-coordinate-point. Unauthenticated GET302 redirects to vercel.com;
+  existing Preview protection was not weakened.
+- Final release build62.8s; existing Cupertino font warning remains. Fresh
+  deployment folder contains69 static files and no API/Dart/manuscript/env.
+  Intermediate9J4/6Tz candidates are superseded, not product releases.
+- Local AND actual authenticated-browser main.dart.js4,976,407 bytes, SHA256
+  `F4A409548E4FA5051DDED2F2C0EC34BBFEC467BA1897BC3BA67455005EBC7550`.
+- Synthetic authored pages5 ->reader pages7, actual dirty BookWidget renderer.
+  No real manuscript or BOOK_QA_JSON defines. ApiClient locally rejects network
+  calls, synthetic memory identity only, persistenceEnabled=false/injected loader.
+- 191 app-source depfile entries include actual BookWidget and new coordinate
+  renderer. `book-coordinate-point-preview-proof.json` records this dirty-source
+  closure. Source snapshot build/temp/bookwidget-v2-coordinate-release-source.tar
+  SHA256 `2EFDAE82CB8D412DCB835A5BCFC66302E27384FC63864116DA2580B71150443C`.
+  This is NOT reproducible from HEAD alone or a clean full-product build.
+- Actual390x844 pointer drag(-2,3)->(3,-2), focused point ArrowUp->(3,-1), quadrant
+  and direction update correctly. One semantic point button, no unlabeled nested
+  point button. Scrolling reveals movement stages/hints. Reveal stage2 and hint;
+  resize1280x900 retains coordinate/stage/hint. X slider ArrowRight->(4,-1).
+  Page2 then previous restores(4,-1)/stage2/hint. At390x600 actual wheel reaches
+  lower controls/disclaimer with fixed navigation. Reset returns(-2,3)/stage1/no
+  hint. No axis/tick overlap in negative-y golden and final screenshot.
+- Flutter touch+mouse event tests passed. **Physical browser touch is not verified**:
+  IAB CDP rejects Input.dispatchTouchEvent. No synthetic page-JS event workaround.
+  Temporary touch emulation was disabled again. Physical-device touch remains a
+  separate QA gate; mouse/keyboard browser results do not substitute for it.
+- Final scoped Dart analyze0; Python115 passed, existing warning1. Fresh committed
+  feature archive at6c0845e ran4 tests incl both goldens successfully (dependency
+  config and font asset reused, not whole-project clean). Latest working-source
+  reader/graph/native/context regression20 passed after all final source changes.
+- Observed53 browser network requests,0 product API paths and0 console error
+  entries in that run; origins Preview/vercel.live/fonts.gstatic.com. No offline,
+  real login, server persistence/grade, live chatbot or DB concurrency claim.
+
+Screenshots in existing evidence directory: coordinate-point-reader-390.png,
+coordinate-point-reader-lower-390.png, coordinate-point-reader-1280.png,
+coordinate-point-reader-short-scroll.png, coordinate-point-reader-reset-1280.png.
+These are synthetic functional UI proof, not original HTML full-page parity.
+
+Canonical alias still **dpl_HTYscDjA8dNT521Pjf91UeqJsaF2**. Fresh canonical JS
+7,133,766 bytes SHA256
+`7F54EE1424F0982D6C2F461C4744EAADD7954602487576F9C08ECA2E9DB340B8`.
+Local public remains7,157,176 bytes SHA256
+`DA4910F2C02651760008559AE811B3B4AEB7780BF5090136404C975FC447F849`.
+Those two existing artifacts differ and were NOT replaced or conflated.
+No catalogue/student DB write/import/delete or production alias operation.
+
+The older full backend Preview GFBf still uses b310fd1, without rightTriangle or
+coordinatePoint. New validator code is committed/tested but not live there or on
+canonical. Compatible API candidate/authenticated DB idempotency QA and a clean
+full app build remain required before real new-kind import. Authoring review/
+rights approval is still pending; no unreviewed textbook was published.
