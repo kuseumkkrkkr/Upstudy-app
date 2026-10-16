@@ -11,6 +11,22 @@
     "10수학04-02",
     "10수학04-03",
     "2015 개정",
+    "candidate-standard:10수학03-01",
+    "candidate-standard:10수학03-02",
+    "candidate-standard:10수학03-03",
+    "candidate-standard:10수학03-04",
+    "candidate-standard:10수학03-05",
+    "candidate-standard:10수학03-06",
+    "candidate-standard:10수학03-07",
+    "candidate-standard:10수학03-08",
+    "candidate-standard:10수학04-01",
+    "candidate-standard:10수학04-02",
+    "candidate-standard:10수학04-03",
+    "candidate-standard:10수학04-04",
+    "candidate-standard:10수학04-05",
+    "candidate-standard:10수학05-01",
+    "candidate-standard:10수학05-02",
+    "candidate-standard:10수학05-03",
     "경우의 수",
     "곱의 법칙",
     "공식 코드 대조 전",
@@ -54,6 +70,24 @@
     "10수학03-08",
     "10수학04-02",
     "10수학04-03"
+  ],
+  "candidate_standard_codes": [
+    "10수학03-01",
+    "10수학03-02",
+    "10수학03-03",
+    "10수학03-04",
+    "10수학03-05",
+    "10수학03-06",
+    "10수학03-07",
+    "10수학03-08",
+    "10수학04-01",
+    "10수학04-02",
+    "10수학04-03",
+    "10수학04-04",
+    "10수학04-05",
+    "10수학05-01",
+    "10수학05-02",
+    "10수학05-03"
   ],
   "units": [
     {
@@ -200,7 +234,11 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-01",
+        "10수학03-03"
+      ]
     },
     {
       "title": "여집합과 차집합",
@@ -428,7 +466,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-04"
+      ]
     },
     {
       "title": "두 집합 사이의 포함 관계",
@@ -554,7 +595,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-02"
+      ]
     },
     {
       "title": "명제의 역과 대우",
@@ -680,7 +724,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-05"
+      ]
     },
     {
       "title": "충분조건과 필요조건",
@@ -806,7 +853,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-06"
+      ]
     },
     {
       "title": "대우를 이용한 증명과 귀류법",
@@ -932,7 +982,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-07"
+      ]
     },
     {
       "title": "절대부등식의 뜻과 증명",
@@ -1057,7 +1110,10 @@
           ]
         }
       ],
-      "unitTitle": "수와 연산"
+      "unitTitle": "수와 연산",
+      "candidate_standard_codes": [
+        "10수학03-08"
+      ]
     },
     {
       "title": "함수의 뜻과 대응",
@@ -1171,7 +1227,10 @@
           ]
         }
       ],
-      "unitTitle": "함수"
+      "unitTitle": "함수",
+      "candidate_standard_codes": [
+        "10수학04-01"
+      ]
     },
     {
       "title": "함수의 합성과 합성함수",
@@ -1296,7 +1355,10 @@
           ]
         }
       ],
-      "unitTitle": "함수"
+      "unitTitle": "함수",
+      "candidate_standard_codes": [
+        "10수학04-02"
+      ]
     },
     {
       "title": "역함수의 의미와 구하기",
@@ -1422,7 +1484,10 @@
           ]
         }
       ],
-      "unitTitle": "함수"
+      "unitTitle": "함수",
+      "candidate_standard_codes": [
+        "10수학04-03"
+      ]
     },
     {
       "title": "유리함수의 기본 꼴",
@@ -1536,7 +1601,10 @@
           ]
         }
       ],
-      "unitTitle": "함수"
+      "unitTitle": "함수",
+      "candidate_standard_codes": [
+        "10수학04-04"
+      ]
     },
     {
       "title": "무리함수의 정의역과 그래프",
@@ -1650,7 +1718,10 @@
           ]
         }
       ],
-      "unitTitle": "함수"
+      "unitTitle": "함수",
+      "candidate_standard_codes": [
+        "10수학04-05"
+      ]
     },
     {
       "title": "합의 법칙과 곱의 법칙",
@@ -1764,7 +1835,10 @@
           ]
         }
       ],
-      "unitTitle": "확률과 통계"
+      "unitTitle": "확률과 통계",
+      "candidate_standard_codes": [
+        "10수학05-01"
+      ]
     },
     {
       "title": "순열",
@@ -1878,7 +1952,10 @@
           ]
         }
       ],
-      "unitTitle": "확률과 통계"
+      "unitTitle": "확률과 통계",
+      "candidate_standard_codes": [
+        "10수학05-02"
+      ]
     },
     {
       "title": "조합",
@@ -1992,7 +2069,10 @@
           ]
         }
       ],
-      "unitTitle": "확률과 통계"
+      "unitTitle": "확률과 통계",
+      "candidate_standard_codes": [
+        "10수학05-03"
+      ]
     }
   ],
   "metadata": {

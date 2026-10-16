@@ -113,6 +113,7 @@ def build_volume(folder_name: str, units: list[tuple[str, list[str]]]) -> None:
     }
     if candidate_standard_codes != expected_volume_codes:
         raise RuntimeError(f"Candidate standard mapping mismatch in combined volume: {folder_name}")
+    tags.update(f"candidate-standard:{code}" for code in candidate_standard_codes)
     volume_label = "수학(상)" if folder_name.startswith("수학상") else "수학(하)"
     book = {
         "title": f"{volume_label} 2015 개정 · 태그별 분권 통합 초안",

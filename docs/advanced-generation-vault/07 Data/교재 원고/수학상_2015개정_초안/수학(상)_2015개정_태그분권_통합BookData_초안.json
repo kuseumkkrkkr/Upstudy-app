@@ -7,6 +7,31 @@
     "10수학01-15",
     "10수학02-05",
     "2015 개정",
+    "candidate-standard:10수학01-01",
+    "candidate-standard:10수학01-02",
+    "candidate-standard:10수학01-03",
+    "candidate-standard:10수학01-04",
+    "candidate-standard:10수학01-05",
+    "candidate-standard:10수학01-06",
+    "candidate-standard:10수학01-07",
+    "candidate-standard:10수학01-08",
+    "candidate-standard:10수학01-09",
+    "candidate-standard:10수학01-10",
+    "candidate-standard:10수학01-11",
+    "candidate-standard:10수학01-12",
+    "candidate-standard:10수학01-13",
+    "candidate-standard:10수학01-14",
+    "candidate-standard:10수학01-15",
+    "candidate-standard:10수학01-16",
+    "candidate-standard:10수학02-01",
+    "candidate-standard:10수학02-02",
+    "candidate-standard:10수학02-03",
+    "candidate-standard:10수학02-04",
+    "candidate-standard:10수학02-05",
+    "candidate-standard:10수학02-06",
+    "candidate-standard:10수학02-07",
+    "candidate-standard:10수학02-08",
+    "candidate-standard:10수학02-09",
     "공식 코드 대조 전",
     "교점",
     "그래프와 실근",
@@ -63,6 +88,33 @@
     "10수학01-02",
     "10수학01-15",
     "10수학02-05"
+  ],
+  "candidate_standard_codes": [
+    "10수학01-01",
+    "10수학01-02",
+    "10수학01-03",
+    "10수학01-04",
+    "10수학01-05",
+    "10수학01-06",
+    "10수학01-07",
+    "10수학01-08",
+    "10수학01-09",
+    "10수학01-10",
+    "10수학01-11",
+    "10수학01-12",
+    "10수학01-13",
+    "10수학01-14",
+    "10수학01-15",
+    "10수학01-16",
+    "10수학02-01",
+    "10수학02-02",
+    "10수학02-03",
+    "10수학02-04",
+    "10수학02-05",
+    "10수학02-06",
+    "10수학02-07",
+    "10수학02-08",
+    "10수학02-09"
   ],
   "units": [
     {
@@ -217,7 +269,10 @@
           ]
         }
       ],
-      "unitTitle": "다항식"
+      "unitTitle": "다항식",
+      "candidate_standard_codes": [
+        "10수학01-01"
+      ]
     },
     {
       "title": "나머지정리와 인수정리",
@@ -330,7 +385,10 @@
           ]
         }
       ],
-      "unitTitle": "다항식"
+      "unitTitle": "다항식",
+      "candidate_standard_codes": [
+        "10수학01-03"
+      ]
     },
     {
       "title": "다항식의 인수분해",
@@ -445,7 +503,10 @@
           ]
         }
       ],
-      "unitTitle": "다항식"
+      "unitTitle": "다항식",
+      "candidate_standard_codes": [
+        "10수학01-04"
+      ]
     },
     {
       "title": "항등식의 성질과 계수 비교",
@@ -570,7 +631,10 @@
           ]
         }
       ],
-      "unitTitle": "다항식"
+      "unitTitle": "다항식",
+      "candidate_standard_codes": [
+        "10수학01-02"
+      ]
     },
     {
       "title": "복소수의 뜻과 연산",
@@ -685,7 +749,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-05"
+      ]
     },
     {
       "title": "복소수 범위의 이차방정식",
@@ -799,7 +866,11 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-06",
+        "10수학01-07"
+      ]
     },
     {
       "title": "이차함수 그래프와 이차방정식의 실근",
@@ -913,7 +984,12 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-09",
+        "10수학01-10",
+        "10수학01-11"
+      ]
     },
     {
       "title": "이차방정식의 근과 계수의 관계",
@@ -1027,7 +1103,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-08"
+      ]
     },
     {
       "title": "인수분해를 이용한 삼차방정식",
@@ -1142,7 +1221,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-12"
+      ]
     },
     {
       "title": "분수방정식과 해의 검토",
@@ -1485,7 +1567,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-13"
+      ]
     },
     {
       "title": "연립일차부등식과 공통 해",
@@ -1599,7 +1684,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-14"
+      ]
     },
     {
       "title": "이차부등식의 해",
@@ -1713,7 +1801,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-16"
+      ]
     },
     {
       "title": "절댓값을 포함한 일차부등식",
@@ -1838,7 +1929,10 @@
           ]
         }
       ],
-      "unitTitle": "방정식과 부등식"
+      "unitTitle": "방정식과 부등식",
+      "candidate_standard_codes": [
+        "10수학01-15"
+      ]
     },
     {
       "title": "두 점 사이의 거리와 선분의 중점",
@@ -1952,7 +2046,11 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-01",
+        "10수학02-02"
+      ]
     },
     {
       "title": "점과 직선 사이의 거리",
@@ -2078,7 +2176,10 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-05"
+      ]
     },
     {
       "title": "기울기와 직선의 방정식",
@@ -2192,7 +2293,10 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-03"
+      ]
     },
     {
       "title": "평행한 직선과 수직인 직선의 방정식",
@@ -2306,7 +2410,10 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-04"
+      ]
     },
     {
       "title": "원의 표준형과 중심·반지름",
@@ -2420,7 +2527,10 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-06"
+      ]
     },
     {
       "title": "직선과 원의 교점 및 접선",
@@ -2534,7 +2644,10 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-07"
+      ]
     },
     {
       "title": "원의 접선의 방정식",
@@ -2762,7 +2875,11 @@
           ]
         }
       ],
-      "unitTitle": "도형의 방정식"
+      "unitTitle": "도형의 방정식",
+      "candidate_standard_codes": [
+        "10수학02-08",
+        "10수학02-09"
+      ]
     }
   ],
   "metadata": {

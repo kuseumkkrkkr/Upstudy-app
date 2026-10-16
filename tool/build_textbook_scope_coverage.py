@@ -127,7 +127,11 @@ def main() -> None:
             signal = chapter_signals.setdefault(key, {"files": set(), "chapters": 0, "pages": 0, "blocks": set()})
             matched_chapters = []
             for chapter in chapters if isinstance(chapters, list) else []:
-                chapter_text = json.dumps(chapter, ensure_ascii=False)
+                chapter_text = json.dumps(
+                    {key: value for key, value in chapter.items() if key != "candidate_standard_codes"}
+                    if isinstance(chapter, dict) else chapter,
+                    ensure_ascii=False,
+                )
                 if not re.search(rf"(?<![\w-]){re.escape(code)}(?![\w-])", chapter_text):
                     continue
                 matched_chapters.append(chapter)
