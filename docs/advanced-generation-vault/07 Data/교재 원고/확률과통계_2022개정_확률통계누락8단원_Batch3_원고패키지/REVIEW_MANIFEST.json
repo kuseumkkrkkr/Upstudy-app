@@ -40,8 +40,8 @@
   "rights_status": "newly_authored; publication_rights_decision_pending",
   "integration_status": "not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "passed",
-  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5",
-  "runtime_validation_command": null,
-  "runtime_validator_candidate_sha256": null
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "ed2c4cc",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (34 tests passed; mean and proportion statisticsEstimator student reader interaction verified)",
+  "runtime_validator_candidate_sha256": "28EDFE3363CC976BF899F41AFBCE31C1CE10FF71B547F262915D5449DE4276FA"
 }
