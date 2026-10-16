@@ -23,6 +23,7 @@ GENERATORS = [
     ("build_probability_2022_missing_units_v2_batch2.py", "main"),
     ("build_probability_2022_missing_units_v2_batch3.py", "main"),
     ("build_probability_2022_basic_probability_v2_batch4.py", "main"),
+    ("build_common_math2_existing_candidate_tags.py", "main"),
     ("build_other_2022_course_drafts.py", "main"),
     ("build_calculus_1_2022_draft.py", "main"),
     ("build_calculus_2_2022_draft.py", "main"),

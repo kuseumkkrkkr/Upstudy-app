@@ -45,6 +45,34 @@ def read_catalog() -> dict[int, str]:
     return result
 
 
+def edition_from_bookdata(data: dict) -> str:
+    """Use explicit version metadata or an explicit edition tag; never infer from filename."""
+    value = str(data.get("curriculum_version") or "").strip()
+    tags = data.get("tags", [])
+    tags = [str(tag).strip() for tag in tags] if isinstance(tags, list) else []
+    tagged_editions = {
+        year for year in ("2015", "2022")
+        if any(re.fullmatch(rf"{year} 개정(?: 후보)?", tag) for tag in tags)
+    }
+    if value in {"2015", "2022"}:
+        return value if not tagged_editions or tagged_editions == {value} else "edition-conflict"
+    if len(tagged_editions) == 1:
+        return next(iter(tagged_editions))
+    return "edition-unverified" if not tagged_editions else "edition-conflict"
+
+
+def exact_codes_from_tags(tags: object, valid_codes: set[str]) -> list[str]:
+    if not isinstance(tags, list):
+        return []
+    found: set[str] = set()
+    for tag in tags:
+        text = str(tag)
+        for code in valid_codes:
+            if re.search(rf"(?<![\w]){re.escape(code)}(?![\w-])", text):
+                found.add(code)
+    return sorted(found)
+
+
 def main() -> None:
     catalog = read_catalog()
     standards: dict[str, dict[str, str]] = {}
@@ -67,16 +95,21 @@ def main() -> None:
     for manifest_path in MANUSCRIPTS.rglob("REVIEW_MANIFEST.json"):
         manifest = json.loads(manifest_path.read_text(encoding="utf-8"))
         module_alignment.update(manifest.get("preliminary_module_alignment", {}))
+    valid_codes = {code for source in standards.values() for code in source}
+    code_tagged_files: set[str] = set()
     for path in candidate_bookdata_files:
         data = json.loads(path.read_text(encoding="utf-8"))
         raw = data.get("standard_codes", [])
         codes = raw if isinstance(raw, list) else [raw]
         if data.get("standard_code"):
             codes.append(data["standard_code"])
-        codes = [str(code).strip() for code in codes if str(code).strip()]
+        codes += exact_codes_from_tags(data.get("tags", []), valid_codes)
+        codes = sorted({str(code).strip() for code in codes if str(code).strip()})
+        if codes:
+            code_tagged_files.add(path.name)
         if not codes:
             untagged_by_prefix[str(data.get("curriculum_version") or "판본 미기록")].append(path.name)
-        edition = str(data.get("curriculum_version") or "edition-unverified")
+        edition = edition_from_bookdata(data)
         for code in codes:
             tagged[code].append((path.name, edition))
 
@@ -88,6 +121,7 @@ def main() -> None:
         "## 해석 규칙",
         "",
         "- 재귀 원고 인벤토리의 exact BookData code tag는 매핑 후보 수로만 센다. 태그만으로 설명·예제·연습·해설의 충족을 판정하지 않는다.",
+        "- 공식 코드 토큰은 `standard_codes`/`standard_code` 필드와 tags에서 exact match로 찾는다. 판본은 `curriculum_version` 또는 명시적인 판본 태그로만 확인한다.",
         "- 2022 HWP XHTML 본표에서 추출한 코드를 공식 기준 baseline으로 삼는다. 해설 참고 ID는 이 집합과 분리한다.",
         "- `edition-unverified` 태그는 같은 코드 문자열이 보여도 특정 교육과정 판본에 연결하지 않는다.",
         "- 중학교 학년군 기준은 학기별로 배분하지 않는다. 2015 수학(상)/(하) 분권도 공식 경계가 아니므로 각 기준을 양쪽 상품에 동시에 완료 처리하지 않는다.",
@@ -129,11 +163,26 @@ def main() -> None:
                 status = "태그·statisticsEstimator 후보 있음 · importer/reader QA 대기"
             elif alignment == "candidate_statistics_estimator_qa_passed_pending_teacher_review":
                 status = "태그·statisticsEstimator candidate importer/reader QA 통과 · 교사/권리 검토 대기"
+            elif alignment == "candidate_partial_general_function_graph_incomplete":
+                status = "부분 후보 태그 있음 · 일반 함수 그래프 이해 미완료; 내용 검수 필요"
+            elif alignment == "candidate_mapping_review_pending":
+                status = "후보 연결 기록 있음 · 교사·내용 검수 필요"
             else:
                 status = "tag 있음 · 내용 검수 필요" if sources else "same-edition tag 없음 · 원고 대조 필요"
             excerpt = description.replace("|", "\\|")[:180]
             lines.append(f"| `{code}` | {excerpt} | {evidence} | {status} |")
         lines.append("")
+
+    lines += [
+        "## 2022 원문 수식 추출 한계",
+        "",
+        "공식 HWP 원본 XML에는 아래 기준 문단 안에 `EqEdit` 수식 개체가 있으나 XHTML/TXT 추출물에는 수식 내용이 들어 있지 않다. 이 기준 문구는 수식이 복구될 때까지 완전 전사로 보지 않으며, 가려진 수식 형태를 추측해 내용 충족 처리하지 않는다.",
+        "",
+        "- `9수02-10`",
+        "- `10공수2-01-07`, `10공수2-03-04`, `10공수2-03-05`",
+        "- `12대수03-02`, `12대수03-03`, `12대수03-04`, `12대수03-05`",
+        "",
+    ]
 
     recursive_bookdata = sorted(MANUSCRIPTS.rglob("*BookData*.json"))
     v2_files: list[str] = []
@@ -172,8 +221,8 @@ def main() -> None:
         "",
         "2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.",
         "",
-        f"현재 검색 대상은 원본 BookData `{len(source_bookdata_files)}`개, 재귀 후보·패키지 BookData `{len(candidate_bookdata_files)}`개다. 기준 code tag가 있는 재귀 파일은 `{sum(1 for p in candidate_bookdata_files if (json.loads(p.read_text(encoding='utf-8')).get('standard_codes') or json.loads(p.read_text(encoding='utf-8')).get('standard_code')))}`개다.",
-        "태그되지 않은 원고도 파일명으로 판본·학기·상품에 자동 귀속하지 않았다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계했다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.",
+        f"현재 검색 대상은 원본 BookData `{len(source_bookdata_files)}`개, 재귀 후보·패키지 BookData `{len(candidate_bookdata_files)}`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `{len(code_tagged_files)}`개다.",
+        "태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.",
         "",
         "자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.",
         "",

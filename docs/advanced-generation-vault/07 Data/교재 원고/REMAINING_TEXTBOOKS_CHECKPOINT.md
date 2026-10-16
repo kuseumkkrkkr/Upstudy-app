@@ -1,9 +1,18 @@
 # 남은 교재 제작·출판 체크포인트
 
-기준일: 2026-10-16
+기준일: 2026-10-17
 상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
-## 2026-10-16 최신 재검증
+## 2026-10-17 최신 재검증
+
+- 태그 생성 파이프라인 67단계 성공, 원본 BookData 98개 참조 확인. 원고 폴더 실측: BookData 134개, JSON 225개, 하위 폴더 41개, HTML 106개. activity: quiz 104, statisticsEstimator 2, discreteExperiment 1.
+- 커버리지 원장은 이제 `standard_codes`/`standard_code`와 tags의 exact official-code token을 검사한다. 판본은 `curriculum_version` 또는 명시적인 판본 태그에서만 확인하고, 파일명으로 추정하지 않는다. 이에 따라 2015 중학교 학년군 태그 27개, 2022 중학교 학년군 태그 30개가 각각 확인됐지만, 이 기준은 학기별·상품별로 배분하지 않았다.
+- 그 외 확인된 공식-code 후보 수: #16 수학Ⅱ(2015) 3/21, #17 확률과 통계(2015) 17/17, #20 공통수학1(2022) 19/19, #21 공통수학2(2022) 3/20, #22 대수(2022) 1/18, #23 미적분Ⅰ(2022) 2/20, #24 확률과 통계(2022) 16/16, #25 미적분Ⅱ(2022) 23/23, #26 기하(2022) 14/14. 이는 태그 후보 수이며 내용 완성 수가 아니다.
+- 공통수학2에서는 본문에 2022 기준을 명시한 기존 두 BookData의 페이지를 유지하고 `10공수2-02-04`, `02-05`, `03-01`을 예비 연결했다. `03-01`은 일반 함수 그래프 이해가 명시적으로 미완료다. 판본 또는 공식 기준 근거가 불분명한 집합·유리함수 기존 자료는 연결하지 않았다. 두 기존 BookData와 매니페스트는 guarded Upstudy-hotfix HEAD `fc7d4eeece54494af0313b8a0985d4069f8a3ee5` importer 통과, 그룹 초안은 두 단원·원본 9쪽을 보존했다.
+- 2022 공식 HWP XML에서 기준 문단의 `EqEdit` 수식 개체가 변환 텍스트에서 빠진 코드를 coverage ledger에 표시했다: `9수02-10`, `10공수2-01-07`, `10공수2-03-04/05`, `12대수03-02/03/04/05`. 누락 수식은 임의로 복원하지 않았으며, 해당 텍스트를 완전 전사로 취급하지 않는다.
+- 매니페스트 등록 V2 후보 12개와 공통수학2 기존 후보 2개, 총 14 BookData가 guarded importer를 통과했다. 독립 교사·수학 검토, 전 과목 범위 승인과 권리 결정은 계속 대기 중이며 production import/deploy는 하지 않았다.
+
+## 2026-10-16 이전 재검증
 
 - 파이프라인 66단계 성공, 원본 BookData 98개 참조 확인. 교재 원고 폴더 실측: BookData 파일 134개, JSON 223개, 하위 폴더 40개, HTML 106개. HTML 인덱스 재생성 완료.
 - 선언형 activity 인벤토리: quiz 104개, statisticsEstimator 2개, discreteExperiment 1개. 이는 저작물 기능 수이며 실제 화면별 동작·교과 적합성 검토 완료를 뜻하지 않는다.
@@ -33,8 +42,8 @@
 ## 현재 근거
 
 - 목표 집합은 [개념서 체험콘텐츠 제작규격](개념서_체험콘텐츠_제작규격.md)의 판본별 26종(중등 12, 고등 14)이다. 아래 23개 폴더는 작업 산출물 위치이지 목표 집합이 아니다.
-- 최초 인벤토리: 폴더 23개, BookData JSON 117개, JSON 187개, 체험형 HTML 84개. 현재 재귀 실측은 폴더 38개, BookData JSON 132개, JSON 217개, HTML 106개다.
-- `python tool/build_tagged_textbook_drafts.py`: 최신 64단계 성공, 원본 BookData 96개 참조 확인. 기존 태그 패키징 수치: 단원 34, 소단원 109, 개념 199, 보존 지면 1,594. 추가 후보 BookData는 기존 통합본 범위를 늘린 것으로 세지 않는다.
+- 최초 인벤토리: 폴더 23개, BookData JSON 117개, JSON 187개, 체험형 HTML 84개. 최신 재귀 실측은 폴더 41개, BookData JSON 134개, JSON 225개, HTML 106개다.
+- `python tool/build_tagged_textbook_drafts.py`: 최신 67단계 성공, 원본 BookData 98개 참조 확인. 기존 태그 패키징 수치: 단원 34, 소단원 109, 개념 199, 보존 지면 1,594. 추가 후보 BookData는 기존 통합본 범위를 늘린 것으로 세지 않는다.
 - #8·#9·#10·#11 후보 BookData는 schema v2, 각각 4개 선언형 quiz activity다. 2026-10-16 guarded Upstudy-hotfix HEAD `169a2d4bb533229c3032052cf9fe5724119100cd`에서 네 파일 모두 SHA-256 검증을 포함한 importer 통과(각 4모듈/24쪽/4활동). 원고 테스트 #8–#11 각 2건, 총 8건 통과; guarded hotfix `test/book_activity_v2_test.dart` 6건 통과(실제 reader 390px/1280px 포함).
 - #9–#11 HTML 12개를 브라우저에서 열어 직접 조작했다. #9는 원뿔 단면, 이등변삼각형 채점, 직사각형 대각선 성질, 상대도수 비교를 확인했다. #10은 피타고라스 빗변, 삼각비 비율, 곱의 법칙 결과 갱신, 주사위 시행/상대도수 누적을 확인했다. #11은 제곱근 근삿값, 다항식 곱·인수분해 결과, 이차함수 극값 방향 전환을 확인했다. 캡처는 로컬 검수 증거이며 공개 배포 증거가 아니다.
 - #12 schema v2 BookData는 guarded Upstudy-hotfix HEAD `e9028f9da180835d642863d49c09ebdf81341e5d`의 SHA-256 importer 통과(SHA-256 `926AF3444B0DC9BC0C0C621638A30E8958EBD62F9FE3BB6CFF09FFE3D74D533D`); 원고 테스트 2건 통과, guarded hotfix V2 reader 회귀 6건 통과. 네 HTML 페이지의 화면을 캡처하고 조작 확인했다: 조사 인원 20→26명, 제3사분위수 80→81(사분위 범위 25→26), 상관 방향 양→음, 이상값 변경 시 평균·중앙값·최빈값 갱신. 모든 확인은 로컬 후보 검수이며 공개 배포 증거가 아니다.
@@ -42,7 +51,7 @@
 - 기하 포물선 시범은 BookData 3쪽에 매개변수 그래프를 담고, 거리 측정·채점형 입력은 별도 `고등수학_기하_포물선_체험형_시범.html`에 있다. 앱 모델이 지원하지 않는 기능은 HTML/태그 자산을 보존하고 지원된다고 주장하지 않는다.
 - 원격 게시 경로 `ApiClient.createTextbook()`은 빈 Map을 반환한다. 실제 서버 저장 계약과 UI 게시 동작은 미확인이다.
 - 2022 HWP TXT 추출 ID는 `(가) 성취기준 해설` 참고이며 본표 ID와 구분한다. XHTML로 본표 190개 고유 기준을 추가 복구했다. HWP SHA-256 `AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856`; 공식 묶음 SHA-256 `B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146`. 원본과 변환 파일은 `work/`에 보존한다.
-- 2015 교육부 고시 제2015-74호 별책8 수학 PDF/공식 ZIP도 내려받아 코드 인덱스를 추출했다(PDF SHA-256 `4BD2B84E978865A71D90577D8EB6240F0ECF24A9884642D627CDE460D71AB88E`; ZIP SHA-256 `556C3045B7DCEFF1442049D3B84E6DD0A34FDEE420356305E7802E7070AFA212`). `tool/build_curriculum_code_inventory.py`가 26종을 과목/학년군 prefix에 연결했다. 단, 2022 HWP 텍스트 추출에서 성취기준 표 전체가 복구되지 않아 그쪽 코드 개수는 관측된 하한일 뿐 전체 범위가 아니다. 기존 본문이 각 코드를 충족하는지도 아직 대조하지 않았다.
+- 2015 교육부 고시 제2015-74호 별책8 수학 PDF/공식 ZIP도 내려받아 코드 인덱스를 추출했다(PDF SHA-256 `4BD2B84E978865A71D90577D8EB6240F0ECF24A9884642D627CDE460D71AB88E`; ZIP SHA-256 `556C3045B7DCEFF1442049D3B84E6DD0A34FDEE420356305E7802E7070AFA212`). `tool/build_curriculum_code_inventory.py`가 26종을 과목/학년군 prefix에 연결했다. 단, 2022 HWP XHTML 본표에서 190개 고유 코드를 복구했으며, 일부 EqEdit 수식 개체는 변환물에서 내용이 빠져 별도 한계로 원장에 표시한다. 기존 본문이 각 코드를 충족하는지도 아직 대조하지 않았다.
 - [26종 성취기준·콘텐츠 적용 범위 원장](REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md)은 2015 PDF 및 2022 HWP XHTML 본표 기준 코드와 원고 tag를 edition 일치 조건으로 대조한다. 2015 수학(상)/(하) 분권 경계와 모든 학기 배정은 미확정이며, tag는 내용 coverage 승인이 아니다.
 - guarded `Upstudy-hotfix` HEAD `1c28c3038c0eac48de5f3e6bd2581dbf7d486b24`의 실제 V2 계약에서 `discreteExperiment` 네이티브 importer/widget을 확인했다. 독립 HTML은 activity로 자동 임베드되지 않으며, 확률 원본에 discreteExperiment를 부분 대응했다. 실제 UI parity 검수는 미완료다. 서버 저장·교사/권리 승인·배포 근거는 없다.
 - 기존 대수 초안의 `[12대수03-02]`는 XHTML 본표에 존재한다. 코드의 유무는 확인됐지만 초안 내용이 그 기준을 충족하는지는 별도 대조해야 한다.

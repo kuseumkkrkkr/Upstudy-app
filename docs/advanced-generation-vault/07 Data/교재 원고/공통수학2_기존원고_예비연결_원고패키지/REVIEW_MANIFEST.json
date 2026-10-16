@@ -1,0 +1,42 @@
+{
+  "source_bookdata_files": [
+    {
+      "bookdata_file": "공통수학2_명제와조건_BookData_시범.json",
+      "bookdata_sha256": "1E8D0975AD0304B16C69D6844AC46E3F226EB934FA43904BAE0ED4F45C304A28",
+      "standard_codes": [
+        "10공수2-02-04",
+        "10공수2-02-05"
+      ]
+    },
+    {
+      "bookdata_file": "공통수학2_함수의대응_BookData_시범.json",
+      "bookdata_sha256": "4BD735C8099B001798BAF71389CD0992ED57722F312D3EACF97272A4F23E8F9D",
+      "standard_codes": [
+        "10공수2-03-01"
+      ]
+    }
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_criterion_table",
+  "candidate_code_references": [
+    "10공수2-02-04",
+    "10공수2-02-05",
+    "10공수2-03-01"
+  ],
+  "preliminary_module_alignment": {
+    "10공수2-02-04": "candidate_mapping_review_pending",
+    "10공수2-02-05": "candidate_mapping_review_pending",
+    "10공수2-03-01": "candidate_partial_general_function_graph_incomplete"
+  },
+  "curriculum_review_status": "official_codes_and_explicit_source_mentions_checked; product_scope_pending",
+  "math_review_status": "pending_independent_teacher_review",
+  "teacher_review_status": "pending",
+  "rights_status": "unknown_for_existing_drafts; project_rights_decision_pending",
+  "integration_status": "candidate_pages_preserved; grouped_output_generated_by_pipeline",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "fc7d4eeece54494af0313b8a0985d4069f8a3ee5",
+  "notes": [
+    "10공수2-03-01 source explicitly says general function graph understanding is incomplete; this remains a partial candidate.",
+    "Other Common Math 2 samples without explicit edition evidence or standard-code evidence were left untagged."
+  ]
+}
