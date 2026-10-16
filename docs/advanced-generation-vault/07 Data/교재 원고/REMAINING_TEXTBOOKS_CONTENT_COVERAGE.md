@@ -1272,7 +1272,7 @@
 
 ## 앱 인터랙션 호환성 인벤토리
 
-현재 재귀 인벤토리: BookData `147`개(그중 V2 `26`개), 선언형 activity `215`개(`discreteExperiment` 1, `quiz` 210, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
+현재 재귀 인벤토리: BookData `147`개(그중 V2 `26`개), 선언형 activity `228`개(`discreteExperiment` 1, `quiz` 223, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
 
 실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
 `statisticsEstimator`는 표본 값 입력으로 평균을 계산하거나 성공 수÷표본 크기로 비율을 계산하고, 결과 해석·수정·초기화·힌트를 제공한다. 상태는 reader-session에 한정된다. `12확통03-07` 후보에는 mean/proportion 두 모드를 넣었다. 전체 BookData importer, Python activity/import 32개, Flutter estimator/V2 reader 9개가 guarded hotfix HEAD에서 통과했으나, 교사 수학검토·권리승인은 남아 있다.
