@@ -1268,7 +1268,8 @@
 
 ## 기준-챕터 매핑 신호 감사
 
-고유 공식 판본-코드 쌍 `392`개 중 같은 판본 태그가 있는 쌍은 `392`개, exact code가 chapter 안에 있는 쌍은 `342`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 검토 대기 candidate chapter mapping은 `75`개, exact 또는 candidate 구조 신호가 없는 쌍은 `0`개다.
+고유 공식 판본-코드 쌍 `392`개 중 공식 코드 필드 또는 태그 신호가 있는 쌍은 `392`개, exact code가 chapter 안에 있는 쌍은 `342`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `21`개, 검토 대기 candidate chapter mapping은 `75`개, exact 또는 candidate 구조 신호가 없는 쌍은 `0`개다.
+코드 신호 출처를 나누면 공식 코드 필드 `325`쌍, 일반 태그 `233`쌍, `candidate-standard`/`성취기준 후보` 태그 `130`쌍이다. 출처 간 중복이 있어 합산하지 않는다. 태그·필드·챕터 구조 신호는 내용 충족 증거가 아니다. 이 원장에서 독립 검토 승인으로 인정한 기준 충족 수는 `0`개이며, 실제 충족 여부는 교사·독립 수학 검토 기록으로 별도 확인해야 한다.
 아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.
 
 | # | 상품 | 기준 수 | chapter 연결 신호 없음 |
@@ -1311,6 +1312,7 @@
 ## 게시·권리·사람 검토 게이트 인벤토리
 
 재귀 BookData `178`개 metadata 집계: 게시 적격성 `not_eligible` 33, `unspecified` 145; 권리 상태 `pending` 33, `unspecified` 145; 교사 검토 `pending` 33, `unspecified` 145; 수학 검토 `author_checks_recorded_independent_review_pending` 32, `pending` 1, `unspecified` 145.
+현재 metadata에서 게시·권리·교사·독립 수학 검토가 모두 승인으로 확인되는 BookData는 0개다. 따라서 게시 가능 자료로 계산한 수는 0개다.
 `unspecified`는 승인이나 미승인을 뜻하지 않고 증거가 없는 상태다. `not_eligible` 및 검수 대기 문서만으로는 출판 승인할 수 없다. 이 집계는 원고 metadata 인벤토리이며 권리 문서·교사 서명·독립 수학검토 산출물을 대체하지 않는다.
 
 실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
