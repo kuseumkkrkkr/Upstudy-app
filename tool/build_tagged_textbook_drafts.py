@@ -35,6 +35,7 @@ GENERATORS = [
     ("build_math_2_2015_draft.py", "main"),
     ("build_probability_statistics_2015_draft.py", "main"),
     ("build_probability_statistics_2015_v2_batch1.py", "main"),
+    ("build_probability_statistics_2015_remaining_v2_batch2.py", "main"),
     ("build_calculus_2015_draft.py", "main"),
     ("build_unversioned_middle_school_integer_draft.py", "main"),
     ("build_remaining_tagged_samples.py", "main"),
