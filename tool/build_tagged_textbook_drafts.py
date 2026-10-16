@@ -115,6 +115,7 @@ GENERATORS = [
     ("build_math2_2015_derivative_equations_inequalities_v2_batch7.py", "main"),
     ("build_geometry_2015_conic_tangents_v2_batch2.py", "main"),
     ("build_geometry_2015_vector_line_circle_v2_batch3.py", "main"),
+    ("build_geometry_2015_space_relations_v2_batch4.py", "main"),
 ]
 
 

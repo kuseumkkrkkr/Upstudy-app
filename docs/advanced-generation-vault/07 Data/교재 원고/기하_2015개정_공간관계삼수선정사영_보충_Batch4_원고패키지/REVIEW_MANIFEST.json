@@ -1,0 +1,23 @@
+{
+  "bookdata_file": "기하_2015개정_공간관계삼수선정사영_보충_Batch4_BookData_V2_시범.json",
+  "bookdata_sha256": "C76D42AD7C14330C2FF3B03EA4987A5D3BA898D63FB31BB812F4F027578E2D5B",
+  "candidate_code_references": [
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 3,
+  "page_count": 15,
+  "native_activity_count": 3,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 0,
+  "content_assertion_status": "coordinate_proofs_and_projection_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; existing_space_candidates_preserved"
+}

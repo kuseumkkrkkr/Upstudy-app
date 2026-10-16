@@ -1,0 +1,474 @@
+{
+  "schema_version": 2,
+  "title": "기하 · 공간의 위치 관계·삼수선·정사영 보충 Batch4",
+  "subtitle": "2015 개정 기준 12기하03-01, 12기하03-02, 12기하03-03",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03"
+  ],
+  "tags": [
+    "기하",
+    "2015 개정",
+    "공간도형 보충",
+    "추가 원고 후보",
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03"
+  ],
+  "chapters": [
+    {
+      "title": "직선·평면의 위치 관계 증명",
+      "intro": [
+        "공식 기준 12기하03-01에 연결한 보충 후보입니다.",
+        "기존 예제와 연습의 반복을 피하고 풀이 근거를 단계별로 보완합니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-space-relations-open",
+          "template": "opening",
+          "title": "핵심 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "생각할 문제",
+              "text": "방향벡터와 법선벡터, 교점 조건으로 직선이 평면과 평행함을 어떻게 보일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 확인",
+              "text": "조건을 그림 또는 좌표로 나타내고 결론을 뒷받침할 근거를 찾습니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-space-relations-concept",
+          "template": "concept",
+          "title": "개념과 근거",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "직선·평면의 위치 관계 증명",
+              "text": "평면 π의 법선벡터를 n이라 하자. 직선의 방향벡터 d가 d·n=0이면 직선의 방향은 평면과 평행하다. 직선 위 한 점이 π에 있지 않으면 직선은 π와 만나지 않아 π에 평행하다."
+            },
+            {
+              "type": "formula",
+              "title": "핵심 관계",
+              "text": "d·n=0이고 직선 위 점이 π에 없으면 직선과 평면은 평행이다."
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "그림에서 보이는 모양만으로 평행·수직·길이를 단정하지 말고 정의와 조건으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-space-relations-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "평면 π: z=0에 대해 직선 ℓ: (x,y,z)=(2,1,1)+t(3,−2,0)이 π와 평행함을 증명하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 방향",
+              "text": "π의 법선벡터는 n=(0,0,1), ℓ의 방향벡터는 d=(3,−2,0)이다. d·n=0이므로 ℓ의 방향은 π와 평행하다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 교점",
+              "text": "ℓ 위의 모든 점은 z=1이다. π 위의 점은 z=0이므로 ℓ과 π는 만나지 않는다. 따라서 ℓ∥π이다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "결론을 원래 조건에 대입하고 증명에 필요한 가정이 모두 사용되었는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-space-relations-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "두 직선 ℓ₁=(t,0,0), ℓ₂=(1,s,1)이 꼬인 위치임을 증명하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 기준 정의나 정리를 표시하고, 수치·벡터 관계를 단계별로 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 방향 비교",
+              "text": "방향벡터는 (1,0,0), (0,1,0)으로 서로 평행하지 않다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 교점 확인",
+              "text": "교점이 있다면 z좌표가 0과 1로 같아야 하므로 모순이다. 두 직선은 만나지 않고 평행하지 않으므로 꼬인 위치이다."
+            },
+            {
+              "type": "answer",
+              "title": "정리",
+              "text": "교점이 있다면 z좌표가 0과 1로 같아야 하므로 모순이다. 두 직선은 만나지 않고 평행하지 않으므로 꼬인 위치이다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-rel-quiz",
+                "kind": "quiz",
+                "prompt": "d·n=0이고 직선 위 한 점이 평면에 속하지 않을 때 직선과 평면의 관계는?",
+                "options": [
+                  "평행",
+                  "수직",
+                  "평면 위에 포함"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "방향이 평면과 평행하고 직선 위 점은 평면 밖이므로 만나지 않습니다.",
+                "incorrect_feedback": "법선벡터와 내적이 0이면 방향은 평면과 평행합니다. 점이 평면 밖이므로 직선 전체가 평면 위에 있지는 않습니다.",
+                "hints": [
+                  "d·n=0이 의미하는 방향 관계를 확인하세요.",
+                  "직선 위 기준점이 평면 밖이면 교점이 없습니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-space-relations-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "직선·평면의 위치 관계 증명",
+              "text": "평면 π의 법선벡터를 n이라 하자. 직선의 방향벡터 d가 d·n=0이면 직선의 방향은 평면과 평행하다. 직선 위 한 점이 π에 있지 않으면 직선은 π와 만나지 않아 π에 평행하다. d·n=0이고 직선 위 점이 π에 없으면 직선과 평면은 평행이다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "정의 또는 정리를 분명히 말했다.",
+                "계산·증명의 근거를 빠뜨리지 않았다.",
+                "결론을 조건에 대입해 확인했다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "삼수선의 정리 좌표 적용",
+      "intro": [
+        "공식 기준 12기하03-02에 연결한 보충 후보입니다.",
+        "기존 예제와 연습의 반복을 피하고 풀이 근거를 단계별로 보완합니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-three-perpendicular-open",
+          "template": "opening",
+          "title": "핵심 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "생각할 문제",
+              "text": "평면 위 직선이 사선의 정사영과 수직이면 왜 사선에도 수직일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 확인",
+              "text": "조건을 그림 또는 좌표로 나타내고 결론을 뒷받침할 근거를 찾습니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-three-perpendicular-concept",
+          "template": "concept",
+          "title": "개념과 근거",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "삼수선의 정리 좌표 적용",
+              "text": "평면 α에 수직인 선분 PH의 발을 H, 평면 위의 점을 A라 하자. 사선 PA의 정사영은 HA이다. 평면 위 직선 ℓ이 HA와 수직이면 ℓ은 사선 PA에도 수직이다."
+            },
+            {
+              "type": "formula",
+              "title": "핵심 관계",
+              "text": "평면 성분과 수직 성분을 분리하면 내적 0을 확인할 수 있다."
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "그림에서 보이는 모양만으로 평행·수직·길이를 단정하지 말고 정의와 조건으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-three-perpendicular-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "α: z=0, H=(0,0,0), A=(3,0,0), P=(0,0,4)이다. A를 지나고 y방향인 직선 ℓ이 PA와 수직임을 좌표와 삼수선 정리로 확인하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 정사영",
+              "text": "PH는 z축 방향으로 α에 수직이다. P의 수선의 발은 H이고, PA의 정사영은 HA로 x축 방향이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 수직 확인",
+              "text": "ℓ의 방향벡터는 (0,1,0), AP의 방향벡터는 (−3,0,4)이다. 내적은 0이므로 ℓ⊥PA이며 삼수선 정리와 일치한다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "결론을 원래 조건에 대입하고 증명에 필요한 가정이 모두 사용되었는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-three-perpendicular-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "α: z=0, H=(0,0,0), A=(0,4,0), P=(0,0,3)이다. A를 지나고 x방향인 직선 m이 PA와 수직임을 정사영과 내적으로 설명하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 기준 정의나 정리를 표시하고, 수치·벡터 관계를 단계별로 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 정사영",
+              "text": "PA의 정사영 HA는 y방향이고, m의 방향은 x방향이므로 m⊥HA이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 사선과 비교",
+              "text": "AP=(0,−4,3), m의 방향벡터는 (1,0,0)이다. 내적이 0이므로 m⊥PA이다. 이는 삼수선 정리의 결론이다."
+            },
+            {
+              "type": "answer",
+              "title": "정리",
+              "text": "AP=(0,−4,3), m의 방향벡터는 (1,0,0)이다. 내적이 0이므로 m⊥PA이다. 이는 삼수선 정리의 결론이다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-three-perp-quiz",
+                "kind": "quiz",
+                "prompt": "평면 위 직선 ℓ이 사선의 정사영에 수직일 때 삼수선 정리의 결론은?",
+                "options": [
+                  "ℓ은 사선에도 수직",
+                  "ℓ은 사선과 평행",
+                  "ℓ은 평면에 수직"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정사영에 수직인 평면 위 직선은 삼수선 정리에 따라 사선에도 수직입니다.",
+                "incorrect_feedback": "정사영에 대한 수직 관계를 사선으로 옮기는 것이 삼수선 정리입니다.",
+                "hints": [
+                  "평면 위 직선과 사선의 정사영 관계를 확인하세요.",
+                  "정사영에 수직이면 사선에도 수직입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-three-perpendicular-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "삼수선의 정리 좌표 적용",
+              "text": "평면 α에 수직인 선분 PH의 발을 H, 평면 위의 점을 A라 하자. 사선 PA의 정사영은 HA이다. 평면 위 직선 ℓ이 HA와 수직이면 ℓ은 사선 PA에도 수직이다. 평면 성분과 수직 성분을 분리하면 내적 0을 확인할 수 있다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "정의 또는 정리를 분명히 말했다.",
+                "계산·증명의 근거를 빠뜨리지 않았다.",
+                "결론을 조건에 대입해 확인했다."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "정사영 길이와 역산",
+      "intro": [
+        "공식 기준 12기하03-03에 연결한 보충 후보입니다.",
+        "기존 예제와 연습의 반복을 피하고 풀이 근거를 단계별로 보완합니다."
+      ],
+      "pages": [
+        {
+          "id": "geo15-projection-length-open",
+          "template": "opening",
+          "title": "핵심 질문",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "생각할 문제",
+              "text": "선분의 실제 길이와 평면 위 그림의 길이는 각도에 따라 어떻게 달라질까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 확인",
+              "text": "조건을 그림 또는 좌표로 나타내고 결론을 뒷받침할 근거를 찾습니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-projection-length-concept",
+          "template": "concept",
+          "title": "개념과 근거",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "정사영 길이와 역산",
+              "text": "길이 L인 선분이 평면과 예각 θ를 이루면 그 선분의 정사영 길이는 L cosθ이다. 정사영 길이가 주어지면 L=정사영 길이/cosθ로 실제 길이를 구한다."
+            },
+            {
+              "type": "formula",
+              "title": "핵심 관계",
+              "text": "정사영 길이 = 실제 길이 × cos(선분과 평면의 예각)"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 확인",
+              "text": "그림에서 보이는 모양만으로 평행·수직·길이를 단정하지 말고 정의와 조건으로 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-projection-length-example",
+          "template": "example",
+          "title": "예제 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "길이 13인 선분이 평면과 30°를 이룬다. 정사영의 길이를 구하세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 식 세우기",
+              "text": "정사영 길이는 13cos30°이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 계산",
+              "text": "cos30°=√3/2이므로 정사영 길이는 13√3/2이다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "결론을 원래 조건에 대입하고 증명에 필요한 가정이 모두 사용되었는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo15-projection-length-practice",
+          "template": "practice",
+          "title": "연습과 해설",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "선분과 평면이 이루는 예각은 60°이고 정사영 길이는 6이다. 원래 선분 길이를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "먼저 기준 정의나 정리를 표시하고, 수치·벡터 관계를 단계별로 계산합니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 역산",
+              "text": "6=Lcos60°=L/2이므로 L=12이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 확인",
+              "text": "12cos60°=6이므로 주어진 정사영 길이와 일치한다."
+            },
+            {
+              "type": "answer",
+              "title": "정리",
+              "text": "12cos60°=6이므로 주어진 정사영 길이와 일치한다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo15-projection-quiz",
+                "kind": "quiz",
+                "prompt": "길이 8인 선분이 평면과 60°를 이룰 때 정사영 길이는?",
+                "options": [
+                  "4",
+                  "8",
+                  "4√3"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "8cos60°=4입니다.",
+                "incorrect_feedback": "선분과 평면 사이 각도의 코사인을 실제 길이에 곱합니다.",
+                "hints": [
+                  "정사영 길이는 Lcosθ입니다.",
+                  "cos60°=1/2입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo15-projection-length-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "정사영 길이와 역산",
+              "text": "길이 L인 선분이 평면과 예각 θ를 이루면 그 선분의 정사영 길이는 L cosθ이다. 정사영 길이가 주어지면 L=정사영 길이/cosθ로 실제 길이를 구한다. 정사영 길이 = 실제 길이 × cos(선분과 평면의 예각)"
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "정의 또는 정리를 분명히 말했다.",
+                "계산·증명의 근거를 빠뜨리지 않았다.",
+                "결론을 조건에 대입해 확인했다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "supplement_only": true,
+    "publication_eligibility": "not_eligible",
+    "teacher_review_status": "pending",
+    "math_review_status": "independent_review_pending",
+    "rights_status": "publication_decision_pending"
+  }
+}
