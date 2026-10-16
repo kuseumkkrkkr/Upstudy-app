@@ -167,7 +167,8 @@ class MobileStudentBottomAppBar extends StatelessWidget {
           border: Border(top: BorderSide(color: Color(0x1409090B))),
         ),
         child: SizedBox(
-          height: 66,
+          // Preserve the reference 66px bar at default text size; grow for accessibility.
+          height: 66 + (MediaQuery.textScalerOf(context).scale(12) - 12).clamp(0.0, double.infinity).toDouble() * 1.5,
           child: Row(
             children: [
               for (final item in _primaryItems)

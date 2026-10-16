@@ -14,6 +14,13 @@ import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 const int _maxInputChars = 250;
 
+const _atlasBubbleTextStyle = TextStyle(
+  fontSize: 13,
+  height: 1.45,
+  fontWeight: FontWeight.w700,
+  letterSpacing: 0,
+);
+
 class ServerChatPage extends StatefulWidget {
   const ServerChatPage({
     super.key,
@@ -52,6 +59,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   int _conversationEpoch = 0;
   bool _contextValid = true;
 
+  bool _attachLearningContext = false;
   bool _sending = false;
   DateTime? _blockedUntil;
   Timer? _blockTimer;
@@ -107,6 +115,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
     _controller.clear();
     setState(() {
       _contextValid = false;
+      _attachLearningContext = false;
       _sending = false;
       _blockedUntil = null;
       _messages
@@ -258,38 +267,27 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 작동 원리: 모바일은 화면 전체를, 데스크톱은 중앙의 넓은 한 열을 사용해 대화에 집중한다.
   Widget _buildStandalone(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    return StudentHtmlShell(
-      key: const ValueKey('server-chat-page'),
-      title: 'AI 학습 튜터',
-      activeRoute: '/tools',
-      showContextAside: MediaQuery.sizeOf(context).width > 1040,
-      onSearch: () => showStudentQuickSearch(context),
-      onNotifications: () => showStudentNotifications(context),
-      child: Padding(
-        padding: EdgeInsets.fromLTRB(
-          mobile ? 0 : 24,
-          mobile ? 0 : 22,
-          mobile ? 0 : 24,
-          mobile ? 0 : 22,
-        ),
-        child: Center(
-          child: ConstrainedBox(
-            constraints: const BoxConstraints(maxWidth: 920),
-            child: _buildChatSurface(
-              compact: mobile,
-              showClose: false,
-              edgeToEdge: mobile,
-              showPrompts: true,
-              onPersonalized: _canSend ? _askWithMyData : null,
-            ),
-          ),
+    final wide = MediaQuery.sizeOf(context).width > StudentDensityTokens.desktopBreakpoint;
+    return ColoredBox(color: StudentDensityTokens.background,
+      child: Padding(padding: EdgeInsets.only(right: wide ? 244 : 0),
+        child: StudentHtmlShell(
+          key: const ValueKey('server-chat-page'), title: 'AI 학습 튜터',
+          activeRoute: '/tools', railWidth: 84, includeHeader: false,
+          child: Column(children: [
+            _TutorStandaloneHeader(mobile: mobile, onBack: _close,
+              onSearch: () => showStudentQuickSearch(context),
+              onNotifications: () => showStudentNotifications(context)),
+            Expanded(child: _AtlasConversation(messages: _messages, sending: _sending,
+              blocked: _inputBlocked, controller: _controller, scrollController: _scrollController,
+              onSend: () => _send(includeUserData: _attachLearningContext),
+              contextAttached: _attachLearningContext,
+              onContext: _canSend ? () => setState(() => _attachLearningContext = !_attachLearningContext) : null)),
+          ]),
         ),
       ),
     );
   }
 
-  /// 필요한 변수는 모달이 열린 화면 크기와 닫기 콜백이다.
-  /// 작동 원리: 기존 문제 풀이 화면을 가린 채 최대 920×820 크기의 반응형 챗봇 패널을 중앙에 띄운다.
   Widget _buildOverlay(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final compact = size.width <= StudentDensityTokens.mobileBreakpoint;
@@ -346,6 +344,270 @@ class _ServerChatPageState extends State<ServerChatPage> {
         onSend: () => _send(),
       ),
     );
+  }
+}
+
+class _AtlasConversation extends StatelessWidget {
+  const _AtlasConversation({
+    required this.messages,
+    required this.sending,
+    required this.blocked,
+    required this.controller,
+    required this.scrollController,
+    required this.onSend,
+    required this.onContext,
+    required this.contextAttached,
+  });
+
+  final List<_ChatMessage> messages;
+  final bool sending;
+  final bool blocked;
+  final TextEditingController controller;
+  final ScrollController scrollController;
+  final VoidCallback onSend;
+  final VoidCallback? onContext;
+  final bool contextAttached;
+  static const _suggestion = '도함수와 접선의 관계를 설명해줘';
+
+  /// 메시지·입력·전송 상태를 사용한다. 추천 사용은 입력만 채우고 서버 호출은 보내기에만 연결한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final enabled = !sending && !blocked;
+    return ColoredBox(
+      color: const Color(0xFFFDFDFE),
+      child: Padding(
+        padding: EdgeInsets.all(mobile ? 14 : 22),
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                controller: scrollController,
+                children: [
+                  const Center(
+                    child: Text(
+                      '오늘',
+                      style: TextStyle(fontSize: 10, height: 1.52, color: Color(0xFF71717A)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  for (final message in messages)
+                    _AtlasBubble(
+                      message: message,
+                    ),
+                  if (messages.length == 1)
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: IntrinsicWidth(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const Align(
+                              alignment: Alignment.centerRight,
+                              child: Text(
+                                '제안',
+                                style: TextStyle(
+                                  fontSize: 9,
+                                  color: Color(0xFF71717A),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Container(
+                              key: const ValueKey('tutor-suggestion-bubble'),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 16,
+                                vertical: 14,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF09090B),
+                                border: Border.all(
+                                  color: const Color(0xFF09090B),
+                                ),
+                              ),
+                              child: Text(
+                                _suggestion,
+                                style: _atlasBubbleTextStyle.copyWith(
+                                  color: Colors.white,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 5),
+                            Align(
+                              alignment: Alignment.centerLeft,
+                              child: SizedBox.square(
+                                dimension: 44,
+                                child: OutlinedButton(
+                                  key: const ValueKey('tutor-use-suggestion'),
+                                  onPressed: enabled
+                                      ? () {
+                                          controller.text = _suggestion;
+                                          controller.selection =
+                                              TextSelection.collapsed(
+                                                offset: controller.text.length,
+                                              );
+                                        }
+                                      : null,
+                                  style: OutlinedButton.styleFrom(
+                                    padding: EdgeInsets.zero,
+                                    minimumSize: const Size(44, 44),
+                                    maximumSize: const Size(44, 44),
+                                    visualDensity: VisualDensity.standard,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                    shape: const RoundedRectangleBorder(),
+                                    side: const BorderSide(
+                                      color: Color(0x1A09090B),
+                                    ),
+                                    foregroundColor: const Color(0xFF09090B),
+                                    textStyle: Theme.of(context)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(fontSize: 10),
+                                  ),
+                                  child: const Text('사용'),
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  if (sending)
+                    const Text(
+                      '답변을 작성하고 있어요.',
+                      style: TextStyle(fontSize: 12, color: Color(0xFF71717A)),
+                    ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              key: const ValueKey('tutor-html-composer'),
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0x1A09090B)),
+              ),
+              child: Row(
+                children: [
+                  Semantics(
+                    toggled: contextAttached,
+                    button: true,
+                    label: contextAttached ? '학습 맥락 첨부 해제' : '학습 맥락 첨부',
+                    child: SizedBox.square(
+                      dimension: 44,
+                      child: IconButton(
+                        key: const ValueKey('tutor-personalized'),
+                        tooltip: contextAttached ? '학습 맥락 첨부 해제' : '학습 맥락 첨부',
+                        isSelected: contextAttached,
+                        onPressed: onContext,
+                        style: IconButton.styleFrom(
+                          backgroundColor: contextAttached
+                              ? const Color(0xFF09090B)
+                              : const Color(0xFFF3F3F5),
+                          foregroundColor: contextAttached
+                              ? Colors.white
+                              : const Color(0xFF09090B),
+                          shape: const RoundedRectangleBorder(),
+                        ),
+                        icon: const Icon(Icons.auto_awesome, size: 18),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: TextField(
+                      controller: controller,
+                      enabled: enabled,
+                      minLines: 1,
+                      maxLines: 4,
+                      maxLength: _maxInputChars,
+                      textInputAction: TextInputAction.send,
+                      onSubmitted: (_) => onSend(),
+                      inputFormatters: [
+                        LengthLimitingTextInputFormatter(_maxInputChars),
+                      ],
+                      style: const TextStyle(fontSize: 12),
+                      decoration: InputDecoration(
+                        hintText: blocked ? '잠시 후 다시 입력해 주세요' : '메시지를 입력하세요',
+                        counterText: '',
+                        border: InputBorder.none,
+                        enabledBorder: InputBorder.none,
+                        focusedBorder: InputBorder.none,
+                        filled: false,
+                        isDense: true,
+                        contentPadding: EdgeInsets.zero,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  SizedBox(
+                    width: 72,
+                    height: 44,
+                    child: FilledButton(
+                      key: const ValueKey('tutor-send'),
+                      onPressed: enabled ? onSend : null,
+                      style: FilledButton.styleFrom(
+                        padding: EdgeInsets.zero,
+                        backgroundColor: const Color(0xFF09090B),
+                        shape: const RoundedRectangleBorder(),
+                      ),
+                      child: Text(
+                        sending ? '대기' : '보내기',
+                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+
+/// Reference header with keyboard-accessible square controls (mobile >=44px).
+class _TutorStandaloneHeader extends StatelessWidget {
+  const _TutorStandaloneHeader({required this.mobile, required this.onBack, required this.onSearch, required this.onNotifications});
+  final bool mobile;
+  final VoidCallback onBack, onSearch, onNotifications;
+  Widget button(String name, IconData icon, VoidCallback action, {double size = 48}) =>
+    SizedBox.square(dimension: size, child: IconButton(tooltip: name, onPressed: action,
+      style: IconButton.styleFrom(shape: const RoundedRectangleBorder(),
+        side: const BorderSide(color: Color(0x1A09090B)), foregroundColor: const Color(0xFF09090B)),
+      icon: Icon(icon, size: 20)));
+  @override
+  Widget build(BuildContext context) => Container(height: mobile ? 64 : 62,
+    padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 22),
+    decoration: const BoxDecoration(color: Color(0xFFFDFDFE),border: Border(bottom: BorderSide(color: Color(0x1A09090B)))),
+    child: Row(children: [button('뒤로가기', Icons.chevron_left, onBack, size: 44), const SizedBox(width: 12),
+      const Expanded(child: Text('AI 학습 튜터', style: TextStyle(fontSize: 16,fontWeight: FontWeight.w800))),
+      button('검색',Icons.search,onSearch), const SizedBox(width: 7), button('알림',Icons.notifications_none,onNotifications)]));
+}
+
+class _AtlasBubble extends StatelessWidget {
+  const _AtlasBubble({required this.message});
+  final _ChatMessage message;
+  @override
+  Widget build(BuildContext context) {
+    final mine=message.isUser;
+    final color=mine ? Colors.white : const Color(0xFF09090B);
+    return LayoutBuilder(builder:(context, constraints)=>Align(
+      alignment:mine ? Alignment.centerRight : Alignment.centerLeft,
+      child:ConstrainedBox(constraints:BoxConstraints(maxWidth:constraints.maxWidth*(isStudentDensityMobile(context) ? .88 : .76)),
+        child:Padding(padding:const EdgeInsets.only(bottom:12),child:Column(
+          crossAxisAlignment:mine?CrossAxisAlignment.end:CrossAxisAlignment.start,
+          children:[Text(mine?'나':'튜터',style:const TextStyle(fontSize:9,color:Color(0xFF71717A))),const SizedBox(height:5),
+            Container(padding:const EdgeInsets.symmetric(horizontal:16,vertical:14),
+              decoration:BoxDecoration(color:mine?const Color(0xFF09090B):const Color(0xFFF3F3F5),
+                border:Border.all(color:mine?const Color(0xFF09090B):const Color(0x1A09090B))),
+              child:RichText(textScaler:MediaQuery.textScalerOf(context),text:TextSpan(
+                style:_atlasBubbleTextStyle.copyWith(color:color,fontFamily:Theme.of(context).textTheme.bodyMedium?.fontFamily),
+                children:_MessageBubble(message:message)._spans(context,color)))),
+          ])))));
   }
 }
 
