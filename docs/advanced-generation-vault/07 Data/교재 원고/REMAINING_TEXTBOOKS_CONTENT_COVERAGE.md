@@ -1074,8 +1074,8 @@
 | `12기하01-02` | 타원의 뜻을 알고, 타원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
 | `12기하01-03` | 쌍곡선의 뜻을 알고, 쌍곡선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
 | `12기하01-04` | 이차곡선과 직선의 위치 관계를 이해하고, 접선의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-01` | 벡터의 뜻을 안다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
-| `12기하02-02` | 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
+| `12기하02-01` | 벡터의 뜻을 안다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
+| `12기하02-02` | 벡터의 덧셈, 뺄셈, 실수배를 할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json`, `고등수학_기하_벡터의덧셈과실수배_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
 | `12기하02-03` | 위치벡터의 뜻을 알고, 평면벡터와 좌표의 대응을 이해한다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_위치벡터와좌표_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
 | `12기하02-04` | 두 평면벡터의 내적의 뜻을 알고, 이를 구할 수 있다. | `고등수학_기하_2015개정_개념서_시범_BookData.json`, `고등수학_기하_평면벡터내적_BookData_시범.json` | tag 있음 · 내용 검수 필요 |
 | `12기하02-05` | 좌표평면에서 벡터를 이용하여 직선과 원의 방정식을 구할 수 있다. | `기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json` | tag 있음 · 내용 검수 필요 |
@@ -1272,9 +1272,9 @@
 
 ## 앱 인터랙션 호환성 인벤토리
 
-현재 재귀 인벤토리: BookData `143`개(그중 V2 `26`개), 선언형 activity `208`개(`discreteExperiment` 1, `quiz` 205, `statisticsEstimator` 2), 독립 HTML `106`개.
+현재 재귀 인벤토리: BookData `145`개(그중 V2 `26`개), 선언형 activity `213`개(`discreteExperiment` 1, `quiz` 208, `statisticsEstimator` 2, `vectorInnerProduct` 1, `vectorOperation` 1), 독립 HTML `106`개.
 
-실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. `vectorOperation`은 pushed hotfix `67e1d83530af56734681162147298e7d0c38982a`에서 평면 벡터의 덧셈·뺄셈·실수배를 지원하며, `vectorInnerProduct`는 `53f894c543a626524a25afa7d089b7ba48e9912a`에서 평면 벡터 내적을 지원한다. 원본 자산은 HTML 인덱스에 기록했지만 eligible BookData 이관은 확인되지 않아 `migration_status=not_ported`다. 현재 main 앱의 `TextbookActivityBlock`은 `quiz`만 실행하고 나머지 kind는 unsupported fallback으로 보여 준다. 따라서 opaque payload 왕복 보존은 기능 실행/HTML parity가 아니며 vector 기능 보존을 주장하지 않는다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
+실제 hotfix 앱 계약은 guarded `Upstudy-hotfix`에서 확인했다. 등록 kind는 `quiz`, `steps`, `parabolaDistance`, `discreteExperiment`, `statisticsEstimator`, `vectorOperation`, `vectorInnerProduct`이다. main은 hotfix의 한정된 모델·renderer를 재사용해 `vectorOperation`과 `vectorInnerProduct` kind를 reader에 연결했다. `vectorOperation`은 2015 기하 V2 후보에 벡터 조작 활동과 HTML의 두 Socratic 확인 및 연습 퀴즈를 연결했다. importer 왕복과 BookWidget 조작은 검증했으나 원본 HTML의 모든 시각·시간 동작과 parity는 확인하지 않아 `migration_status=ported_pending_review`다. `vectorInnerProduct`는 별도 V2 후보에서 importer 및 BookWidget 조작을 확인했고 동일하게 교사 수학검수·권리·전체 HTML parity는 pending이다. 두 vector 상품은 출판 eligible이 아니다. opaque payload 왕복은 지원 기능 실행과 구분한다. 이 main 저장소에서는 hotfix 모델·렌더러를 중복 구현하지 않고, `discreteExperiment`는 이산 결과를 네이티브로 반복 추첨해 결과 횟수·누적 상대도수를 보여 주며 학생결과 사전 입력이나 API 저장은 허용하지 않는다.
 `statisticsEstimator`는 표본 값 입력으로 평균을 계산하거나 성공 수÷표본 크기로 비율을 계산하고, 결과 해석·수정·초기화·힌트를 제공한다. 상태는 reader-session에 한정된다. `12확통03-07` 후보에는 mean/proportion 두 모드를 넣었다. 전체 BookData importer, Python activity/import 32개, Flutter estimator/V2 reader 9개가 guarded hotfix HEAD에서 통과했으나, 교사 수학검토·권리승인은 남아 있다.
 독립 HTML/JavaScript 자산은 V2 activity로 임베드되거나 자동 실행되지 않는다. 이산실험은 native discreteExperiment로 일부 기능을 대응할 수 있으나 원본 HTML과 화면·기능 패리티는 별도 검수 대상이다. 범용 드래그 도형, 범용 애니메이션, 자유서술 의미 채점은 등록 계약 밖이다.
 V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다. 실제 서버 저장, 페이지별 UI 패리티, 교사 검수, 권리 승인 단계는 별도로 남아 있다.
@@ -1283,7 +1283,7 @@ V2는 저장·검증 가능한 데이터 계약이지 배포 승인이 아니다
 
 2022 HWP 본표에서 대수 코드를 추출했다. 초안의 코드 연결은 표 기준과 직접 대조해야 하며, code tag만으로 원고 충족을 인정하지 않는다.
 
-현재 검색 대상은 원본 BookData `107`개, 재귀 후보·패키지 BookData `143`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `99`개다.
+현재 검색 대상은 원본 BookData `109`개, 재귀 후보·패키지 BookData `145`개다. 공식 코드 필드 또는 tags에 정확한 코드 토큰이 있는 재귀 파일은 `100`개다.
 태그에서 코드를 읽을 때는 공식 코드 전체와 exact token을 대조한다. 판본은 curriculum_version 또는 명시적인 `2015 개정`/`2022 개정` 태그만 인정하며, filename은 판본 근거로 쓰지 않는다. 2022 code tags는 본표 공식 코드와 동일 판본일 때만 집계한다. 기준 태그가 있어도 full content coverage는 별도 검수 대상이다.
 
 자동 생성 표시는 증거 인벤토리이며 완성도·정답 정확성·저작권 승인 판정은 아니다.

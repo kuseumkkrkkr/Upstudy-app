@@ -3,6 +3,13 @@
 기준일: 2026-10-17
 상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
+## 2026-10-17 vectorOperation + resumable pipeline 재검증
+
+- 기존 vector source tag 생성 stage에 `고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json` 생성을 추가했다. 원본 3쪽을 보존하며 `vectorOperation` 조작 activity와 HTML의 2개 Socratic 확인·연습을 quiz 3개로 연결했다. 후보에는 independent teacher/math review와 rights 확인 전 상태를 유지했다.
+- 새 V2의 네 activity 모두 app `BookData` importer 왕복을 통과했다. 실제 후보 전체를 학생 `BookWidget`에 올려 add/subtract/scalar 선택, 결과 확인, scalar 슬라이더의 음수 방향 전환을 테스트했고 Socratic quiz 선택·채점도 확인했다. 기존 vectorInnerProduct BookWidget 검사 포함 compatibility suite 16/16 통과, 변경 Dart 파일 analyzer `No issues found`, Python generator syntax와 V2 재생성 SHA-256 동일(`9404BC0826F8D5C6F1D1DAF15B685682EB86B72A35E3A3852808006062E9E0FE`).
+- 공식 원문 입력이 있는 C: 격리 worktree에서 전체 tag pipeline 78/78 단계를 성공적으로 다시 실행했다. 마지막 검증은 26 products, 1,038 product-standard rows, top-level 109 BookData source files의 package references 통과; HTML index는 standalone HTML 106개와 recursive BookData 145개를 집계했다. 재개 실행도 새 stage 이후 50/50 suffix와 109개 참조 검사를 통과했다.
+- HTML 원장에서는 vectorInnerProduct 및 vectorOperation을 `ported_pending_review`로 표시한다. 이는 선택된 native 동작 검증을 뜻하며 독립 HTML 전체 화면·시간 동작 parity를 뜻하지 않는다. Geometry(2015) 성취기준 본문 매핑은 여전히 partial; 권리, 독립 수학/교사 검수, 배포 승인은 대기 중이다. 26개 상품은 모두 출판 eligible이 아니므로 배포하지 않았다.
+
 ## 2026-10-17 vectorInnerProduct reader 연결 업데이트
 
 - hotfix의 한정된 `BookActivity` 모델·네이티브 activity renderer를 main에 가져와 `TextbookActivityBlock`이 `vectorOperation`/`vectorInnerProduct`를 안전한 parser 통과 시 실행하도록 연결했다. 알 수 없거나 잘못된 payload는 기존 unsupported fallback에 남는다. 서버/시험 점수 저장은 추가하지 않았다.

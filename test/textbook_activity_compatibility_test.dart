@@ -15,6 +15,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2015개정_이차곡선공간도형_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_space_BookData_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/기하_2022개정_vector_BookData_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -102,6 +103,99 @@ void main() {
     final activity = _activities(source).single;
     expect(activity['kind'], 'vectorInnerProduct');
     expect(_activities(book.toJson()), [activity]);
+  });
+
+  testWidgets('vector operations V2 candidate runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final book = BookData.fromJson(source);
+    final activities = _activities(source);
+    expect(activities.map((activity) => activity['kind']), [
+      'vectorOperation',
+      'quiz',
+      'quiz',
+      'quiz',
+    ]);
+    tester.view.physicalSize = const Size(1280, 900);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: book,
+          initialEntryIndex: 1,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    for (
+      var attempt = 0;
+      attempt < 5 && find.textContaining('u+v=(4, 3)').evaluate().isEmpty;
+      attempt++
+    ) {
+      await tester.tap(find.byTooltip('다음 페이지'));
+      await tester.pumpAndSettle();
+    }
+
+    expect(find.textContaining('u+v=(4, 3)'), findsOneWidget);
+    final operationPicker = find.byType(DropdownButtonFormField<String>);
+    await tester.ensureVisible(operationPicker);
+    await tester.tap(operationPicker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('뺄셈 u − v').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('u−v=(2, -1)'), findsOneWidget);
+
+    await tester.ensureVisible(operationPicker);
+    await tester.tap(operationPicker);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('실수배 αu').last);
+    await tester.pumpAndSettle();
+    expect(find.textContaining('αu=(6, 2)'), findsOneWidget);
+    final alphaSlider = find.byType(Slider).first;
+    await tester.ensureVisible(alphaSlider);
+    await tester.drag(
+      alphaSlider,
+      Offset(-tester.getSize(alphaSlider).width * 0.75, 0),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('αu=('), findsOneWidget);
+    expect(find.textContaining('계수가 음수'), findsOneWidget);
+  });
+
+  testWidgets('vector operations V2 Socratic quiz runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의덧셈과실수배_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activity = _activities(source)[1];
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+
+    expect(find.textContaining('u−v를 만들 때'), findsOneWidget);
+    await tester.ensureVisible(find.text('u+(−v)'));
+    await tester.tap(find.text('u+(−v)'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('맞아요. v를 −v로 바꾸어 u에 더합니다.'), findsOneWidget);
   });
 
   testWidgets('vector inner product runs in the student BookWidget', (
