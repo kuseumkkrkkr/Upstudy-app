@@ -1,0 +1,466 @@
+{
+  "title": "대수 2022 개정 · 단원 코드 02 부분 통합 초안",
+  "tags": [
+    "대수",
+    "2022 개정",
+    "12대수02",
+    "부분 통합 초안"
+  ],
+  "chapters": [
+    {
+      "title": "일반각과 호도법",
+      "pages": [
+        {
+          "title": "일반각과 호도법 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · V2 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 12대수01-01 · 12대수01-02 · 12대수01-03 · 12대수01-04 · 12대수01-05 · 12대수01-06 · 12대수01-07 · 12대수01-08 · 12대수02-01 · 12대수02-02 · 12대수02-03 · 12대수03-01 · 12대수03-06 · 12대수03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수02-01. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-02-01-001"
+        },
+        {
+          "id": "other22-12대수-02-01-002",
+          "template": "opening",
+          "title": "질문으로 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "탐구 상황",
+              "text": "반지름과 호의 길이가 같으면 중심각은 몇 라디안일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 정의역을 표시하고, 어떤 표현이나 관계를 찾아야 하는지 한 문장으로 적어 보세요."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-01-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "양의 x축에서 시작해 회전한 각은 방향과 회전량으로 나타내는 일반각으로 확장할 수 있다. 라디안 측정에서 θ=s/r(r은 반지름, s는 호의 길이)이다. 180°=π rad이고, 회전 방향을 부호로 구분한다."
+            },
+            {
+              "type": "standard",
+              "title": "공식 기준 문구",
+              "text": "12대수02-01: 일반각과 호도법의 뜻을 알고, 그 관계를 설명할 수 있다"
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 조건",
+              "text": "정의역, 부호, 인덱스 조건을 먼저 확인하고 성질을 적용합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-01-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "반지름과 호의 길이가 같으면 중심각은 몇 라디안일까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "호의 길이가 6, 반지름이 3이면 θ=6/3=2 rad이다. 60°는 60·π/180=π/3 rad이다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "조건을 만족하는지 대입하거나 그래프·관계식으로 검산합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-01-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "반지름 4, 호의 길이 2인 부채꼴의 중심각을 라디안으로 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "90°/180°=1/2입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "θ=s/r=2/4=1/2 rad입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "θ=s/r=2/4=1/2 rad입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algebra0201-quiz",
+                "kind": "quiz",
+                "prompt": "90°를 라디안으로 나타내면?",
+                "options": [
+                  "π/2",
+                  "π/4",
+                  "2π"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "90°는 180°의 절반이므로 π/2 rad입니다.",
+                "incorrect_feedback": "180°=π를 기준으로 비례식을 세우세요.",
+                "hints": [
+                  "90°/180°=1/2입니다.",
+                  "π의 절반은 π/2입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-01-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기준 연결",
+              "text": "12대수02-01 · 일반각과 호도법"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "핵심 개념을 설명하고, 예제의 조건과 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수02-01"
+      ]
+    },
+    {
+      "title": "삼각함수의 그래프",
+      "pages": [
+        {
+          "title": "삼각함수의 그래프 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · V2 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 12대수01-01 · 12대수01-02 · 12대수01-03 · 12대수01-04 · 12대수01-05 · 12대수01-06 · 12대수01-07 · 12대수01-08 · 12대수02-01 · 12대수02-02 · 12대수02-03 · 12대수03-01 · 12대수03-06 · 12대수03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수02-02. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-02-02-001"
+        },
+        {
+          "id": "other22-12대수-02-02-002",
+          "template": "opening",
+          "title": "질문으로 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "탐구 상황",
+              "text": "단위원 위 점이 한 바퀴 회전할 때 y좌표와 x좌표는 어떤 그래프를 만들까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 정의역을 표시하고, 어떤 표현이나 관계를 찾아야 하는지 한 문장으로 적어 보세요."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-02-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "단위원에서 각 θ에 대응하는 점의 좌표는 (cosθ,sinθ)이다. y=sin x와 y=cos x는 주기 2π, 최댓값 1, 최솟값 −1을 갖는다. y=tan x=sin x/cos x는 cos x=0인 곳에서 정의되지 않고 주기 π이다."
+            },
+            {
+              "type": "standard",
+              "title": "공식 기준 문구",
+              "text": "12대수02-02: 삼각함수의 개념을 이해하여 사인함수, 코사인함수, 탄젠트함수의 그래프를 그리고, 그 성질을 설명할 수 있다"
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 조건",
+              "text": "정의역, 부호, 인덱스 조건을 먼저 확인하고 성질을 적용합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-02-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "단위원 위 점이 한 바퀴 회전할 때 y좌표와 x좌표는 어떤 그래프를 만들까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "sin 0=0, sin(π/2)=1, sin π=0이다. tan x는 x=π/2에서 정의되지 않으며 각 구간에서 주기가 π로 반복된다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "조건을 만족하는지 대입하거나 그래프·관계식으로 검산합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-02-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=cos x의 한 주기 길이와 최댓값을 말하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "sin과 cos는 π만큼 이동하면 둘 다 부호가 바뀝니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "한 주기 길이는 2π이고 최댓값은 1입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "한 주기 길이는 2π이고 최댓값은 1입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algebra0202-quiz",
+                "kind": "quiz",
+                "prompt": "y=tan x의 주기는?",
+                "options": [
+                  "π",
+                  "2π",
+                  "π/2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "tan(x+π)=tan x이므로 주기는 π입니다.",
+                "incorrect_feedback": "탄젠트의 비 sin x/cos x에 x+π를 대입해 보세요.",
+                "hints": [
+                  "sin과 cos는 π만큼 이동하면 둘 다 부호가 바뀝니다.",
+                  "두 부호가 나뉘어 몫은 같아집니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-02-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기준 연결",
+              "text": "12대수02-02 · 삼각함수의 그래프"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "핵심 개념을 설명하고, 예제의 조건과 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수02-02"
+      ]
+    },
+    {
+      "title": "사인법칙과 코사인법칙",
+      "pages": [
+        {
+          "title": "사인법칙과 코사인법칙 · 원본 태그와 기준 후보",
+          "template": "opening",
+          "blocks": [
+            {
+              "type": "paragraph",
+              "text": "태그 경로: 대수 · 2022 개정 · V2 추가 원고 후보 · 가상 예시 · 학기 배정 미확정 · 12대수01-01 · 12대수01-02 · 12대수01-03 · 12대수01-04 · 12대수01-05 · 12대수01-06 · 12대수01-07 · 12대수01-08 · 12대수02-01 · 12대수02-02 · 12대수02-03 · 12대수03-01 · 12대수03-06 · 12대수03-07"
+            },
+            {
+              "type": "paragraph",
+              "text": "성취기준 코드 후보: 12대수02-03. 공식 기준과 대조 전 후보입니다."
+            }
+          ],
+          "id": "other22-12대수-02-03-001"
+        },
+        {
+          "id": "other22-12대수-02-03-002",
+          "template": "opening",
+          "title": "질문으로 시작하기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "탐구 상황",
+              "text": "삼각형에서 두 변과 끼인각을 알면 나머지 한 변을 어떻게 구할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "조건과 정의역을 표시하고, 어떤 표현이나 관계를 찾아야 하는지 한 문장으로 적어 보세요."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-03-003",
+          "template": "concept",
+          "title": "개념과 조건",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "삼각형 ABC에서 변 a,b,c는 각각 맞은편 각 A,B,C의 크기다. 사인법칙은 a/sinA=b/sinB=c/sinC이고, 코사인법칙은 c²=a²+b²−2ab cosC이다. 어떤 자료가 주어졌는지 보고 적절한 법칙을 선택한다."
+            },
+            {
+              "type": "standard",
+              "title": "공식 기준 문구",
+              "text": "12대수02-03: 사인법칙과 코사인법칙을 이해하고, 실생활 문제를 해결할 수 있다"
+            },
+            {
+              "type": "misconception",
+              "title": "확인할 조건",
+              "text": "정의역, 부호, 인덱스 조건을 먼저 확인하고 성질을 적용합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-03-004",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "삼각형에서 두 변과 끼인각을 알면 나머지 한 변을 어떻게 구할까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "a=3,b=4,C=90°이면 c²=3²+4²−2·3·4·cos90°=25이므로 c=5이다. 직각삼각형에서는 피타고라스 정리와 일치한다."
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "조건을 만족하는지 대입하거나 그래프·관계식으로 검산합니다."
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-03-005",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=5,b=7,C=60°일 때 c²을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "c²=a²+b²−2ab cosC입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "c²=25+49−70·(1/2)=39입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "c²=25+49−70·(1/2)=39입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "algebra0203-quiz",
+                "kind": "quiz",
+                "prompt": "a=3,b=4,C=90°일 때 c는?",
+                "options": [
+                  "5",
+                  "7",
+                  "√7"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "코사인법칙에서 cos90°=0이므로 c²=25, c=5입니다.",
+                "incorrect_feedback": "끼인각 C가 주어졌으므로 코사인법칙을 적용하세요.",
+                "hints": [
+                  "c²=a²+b²−2ab cosC입니다.",
+                  "cos90°=0입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "other22-12대수-02-03-006",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기준 연결",
+              "text": "12대수02-03 · 사인법칙과 코사인법칙"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "핵심 개념을 설명하고, 예제의 조건과 계산을 검산할 수 있나요?"
+            }
+          ]
+        }
+      ],
+      "source_file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "candidate_standard_codes": [
+        "12대수02-03"
+      ]
+    }
+  ],
+  "metadata": {
+    "status": "partial_draft",
+    "source_files": [
+      "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json"
+    ]
+  }
+}

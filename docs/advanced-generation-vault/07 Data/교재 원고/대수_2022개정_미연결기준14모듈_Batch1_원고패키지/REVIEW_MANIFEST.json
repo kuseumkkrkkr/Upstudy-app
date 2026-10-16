@@ -1,0 +1,64 @@
+{
+  "bookdata_file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+  "bookdata_sha256": "548FBA0F431C78444AE28774EB2452AEE6182996088047C95E7EB82BB88B0B1D",
+  "candidate_code_references": [
+    "12대수01-01",
+    "12대수01-02",
+    "12대수01-03",
+    "12대수01-04",
+    "12대수01-05",
+    "12대수01-06",
+    "12대수01-07",
+    "12대수01-08",
+    "12대수02-01",
+    "12대수02-02",
+    "12대수02-03",
+    "12대수03-01",
+    "12대수03-06",
+    "12대수03-07"
+  ],
+  "candidate_code_reference_type": "exact_official_2022_hwp_table_and_extracted_standards",
+  "module_count": 14,
+  "page_count": 70,
+  "native_quiz_count": 14,
+  "official_scope_count": 18,
+  "existing_candidate_code": [
+    "12대수03-02"
+  ],
+  "unresolved_formula_codes": [
+    "12대수03-03",
+    "12대수03-04",
+    "12대수03-05"
+  ],
+  "related_html_sources": [
+    {
+      "file": "대수_등차수열_체험형_시범.html",
+      "sha256": "7BACEB36A0745E8CD1246EE2D44C8EDB9E88524E814E6D85C2B2E2412050B0D4",
+      "linked_standard": "12대수03-02",
+      "status": "standalone_asset; not embedded; rights review required"
+    },
+    {
+      "file": "대수_등비수열_체험형_시범.html",
+      "sha256": "1737AF2B6A281C0233BD0597C501A8DA6BC3DFE123B9FB2035A5F2CCCF2E86FE",
+      "linked_standard": null,
+      "status": "standalone_asset; edition not established; not counted as 2022 coverage"
+    },
+    {
+      "file": "대수_지수와로그_체험형_시범.html",
+      "sha256": "55B5B2CBB2067E7B5E2CCE014B6B3A7841EEC69B3D50E551704FB511222EF235",
+      "linked_standard": null,
+      "status": "standalone_asset; existing BookData is explicitly 2015; not counted as 2022 coverage"
+    }
+  ],
+  "example_content_status": "newly_authored synthetic examples",
+  "curriculum_review_status": "15 of 18 official codes have candidate tags; content and product scope review pending",
+  "math_review_status": "arithmetic assertions passed for listed checks only; independent review pending",
+  "teacher_review_status": "pending",
+  "rights_status": "newly authored text pending rights decision; referenced HTML assets pending source review",
+  "interactive_status": "HTML files remain separate; app execution and screen parity unverified",
+  "app_model_roundtrip_status": "parser accepts chapters and pages, but BookContentBlock drops activity payloads on serialization; native quiz compatibility failed",
+  "integration_status": "tag-driven unit integration output; source BookData page payloads preserved",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null
+}

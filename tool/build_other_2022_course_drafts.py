@@ -24,6 +24,14 @@ COURSES = [
         "folder": "확률과통계_2022개정_통합초안",
         "code_prefix": "12확통",
     },
+    {
+        "name": "대수",
+        "glob": "대수*_BookData*_시범.json",
+        "code": re.compile(r"12대수(\d{2})-(\d{2})"),
+        "folder": "대수_2022개정_통합초안",
+        "code_prefix": "12대수",
+        "edition": "2022",
+    },
 ]
 
 
@@ -36,6 +44,9 @@ def build_course(config: dict) -> dict | None:
     expected: Counter[str] = Counter()
     for path in sorted(MANUSCRIPTS.glob(config["glob"])):
         book = json.loads(path.read_text(encoding="utf-8"))
+        edition = config.get("edition")
+        if edition and book.get("curriculum_version") != edition and f"{edition} 개정" not in book.get("tags", []):
+            continue
         book_codes = sorted({(match.group(1), match.group(2)) for match in config["code"].finditer(" ".join(book.get("tags", [])))})
         if not book_codes:
             continue

@@ -35,7 +35,7 @@
     "고등수학_기하_포물선_체험형_시범.html"
   ],
   "html_compatibility_status": "separate_sources_preserved; not embedded or runtime-executed by BookData V2; visual parity unverified",
-  "app_activity_status": "native_quiz_candidate; guarded import pass",
+  "app_activity_status": "BookData.fromJson parser accepts pages; parse-serialize drops all activity payloads; quiz import compatibility failed",
   "math_arithmetic_check_status": "pass_for_listed_spot_checks_only",
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
   "curriculum_review_status": "all_12_new_codes_verified; existing_4_vector_code_mappings_partial; full_product_scope_pending",
