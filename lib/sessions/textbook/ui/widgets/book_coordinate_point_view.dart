@@ -302,7 +302,10 @@ class _PlanePainter extends CustomPainter {
     label('y', Offset(center + 4, 4));
     label(
       'A(${point.x}, ${point.y})',
-      Offset(center + point.x * unit + 12, center - point.y * unit - 22),
+      Offset(
+        center + point.x * unit + 12,
+        center - point.y * unit + (point.y < 0 ? 10 : -22),
+      ),
     );
   }
 

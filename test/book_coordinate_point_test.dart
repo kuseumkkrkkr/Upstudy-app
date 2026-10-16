@@ -184,6 +184,13 @@ void main() {
       expect(find.text('A(3, -1) · 제4사분면'), findsOneWidget);
       expect(find.text('Horizontal, then vertical'), findsOneWidget);
       expect(find.textContaining('2단계:'), findsOneWidget);
+      if (device == PointerDeviceKind.touch) {
+        await tester.pumpAndSettle();
+        await expectLater(
+          find.byType(Scaffold),
+          matchesGoldenFile('goldens/book_coordinate_point_negative_y.png'),
+        );
+      }
       await tester.tap(find.text('처음 위치로'));
       await tester.pumpAndSettle();
       expect(find.text('A(-2, 3) · 제2사분면'), findsOneWidget);
