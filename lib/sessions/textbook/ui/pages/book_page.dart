@@ -5295,17 +5295,7 @@ List<BookContentBlock> _splitEditorialBlock(
   return [block];
 }
 
-List<String> _editorialPageSearchText(BookPage page) => [
-  if (page.kicker.isNotEmpty) page.kicker,
-  for (final block in page.blocks) ...[
-    if (block.title.isNotEmpty) block.title,
-    if (block.text.isNotEmpty) block.text,
-    if (block.formula.isNotEmpty) block.formula,
-    if (block.activity != null) block.activity!.prompt,
-    if (block.activity != null) ...block.activity!.options,
-    ...block.items,
-  ],
-];
+List<String> _editorialPageSearchText(BookPage page) => page.contextText;
 
 List<String> _splitParagraphForPage(String paragraph, int maxChars) {
   final text = paragraph.trim();

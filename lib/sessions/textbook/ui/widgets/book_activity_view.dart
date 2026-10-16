@@ -251,6 +251,23 @@ class _BookActivityViewState extends State<BookActivityView>
       'p': _p,
       'x': _x,
     });
+    if (a.kind == 'disclosure') {
+      final border = Border.all(color: const Color(0xffd4d4d8));
+      return ExpansionTile(
+        key: ValueKey(jsonEncode(a.toJson())),
+        title: Text(a.prompt, style: const TextStyle(fontSize: 16)),
+        shape: border,
+        collapsedShape: border,
+        initiallyExpanded: _step > 0,
+        onExpansionChanged: (open) => setState(() => _step = open ? 1 : 0),
+        childrenPadding: const EdgeInsets.all(16),
+        expandedCrossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(a.disclosureContent, style: const TextStyle(fontSize: 16, height: 1.6)),
+          for (final hint in a.hints) Text(hint, style: const TextStyle(fontSize: 16)),
+        ],
+      );
+    }
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(

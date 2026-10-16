@@ -30,6 +30,7 @@ class BookActivity {
     this.vectorInnerProduct,
     this.walkDurationMs,
     this.setOperations,
+    this.disclosureContent,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -45,6 +46,7 @@ class BookActivity {
   final BookVectorInnerProduct? vectorInnerProduct;
   final int walkDurationMs;
   final BookSetOperations? setOperations;
+  final String disclosureContent;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -82,6 +84,7 @@ class BookActivity {
     BookVectorInnerProduct? vectorInnerProduct;
     var walkDurationMs = 0;
     BookSetOperations? setOperations;
+    var disclosureContent = '';
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -155,6 +158,9 @@ class BookActivity {
         }
         legA = leg(json['a']);
         legB = leg(json['b']);
+      case 'disclosure':
+        allowed.add('content');
+        disclosureContent = text(json['content']);
       case 'steps':
         allowed.add('steps');
         steps = texts(json['steps'], 1, 12);
@@ -196,6 +202,7 @@ class BookActivity {
       vectorInnerProduct,
       walkDurationMs,
       setOperations,
+      disclosureContent,
     );
   }
 
@@ -226,6 +233,7 @@ class BookActivity {
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
     if (kind == 'squareRootNumberLine') ...{'min': 1, 'max': 25},
     if (setOperations != null) ...setOperations!.toJson(),
+    if (kind == 'disclosure') 'content': disclosureContent,
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

@@ -248,6 +248,25 @@ class BookPage {
   final String kicker;
   final List<BookContentBlock> blocks;
 
+  /// Authored text for this page's search/tutor context, never another page or learner state.
+  List<String> get contextText => [
+    if (kicker.isNotEmpty) kicker,
+    for (final block in blocks) ...[
+      if (block.title.isNotEmpty) block.title,
+      if (block.text.isNotEmpty) block.text,
+      if (block.formula.isNotEmpty) block.formula,
+      if (block.activity != null) ...[
+        block.activity!.prompt,
+        ...block.activity!.options,
+        if (block.activity!.kind == 'disclosure') ...[
+          block.activity!.disclosureContent,
+          ...block.activity!.hints,
+        ],
+      ],
+      ...block.items,
+    ],
+  ];
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'template': template.name,

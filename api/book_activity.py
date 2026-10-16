@@ -137,6 +137,9 @@ def validate_activity(value):
         fields(value, common + ' min max')
         if type(value.get('min')) is not int or value['min'] != 1 or type(value.get('max')) is not int or value['max'] != 25:
             raise ValueError('activity: square root number line requires integer bounds 1..25')
+    elif kind == 'disclosure':
+        fields(value, common + ' content')
+        text(value.get('content'))
     elif kind == 'steps':
         fields(value, common + ' steps')
         texts(value.get('steps'), 1, 12)
