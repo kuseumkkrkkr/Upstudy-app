@@ -14,7 +14,7 @@
 - 현재 앱 테스트를 다시 실행했다: BookData 인벤토리 왕복과 activity compatibility 합계 127 tests passed. Upstudy-hotfix 공개/가져오기/저자 호환/그래프 보안 회귀도 51 passed, Starlette/httpx deprecation warning 1개다. 이는 전체 standalone HTML의 화면·동작 parity 검증이 아니다.
 - 현재 BookData로 범위 원장을 재생성했다: 26개 상품, 1,038 product-standard 행, 115 root source BookData. 재귀 원고는 178 BookData이며 이전 분류 기준으로 33 `not_eligible`, 145 eligibility 미지정이다. 106 HTML의 전체 앱 패리티도 미확인이다. 원장 출력은 작업 산출물 폴더의 `REMAINING_TEXTBOOKS_CURRENT_SCOPE_COVERAGE.md`에 보관했다.
 - 공식 판본-코드 392쌍 모두 코드/태그 신호가 있다. 이 중 342쌍은 chapter exact code, 21쌍은 단일 코드·단일 chapter 연결, 75쌍은 candidate chapter mapping이다. exact 또는 candidate 구조 신호가 전혀 없는 쌍은 0이지만, candidate 75쌍의 대조와 모든 실질 내용 충족 검토는 승인되지 않았다.
-- 재귀 `REVIEW_MANIFEST.json` 30개는 모두 `publication_eligibility=not_eligible`다. 단일 원본 SHA를 선언한 25개 중 21개는 CRLF를 LF로 정규화한 뒤 SHA가 일치하고 4개는 불일치한다. 나머지 5개는 여러 원본을 선언하는 형식이라 단일 `bookdata_file` 방식으로는 비교되지 않았다. 원본 교정·manifest 동기화 전까지 기존 runtime status를 현재 후보 SHA의 증거로 간주하지 않는다.
+- 재귀 `REVIEW_MANIFEST.json` 30개는 모두 `publication_eligibility=not_eligible`다. `bookdata_file`, `source_bookdata_files`, `source_files`에 선언된 원본 38개를 CRLF→LF 정규화 SHA로 재대조해 34개 일치, 4개 불일치를 확인했다. 다중 원본 매니페스트 5개의 13개 원본은 모두 일치한다. 불일치 4개는 `수학Ⅰ_2015개정_지수로그누락기준_Batch2`, `수학상_2015개정_다항식곱셈나눗셈`, `공통수학2_2022개정_유리함수그래프탐구_Batch1`, `공통수학2_2022개정_무리함수그래프탐구_Batch1`이다. 원본 또는 manifest digest 재동기화 전까지 runtime status를 현재 후보 SHA의 증거로 간주하지 않는다.
 - 인벤토리·체크포인트 커밋 뒤 저장소 `HEAD`와 `origin/main`은 일치한다. 작업트리에는 별도 로컬 변경이 남아 있으므로 이 검증을 배포물 검증으로 표현하지 않는다.
 - 모든 검수 manifest가 출판 부적격이고 권리·교사·독립 수학·교육과정 검토가 완료되지 않아 배포하지 않았다. 교육부 첨부별 권리 근거, 4개 SHA 불일치 원인, 5개 다중 원본 hash map, 75개 후보 매핑 및 내용의 실질 범위 대조가 후속 차단 항목이다.
 
