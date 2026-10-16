@@ -318,3 +318,10 @@
 - BookData 왕복 및 전체 activity compatibility 124/124 통과. 동일 원장 기준 392 공식 판본-코드 쌍 중 same-edition tag 370, exact chapter anchor 328, 단일 코드·단일 chapter anchor 21, 구조 신호 없음 47이다. 이 수치는 내용 충족이나 승인 수가 아니다.
 - 검수 inventory: 33 BookData `not_eligible`, eligibility·권리·교사 검토 미지정 145, 권리 및 교사 pending 33, author math checks with independent review pending 32, math pending 1. 47 구조 미연결 쌍과 수학·교사·권리 gate가 남아 있어 배포하지 않았다.
 - 전체 생성기 95단계는 기존 체크포인트의 1–47단계와 이번 재개의 48–95단계를 합쳐 완료했다. 다음 작업은 구조 미연결 기준을 코드별로 대조해 실제 공백과 불확실 매핑을 구분하고, 검수 게이트를 해소하는 것이다.
+
+## 2026-10-17 코드 미연결 원본 43개 보수적 대조
+
+- 재귀 BookData 중 공식 코드 토큰이 없는 43개 원본을 분류했다. 31개에는 검토 대기 후보 코드 연결, 3개는 현재 상·하 감사표와 직접 연결할 수 없었고, 9개는 판본 또는 기준 근거가 부족해 미분류로 남겼다.
+- 별도 [미연결 BookData 감사표](REMAINING_TEXTBOOKS_UNTAGGED_BOOKDATA_AUDIT.md)에 각 원본, 후보 코드, 부분 범위 및 근거 한계를 기록했다. 원본 태그는 바꾸지 않았다. 후보는 내용 충족·승인·출판 자격을 뜻하지 않는다.
+- 명시적 2015 수학Ⅱ 정적분 면적 후보는 공식 `12수학Ⅱ03-05`로 바로잡았다. 2015 상·하 후보는 별도의 chapter 후보 대조표를 근거로 했다.
+- 이번에는 coverage audit generator 단계만 재실행했다: 26상품·1,038 상품-기준 행·115 root / 178 recursive BookData. 재귀 178개 중 exact field/tag code 135, 출판 `not_eligible` 33, unspecified 145, 독립 승인 인정 0. 전체 95단계 파이프라인을 다시 돌린 것은 아니다.
