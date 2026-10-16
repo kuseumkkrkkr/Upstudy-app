@@ -201,6 +201,7 @@ enum BookPageTemplate {
 enum BookContentBlockType {
   lead,
   paragraph,
+  standard,
   definition,
   theorem,
   formula,

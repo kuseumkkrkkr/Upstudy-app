@@ -4,6 +4,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:s11/sessions/textbook/ui/widgets/book_activity_view.dart';
+import 'package:s11/sessions/textbook/ui/widgets/book_area_model_pieces.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
@@ -3908,6 +3909,11 @@ class _BookVisualCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final content = switch (visual.kind) {
       'formula' => _buildFormula(),
+      'area-model' => Column(children: [
+        if (visual.formula.isNotEmpty) _buildFormula(),
+        const SizedBox(height: 8),
+        BookAreaModelPieces(labels: visual.items),
+      ]),
       'table' || 'signChart' => _buildTable(),
       'steps' || 'flow' => _buildSequence(),
       'image' => _buildImage(),

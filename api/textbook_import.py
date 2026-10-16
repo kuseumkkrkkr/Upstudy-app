@@ -11,7 +11,7 @@ from api.book_activity import validate_activity
 
 MAX_SOURCE_BYTES = 512 * 1024
 TEMPLATES = set('opening concept principle experiment example solution practice summary'.split())
-BLOCKS = set('lead paragraph definition theorem formula symbols derivation visual graph question thinking solutionStep verification hint answer misconception summary checklist'.split())
+BLOCKS = set('lead paragraph standard definition theorem formula symbols derivation visual graph question thinking solutionStep verification hint answer misconception summary checklist'.split())
 FUNCTIONS = set('abs max min sqrt pow exp ln log sin cos tan ceil floor round'.split())
 RESERVED = FUNCTIONS | {'x', 'pi', 'e', 'constructor', 'prototype', 'window', 'parent', 'document', 'globalThis', 'this'}
 
@@ -121,11 +121,13 @@ def validate_graph(graph):
 
 def validate_visual(visual):
     object_fields(visual, 'kind title caption formula items rows image_source', 'visual')
-    if visual.get('kind') not in {'formula', 'steps', 'table', 'signChart', 'flow', 'image', 'callout'}:
+    if visual.get('kind') not in {'formula', 'steps', 'table', 'signChart', 'flow', 'image', 'callout', 'area-model'}:
         raise ValueError('visual: unsupported kind')
     for field in ('title', 'caption', 'formula', 'image_source'):
         text(visual.get(field, ''), 'visual.' + field)
     strings(visual.get('items', []), 'visual.items')
+    if visual.get('kind') == 'area-model' and len(visual.get('items', [])) != 4:
+        raise ValueError('visual.area-model: four labelled pieces required')
     for row in sequence(visual.get('rows', []), 'visual.rows'):
         strings(row, 'visual.row', 20, 500)
     validate_image(visual.get('image_source', ''))
@@ -148,7 +150,7 @@ def validate_book(book):
         raise ValueError('book.title: required')
     for field, limit in [('subtitle', 300), ('category', 64), ('curriculum_version', 40)]:
         text(book.get(field, ''), 'book.' + field, limit)
-    strings(book.get('tags', []), 'book.tags', 32, 80)
+    strings(book.get('tags', []), 'book.tags', 64, 80)
     strings(book.get('standard_codes', []), 'book.standard_codes', 32, 80)
     if 'cover_color' in book and book['cover_color'] is not None:
         value = book['cover_color']

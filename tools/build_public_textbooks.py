@@ -23,6 +23,14 @@ def prepare(source):
     original = json.loads(source, object_pairs_hook=_unique_object, parse_constant=_reject_constant)
     book = copy.deepcopy(original)
     annotations = {'book': {}, 'chapters': []}
+    # Older author exports omitted the version despite explicit registered V2
+    # activities. Upgrade only a missing declaration; never override explicit V1.
+    if 'schema_version' not in book and any(
+            block.get('type') == 'activity'
+            for chapter in book.get('chapters', [])
+            for page in chapter.get('pages', []) for block in page.get('blocks', [])):
+        book['schema_version'] = 2
+        annotations['schema_migration'] = {'from': 'omitted', 'to': 2}
     for key in ROOT_ANNOTATIONS:
         if key in book:
             annotations['book'][key] = book.pop(key)
