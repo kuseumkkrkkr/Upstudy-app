@@ -23,7 +23,7 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 | `공통수학2_집합과명제_BookData_시범.json` | Unresolved | — | Edition is not established; product/topic title alone is insufficient. |
 | `대수_등비수열_BookData_시범.json` | Unresolved | — | Standard mapping and edition are both pending. |
 | `미적분_2015개정_수열의극한_BookData_시범.json` | 2015 candidate; page/course review pending | 12미적01-01 | 2015 tag + sequence-limit topic. Do not extend to 01-02 without page evidence. |
-| `수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json` | 2015 candidate; page/course review pending | 12미적03-05 | 2015 tag and area-under-curve activity; this is an adjacent calculus criterion, not a Math II code. Verify course placement. |
+| `수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json` | 2015 candidate; page/course review pending | 12수학Ⅱ03-05 | 2015 tag and area-under-curve activity; official 2015 Math II criterion for area enclosed by curves; page-level coverage remains unreviewed. |
 | `수학Ⅱ_도함수부호와증감_BookData_시범.json` | Unresolved | — | Tag says 2015 candidate, not confirmed edition; code not compared. |
 | `수학상_2015개정_초안/수학상_2015개정_거리와중점_BookData_초안.json` | 2015 상·하 topic candidate | 10수학02-01; 10수학02-02 | 02-02 is partial: current source title only covers distance/midpoint, not internal/external division points. |
 | `수학상_2015개정_초안/수학상_2015개정_근과계수의관계_BookData_초안.json` | 2015 상·하 topic candidate | 10수학01-08 | Topic/title match; still needs page-level and math review. |
@@ -64,6 +64,6 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 ## Next review steps
 
 1. Inspect each linked source page and decide whether the candidate is full-topic, partial-topic, or a false match.
-2. Confirm course placement for the 2015 definite-integral sample; its candidate is `12수학Ⅱ03-05` in the official 2015 `수학Ⅱ` criteria.
+2. Review page-level coverage of the 2015 definite-integral sample against `12수학Ⅱ03-05`.
 3. Resolve edition/source evidence for the nine unresolved files before assigning any standard code.
 4. Keep teacher approval, independent math review, rights clearance, and runtime compatibility as separate release gates.

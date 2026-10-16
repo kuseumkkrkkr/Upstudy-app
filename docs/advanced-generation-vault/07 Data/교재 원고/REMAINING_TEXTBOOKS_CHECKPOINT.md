@@ -325,3 +325,4 @@
 - 별도 [미연결 BookData 감사표](REMAINING_TEXTBOOKS_UNTAGGED_BOOKDATA_AUDIT.md)에 각 원본, 후보 코드, 부분 범위 및 근거 한계를 기록했다. 원본 태그는 바꾸지 않았다. 후보는 내용 충족·승인·출판 자격을 뜻하지 않는다.
 - 명시적 2015 수학Ⅱ 정적분 면적 후보는 공식 `12수학Ⅱ03-05`로 바로잡았다. 2015 상·하 후보는 별도의 chapter 후보 대조표를 근거로 했다.
 - 이번에는 coverage audit generator 단계만 재실행했다: 26상품·1,038 상품-기준 행·115 root / 178 recursive BookData. 재귀 178개 중 exact field/tag code 135, 출판 `not_eligible` 33, unspecified 145, 독립 승인 인정 0. 전체 95단계 파이프라인을 다시 돌린 것은 아니다.
+- 최신 범위 원장은 392개 공식 판본-코드 쌍 모두에 field/tag 신호, 342개 exact chapter anchor, 21개 단일코드·단일chapter 연결, 75개 검토 대기 candidate chapter mapping, exact/candidate 구조 신호 누락 0개를 기록한다. 이 최신 구조 신호 집계가 위 Stage 95 시점의 47개 누락 기록을 갱신하며, 내용 충족·승인을 뜻하지 않는다.
