@@ -19,6 +19,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_벡터의뜻_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/고등수학_기하_위치벡터와좌표_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
 ];
 
 void main() {
@@ -185,15 +186,17 @@ void main() {
     final examplePage = (module['pages'] as List)
         .cast<Map<String, dynamic>>()
         .singleWhere((page) => page['id'] == 'geo15-0205-example');
-    final solution = (examplePage['blocks'] as List)
-        .cast<Map<String, dynamic>>()
-        .singleWhere((block) => block['type'] == 'solutionStep')['text'] as String;
+    final solution =
+        (examplePage['blocks'] as List)
+                .cast<Map<String, dynamic>>()
+                .singleWhere((block) => block['type'] == 'solutionStep')['text']
+            as String;
     expect(solution, contains('(x,y)=(0,1)+t(3,2)'));
     expect(solution, contains('(x−2)²+(y+1)²=9'));
     expect(solution, isNot(contains('(1,2)+t(2,−1)')));
-    final activity = _activities(source).singleWhere(
-      (activity) => activity['id'] == 'geo15-0205-quiz',
-    );
+    final activity = _activities(
+      source,
+    ).singleWhere((activity) => activity['id'] == 'geo15-0205-quiz');
     await tester.pumpWidget(
       MaterialApp(
         home: BookWidget(
@@ -242,6 +245,93 @@ void main() {
     await tester.tap(find.text('정답 확인'));
     await tester.pumpAndSettle();
     expect(find.textContaining('맞아요. 3×2−1=5'), findsOneWidget);
+  });
+
+  testWidgets('2015 Calculus V2 quiz imports and runs in the student reader', (
+    tester,
+  ) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final activities = _activities(source);
+    expect(activities, hasLength(27));
+    final activity = activities.singleWhere(
+      (activity) => activity['id'] == 'calc15-0101-quiz',
+    );
+    await tester.pumpWidget(
+      MaterialApp(
+        home: BookWidget(
+          book: _activityBook(activity),
+          initialEntryIndex: 0,
+          persistenceEnabled: false,
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.textContaining('aₙ=3/n'), findsOneWidget);
+    await tester.tap(find.text('0'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('정답 확인'));
+    await tester.tap(find.text('정답 확인'));
+    await tester.pumpAndSettle();
+    expect(find.text('정답입니다: 0'), findsOneWidget);
+  });
+
+  test('2015 Calculus V2 worked examples match their practice prompts', () {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final chapters = source['chapters'] as List<dynamic>;
+    expect(chapters, hasLength(27));
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final pages = chapter['pages'] as List<dynamic>;
+      final examplePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'example',
+              )
+              as Map<String, dynamic>;
+      final practicePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'practice',
+              )
+              as Map<String, dynamic>;
+      final exampleBlocks = examplePage['blocks'] as List<dynamic>;
+      final practiceBlocks = practicePage['blocks'] as List<dynamic>;
+      final exampleQuestion =
+          exampleBlocks.singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>;
+      final practiceQuestion =
+          practiceBlocks.singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>;
+      expect(exampleQuestion['text'], practiceQuestion['text']);
+      final activity = _activities({
+        'chapters': [
+          {
+            'pages': [practicePage],
+          },
+        ],
+      }).single;
+      expect(activity['prompt'], practiceQuestion['text']);
+      expect(
+        (activity['options'] as List<dynamic>)[activity['correct_index']
+            as int],
+        (practiceBlocks.singleWhere(
+              (block) => (block as Map<String, dynamic>)['type'] == 'answer',
+            )
+            as Map<String, dynamic>)['text'],
+      );
+    }
   });
 
   testWidgets('vector meaning V2 practice runs in the student reader', (

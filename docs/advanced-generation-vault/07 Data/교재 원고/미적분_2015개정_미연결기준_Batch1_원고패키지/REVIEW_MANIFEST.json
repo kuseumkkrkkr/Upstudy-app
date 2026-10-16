@@ -1,6 +1,6 @@
 {
   "bookdata_file": "미적분_2015개정_미연결기준_Batch1_BookData_V2_시범.json",
-  "bookdata_sha256": "C598382838A297A94D4303BF9D43548868E6FF30245689A48B4E15447E00565E",
+  "bookdata_sha256": "500E23F61BF295FABC543F955A0BA216B522F26254DDDDF43E8DFC593DFAD583",
   "candidate_code_references": [
     "12미적01-01",
     "12미적01-02",
@@ -37,6 +37,7 @@
   "native_activity_kinds": [
     "quiz"
   ],
+  "question_example_alignment_status": "all 27 example and practice prompts share the same question; structural test passed; independent review pending",
   "math_arithmetic_check_status": "pass_for_spot_checked_examples_only",
   "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
   "curriculum_review_status": "official_codes_verified; product_scope_and_existing_content_merge_pending",
@@ -46,6 +47,8 @@
   "source_interaction_status": "native_quiz_candidates; independent legacy HTML parity unreviewed",
   "integration_status": "candidate_for_tag_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pass_guarded_BookData_fromJson",
-  "runtime_validator_head": "e0bc17074481259c6f8d4c63894da07dd6c2e814"
+  "runtime_import_status": "pending_current_hash_validation",
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }

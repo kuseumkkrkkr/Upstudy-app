@@ -39,11 +39,43 @@ SPECS=[
 ]
 UNIT={"01":"수열의 극한과 급수","02":"미분법","03":"적분법"}
 
+# Keep the worked example and its practice prompt identical so each answer is
+# demonstrated against the exact question shown to the learner.
+ALIGNED_SOLUTIONS={
+ "01-01":"n이 커질수록 3/n은 0에 가까워진다. 따라서 lim(n→∞)3/n=0이다.",
+ "01-02":"합의 극한 법칙으로 lim(aₙ+bₙ)=4+1=5이다.",
+ "01-03":"공비 1/2의 절댓값이 1보다 작으므로 (1/2)ⁿ→0이다. 따라서 극한은 5×0=0이다.",
+ "01-04":"각 항이 1인 n개 항의 부분합은 Sₙ=n이다. Sₙ은 유한한 값으로 수렴하지 않고 커지므로 급수는 발산한다.",
+ "01-05":"첫째항은 3, 공비는 1/3이다. |r|<1이므로 합은 3/(1−1/3)=9/2이다.",
+ "01-06":"전체 길이는 6+3+3/2+⋯이다. 첫째항 6, 공비 1/2인 등비급수이므로 합은 6/(1−1/2)=12cm이다.",
+ "02-01":"지수함수는 연속이므로 lim(x→2)3ˣ=3²=9이다.",
+ "02-02":"자연로그의 미분 공식 (ln x)′=1/x를 적용한다. (x>0)",
+ "02-03":"덧셈정리로 sin(45°+30°)=sin45°cos30°+cos45°sin30°=(√6+√2)/4이다.",
+ "02-04":"sin(5x)/x=5·sin(5x)/(5x)이고 sin u/u→1이므로 극한은 5이다.",
+ "02-05":"코사인함수의 미분 공식에 따라 (cos x)′=−sin x이다. (x는 라디안)",
+ "02-06":"몫의 미분법으로 (x/(x+1))′=((x+1)−x)/(x+1)²=1/(x+1)²이다. (x≠−1)",
+ "02-07":"연쇄법칙으로 (e^(3x))′=e^(3x)·(3x)′=3e^(3x)이다.",
+ "02-08":"dy/dt=2t, dx/dt=2이므로 dy/dx=(2t)/2=t이다.",
+ "02-09":"음함수 미분으로 2x+2y(dy/dx)=0이다. (3,4)를 대입하면 dy/dx=−3/4이다.",
+ "02-10":"f′(x)=4x³이고 이를 한 번 더 미분하면 f′′(x)=12x²이다.",
+ "02-11":"f′(x)=2x이므로 x=2에서 접선 기울기는 4이다. 점 (2,4)를 지나므로 y−4=4(x−2), 즉 y=4x−4이다.",
+ "02-12":"x²≥0이고 x=0에서 등호가 성립한다. 따라서 x=0에서 극솟값 0을 갖는다.",
+ "02-13":"x²≥0이므로 x²+4≥4이고 x=0일 때 등호가 성립한다. 최솟값은 4이다.",
+ "02-14":"s(t)=t³이면 v(t)=3t², a(t)=v′(t)=6t이다. 따라서 a(2)=12이다.",
+ "03-01":"u=x²로 치환하면 du=2x dx이다. 따라서 적분은 ∫eᵘdu=eᵘ+C=e^(x²)+C이다.",
+ "03-02":"부분적분으로 ∫xeˣdx=xeˣ−∫eˣdx=(x−1)eˣ+C이다.",
+ "03-03":"∫₀¹2x dx=[x²]₀¹=1²−0²=1이다.",
+ "03-04":"합의 항은 모두 1/n이고 항이 n개이므로 합은 n×(1/n)=1이다. 따라서 극한도 1이다.",
+ "03-05":"0≤x≤2에서 y=x는 x축 위에 있다. 넓이는 ∫₀²x dx=[x²/2]₀²=2이다.",
+ "03-06":"단면적은 π·2²=4π이고 길이는 3이다. 부피는 4π×3=12π이다.",
+ "03-07":"속도가 일정한 2이므로 이동거리는 ∫₀²|2|dt=2×2=4이다.",
+}
+
 def main():
  chapters=[]; codes=[]
  for code,title,concept,example,question,answer,options in SPECS:
   full="12미적"+code; codes.append(full); slug="calc15-"+code.replace("-","")
-  exp=example; unit=UNIT[code[:2]]
+  exp=ALIGNED_SOLUTIONS[code]; unit=UNIT[code[:2]]
   pages=[
    {"id":slug+"-open","template":"opening","title":"질문 열기","blocks":[{"type":"lead","title":"핵심 질문","text":title},{"type":"thinking","title":"먼저 생각하기","text":"조건과 변수를 표시하고 어떤 극한·미분·적분 관계가 필요한지 예상합니다."}]},
    {"id":slug+"-concept","template":"concept","title":"개념과 조건","blocks":[{"type":"definition","title":title,"text":concept},{"type":"formula","title":"2015 공식 기준 후보","text":full},{"type":"misconception","title":"조건 확인","text":"정의역, 라디안, 미분가능 구간, 수렴 조건 또는 적분 구간을 확인합니다."}]},
@@ -55,6 +87,7 @@ def main():
  book={"schema_version":2,"title":"미적분 · 2015 개정 미연결 기준 보완 후보","subtitle":"수열의 극한·급수, 미분법, 적분법","category":"concept_textbook_prototype","curriculum_version":"2015","tags":["미적분","2015 개정","추가 원고 후보","가상 예시",*codes],"standard_codes":codes,"chapters":chapters}
  pages=[p for c in chapters for p in c["pages"]]; ids=[p["id"] for p in pages]
  assert len(codes)==27 and len(set(codes))==27 and len(pages)==135 and len(set(ids))==135
+ assert len(ALIGNED_SOLUTIONS)==len(SPECS) and all(code in ALIGNED_SOLUTIONS for code,*_ in SPECS)
  assert abs((sum(k for k in range(1,101))/10000)-.505)<1e-12 and abs((1/6)-(.5-1/3))<1e-12
  assert abs((1/3+1/3+1/3)-1)<1e-12 and abs((3*3.141592653589793/3)-3.141592653589793)<1e-12
  OUT.write_text(json.dumps(book,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
@@ -62,9 +95,10 @@ def main():
  try: old=json.loads((PACKAGE/"REVIEW_MANIFEST.json").read_text(encoding="utf-8"))
  except (OSError,json.JSONDecodeError): pass
  digest=canonical_file_sha256(OUT)
- manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2015_appendix8_math_criteria_table","module_count":27,"page_count":135,"native_activity_count":27,"native_activity_kinds":["quiz"],"math_arithmetic_check_status":"pass_for_spot_checked_examples_only","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","curriculum_review_status":"official_codes_verified; product_scope_and_existing_content_merge_pending","math_review_status":"author_spot_checks_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; independent legacy HTML parity unreviewed","integration_status":"candidate_for_tag_grouping; not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if old.get("bookdata_sha256")==digest else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if old.get("bookdata_sha256")==digest else None}
+ same_candidate=old.get("bookdata_sha256")==digest
+ manifest={"bookdata_file":OUT.name,"bookdata_sha256":digest,"candidate_code_references":codes,"candidate_code_reference_type":"official_2015_appendix8_math_criteria_table","module_count":27,"page_count":135,"native_activity_count":27,"native_activity_kinds":["quiz"],"question_example_alignment_status":"all 27 example and practice prompts share the same question; structural test passed; independent review pending","math_arithmetic_check_status":"pass_for_spot_checked_examples_only","example_data_status":"synthetic_original_examples; no commercial text, problem, illustration, or dataset copied","curriculum_review_status":"official_codes_verified; product_scope_and_existing_content_merge_pending","math_review_status":"author_spot_checks_passed; independent_teacher_review_pending","teacher_review_status":"pending","rights_status":"newly_authored; publication_rights_decision_pending","source_interaction_status":"native_quiz_candidates; independent legacy HTML parity unreviewed","integration_status":"candidate_for_tag_grouping; not_merged_into_master_book","publication_eligibility":"not_eligible","runtime_import_status":old.get("runtime_import_status","pending_current_hash_validation") if same_candidate else "pending_current_hash_validation","runtime_validator_head":old.get("runtime_validator_head") if same_candidate else None,"runtime_validation_command":old.get("runtime_validation_command") if same_candidate else None,"runtime_validator_candidate_sha256":old.get("runtime_validator_candidate_sha256") if same_candidate else None}
  (PACKAGE/"REVIEW_MANIFEST.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
- (PACKAGE/"README.md").write_text(f"# {book['title']}\n\n공식 기준 27개를 대상으로 27모듈·135쪽의 새 원고 후보를 만들었습니다. 기존 수열 극한 시범은 별도 보존했습니다. 예시는 자체 작성 가상 자료입니다. 수학 교사 검수·권리 결정 전 출판 부적격이며, HTML parity는 미검증입니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n",encoding="utf-8")
+ (PACKAGE/"README.md").write_text(f"# {book['title']}\n\n공식 기준 27개를 대상으로 27모듈·135쪽의 새 원고 후보를 만들었습니다. 예제와 연습 문항을 동일한 질문으로 맞추고 해설·정답·퀴즈 선택지를 연결했습니다. 모든 문항은 자체 작성입니다. 수학 교사 검수·권리 결정 전 출판 부적격이며, HTML parity는 미검증입니다.\n\nBookData: [`{OUT.name}`](../{OUT.name})\n",encoding="utf-8")
  print(f"Built {len(chapters)} modules, {len(pages)} pages, {len(codes)} standard candidates; sha256={digest}")
 
 if __name__=="__main__": main()
