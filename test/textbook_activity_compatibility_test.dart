@@ -26,6 +26,7 @@ const _draftPaths = <String>[
   'docs/advanced-generation-vault/07 Data/교재 원고/수학Ⅱ_2015개정_미연결기준_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_추출가능기준14모듈_Batch1_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json',
+  'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2015개정_미연결기준15모듈_Batch2_BookData_V2_시범.json',
   'docs/advanced-generation-vault/07 Data/교재 원고/확률과통계_2022개정_확률통계누락8단원_Batch3_BookData_V2_시범.json',
 ];
@@ -715,6 +716,70 @@ void main() {
       await tester.tap(find.text('정답 확인'));
       await tester.pumpAndSettle();
       expect(find.text('정답입니다. 좌표 변환과 정의역 조건을 확인했습니다.'), findsOneWidget);
+    }
+  });
+
+  testWidgets('Algebra EqEdit Batch2 examples and quizzes run', (tester) async {
+    const path =
+        'docs/advanced-generation-vault/07 Data/교재 원고/대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json';
+    final source =
+        jsonDecode(File(path).readAsStringSync()) as Map<String, dynamic>;
+    final chapters = source['chapters'] as List<dynamic>;
+    expect(chapters, hasLength(3));
+    for (final rawChapter in chapters) {
+      final chapter = rawChapter as Map<String, dynamic>;
+      final pages = chapter['pages'] as List<dynamic>;
+      final examplePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'example',
+              )
+              as Map<String, dynamic>;
+      final practicePage =
+          pages.singleWhere(
+                (page) =>
+                    (page as Map<String, dynamic>)['template'] == 'practice',
+              )
+              as Map<String, dynamic>;
+      final exampleQuestion =
+          ((examplePage['blocks'] as List<dynamic>).singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      final practiceQuestion =
+          ((practicePage['blocks'] as List<dynamic>).singleWhere(
+                (block) =>
+                    (block as Map<String, dynamic>)['type'] == 'question',
+              )
+              as Map<String, dynamic>)['text'];
+      expect(exampleQuestion, isNotEmpty);
+      expect(practiceQuestion, isNotEmpty);
+      expect(exampleQuestion, isNot(practiceQuestion));
+    }
+
+    final activities = _activities(source);
+    expect(activities, hasLength(3));
+    for (final activity in activities) {
+      final options = activity['options'] as List<dynamic>;
+      final correctIndex = activity['correct_index'] as int;
+      final correctAnswer = options[correctIndex] as String;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: BookWidget(
+            book: _activityBook(activity),
+            initialEntryIndex: 0,
+            persistenceEnabled: false,
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.text(correctAnswer));
+      await tester.pumpAndSettle();
+      await tester.ensureVisible(find.text('정답 확인'));
+      await tester.tap(find.text('정답 확인'));
+      await tester.pumpAndSettle();
+      expect(find.text('정답입니다. 수열의 항이나 합을 확인했습니다.'), findsOneWidget);
     }
   });
 

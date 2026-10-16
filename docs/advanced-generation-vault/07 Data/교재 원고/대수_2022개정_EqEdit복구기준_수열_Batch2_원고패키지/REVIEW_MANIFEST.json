@@ -1,6 +1,6 @@
 {
   "bookdata_file": "대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "B13C4F7D41DF8A6EB988440C73E2809B99348371CB555ED5555DBFE0D85D3685",
+  "bookdata_sha256": "0EBF437D7C47C598FDD8F7BB6EEFCF9DCBE761004E24AB62A668D4112DE1955F",
   "candidate_code_references": [
     "12대수03-03",
     "12대수03-04",
@@ -29,8 +29,9 @@
     "quiz"
   ],
   "spot_checks": "listed arithmetic checks passed only",
-  "app_model_roundtrip_status": "passed: all 3 Batch2 quiz payloads preserved by BookData.fromJson/toJson",
-  "teacher_reader_interaction_status": "passed: actual Batch2 BookData rendered in teacher reader; quiz submission and feedback verified",
+  "example_question_alignment_status": "explicit_example_question_map_for_all_3_codes; independent review pending",
+  "app_model_roundtrip_status": "pending_current_hash_validation",
+  "teacher_reader_interaction_status": "pending_current_hash_validation",
   "validation_test": "test/textbook_activity_compatibility_test.dart",
   "teacher_review_status": "pending",
   "math_review_status": "author spot checks passed; independent teacher review pending",
@@ -38,5 +39,7 @@
   "curriculum_review_status": "codes and raw HWP EqEdit evidence verified; full scope and semester assignment pending",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }
