@@ -151,3 +151,13 @@
 - 외부 Preview는 합성 교재/응답만 포함한다. 데스크톱은 종이 본문 안을 스크롤해야 아래 slider가 보인다. 브라우저 컨트롤로 실제 조작하고 모바일 응답 캡처도 저장했다. 실제 모델의 소크라틱 품질 검증과 운영 API 호출은0이다.
 - 검증 계약·순수 helper는 `80b8269`로 push했다. UI/API의 연결 파일은 기존 미검토 변경과 혼재하므로 이 커밋이 전체 기능 clean-source 배포를 보증하지 않는다. 해당 파일: `book_page.dart`, `server_chat_page.dart`, `api_client.dart`, `jsx_graph_html_builder.dart`, `jsx_graph_embed*.dart`, `tutor_history_delivery_test.dart`.
 - 기계 증거는 `design/student/audits/graph-observation-preview-proof.json`. 운영 alias는 변경하지 않았다. 시각 디자인 개편이 아닌 상태 전달 변경이며 전체 HTML parity나 수정 전 동일 데이터 캡처가 있다고 주장하지 않는다.
+
+### 연동 소스 분리 커밋과 최종 Preview
+
+- `ca899f0`은 graph bridge/renderer, reader의 관찰값·페이지 질문 경로, chat의 최소 history/context·세션 수명, API의 선택적 문맥과 전송 전후 세션 세대 검사를 선택해 커밋했다. Graph 카드의 ‘그래프 질문하기’가 공통 페이지 질문 경로를 연다. 기존 viewport/command bridge의 작은 관련 변경도 함께 검토했다. reader의 전체 디자인 개편이나 대규모 ApiSessionScope 리팩터는 포함하지 않았다.
+- 스테이징은 HEAD 문자열에 확인한 변경만 적용해 Git blob/index로 등록했다. 작업 파일은 바꾸지 않았고 전후 해시가 일치한다. 원래 dirty diff는 `build/temp/graph-integration-dirty-before.patch`에 보존했다. 이 patch와 이전 소스 tar는 생성물이며 복구 전 삭제하지 않는다.
+- 독립 검사에서 드러난 HEAD 시험지 선언 누락은 `4ada855`(timer), `b436af5`(focus/review), `c5e92b7`(compact enum)의 최소 변경으로 분리했다. WebSocket 패키지는 HEAD pubspec에 이미 선언되어 있어 의존성을 새로 추가하지 않았다. 현재 dirty 환경에서 빠진 캐시 매핑과 전이 의존성만 독립 검사 설정에 명시했다.
+- commit source snapshot 테스트5개와 최종 전달 재검사1개가 통과했다. 전송 직전 세션 경합에서 이전 문맥이 새 토큰으로 나가지 않는 검사도 포함한다. 원본 작업본 합동 검사10개도 별도 통과했다.
+- `flutter build web --packages=...`만 사용한 중간 빌드는 실제로 기본 작업본 소스를 참조했다. 이 빌드와 `dpl_GB1LD4wV1mZ8wTzYkHRF7NerHjjk`는 독립 소스 검증 근거에서 제외한다. 생성 package_config를 잠시 재생성하고 원래 바이트로 복구한 뒤66.9초 release 빌드에 성공했다. compiler depfile의 snapshot 경로와294개 lib 파일의 HEAD blob 일치를 확인했다. 라이선스된 현재 asset 설정과 기록한 패키지 매핑을 사용하며, 전체 제품의 깨끗한 배포 검증을 뜻하지 않는다.
+- 최종 `dpl_5uU3ckaJ23bzxKVBb2AcN9DVLhg8`는 합성 정적 Preview다. JS5,736,426bytes SHA-256은 기계 증거에 기록한다. 실제 원고는 localhost9001에서만 열어 m=1.25/h=0.5 전달을 재확인했다. 최종 캡처는 evidence의07~11번이며 앞선01~06번은 과거 작업본 증거다.
+- **디자인 게이트 미통과:** commit snapshot의 tutor는 기존 둥근 hero/chips·LIVE 라벨을 유지한다. 승인 HTML과 같다고 판정하지 않는다. 더 새로운 작업본 UI를 무검토로 커밋하지 않기 위해 기능 연동만 분리한 결과다. 실제 모델 응답, 적격 교재 게시·권리/교사 검토, 전체 제품 동작 게이트도 남아 있어 production alias는 변경하지 않는다.

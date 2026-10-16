@@ -1,15 +1,20 @@
 {
   "kind": "synthetic-preview-not-production",
-  "featureCommit": "80b8269c8097e0128b1753024865295bf315eaf5",
-  "deploymentId": "dpl_2RHUiunPatBtABkQTmqJFNnPvg8t",
-  "url": "https://aiflow-web-canary-gaftcekw3-cw20208021-9200s-projects.vercel.app/",
-  "sourceIsDirty": true,
-  "postBuildSourceArchive": "build/temp/graph-observation-source.tar",
-  "postBuildSourceArchiveSha256": "02AB4A89AEBC10E1D8F72B704A70D55C61736356362A785A12A33454B2373B6E",
+  "featureCommit": "ca899f0c160e6852f3fda3cc3ecc9328f9538102",
+  "deploymentId": "dpl_5uU3ckaJ23bzxKVBb2AcN9DVLhg8",
+  "url": "https://aiflow-web-canary-ej0kdi9dp-cw20208021-9200s-projects.vercel.app/",
+  "workspaceIsDirty": true,
+  "sourceMode": "294 exported lib files match committed HEAD blobs; unrelated working source is not compiled",
+  "verifiedSourceArchive": "build/temp/graph-staged-source-evidence.tar",
+  "verifiedSourceArchiveSha256": "2B0091C5DD357D83D7B855856E6FCB3237B1B5D6BA04A3E6844A395F15B7B431",
+  "compilerDependencyEvidence": ".dart_tool/flutter_build/6e260908b4267363bfabee71dc257798/dart2js.d",
+  "temporaryGeneratedPackageConfigRestored": true,
+  "dirtyBaselinePatchSha256": "F25121C95F9D5454E3837B1E5C5D396BB8BF0915EB506622A3D263C0D6E861F4",
+  "supersededPreviews": ["dpl_2RHUiunPatBtABkQTmqJFNnPvg8t", "dpl_GB1LD4wV1mZ8wTzYkHRF7NerHjjk"],
   "mainDartJs": {
     "browserHttpStatus": 200,
-    "bytes": 5044279,
-    "localAndBrowserSha256": "6E97575BE48A001FA7036F91750A3C7A0058F8387B17B4A2DCFAA31079293D8B"
+    "bytes": 5736426,
+    "localAndBrowserSha256": "9B1A3CFE9352E5D828D61360B9010DAB08298538EC08C1D65EFDA481F29E0969"
   },
   "localManuscript": {
     "filename": "공통수학1_꼭짓점형_BookData_시범.json",
@@ -21,19 +26,20 @@
   "verified": [
     "Actual local BookData: keyboard slider input changed m=1 to 1.25 and h=0 to 0.5",
     "Actual local mobile reader to tutor request carried page-2-graph-0 with m=1.25 h=0.5 k=0",
-    "Navigation to next page sent no previous graph observations",
+    "Preliminary working-tree QA: navigation to next page sent no previous graph observations",
     "Remote synthetic desktop Preview: scroll inside paper, manipulate sliders, ask page tutor and receive same structured values",
     "Remote synthetic tutor response captured at desktop and 390x844 mobile size",
     "Canonical alias remains dpl_HTYscDjA8dNT521Pjf91UeqJsaF2"
   ],
-  "tests": {"python": "46 passed", "flutterCombinedInitial": "10 passed", "flutterFinalHelperAndDelivery": "5 passed", "focusedDartAnalyze": "No issues found"},
+  "tests": {"python": "46 passed", "flutterWorkingTreeCombined": "10 passed", "flutterCommittedSnapshot": "5 passed plus final delivery rerun 1 passed", "focusedDartAnalyze": "No issues found", "committedSnapshotWebReleaseBuild": "passed 66.9s; compiler paths verified"},
   "evidenceDirectory": "design/student/audits/evidence/2026-10-17-graph-observation",
   "actualProviderCalls": 0,
   "databaseWrites": 0,
   "limitations": [
     "Static synthetic Preview uses canned responses, not actual AI or product backend",
-    "Clean-source UI commit closure is pending: pre-existing reader, session API, renderer and chat modifications remain dirty",
-    "Source archive was recorded after build, not a clean checkout reproducibility proof",
+    "Committed source snapshot uses current licensed asset configuration and explicitly recorded package mappings; this is not a complete product deployment",
+    "Source archive, generated Preview entry and dependency mapping are local build artifacts; application lib source is committed",
+    "HTML visual parity is not met: committed tutor still has prior rounded hero/chips; unrelated newer dirty UI is preserved, not silently committed",
     "No native-device runtime, 200-session load or full visual parity claim",
     "Actual manuscript publication remains gated by teacher/rights evidence",
     "Do not promote this static synthetic Preview to the product alias"
