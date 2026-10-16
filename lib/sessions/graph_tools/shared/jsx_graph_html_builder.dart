@@ -569,7 +569,7 @@ String buildAiFlowGraphHtml(
               const points = xValues
                 .map((x, index) => [numberOrFallback(x, 0), numberOrFallback(yValues[index], NaN)])
                 .filter((pair) => Number.isFinite(pair[0]) && Number.isFinite(pair[1]));
-              if (points.length === 0) continue;
+              if (points.length < (type === 'scatter' ? 1 : 2)) continue;
               if (type === 'line') {
                 ctx.strokeStyle = color;
                 ctx.lineWidth = 2 * ratio;
@@ -831,7 +831,7 @@ String buildAiFlowGraphHtml(
               const points = xValues
                 .map((x, index) => [numberOrFallback(x, 0), numberOrFallback(yValues[index], 0)])
                 .filter((pair) => Number.isFinite(pair[0]) && Number.isFinite(pair[1]));
-              if (points.length < 2) continue;
+              if (points.length < (type === 'scatter' ? 1 : 2)) continue;
               if (type === 'scatter') {
                 const pointElements = points.map((point, index) => {
                   return board.create(

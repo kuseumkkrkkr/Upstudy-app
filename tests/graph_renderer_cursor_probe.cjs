@@ -31,6 +31,17 @@ function run(fallback) {
   vm.runInNewContext(script, {window, document, JXG, console,
     setTimeout() {}, clearTimeout() {}}, {timeout: 3000});
   if (fallback) nodes.get('jsxgraph-script').listeners.error();
+  if (process.argv[3] === 'scatter') {
+    if (fallback) {
+      assert.equal(arcs.length, 2, 'two singleton scatter items must render');
+    } else {
+      assert.deepEqual(created.filter(e => e.type === 'point').map(e => [...e.values]),
+        [[-2, 3], [3, -2]]);
+      assert.equal(created.filter(e => e.type === 'curve').length, 0,
+        'a single point is not a line segment');
+    }
+    return {fallback, singletonScatter: 2};
+  }
   const readout = nodes.get('observationReadout');
   const before = readout.textContent;
   const curvesBefore = created.filter(e => e.type === 'functiongraph')

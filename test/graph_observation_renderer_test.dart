@@ -5,6 +5,28 @@ import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/sessions/graph_tools/shared/jsx_graph_html_builder.dart';
 
 void main() {
+  test('singleton scatter renders in both paths while empty and singleton lines do not', () async {
+    final graphJson = {
+      'items': [
+        {'id': 'a', 'type': 'scatter', 'xValues': [-2], 'yValues': [3]},
+        {'id': 'b', 'type': 'scatter', 'xValues': [3], 'yValues': [-2]},
+        {'id': 'empty', 'type': 'scatter', 'xValues': [], 'yValues': []},
+        {'id': 'line', 'type': 'line', 'xValues': [1], 'yValues': [2]},
+      ],
+      'settings': <String, dynamic>{},
+    };
+    final book = BookData.fromJson({'title': 'Synthetic', 'chapters': [
+      {'title': 'Points', 'sections': [{'title': 'Reference', 'graph': graphJson}]},
+    ]});
+    final graph = book.chapters.single.sections.single.graph!;
+    final roundtrip = BookData.fromJson(book.toJson()).chapters.single.sections.single.graph!;
+    expect(roundtrip.toJson(), graph.toJson());
+    final fixture = File('build/temp/graph-singleton-scatter-fixture.html');
+    await fixture.writeAsString(buildAiFlowGraphHtml(graph));
+    final process = await Process.run('node', ['tests/graph_renderer_cursor_probe.cjs', fixture.path, 'scatter']);
+    expect(process.exitCode, 0, reason: process.stderr.toString());
+    expect((jsonDecode(process.stdout as String) as List).map((row) => row['singletonScatter']), [2, 2]);
+  });
   test('shared web/native renderer updates cursor points and canvas fallback', () async {
     final source = {'title': 'Synthetic', 'chapters': [{'title': 'Observation', 'sections': [
       {'title': 'Graph', 'graph': {'items': [
