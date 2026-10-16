@@ -72,7 +72,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x²의 x=3에서 미분계수를 구하세요."
+              "text": "f(x)=x²의 x=2에서 차분몫의 극한으로 미분계수를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -104,7 +104,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x², a=2이면 차분몫은 4+h이므로 미분계수는 4이다."
+              "text": "6"
             },
             {
               "type": "answer",
@@ -124,10 +124,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 6",
-                "incorrect_feedback": "정답은 6입니다. f(x)=x², a=2이면 차분몫은 4+h이므로 미분계수는 4이다.",
+                "incorrect_feedback": "정답은 6입니다. 6",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "f(x)=x², a=2이면 차분몫은 4+h이므로 미분계수는 4이다."
+                  "6"
                 ]
               }
             }
@@ -242,7 +242,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "y=x²의 x=2에서 접선 기울기를 구하세요."
+              "text": "y=x²의 x=1에서 접선의 기울기와 방정식을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -274,7 +274,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "y=x²의 x=1에서 기울기는 2이며 접선은 y−1=2(x−1)이다."
+              "text": "4"
             },
             {
               "type": "answer",
@@ -294,10 +294,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 4",
-                "incorrect_feedback": "정답은 4입니다. y=x²의 x=1에서 기울기는 2이며 접선은 y−1=2(x−1)이다.",
+                "incorrect_feedback": "정답은 4입니다. 4",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "y=x²의 x=1에서 기울기는 2이며 접선은 y−1=2(x−1)이다."
+                  "4"
                 ]
               }
             }
@@ -412,7 +412,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "미분가능한 함수는 그 점에서 연속인가요?"
+              "text": "|x|는 x=0에서 연속인가요? 미분가능한가요?"
             },
             {
               "type": "solutionStep",
@@ -444,7 +444,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "|x|는 x=0에서 연속이지만 좌우 기울기가 −1과 1로 달라 미분가능하지 않다."
+              "text": "그렇다"
             },
             {
               "type": "answer",
@@ -464,10 +464,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 그렇다",
-                "incorrect_feedback": "정답은 그렇다입니다. |x|는 x=0에서 연속이지만 좌우 기울기가 −1과 1로 달라 미분가능하지 않다.",
+                "incorrect_feedback": "정답은 그렇다입니다. 그렇다",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "|x|는 x=0에서 연속이지만 좌우 기울기가 −1과 1로 달라 미분가능하지 않다."
+                  "그렇다"
                 ]
               }
             }
@@ -582,7 +582,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "(x⁵)′을 구하세요."
+              "text": "x⁴을 미분하세요."
             },
             {
               "type": "solutionStep",
@@ -614,7 +614,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "(x⁴)′=4x³이다."
+              "text": "5x⁴"
             },
             {
               "type": "answer",
@@ -634,10 +634,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 5x⁴",
-                "incorrect_feedback": "정답은 5x⁴입니다. (x⁴)′=4x³이다.",
+                "incorrect_feedback": "정답은 5x⁴입니다. 5x⁴",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "(x⁴)′=4x³이다."
+                  "5x⁴"
                 ]
               }
             }
@@ -752,7 +752,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "(2x³−x+4)′을 구하세요."
+              "text": "(x²+1)(x+2)를 미분하세요."
             },
             {
               "type": "solutionStep",
@@ -784,7 +784,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "((x²+1)(x+2))′=2x(x+2)+(x²+1)=3x²+4x+1이다."
+              "text": "6x²−1"
             },
             {
               "type": "answer",
@@ -804,10 +804,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 6x²−1",
-                "incorrect_feedback": "정답은 6x²−1입니다. ((x²+1)(x+2))′=2x(x+2)+(x²+1)=3x²+4x+1이다.",
+                "incorrect_feedback": "정답은 6x²−1입니다. 6x²−1",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "((x²+1)(x+2))′=2x(x+2)+(x²+1)=3x²+4x+1이다."
+                  "6x²−1"
                 ]
               }
             }
@@ -922,7 +922,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "y=x²의 x=2에서 접선의 방정식을 구하세요."
+              "text": "y=x²의 x=1에서 접선 방정식을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -954,7 +954,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "y=x²의 x=1에서 점은 (1,1), 기울기는 2이므로 접선은 y=2x−1이다."
+              "text": "y=4x−4"
             },
             {
               "type": "answer",
@@ -974,10 +974,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. y=4x−4",
-                "incorrect_feedback": "정답은 y=4x−4입니다. y=x²의 x=1에서 점은 (1,1), 기울기는 2이므로 접선은 y=2x−1이다.",
+                "incorrect_feedback": "정답은 y=4x−4입니다. y=4x−4",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "y=x²의 x=1에서 점은 (1,1), 기울기는 2이므로 접선은 y=2x−1이다."
+                  "y=4x−4"
                 ]
               }
             }
@@ -1092,7 +1092,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x², [0,2]에서 평균값 정리의 c를 구하세요."
+              "text": "f(x)=x²을 [1,3]에 적용한 평균값 정리의 c를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1124,7 +1124,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x², [1,3]의 평균 기울기는 4이며 f′(c)=2c=4에서 c=2이다."
+              "text": "1"
             },
             {
               "type": "answer",
@@ -1144,10 +1144,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 1",
-                "incorrect_feedback": "정답은 1입니다. f(x)=x², [1,3]의 평균 기울기는 4이며 f′(c)=2c=4에서 c=2이다.",
+                "incorrect_feedback": "정답은 1입니다. 1",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "f(x)=x², [1,3]의 평균 기울기는 4이며 f′(c)=2c=4에서 c=2이다."
+                  "1"
                 ]
               }
             }
@@ -1262,7 +1262,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x²의 x=0은 극대인가 극소인가요?"
+              "text": "f(x)=x²−4x의 극값과 그때의 함수값을 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1294,7 +1294,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x²−4x의 도함수는 2x−4이다. x=2에서 감소에서 증가로 바뀌어 극솟값 −4를 갖는다."
+              "text": "극소"
             },
             {
               "type": "answer",
@@ -1314,10 +1314,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 극소",
-                "incorrect_feedback": "정답은 극소입니다. f(x)=x²−4x의 도함수는 2x−4이다. x=2에서 감소에서 증가로 바뀌어 극솟값 −4를 갖는다.",
+                "incorrect_feedback": "정답은 극소입니다. 극소",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "f(x)=x²−4x의 도함수는 2x−4이다. x=2에서 감소에서 증가로 바뀌어 극솟값 −4를 갖는다."
+                  "극소"
                 ]
               }
             }
@@ -1432,7 +1432,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "f(x)=x²는 실수 전체에서 증가하나요 감소하나요?"
+              "text": "f(x)=x³−3x의 임계점을 찾고 도함수로 증가·감소를 조사하세요."
             },
             {
               "type": "solutionStep",
@@ -1464,7 +1464,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x³−3x는 f′(x)=3(x²−1)로 x=−1,1에서 임계점을 갖고 부호표로 개형을 정한다."
+              "text": "x<0에서 감소하고 x>0에서 증가한다"
             },
             {
               "type": "answer",
@@ -1484,10 +1484,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. x<0에서 감소하고 x>0에서 증가한다",
-                "incorrect_feedback": "정답은 x<0에서 감소하고 x>0에서 증가한다입니다. f(x)=x³−3x는 f′(x)=3(x²−1)로 x=−1,1에서 임계점을 갖고 부호표로 개형을 정한다.",
+                "incorrect_feedback": "정답은 x<0에서 감소하고 x>0에서 증가한다입니다. x<0에서 감소하고 x>0에서 증가한다",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "f(x)=x³−3x는 f′(x)=3(x²−1)로 x=−1,1에서 임계점을 갖고 부호표로 개형을 정한다."
+                  "x<0에서 감소하고 x>0에서 증가한다"
                 ]
               }
             }
@@ -1602,7 +1602,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "모든 실수 x에 대해 x²+4의 최솟값은 얼마인가요?"
+              "text": "x²+1의 최솟값과 등호가 성립하는 x를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1634,7 +1634,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "모든 실수 x에 대해 x²+1≥1이다. 등호는 x=0에서 성립한다."
+              "text": "4"
             },
             {
               "type": "answer",
@@ -1654,10 +1654,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 4",
-                "incorrect_feedback": "정답은 4입니다. 모든 실수 x에 대해 x²+1≥1이다. 등호는 x=0에서 성립한다.",
+                "incorrect_feedback": "정답은 4입니다. 4",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "모든 실수 x에 대해 x²+1≥1이다. 등호는 x=0에서 성립한다."
+                  "4"
                 ]
               }
             }
@@ -1772,7 +1772,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "s(t)=3t²일 때 t=2에서 속도를 구하세요."
+              "text": "s(t)=t²+2t일 때 속도와 가속도 함수를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -1804,7 +1804,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다."
+              "text": "12"
             },
             {
               "type": "answer",
@@ -1824,10 +1824,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 12",
-                "incorrect_feedback": "정답은 12입니다. s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다.",
+                "incorrect_feedback": "정답은 12입니다. 12",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "s(t)=t²+2t이면 v(t)=2t+2, a(t)=2이다."
+                  "12"
                 ]
               }
             }

@@ -246,3 +246,11 @@
 - 생성기 공식 기준·식·시작점 계산 assert 통과. BookData round-trip 3/3, 전체 activity compatibility 124/124 통과. 위젯 테스트에서 a/b/c 변경, 정의역 변화, 단계 안내, 초기화 검증. Pipeline stage 47/95.
 - 원장: 26개 상품/1,038 기준 행/115 root source/178 recursive BookData/327 activities/106 HTML; official edition-code 392 중 same-edition tag 370, chapter anchor 328, 구조 신호 없음 47. metadata 집계: publication not_eligible 33, rights/teacher pending 33, author math checks with independent review pending 32, math pending 1, unspecified 145.
 - 사람의 독립 수학·교사 검토와 권리 확인 전 출판하지 않는다.
+
+
+## 2026-10-17 태그별 초안 파이프라인 48–50단계 재개
+
+- `build_math_1_2015_draft.py` 단계를 다시 실행했다. 16개 모듈에 원본 83쪽을 보존하고 page ID 중복 검사를 통과했다. 기존 dirty README는 실행 전후 바이트를 비교해 그대로 복원했다.
+- 2015 수학Ⅱ 미연결 기준 Batch1 생성기는 공식 기준 18개, 18모듈·90쪽·18퀴즈 후보를 생성했다. BookData SHA-256은 `17635B9E58B0A4D706453A2D6AB20A535631C194DFC1CCC136608D5E26E02601`이다. 통합 결과는 22모듈, 보존 지면 102쪽이며 페이지 ID가 고유하다.
+- BookData 왕복 및 활동 호환성 테스트가 통과했다. 범위 원장은 26개 상품·1,038 기준 행·115 root source BookData, 392 공식 판본-코드 쌍 중 same-edition tag 370, exact chapter anchor 328, 단일 코드·단일 chapter 연결 21, 구조 신호 없음 47을 기록한다. 재귀 BookData 178개 중 33개 `not_eligible`, 145개 eligibility 미지정; 권리·교사 검토는 33 pending/145 unspecified, 수학 검토는 32 author checks with independent review pending, 1 pending, 145 unspecified다. HTML 인벤토리는 106개다.
+- 이 단계들은 생성·구조 검증이며 수학 독립검토, 교사 승인, 권리 결정, 사용자 화면 전체 parity를 대체하지 않는다. 배포하지 않았다. 전체 95단계 파이프라인은 미완료다.

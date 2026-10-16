@@ -72,7 +72,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "∫2x dx를 구하세요."
+              "text": "∫x² dx를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -104,7 +104,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "(x³/3)′=x²이므로 ∫x²dx=x³/3+C이다."
+              "text": "x²+C"
             },
             {
               "type": "answer",
@@ -124,10 +124,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. x²+C",
-                "incorrect_feedback": "정답은 x²+C입니다. (x³/3)′=x²이므로 ∫x²dx=x³/3+C이다.",
+                "incorrect_feedback": "정답은 x²+C입니다. x²+C",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "(x³/3)′=x²이므로 ∫x²dx=x³/3+C이다."
+                  "x²+C"
                 ]
               }
             }
@@ -242,7 +242,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "∫(2x+4)dx를 구하세요."
+              "text": "∫(3x²−2) dx를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -274,7 +274,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "∫(3x²−2)dx=x³−2x+C이다."
+              "text": "x²+4x+C"
             },
             {
               "type": "answer",
@@ -294,10 +294,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. x²+4x+C",
-                "incorrect_feedback": "정답은 x²+4x+C입니다. ∫(3x²−2)dx=x³−2x+C이다.",
+                "incorrect_feedback": "정답은 x²+4x+C입니다. x²+4x+C",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "∫(3x²−2)dx=x³−2x+C이다."
+                  "x²+4x+C"
                 ]
               }
             }
@@ -412,7 +412,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "∫₀¹ 2 dx를 구하세요."
+              "text": "∫₀² x dx를 계산하고 [0,1], [1,2]로 나누어도 값이 같은지 확인하세요."
             },
             {
               "type": "solutionStep",
@@ -444,7 +444,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "∫₀² x dx=2이고 구간 [0,1], [1,2]의 적분값 1/2와 3/2의 합도 2이다."
+              "text": "2"
             },
             {
               "type": "answer",
@@ -464,10 +464,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 2",
-                "incorrect_feedback": "정답은 2입니다. ∫₀² x dx=2이고 구간 [0,1], [1,2]의 적분값 1/2와 3/2의 합도 2이다.",
+                "incorrect_feedback": "정답은 2입니다. 2",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "∫₀² x dx=2이고 구간 [0,1], [1,2]의 적분값 1/2와 3/2의 합도 2이다."
+                  "2"
                 ]
               }
             }
@@ -582,7 +582,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "∫₁³2x dx를 구하세요."
+              "text": "∫₀² 2x dx를 원시함수로 계산하세요."
             },
             {
               "type": "solutionStep",
@@ -614,7 +614,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "∫₀²2x dx=[x²]₀²=4이다."
+              "text": "8"
             },
             {
               "type": "answer",
@@ -634,10 +634,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 8",
-                "incorrect_feedback": "정답은 8입니다. ∫₀²2x dx=[x²]₀²=4이다.",
+                "incorrect_feedback": "정답은 8입니다. 8",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "∫₀²2x dx=[x²]₀²=4이다."
+                  "8"
                 ]
               }
             }
@@ -752,7 +752,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "y=x와 x축 사이, 0≤x≤2인 넓이는 얼마인가요?"
+              "text": "y=2와 x축 사이에서 0≤x≤3인 넓이를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -784,7 +784,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "y=2와 x축 사이에서 0≤x≤3인 넓이는 2×3=6이다."
+              "text": "2"
             },
             {
               "type": "answer",
@@ -804,10 +804,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 2",
-                "incorrect_feedback": "정답은 2입니다. y=2와 x축 사이에서 0≤x≤3인 넓이는 2×3=6이다.",
+                "incorrect_feedback": "정답은 2입니다. 2",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "y=2와 x축 사이에서 0≤x≤3인 넓이는 2×3=6이다."
+                  "2"
                 ]
               }
             }
@@ -922,7 +922,7 @@
             {
               "type": "question",
               "title": "예제",
-              "text": "0≤t≤4에서 속도 3으로 움직인 직선 운동의 거리를 구하세요."
+              "text": "0≤t≤3에서 속도 v(t)=2일 때 변위와 이동거리를 구하세요."
             },
             {
               "type": "solutionStep",
@@ -954,7 +954,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "0≤t≤3에서 v(t)=2이면 변위와 이동거리는 모두 6이다."
+              "text": "12"
             },
             {
               "type": "answer",
@@ -974,10 +974,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다. 12",
-                "incorrect_feedback": "정답은 12입니다. 0≤t≤3에서 v(t)=2이면 변위와 이동거리는 모두 6이다.",
+                "incorrect_feedback": "정답은 12입니다. 12",
                 "hints": [
                   "공식의 조건을 확인하고 한 단계씩 계산하세요.",
-                  "0≤t≤3에서 v(t)=2이면 변위와 이동거리는 모두 6이다."
+                  "12"
                 ]
               }
             }
