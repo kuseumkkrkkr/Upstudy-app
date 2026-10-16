@@ -95,7 +95,7 @@ Tag generation pipeline passed 76 steps and referenced 105 source BookData files
 | 23 | 미적분Ⅰ · 2022 | partial | 기존 6모듈/18쪽 + 신규 V2 13모듈/65쪽; 20/20 공식 코드 후보 태그, 본문 충족·상품 통합 검토 미완 | 공식 HWP 본표 20개 확인; 코드 태그는 연결 후보이지 내용 검수 완료가 아님 | 예제 산술/페이지 ID 검사 통과; guarded importer VM crash로 미확인; HTML parity 미검증 | 독립 교사 검수·권리 결정 대기; 출판 부적격 |
 | 24 | 확률과 통계 · 2022 | partial | 기존 통계적 확률 1모듈/3쪽, 보완 1모듈/5쪽 및 V2 후보 16모듈/80쪽; 과목 전체는 미완 | 공식 본표 기준 16개 코드 모두 후보에 연결 | V2 importer 통과; 03-07 mean/proportion statisticsEstimator 후보 QA 통과, 교사·권리 승인 대기 | 통합본 미병합; 상품 전체 대조 미완 |
 | 25 | 미적분Ⅱ · 2022 | partial | 기존 삼각함수 미분 2차시/6쪽 및 수열·급수 V2 5모듈/25쪽; 과목 전체 범위 필요 | 공식 본표 23개 중 01-01~05 다섯 코드 매핑 | V2 퀴즈 5개 guarded importer 통과; 과목 통합/화면 검수 미완 | 교사 검토·권리 승인 대기 |
-| 26 | 기하 · 2022 | partial | 이차곡선·공간좌표 5모듈/17쪽; 전체 범위 필요 | 기준 후보; 공식 대조 전 | 포물선 HTML/그래프 분리 보존, 앱 통합 미확인 | 권리 미기록; 초안 |
+| 26 | 기하 · 2022 | partial | 기존 이차곡선·좌표 5모듈/17쪽에 신규 V2 공간도형 4모듈/20쪽·벡터 5모듈/25쪽 후보가 별도 존재; master 통합 및 교과서별 전체 범위 대조 미완 | 교육부 HWP 본표 14개 코드 모두 tag 후보 연결(공간도형 4, 벡터 5 신규); 태그는 내용 충족 승인 아님 | 두 신규 V2 패키지 manifest에 importer 통과 기록; 포물선/HTML은 별도 자산이며 독립 HTML parity 미검증 | 교사·수학 검토, 권리 확인, 앱 통합 전; 출판 부적격 |
 
 현재 카탈로그 기준 집계: partial 26, missing 0, matched 0. 이는 파일의 교육적 승인 수가 아니다. `student-facing completeness`, `official curriculum match`, `math review`, `rights clearance`, `runtime compatibility`, `publish eligibility`를 별도 단계로 올려야 한다.
 
