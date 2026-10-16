@@ -104,7 +104,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다."
+              "text": "지수함수는 연속이므로 lim(x→2)3ˣ=3²=9이다."
             },
             {
               "type": "answer",
@@ -124,10 +124,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 9",
-                "incorrect_feedback": "정답은 9입니다. lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다.",
+                "incorrect_feedback": "정답은 9입니다. 지수함수는 연속이므로 lim(x→2)3ˣ=3²=9이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "lim(x→1)2ˣ=2, lim(x→4)log₂x=2이다."
+                  "지수함수는 연속이므로 lim(x→2)3ˣ=3²=9이다."
                 ]
               }
             }
@@ -251,7 +251,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "(eˣ+ln x)′=eˣ+1/x (x>0)이다."
+              "text": "자연로그의 미분 공식 (ln x)′=1/x를 적용한다. (x>0)"
             },
             {
               "type": "answer",
@@ -271,10 +271,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 1/x",
-                "incorrect_feedback": "정답은 1/x입니다. (eˣ+ln x)′=eˣ+1/x (x>0)이다.",
+                "incorrect_feedback": "정답은 1/x입니다. 자연로그의 미분 공식 (ln x)′=1/x를 적용한다. (x>0)",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "(eˣ+ln x)′=eˣ+1/x (x>0)이다."
+                  "자연로그의 미분 공식 (ln x)′=1/x를 적용한다. (x>0)"
                 ]
               }
             }
@@ -398,7 +398,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "sin(45°−30°)=√6/4−√2/4이다."
+              "text": "덧셈정리로 sin(45°+30°)=sin45°cos30°+cos45°sin30°=(√6+√2)/4이다."
             },
             {
               "type": "answer",
@@ -418,10 +418,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: (√6+√2)/4",
-                "incorrect_feedback": "정답은 (√6+√2)/4입니다. sin(45°−30°)=√6/4−√2/4이다.",
+                "incorrect_feedback": "정답은 (√6+√2)/4입니다. 덧셈정리로 sin(45°+30°)=sin45°cos30°+cos45°sin30°=(√6+√2)/4이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "sin(45°−30°)=√6/4−√2/4이다."
+                  "덧셈정리로 sin(45°+30°)=sin45°cos30°+cos45°sin30°=(√6+√2)/4이다."
                 ]
               }
             }
@@ -545,7 +545,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다."
+              "text": "sin(5x)/x=5·sin(5x)/(5x)이고 sin u/u→1이므로 극한은 5이다."
             },
             {
               "type": "answer",
@@ -565,10 +565,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 5",
-                "incorrect_feedback": "정답은 5입니다. lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다.",
+                "incorrect_feedback": "정답은 5입니다. sin(5x)/x=5·sin(5x)/(5x)이고 sin u/u→1이므로 극한은 5이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "lim(x→0)sin(3x)/x=3·lim sin(3x)/(3x)=3이다."
+                  "sin(5x)/x=5·sin(5x)/(5x)이고 sin u/u→1이므로 극한은 5이다."
                 ]
               }
             }
@@ -692,7 +692,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "(2sin x−3cos x)′=2cos x+3sin x이다."
+              "text": "코사인함수의 미분 공식에 따라 (cos x)′=−sin x이다. (x는 라디안)"
             },
             {
               "type": "answer",
@@ -712,10 +712,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: −sin x",
-                "incorrect_feedback": "정답은 −sin x입니다. (2sin x−3cos x)′=2cos x+3sin x이다.",
+                "incorrect_feedback": "정답은 −sin x입니다. 코사인함수의 미분 공식에 따라 (cos x)′=−sin x이다. (x는 라디안)",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "(2sin x−3cos x)′=2cos x+3sin x이다."
+                  "코사인함수의 미분 공식에 따라 (cos x)′=−sin x이다. (x는 라디안)"
                 ]
               }
             }
@@ -839,7 +839,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다."
+              "text": "몫의 미분법으로 (x/(x+1))′=((x+1)−x)/(x+1)²=1/(x+1)²이다. (x≠−1)"
             },
             {
               "type": "answer",
@@ -859,10 +859,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 1/(x+1)²",
-                "incorrect_feedback": "정답은 1/(x+1)²입니다. ((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다.",
+                "incorrect_feedback": "정답은 1/(x+1)²입니다. 몫의 미분법으로 (x/(x+1))′=((x+1)−x)/(x+1)²=1/(x+1)²이다. (x≠−1)",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "((x+1)/(x−1))′=((x−1)−(x+1))/(x−1)²=−2/(x−1)²이다."
+                  "몫의 미분법으로 (x/(x+1))′=((x+1)−x)/(x+1)²=1/(x+1)²이다. (x≠−1)"
                 ]
               }
             }
@@ -986,7 +986,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "y=sin(x²)이면 y′=2x cos(x²)이다."
+              "text": "연쇄법칙으로 (e^(3x))′=e^(3x)·(3x)′=3e^(3x)이다."
             },
             {
               "type": "answer",
@@ -1006,10 +1006,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 3e^(3x)",
-                "incorrect_feedback": "정답은 3e^(3x)입니다. y=sin(x²)이면 y′=2x cos(x²)이다.",
+                "incorrect_feedback": "정답은 3e^(3x)입니다. 연쇄법칙으로 (e^(3x))′=e^(3x)·(3x)′=3e^(3x)이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "y=sin(x²)이면 y′=2x cos(x²)이다."
+                  "연쇄법칙으로 (e^(3x))′=e^(3x)·(3x)′=3e^(3x)이다."
                 ]
               }
             }
@@ -1133,7 +1133,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다."
+              "text": "dy/dt=2t, dx/dt=2이므로 dy/dx=(2t)/2=t이다."
             },
             {
               "type": "answer",
@@ -1153,10 +1153,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: t",
-                "incorrect_feedback": "정답은 t입니다. x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다.",
+                "incorrect_feedback": "정답은 t입니다. dy/dt=2t, dx/dt=2이므로 dy/dx=(2t)/2=t이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "x=t², y=t³일 때 t≠0에서 dy/dx=3t²/(2t)=3t/2이다."
+                  "dy/dt=2t, dx/dt=2이므로 dy/dx=(2t)/2=t이다."
                 ]
               }
             }
@@ -1280,7 +1280,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다."
+              "text": "음함수 미분으로 2x+2y(dy/dx)=0이다. (3,4)를 대입하면 dy/dx=−3/4이다."
             },
             {
               "type": "answer",
@@ -1300,10 +1300,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: −3/4",
-                "incorrect_feedback": "정답은 −3/4입니다. x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다.",
+                "incorrect_feedback": "정답은 −3/4입니다. 음함수 미분으로 2x+2y(dy/dx)=0이다. (3,4)를 대입하면 dy/dx=−3/4이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "x²+y²=25를 미분하면 2x+2yy′=0이므로 y′=−x/y (y≠0)이다."
+                  "음함수 미분으로 2x+2y(dy/dx)=0이다. (3,4)를 대입하면 dy/dx=−3/4이다."
                 ]
               }
             }
@@ -1427,7 +1427,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x³이면 f′=3x², f′′=6x이다."
+              "text": "f′(x)=4x³이고 이를 한 번 더 미분하면 f′′(x)=12x²이다."
             },
             {
               "type": "answer",
@@ -1447,10 +1447,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 12x²",
-                "incorrect_feedback": "정답은 12x²입니다. f(x)=x³이면 f′=3x², f′′=6x이다.",
+                "incorrect_feedback": "정답은 12x²입니다. f′(x)=4x³이고 이를 한 번 더 미분하면 f′′(x)=12x²이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "f(x)=x³이면 f′=3x², f′′=6x이다."
+                  "f′(x)=4x³이고 이를 한 번 더 미분하면 f′′(x)=12x²이다."
                 ]
               }
             }
@@ -1574,7 +1574,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다."
+              "text": "f′(x)=2x이므로 x=2에서 접선 기울기는 4이다. 점 (2,4)를 지나므로 y−4=4(x−2), 즉 y=4x−4이다."
             },
             {
               "type": "answer",
@@ -1594,10 +1594,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: y=4x−4",
-                "incorrect_feedback": "정답은 y=4x−4입니다. y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다.",
+                "incorrect_feedback": "정답은 y=4x−4입니다. f′(x)=2x이므로 x=2에서 접선 기울기는 4이다. 점 (2,4)를 지나므로 y−4=4(x−2), 즉 y=4x−4이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "y=eˣ의 x=0에서 점은 (0,1), 기울기는 1이므로 접선은 y=x+1이다."
+                  "f′(x)=2x이므로 x=2에서 접선 기울기는 4이다. 점 (2,4)를 지나므로 y−4=4(x−2), 즉 y=4x−4이다."
                 ]
               }
             }
@@ -1721,7 +1721,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다."
+              "text": "x²≥0이고 x=0에서 등호가 성립한다. 따라서 x=0에서 극솟값 0을 갖는다."
             },
             {
               "type": "answer",
@@ -1741,10 +1741,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 극솟값",
-                "incorrect_feedback": "정답은 극솟값입니다. f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다.",
+                "incorrect_feedback": "정답은 극솟값입니다. x²≥0이고 x=0에서 등호가 성립한다. 따라서 x=0에서 극솟값 0을 갖는다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "f(x)=x³−3x는 f′=3(x²−1)이고 임계점은 x=−1,1이다. 도함수 부호가 개형을 정한다."
+                  "x²≥0이고 x=0에서 등호가 성립한다. 따라서 x=0에서 극솟값 0을 갖는다."
                 ]
               }
             }
@@ -1868,7 +1868,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다."
+              "text": "x²≥0이므로 x²+4≥4이고 x=0일 때 등호가 성립한다. 최솟값은 4이다."
             },
             {
               "type": "answer",
@@ -1888,10 +1888,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 4",
-                "incorrect_feedback": "정답은 4입니다. 모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다.",
+                "incorrect_feedback": "정답은 4입니다. x²≥0이므로 x²+4≥4이고 x=0일 때 등호가 성립한다. 최솟값은 4이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "모든 실수 x에 대해 x²+1≥1이며 등호는 x=0에서 성립한다."
+                  "x²≥0이므로 x²+4≥4이고 x=0일 때 등호가 성립한다. 최솟값은 4이다."
                 ]
               }
             }
@@ -2015,7 +2015,7 @@
             {
               "type": "solutionStep",
               "title": "해설",
-              "text": "s(t)=t³−3t이면 v=3t²−3, a=6t이다."
+              "text": "s(t)=t³이면 v(t)=3t², a(t)=v′(t)=6t이다. 따라서 a(2)=12이다."
             },
             {
               "type": "answer",
@@ -2035,10 +2035,10 @@
                 ],
                 "correct_index": 0,
                 "correct_feedback": "정답입니다: 12",
-                "incorrect_feedback": "정답은 12입니다. s(t)=t³−3t이면 v=3t²−3, a=6t이다.",
+                "incorrect_feedback": "정답은 12입니다. s(t)=t³이면 v(t)=3t², a(t)=v′(t)=6t이다. 따라서 a(2)=12이다.",
                 "hints": [
                   "조건과 공식을 확인하세요.",
-                  "s(t)=t³−3t이면 v=3t²−3, a=6t이다."
+                  "s(t)=t³이면 v(t)=3t², a(t)=v′(t)=6t이다. 따라서 a(2)=12이다."
                 ]
               }
             }
