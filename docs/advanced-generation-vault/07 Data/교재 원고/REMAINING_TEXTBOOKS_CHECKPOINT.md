@@ -343,3 +343,4 @@
 - 재귀 검색한 `REVIEW_MANIFEST.json` 30개를 확인했다. 전부 `publication_eligibility=not_eligible`이며, publication/rights/teacher/math/curriculum 전 항목이 모두 승인으로 표기된 record는 0개다.
 - manifest가 지목하는 BookData 및 source BookData 32개 SHA-256 참조를 현재 파일과 대조했다. CRLF 정규화 해시 또는 raw 해시 기준 32/32 일치했다. 해시 일치는 현재 파일의 내용 식별만 증명하며, manifest의 미승인 상태를 승인으로 바꾸지 않는다.
 - 원고 인벤토리 178개 중 manifest를 가진 패키지가 30개뿐이라는 점도 구분한다. 나머지 148개는 manifest 승인 증거가 없으며 BookData metadata 역시 승인으로 확인되지 않는다.
+- 런타임 검증 provenance도 분리했다: 30개 manifest 중 11개는 `runtime_validator_candidate_sha256`가 현재 BookData manifest SHA와 일치하는 pass, 10개는 pass 표시는 있으나 후보 SHA 결속이 없다. 나머지 9개는 pending 또는 unspecified다. 전부 `not_eligible`이며, hash-bound pass도 사람/권리 승인으로 승격되지 않는다.
