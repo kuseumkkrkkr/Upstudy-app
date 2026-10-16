@@ -1,6 +1,7 @@
 """Build original 2015 middle-school function candidates for six untagged standards."""
 from __future__ import annotations
 import json
+import re
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 OUT=ROOT/"docs/advanced-generation-vault/07 Data/교재 원고/중등수학_2015개정_함수그래프_부분초안"
@@ -28,7 +29,17 @@ def main():
         slug=f"ms15-function-{code[-2:]}"
         quiz={"id":slug+"-quiz","kind":"quiz","prompt":example,"options":[x[0] for x in choices],"correct_index":next(i for i,x in enumerate(choices) if x[1]==0),"correct_feedback":solution,"incorrect_feedback":"기울기·절편 또는 대입 결과를 확인한 뒤 다시 풀어 보세요.","hints":["식을 그래프 형태로 읽고 조건을 대입하세요."]}
         expressions=expr if isinstance(expr,list) else [expr]
-        graph={"items":[{"id":f"function-{j+1}","type":"function","label":f"{title} {j+1}" if len(expressions)>1 else title,"colorHex":["#315DA8","#D97706"][j%2],"enabled":True,"expression":formula} for j,formula in enumerate(expressions)],"settings":{"showAxes":True,"showGrid":True,"lockViewport":True,"degreeMode":False,"viewport":{"left":-5,"right":5,"top":10,"bottom":-10}}}
+        parameters = ([{"id":"a","label":"계수 a","value":1,"min":-3,"max":3,"step":0.5}] if code == "9수03-10" else [])
+        declared = {parameter["id"] for parameter in parameters}
+        supported = {"x","pi","e","abs","max","min","sqrt","pow","exp","ln","log","sin","cos","tan","ceil","floor","round"}
+        for formula in expressions:
+            symbols = set(re.findall(r"\b[A-Za-z_][A-Za-z0-9_]*\b", formula))
+            if symbols - declared - supported:
+                raise ValueError(f"Undeclared graph symbols for {code}: {sorted(symbols - declared - supported)}")
+        settings={"showAxes":True,"showGrid":True,"lockViewport":True,"degreeMode":False,"viewport":{"left":-5,"right":5,"top":10,"bottom":-10}}
+        if parameters:
+            settings["parameters"] = parameters
+        graph={"items":[{"id":f"function-{j+1}","type":"function","label":f"{title} {j+1}" if len(expressions)>1 else title,"colorHex":["#315DA8","#D97706"][j%2],"enabled":True,"expression":formula} for j,formula in enumerate(expressions)],"settings":settings}
         chapter={"title":title,"intro":[f"{title}의 식과 그래프를 연결해 봅니다.",f"2015 개정 중학교 학년군 기준 후보 {code}; 학기 귀속은 공식 기준에서 분리합니다."],"sections":[{"title":"기준과 검토 상태","paragraphs":[f"공식 기준 후보: {code} {standards[code]}","새로 작성한 부분 후보이며 학기 배정, 교사·독립 수학 검토, 권리 검토는 대기 중입니다."]}],"pages":[
           {"id":slug+"-opening","template":"opening","title":"생각 열기","blocks":[{"type":"lead","title":title,"text":concept},{"type":"thinking","title":"질문","text":"계수 하나를 바꾸면 그래프에서 무엇이 달라질지 예측하세요."}]},
           {"id":slug+"-graph","template":"experiment","title":"그래프로 확인하기","blocks":[{"type":"lead","title":"앱 내 그래프","text":"그래프의 점을 읽고 식에 대입해 좌표가 조건을 만족하는지 확인하세요."},{"type":"graph","title":title,"text":concept,"graph":graph}]},

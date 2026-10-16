@@ -904,7 +904,17 @@
                     "right": 5,
                     "top": 10,
                     "bottom": -10
-                  }
+                  },
+                  "parameters": [
+                    {
+                      "id": "a",
+                      "label": "계수 a",
+                      "value": 1,
+                      "min": -3,
+                      "max": 3,
+                      "step": 0.5
+                    }
+                  ]
                 }
               }
             }
