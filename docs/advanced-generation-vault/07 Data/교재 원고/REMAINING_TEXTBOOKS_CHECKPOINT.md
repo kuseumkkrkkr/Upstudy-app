@@ -326,3 +326,9 @@
 - 명시적 2015 수학Ⅱ 정적분 면적 후보는 공식 `12수학Ⅱ03-05`로 바로잡았다. 2015 상·하 후보는 별도의 chapter 후보 대조표를 근거로 했다.
 - 이번에는 coverage audit generator 단계만 재실행했다: 26상품·1,038 상품-기준 행·115 root / 178 recursive BookData. 재귀 178개 중 exact field/tag code 135, 출판 `not_eligible` 33, unspecified 145, 독립 승인 인정 0. 전체 95단계 파이프라인을 다시 돌린 것은 아니다.
 - 최신 범위 원장은 392개 공식 판본-코드 쌍 모두에 field/tag 신호, 342개 exact chapter anchor, 21개 단일코드·단일chapter 연결, 75개 검토 대기 candidate chapter mapping, exact/candidate 구조 신호 누락 0개를 기록한다. 이 최신 구조 신호 집계가 위 Stage 95 시점의 47개 누락 기록을 갱신하며, 내용 충족·승인을 뜻하지 않는다.
+
+## 2026-10-17 현재 체크아웃 교재 호환성 재검증
+
+- `flutter test --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart test/textbook_activity_compatibility_test.dart` 종료 코드 0, 127개 테스트 통과. 왕복 테스트는 재귀 BookData 178개 모두를 검사하고, activity suite는 현재 지정된 후보 파일의 payload 보존과 학생·교사 리더 상호작용을 확인한다.
+- 이는 BookData 직렬화와 선택된 네이티브 활동 렌더링 검증이다. 106개 HTML 전체 화면 동등성, 실제 저장 API/DB, 실사용자 검증을 증명하지 않는다.
+- 외부 릴리스 경로 `Upstudy-hotfix`의 현재 `HEAD`와 `origin/hotfix`는 모두 `ad4a763`이며, manifest builder와 runtime 모두 publication, cleared rights, teacher, math, curriculum approval을 요구한다. 현재 원장상 네 게이트가 모두 승인된 교재는 0개이므로 교재 배포는 진행하지 않았다.
