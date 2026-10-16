@@ -40,6 +40,10 @@ class Storage:
 @pytest.fixture
 def setup(tmp_path, monkeypatch):
     entry = prepare(json.dumps(source()))
+    entry['source_metadata']['approval'] = {
+        'sha256': entry['source_metadata']['original_sha256'],
+        'publication_approved': True, 'rights_status': 'cleared',
+        'teacher_review_status': 'approved', 'math_review_status': 'approved'}
     path = tmp_path / 'published.json'
     path.write_text(json.dumps({'version': 1, 'books': [entry]}), encoding='utf-8')
     monkeypatch.setattr(public, 'BUNDLE', path)
@@ -127,10 +131,12 @@ def test_explicit_approval_subset_never_leaks_sibling_drafts(tmp_path):
     (tmp_path / 'private_BookData.json').write_text('{"private":"never publish"}', encoding='utf-8')
     manifest = {'version': 1, 'files': [{
         'path': 'approved_BookData.json', 'sha256': hashlib.sha256(selected.encode()).hexdigest(),
-        'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved'}]}
+        'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved',
+        'math_review_status': 'approved'}]}
     report, entries = build(tmp_path, manifest)
     assert report == {'files': 1, 'valid': 1, 'errors': []}
     assert len(entries) == 1 and 'private' not in entries[0]['source']
+    assert entries[0]['source_metadata']['approval']['math_review_status'] == 'approved'
     (tmp_path / 'approved_BookData.json').write_text(selected + ' ', encoding='utf-8')
     with pytest.raises(ValueError, match='Approved source changed'):
         build(tmp_path, manifest)
@@ -144,7 +150,8 @@ def test_approved_but_invalid_runtime_blocks_the_release(tmp_path):
     (tmp_path / 'invalid_BookData.json').write_text(invalid)
     manifest = {'version': 1, 'files': [{
         'path': 'invalid_BookData.json', 'sha256': hashlib.sha256(invalid.encode()).hexdigest(),
-        'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved'}]}
+        'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved',
+        'math_review_status': 'approved'}]}
     report, entries = build(tmp_path, manifest)
     assert report['valid'] == 0 and len(report['errors']) == 1 and entries == []
     manifest['files'][0]['path'] = '../outside.json'
@@ -165,3 +172,38 @@ def test_empty_bundle_never_queries_ownership_storage(tmp_path, monkeypatch):
             assert client.get('/marketplace/textbooks/owned').json() == {'items': []}
     finally:
         public.books.cache_clear()
+
+
+@pytest.mark.parametrize('field,value', [
+    ('math_review_status', 'pending'), ('teacher_review_status', 'pending'),
+    ('rights_status', 'pending'), ('publication_approved', False),
+    ('sha256', '0' * 64),
+])
+def test_deployment_bundle_requires_all_approvals_bound_to_original_hash(tmp_path, monkeypatch, field, value):
+    entry = prepare(json.dumps(source()))
+    approval = {'sha256': entry['source_metadata']['original_sha256'],
+                'publication_approved': True, 'rights_status': 'cleared',
+                'teacher_review_status': 'approved', 'math_review_status': 'approved'}
+    approval[field] = value
+    entry['source_metadata']['approval'] = approval
+    path = tmp_path / 'bundle.json'
+    path.write_text(json.dumps({'version': 1, 'books': [entry]}))
+    monkeypatch.setattr(public, 'BUNDLE', path)
+    public.books.cache_clear()
+    try:
+        with pytest.raises(ValueError, match='approval is incomplete'):
+            public.books()
+    finally:
+        public.books.cache_clear()
+
+
+def test_release_manifest_rejects_missing_or_pending_math_review(tmp_path):
+    raw = json.dumps(source())
+    (tmp_path / 'BookData.json').write_text(raw)
+    item = {'path': 'BookData.json', 'sha256': hashlib.sha256(raw.encode()).hexdigest(),
+            'publication_approved': True, 'rights_status': 'cleared', 'teacher_review_status': 'approved'}
+    with pytest.raises(ValueError, match='fields must be explicit'):
+        build(tmp_path, {'version': 1, 'files': [item]})
+    item['math_review_status'] = 'pending'
+    with pytest.raises(ValueError, match='approval is incomplete'):
+        build(tmp_path, {'version': 1, 'files': [item]})

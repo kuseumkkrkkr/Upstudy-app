@@ -692,7 +692,7 @@ class TextbookCreateRequest(BaseModel):
     schema_version: int = Field(default=1, ge=1, le=2, strict=True)
     title: str = Field(min_length=1, max_length=120)
     subtitle: str = Field(default="", max_length=300)
-    tags: list[str] = Field(default_factory=list, max_length=32)
+    tags: list[str] = Field(default_factory=list, max_length=64)
     chapters: list[dict[str, Any]] = Field(min_length=1, max_length=80)
     cover_color: int | None = Field(default=None, ge=0, le=4294967295)
     category: str = Field(default='custom', max_length=64)
@@ -1942,8 +1942,8 @@ def validate_auth_field(payload: FieldValidationRequest) -> dict[str, Any]:
 
 
 def _require_client_storage_key(key: str) -> None:
-    """Generic KV must not expose or modify server-authoritative social records."""
-    if key.casefold().startswith("social."):
+    """Generic KV cannot bypass server-authoritative record validation."""
+    if key.casefold().startswith(("social.", "textbook.private.", "textbook.public.owned.")):
         raise HTTPException(status_code=403, detail="reserved storage namespace")
 
 
@@ -5174,7 +5174,16 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
     for chapter in chapters:
         if not isinstance(chapter, dict) or not str(chapter.get("title") or "").strip():
             raise HTTPException(status_code=422, detail="invalid_textbook_chapter")
-    textbook_id = str(uuid.uuid4())
+    # Content identity is owner-scoped and stable across response loss/retries.
+    canonical = json.dumps(payload.model_dump(exclude_none=True), ensure_ascii=False,
+                           sort_keys=True, separators=(",", ":"))
+    digest = hashlib.sha256(canonical.encode('utf-8')).hexdigest()
+    textbook_id = str(uuid.uuid5(uuid.NAMESPACE_URL, f'aiflow:created-textbook:{user_id}:{digest}'))
+    existing = _load_private_textbook(user_id, textbook_id)
+    if existing is not None:
+        if existing.get('source_sha256') != digest:
+            raise HTTPException(409, 'textbook_create_identity_conflict')
+        return existing
     created_at = datetime.now(timezone.utc).isoformat()
     book = {
         "textbook_id": textbook_id,
@@ -5192,6 +5201,7 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
         "created_at": created_at,
         "updated_at": created_at,
         "created_by": user_id,
+        "source_sha256": digest,
     }
     try:
         _data_api().request(
@@ -5203,11 +5213,14 @@ async def create_textbook(request: Request, user_id: str = Depends(_current_user
                 "key": f"{_PRIVATE_TEXTBOOK_PREFIX}{textbook_id}",
                 "value": json.dumps(book, ensure_ascii=False, separators=(",", ":")),
             },
-            prefer="resolution=merge-duplicates,return=minimal",
+            prefer="resolution=ignore-duplicates,return=minimal",
         )
     except RuntimeError as error:
         raise HTTPException(status_code=503, detail="Textbook storage is unavailable") from error
-    return book
+    persisted = _load_private_textbook(user_id, textbook_id)
+    if persisted is None or persisted.get('source_sha256') != digest:
+        raise HTTPException(503, 'Textbook creation could not be verified; retry the same content')
+    return persisted
 
 
 @app.post('/textbooks/import', status_code=201)

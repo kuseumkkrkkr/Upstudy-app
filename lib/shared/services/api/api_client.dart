@@ -4874,11 +4874,38 @@ extension ApiClientLegacyCompat on ApiClient {
     return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
   }
 
+  /// Save a private draft remotely; creation never grants public eligibility.
   Future<Map<String, dynamic>> createTextbook(
     Map<String, dynamic> payload,
   ) async {
-    // 교재 생성 서버 계약이 연결되기 전에는 성공처럼 보이는 빈 응답을 만들지 않는다.
-    throw ApiException(statusCode: 501, message: 'textbook_create_unavailable');
+    final token = await _ensureToken();
+    final generation = _sessionChanges.value;
+    final response = await _post<Map<String, dynamic>>(
+      '/textbooks',
+      payload,
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+    );
+    final book = response.data;
+    if (!response.success ||
+        book == null ||
+        (book['textbook_id']?.toString().trim().isEmpty ?? true)) {
+      throw ApiException(
+        statusCode: 502,
+        message: 'textbook_create_response_invalid',
+      );
+    }
+    if (_token != token || _sessionChanges.value != generation) {
+      throw ApiException(statusCode: 409, message: 'textbook_create_session_changed');
+    }
+    try {
+      await invalidateCachePath('/textbooks');
+    } catch (_) {
+      // Creating the user's textbook is authoritative even if cache eviction fails.
+    }
+    if (_token != token || _sessionChanges.value != generation) {
+      throw ApiException(statusCode: 409, message: 'textbook_create_session_changed');
+    }
+    return book;
   }
 
   Future<List<DailyQuestItem>> fetchDailyQuests({

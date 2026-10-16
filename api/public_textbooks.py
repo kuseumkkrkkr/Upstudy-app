@@ -27,6 +27,15 @@ def books():
         if set(entry) != {'source', 'sha256', 'source_metadata'}:
             raise ValueError('Invalid public textbook entry')
         book, digest = parse_import(entry['source'], entry['sha256'])
+        metadata = entry['source_metadata']
+        approval = metadata.get('approval', {}) if isinstance(metadata, dict) else {}
+        if (approval.get('publication_approved') is not True
+                or approval.get('rights_status') != 'cleared'
+                or approval.get('teacher_review_status') != 'approved'
+                or approval.get('math_review_status') != 'approved'
+                or not re.fullmatch(r'[0-9a-f]{64}', str(approval.get('sha256', '')))
+                or approval.get('sha256') != metadata.get('original_sha256')):
+            raise ValueError('Public textbook publication approval is incomplete')
         book_id = 'published-' + digest
         if book_id in result:
             raise ValueError('Duplicate public textbook')

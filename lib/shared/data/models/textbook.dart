@@ -39,7 +39,7 @@ class BookData {
   final String? curriculumVersion;
   final List<String> standardCodes;
 
-  /// SHA-256 of the UTF-8 author source, verified by the private import API.
+  /// Server-verified SHA-256: exact import source or canonical create payload.
   final String? sourceSha256;
   final int schemaVersion;
 
