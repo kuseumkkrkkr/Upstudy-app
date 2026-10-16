@@ -256,8 +256,11 @@ class _BookActivityViewState extends State<BookActivityView>
                       behavior: HitTestBehavior.opaque,
                       onHorizontalDragUpdate: (event) => setState(() {
                         _stop();
-                        _x = (_x + event.delta.dx * 10 / (size.width - 48))
-                            .clamp(-4, 4);
+                        _x =
+                            (_x +
+                                    event.delta.dx /
+                                        _ParabolaPainter.unitScale(size))
+                                .clamp(-4, 4);
                       }),
                       child: const SizedBox(width: 48, height: 48),
                     ),
@@ -314,10 +317,12 @@ class _BookActivityViewState extends State<BookActivityView>
 class _ParabolaPainter extends CustomPainter {
   _ParabolaPainter(this.p, this.x);
   final double p, x;
-  static Offset position(Size s, double x, double y) => Offset(
-    24 + (x + 5) / 10 * (s.width - 48),
-    24 + (10 - y) / 14 * (s.height - 48),
-  );
+  // One graph unit has the same pixel length on both axes: equal distances
+  // must also look equal. Independent x/y stretching would falsify the lesson.
+  static double unitScale(Size s) =>
+      math.min((s.width - 48) / 10, (s.height - 48) / 14);
+  static Offset position(Size s, double x, double y) =>
+      Offset(s.width / 2 + x * unitScale(s), 24 + (10 - y) * unitScale(s));
   @override
   void paint(Canvas canvas, Size size) {
     Offset at(double x, double y) => position(size, x, y);
