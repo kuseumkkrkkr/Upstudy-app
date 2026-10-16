@@ -332,3 +332,4 @@
 - `flutter test --reporter compact test/textbook_bookdata_inventory_roundtrip_test.dart test/textbook_activity_compatibility_test.dart` 종료 코드 0, 127개 테스트 통과. 왕복 테스트는 재귀 BookData 178개 모두를 검사하고, activity suite는 현재 지정된 후보 파일의 payload 보존과 학생·교사 리더 상호작용을 확인한다.
 - 이는 BookData 직렬화와 선택된 네이티브 활동 렌더링 검증이다. 106개 HTML 전체 화면 동등성, 실제 저장 API/DB, 실사용자 검증을 증명하지 않는다.
 - 외부 릴리스 경로 `Upstudy-hotfix`의 현재 `HEAD`와 `origin/hotfix`는 모두 `ad4a763`이며, manifest builder와 runtime 모두 publication, cleared rights, teacher, math, curriculum approval을 요구한다. 현재 원장상 네 게이트가 모두 승인된 교재는 0개이므로 교재 배포는 진행하지 않았다.
+- 릴리스 계약 회귀 검증: 현재 `Upstudy-hotfix`의 `ad4a763`에서 bookdata create contract/import, public-textbook release gates, author compatibility, graph math security 5개 suite가 `51 passed`로 통과했다. Starlette/httpx deprecation warning 1건이 있다. 이는 승인 누락 거부 동작을 검증하며, 승인 대상이 생겼거나 배포·DB·실사용이 완료됐다는 증거는 아니다.
