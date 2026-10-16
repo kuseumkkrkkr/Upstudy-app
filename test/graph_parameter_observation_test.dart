@@ -28,4 +28,17 @@ void main() {
     expect(readGraphParameterEvent(document, {...event, 'revision': true}, 1), isNull);
     expect(readGraphParameterEvent(document, {...event, 'type': 'script'}, 1), isNull);
   });
+  test('cursor role survives model copy and structured tutor context', () {
+    const cursor = AiFlowGraphParameter(id: 'observed_x', label: '관찰 위치 x',
+        value: -1, min: -2, max: 2, role: 'observationX');
+    final graph = AiFlowGraphDocument(items: [], settings: AiFlowGraphSettings(parameters: [cursor]));
+    expect(cursor.copyWith(value: .5).toJson()['role'], 'observationX');
+    final values = validateGraphParameters(graph, {'observed_x': .5})!;
+    final observation = graphTutorObservation(graph, values, 'page-1-graph-0');
+    expect((observation['parameters'] as List).single['role'], 'observationX');
+    final invalid = AiFlowGraphDocument(items: [], settings: AiFlowGraphSettings(parameters: [
+      cursor, cursor.copyWith(id: 'another'),
+    ]));
+    expect(validateGraphParameters(invalid, {'observed_x': .5, 'another': 0}), isNull);
+  });
 }

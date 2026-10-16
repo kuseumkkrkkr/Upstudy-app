@@ -19,10 +19,44 @@ ROOT_ANNOTATIONS = {'metadata', 'standard_coverage', 'grade_semester_status',
 CHAPTER_ANNOTATIONS = {'unit', 'title_code', 'unit_name', 'unitTitle', 'candidate_standard_codes'}
 
 
+def migrate_observation_sliders(book):
+    """Separate explicitly labelled observation x from the curve coordinate.
+
+    Expressions are untouched. Each original parameter is recorded by its exact
+    location for reversible audit; ambiguous x parameters still fail validation.
+    """
+    migrations = []
+    for ci, chapter in enumerate(book.get('chapters', [])):
+        graphs = []
+        for si, section in enumerate(chapter.get('sections', [])):
+            if 'graph' in section:
+                graphs.append((['chapters', ci, 'sections', si, 'graph'], section['graph']))
+        for pi, page in enumerate(chapter.get('pages', [])):
+            for bi, block in enumerate(page.get('blocks', [])):
+                if 'graph' in block:
+                    graphs.append((['chapters', ci, 'pages', pi, 'blocks', bi, 'graph'], block['graph']))
+        for path, graph in graphs:
+            parameters = graph.get('settings', {}).get('parameters', [])
+            for index, parameter in enumerate(parameters):
+                if (parameter.get('id') != 'x' or parameter.get('label') != '관찰 위치 x'
+                        or 'role' in parameter):
+                    continue
+                if any(p.get('id') == 'observed_x' or p.get('role') == 'observationX' for p in parameters):
+                    raise ValueError('graph: observation migration conflicts with existing parameter')
+                migrations.append({'path': path + ['settings', 'parameters', index],
+                                   'original': copy.deepcopy(parameter)})
+                parameter['id'] = 'observed_x'
+                parameter['role'] = 'observationX'
+    return migrations
+
+
 def prepare(source):
     original = json.loads(source, object_pairs_hook=_unique_object, parse_constant=_reject_constant)
     book = copy.deepcopy(original)
     annotations = {'book': {}, 'chapters': []}
+    migrations = migrate_observation_sliders(book)
+    if migrations:
+        annotations['graph_parameter_migrations'] = migrations
     # Older author exports omitted the version despite explicit registered V2
     # activities. Upgrade only a missing declaration; never override explicit V1.
     if 'schema_version' not in book and any(

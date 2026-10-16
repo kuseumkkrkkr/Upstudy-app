@@ -133,6 +133,7 @@ class AiFlowGraphParameter {
     required this.min,
     required this.max,
     this.step = 0.1,
+    this.role = 'coefficient',
   });
 
   final String id;
@@ -142,6 +143,9 @@ class AiFlowGraphParameter {
   final double max;
   final double step;
 
+  /// `observationX` locates a point on each curve; never a formula coefficient.
+  final String role;
+
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
       'id': id,
@@ -150,6 +154,7 @@ class AiFlowGraphParameter {
       'min': min,
       'max': max,
       'step': step,
+      if (role != 'coefficient') 'role': role,
     };
   }
 
@@ -160,6 +165,7 @@ class AiFlowGraphParameter {
     double? min,
     double? max,
     double? step,
+    String? role,
   }) {
     return AiFlowGraphParameter(
       id: id ?? this.id,
@@ -168,6 +174,7 @@ class AiFlowGraphParameter {
       min: min ?? this.min,
       max: max ?? this.max,
       step: step ?? this.step,
+      role: role ?? this.role,
     );
   }
 }

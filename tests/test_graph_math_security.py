@@ -23,4 +23,5 @@ console.log(JSON.stringify({values:[f(4,{p:2}), f(4,{p:1}),degree(90),power(2)],
     assert 'new Function' not in builder and 'eval(' not in builder
     web = (root / 'lib/sessions/graph_tools/ui/widgets/jsx_graph_embed_web.dart').read_text(encoding='utf-8')
     assert "setAttribute('sandbox', 'allow-scripts')" in web
-    assert "event.source != _iframe.contentWindow" in web
+    assert "@JS('Object.is')" in web
+    assert "!_sameGraphWindow(event.source, _iframe.contentWindow).toDart" in web

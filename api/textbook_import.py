@@ -77,12 +77,23 @@ def validate_graph(graph):
     settings = graph.get('settings')
     object_fields(settings, 'showAxes showGrid lockViewport degreeMode viewport parameters', 'graph.settings')
     names = set()
+    coefficient_names = set()
+    observers = 0
     for parameter in sequence(settings.get('parameters', []), 'graph.parameters', 16):
-        object_fields(parameter, 'id label value min max step', 'graph.parameter')
+        object_fields(parameter, 'id label value min max step role', 'graph.parameter')
         name = parameter.get('id')
         if not isinstance(name, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,31}', name) or name in RESERVED or name in names:
             raise ValueError('graph.parameter: invalid or duplicate identifier')
         names.add(name)
+        role = parameter.get('role', 'coefficient')
+        if role not in ('coefficient', 'observationX'):
+            raise ValueError('graph.parameter: unsupported role')
+        if role == 'observationX':
+            observers += 1
+            if observers > 1:
+                raise ValueError('graph.parameter: only one observationX allowed')
+        else:
+            coefficient_names.add(name)
         text(parameter.get('label', ''), 'graph.parameter.label', 120)
         for field in ('value', 'min', 'max', 'step'):
             number(parameter.get(field), 'graph.parameter.' + field)
@@ -107,7 +118,7 @@ def validate_graph(graph):
         if 'enabled' in item and not isinstance(item['enabled'], bool):
             raise ValueError('graph.item.enabled: boolean required')
         if item.get('type') == 'function':
-            validate_expression(item.get('expression'), names)
+            validate_expression(item.get('expression'), coefficient_names)
         elif item.get('type') in ('line', 'scatter'):
             xs, ys = item.get('xValues'), item.get('yValues')
             for values in (xs, ys):

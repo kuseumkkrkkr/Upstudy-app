@@ -1,5 +1,5 @@
 """Bounded client-observed graph values; never grading or ownership evidence."""
-from typing import Annotated
+from typing import Annotated, Literal
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 from api.textbook_import import RESERVED
 
@@ -7,6 +7,7 @@ from api.textbook_import import RESERVED
 class GraphParameter(BaseModel):
     model_config = ConfigDict(extra='forbid')
     id: str = Field(pattern=r'^[A-Za-z][A-Za-z0-9_]{0,31}$')
+    role: Literal['coefficient', 'observationX'] = 'coefficient'
     value: float = Field(strict=True, allow_inf_nan=False, ge=-1e9, le=1e9)
     min: float = Field(strict=True, allow_inf_nan=False, ge=-1e9, le=1e9)
     max: float = Field(strict=True, allow_inf_nan=False, ge=-1e9, le=1e9)
@@ -29,6 +30,8 @@ class GraphObservation(BaseModel):
     def unique(self):
         if len({p.id for p in self.parameters}) != len(self.parameters):
             raise ValueError('Duplicate parameter')
+        if sum(p.role == 'observationX' for p in self.parameters) > 1:
+            raise ValueError('Only one observationX allowed')
         return self
 
 

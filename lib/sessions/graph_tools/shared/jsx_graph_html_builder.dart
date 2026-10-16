@@ -204,6 +204,12 @@ String buildAiFlowGraphHtml(
         color: #1f6b4e;
         padding: 0 6px;
       }
+      #observationReadout {
+        font-size: 12px;
+        line-height: 1.5;
+        color: #234535;
+        overflow-wrap: anywhere;
+      }
     </style>
   </head>
   <body class="__AIFLOW_GRAPH_BODY_CLASS__">
@@ -219,6 +225,7 @@ String buildAiFlowGraphHtml(
         <canvas id="fallbackCanvas"></canvas>
       </div>
       <div id="controls" aria-label="파라미터 슬라이더"></div>
+      <div id="observationReadout" role="status" aria-live="polite" hidden></div>
     </div>
 
     <script>
@@ -228,6 +235,7 @@ String buildAiFlowGraphHtml(
         const boardElement = document.getElementById('board');
         const fallbackCanvasElement = document.getElementById('fallbackCanvas');
         const controlsElement = document.getElementById('controls');
+        const observationReadout = document.getElementById('observationReadout');
         const zoomInBtn = document.getElementById('zoomInBtn');
         const zoomOutBtn = document.getElementById('zoomOutBtn');
         const resetBtn = document.getElementById('resetBtn');
@@ -343,8 +351,37 @@ String buildAiFlowGraphHtml(
         __AIFLOW_SAFE_MATH__
 
         function safeFunctionFromExpression(expression, degreeMode) {
-          const parsed = compileGraphMath(normalizeExpression(expression || ''), Object.keys(parameterValues), degreeMode);
+          const coefficients = (currentPayload.settings?.parameters || [])
+            .filter(p => p.role !== 'observationX').map(p => p.id);
+          const parsed = compileGraphMath(normalizeExpression(expression || ''), coefficients, degreeMode);
           return parsed ? x => parsed(x, parameterValues) : null;
+        }
+
+        // One observation cursor is shared by both JSXGraph and canvas fallback.
+        // It evaluates the unchanged curve at x; it never substitutes for x.
+        function observationPoint(settings, evaluator) {
+          const cursors = (settings.parameters || []).filter(p => p.role === 'observationX');
+          if (cursors.length !== 1) return null;
+          const parameter = cursors[0];
+          const x = parameterValues[parameter.id];
+          if (!Number.isFinite(x) || x < parameter.min || x > parameter.max) return null;
+          const y = evaluator(x);
+          return Number.isFinite(y) ? {x, y} : null;
+        }
+
+        function updateObservationReadout(payload) {
+          const settings = payload.settings || {};
+          const hasCursor = (settings.parameters || []).some(p => p.role === 'observationX');
+          observationReadout.hidden = !hasCursor;
+          const descriptions = [];
+          if (hasCursor) for (const item of payload.items || []) {
+            if (item.enabled === false || item.type !== 'function') continue;
+            const evaluator = safeFunctionFromExpression(item.expression, settings.degreeMode === true);
+            const point = evaluator && observationPoint(settings, evaluator);
+            descriptions.push((item.label || item.id || '함수') + ': ' +
+              (point ? 'x=' + formatFixed(point.x) + ', y=' + formatFixed(point.y) : '관찰 위치에서 정의되지 않음'));
+          }
+          observationReadout.textContent = descriptions.join(' · ');
         }
 
         function clearElements() {
@@ -440,6 +477,7 @@ String buildAiFlowGraphHtml(
           const items = Array.isArray(payload?.items) ? payload.items : [];
           const viewport = getViewport(payload);
           const params = settings.parameters || [];
+          updateObservationReadout(payload);
           // Keep the same observed slider values as the main renderer.
           // applyGraphPayload alone initializes them from author defaults.
           const { width, height, ratio } = ensureFallbackCanvasSize();
@@ -500,6 +538,20 @@ String buildAiFlowGraphHtml(
               if (hasPoint) {
                 ctx.stroke();
                 rendered = true;
+              }
+              const point = observationPoint(settings, evaluator);
+              if (point) {
+                const cx = bounds.originX + plotWidth * ((point.x - viewport.left) / (viewport.right - viewport.left));
+                const cy = bounds.originY + plotHeight * ((viewport.top - point.y) / (viewport.top - viewport.bottom));
+                ctx.save();
+                ctx.beginPath();
+                ctx.rect(bounds.originX, bounds.originY, plotWidth, plotHeight);
+                ctx.clip();
+                ctx.fillStyle = color;
+                ctx.beginPath();
+                ctx.arc(cx, cy, 4 * ratio, 0, Math.PI * 2);
+                ctx.fill();
+                ctx.restore();
               }
               continue;
             }
@@ -569,7 +621,7 @@ String buildAiFlowGraphHtml(
             const detail = params
               .map(
                 (p) =>
-                  (p.id || 'param') + '=' + formatFixed(numberOrFallback(p.value, 0)),
+                  (p.id || 'param') + '=' + formatFixed(numberOrFallback(parameterValues[p.id], 0)),
               )
               .join(', ');
             ctx.fillText('파라미터: ' + detail, 30 * ratio, 50 * ratio);
@@ -712,6 +764,7 @@ String buildAiFlowGraphHtml(
           clearElements();
 
           const settings = currentPayload.settings || {};
+          updateObservationReadout(currentPayload);
           for (const grid of board.grids || []) grid.setAttribute({ visible: settings.showGrid !== false });
           if (board.attr.pan) board.attr.pan.enabled = settings.lockViewport !== true;
           if (board.attr.zoom) board.attr.zoom.wheel = settings.lockViewport !== true;
@@ -754,6 +807,11 @@ String buildAiFlowGraphHtml(
                 },
               );
               renderedElements.push(graph);
+              const point = observationPoint(settings, evaluator);
+              if (point) renderedElements.push(board.create('point', [point.x, point.y], {
+                fixed: true, withLabel: false, size: 4,
+                strokeColor: color, fillColor: color,
+              }));
               functionItems.push(graph);
               hasRenderable = true;
               continue;
@@ -881,7 +939,7 @@ String buildAiFlowGraphHtml(
           const fallbackOnce = () => {
             if (useFallback) return;
             setRenderMode(true);
-            drawFallback(initialPayload);
+            applyGraphPayload(initialPayload, true);
             setStatus('JSXGraph 라이브러리를 불러오지 못해 미리보기 모드로 전환했습니다.');
             libraryLoadCompleted = true;
           };
@@ -933,13 +991,13 @@ String buildAiFlowGraphHtml(
                 applyInitialPayload();
               } else {
                 setRenderMode(true);
-                drawFallback(initialPayload);
+                applyGraphPayload(initialPayload, true);
                 setStatus('JSXGraph 초기화에 실패해 미리보기 모드로 전환했습니다.');
               }
             });
             script.addEventListener('error', () => {
               setRenderMode(true);
-              drawFallback(initialPayload);
+              applyGraphPayload(initialPayload, true);
               setStatus('JSXGraph CDN 로딩 실패: 미리보기 모드로 전환했습니다.');
             });
           } else {

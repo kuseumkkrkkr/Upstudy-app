@@ -45,3 +45,13 @@ def test_graph_count_bounded_and_old_clients_compatible():
     assert ServerChatMessageRequest(user_message='hello').graph_context == []
     with pytest.raises(ValidationError):
         ServerChatMessageRequest(user_message='hello', graph_context=[observation()]*5)
+
+
+def test_observation_role_is_bounded_reference_only():
+    graph = observation()
+    graph['parameters'][0].update(id='observed_x', role='observationX')
+    parsed = ServerChatMessageRequest(user_message='hello', graph_context=[graph])
+    assert parsed.graph_context[0].parameters[0].role == 'observationX'
+    graph['parameters'].append({**graph['parameters'][0], 'id': 'second'})
+    with pytest.raises(ValidationError):
+        ServerChatMessageRequest(user_message='hello', graph_context=[graph])

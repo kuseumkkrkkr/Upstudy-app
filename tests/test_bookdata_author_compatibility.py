@@ -82,3 +82,54 @@ def test_reserved_x_does_not_become_an_ignored_slider(tmp_path):
     report, fixture = audit(tmp_path)
     assert report['blocked'] == 1 and fixture == []
     assert report['records'][0]['error'] == 'graph.parameter: invalid or duplicate identifier'
+
+
+def test_explicit_observation_x_migration_is_reversible_and_keeps_curve(tmp_path):
+    original = draft()
+    graph = {'items': [{'type': 'function', 'expression': 'x^3-3*x'}],
+             'settings': {'parameters': [{'id': 'x', 'label': '관찰 위치 x',
+                 'value': -1, 'min': -2, 'max': 2, 'step': .1}]}}
+    original['chapters'][0]['pages'][0]['blocks'].append({'type': 'graph', 'graph': graph})
+    before = copy.deepcopy(original)
+    entry = prepare(json.dumps(original))
+    runtime_graph = json.loads(entry['source'])['chapters'][0]['pages'][0]['blocks'][-1]['graph']
+    assert original == before and runtime_graph['items'] == graph['items']
+    assert runtime_graph['settings']['parameters'] == [{**graph['settings']['parameters'][0],
+        'id': 'observed_x', 'role': 'observationX'}]
+    (tmp_path / 'cursor_BookData.json').write_text(json.dumps(original), encoding='utf-8')
+    report, _ = audit(tmp_path)
+    assert report['passed'] == 1 and report['blocked'] == 0
+    assert report['records'][0]['graph_parameter_migrations'][0]['original'] == graph['settings']['parameters'][0]
+    graph['settings']['parameters'].append({'id': 'observed_x', 'value': 0, 'min': -2, 'max': 2, 'step': .1})
+    with pytest.raises(ValueError, match='migration conflicts'):
+        prepare(json.dumps(original))
+
+
+@pytest.mark.parametrize('alter', [
+    lambda g: g['settings']['parameters'][0].update(role='script'),
+    lambda g: g['settings']['parameters'].append({
+        'id': 'second', 'role': 'observationX', 'value': 0, 'min': -2, 'max': 2, 'step': .1}),
+    lambda g: g['items'][0].update(expression='observed_x*x'),
+])
+def test_observation_role_rejects_ambiguous_or_coefficient_use(alter):
+    original = draft()
+    graph = {'items': [{'type': 'function', 'expression': 'x*x'}],
+             'settings': {'parameters': [{'id': 'observed_x', 'role': 'observationX',
+                 'value': 1, 'min': -2, 'max': 2, 'step': .1}]}}
+    original['chapters'][0]['pages'][0]['blocks'].append({'type': 'graph', 'graph': graph})
+    alter(graph)
+    with pytest.raises(ValueError):
+        validate_book(original)
+
+
+def test_baseline_manifest_detects_source_drift_and_excludes_new_siblings(tmp_path):
+    path = tmp_path / 'first_BookData.json'
+    path.write_text(json.dumps(draft()), encoding='utf-8')
+    baseline, _ = audit(tmp_path)
+    (tmp_path / 'later_BookData.json').write_text('{"not":"a book"}', encoding='utf-8')
+    report, _ = audit(tmp_path, baseline)
+    assert report['files'] == report['passed'] == 1
+    path.write_text(json.dumps({**draft(), 'title': 'Changed'}), encoding='utf-8')
+    report, _ = audit(tmp_path, baseline)
+    assert report['blocked'] == 1
+    assert 'Baseline source hash changed' in report['records'][0]['error']

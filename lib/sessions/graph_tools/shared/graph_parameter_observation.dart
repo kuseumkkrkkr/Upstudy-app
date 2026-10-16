@@ -11,9 +11,14 @@ Map<String, double>? validateGraphParameters(
     return null;
   }
   final result = <String, double>{};
+  var observers = 0;
   for (final parameter in parameters) {
     final id = parameter.id;
     final value = values[id];
+    if (parameter.role != 'coefficient' && parameter.role != 'observationX') {
+      return null;
+    }
+    if (parameter.role == 'observationX' && ++observers > 1) return null;
     if (!RegExp(r'^[A-Za-z][A-Za-z0-9_]{0,31}$').hasMatch(id) ||
         const {'abs', 'max', 'min', 'sqrt', 'pow', 'exp', 'ln', 'log', 'sin',
           'cos', 'tan', 'ceil', 'floor', 'round', 'x', 'y', 'pi', 'e',
@@ -52,6 +57,7 @@ Map<String, dynamic> graphTutorObservation(
   'parameters': [
     for (final parameter in document.settings.parameters)
       {'id': parameter.id, 'value': values[parameter.id],
+       if (parameter.role != 'coefficient') 'role': parameter.role,
        'min': parameter.min, 'max': parameter.max},
   ],
 };

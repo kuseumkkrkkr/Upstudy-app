@@ -9,6 +9,7 @@ import 'book_right_triangle_view.dart';
 import 'book_coordinate_point_view.dart';
 import 'book_vector_operations_view.dart';
 import 'book_vector_inner_product_view.dart';
+import 'book_square_root_number_line_view.dart';
 
 /// Reader-owned keys reparent practice state across responsive shells. No storage.
 class BookActivityKeyScope extends InheritedWidget {
@@ -124,6 +125,7 @@ class _BookActivityViewState extends State<BookActivityView>
           'coordinateWalk',
           'vectorOperation',
           'vectorInnerProduct',
+          'squareRootNumberLine',
         }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
@@ -226,6 +228,9 @@ class _BookActivityViewState extends State<BookActivityView>
     }
     if (a.kind == 'vectorInnerProduct') {
       return BookVectorInnerProductView(activity: a);
+    }
+    if (a.kind == 'squareRootNumberLine') {
+      return BookSquareRootNumberLineView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {
       'answer': _answer.text,

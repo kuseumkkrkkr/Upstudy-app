@@ -449,6 +449,7 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
             min: _readDouble(item['min'], -10),
             max: _readDouble(item['max'], 10),
             step: _readDouble(item['step'], 0.1),
+            role: item['role']?.toString() ?? 'coefficient',
           ),
         )
         .toList(growable: false);

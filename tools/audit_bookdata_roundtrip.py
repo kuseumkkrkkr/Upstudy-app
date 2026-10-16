@@ -9,13 +9,24 @@ from api.textbook_import import parse_import
 from tools.build_public_textbooks import prepare
 
 
-def audit(root):
+def audit(root, baseline=None):
     records, runtime = [], []
-    for path in sorted(root.rglob('*BookData*.json')):
+    root = root.resolve()
+    expected = {}
+    if baseline is not None:
+        for record in baseline['records']:
+            path = (root / record['path']).resolve()
+            if not path.is_relative_to(root) or path in expected:
+                raise ValueError('Baseline path outside root or repeated')
+            expected[path] = record['source_sha256']
+    paths = sorted(expected) if baseline is not None else sorted(root.rglob('*BookData*.json'))
+    for path in paths:
         source = path.read_text(encoding='utf-8-sig')
         digest = hashlib.sha256(source.replace('\r\n', '\n').encode()).hexdigest()
         record = {'path': path.relative_to(root).as_posix(), 'source_sha256': digest}
         try:
+            if path in expected and digest != expected[path]:
+                raise ValueError('Baseline source hash changed; not the same snapshot')
             entry = prepare(source)
             parsed, _ = parse_import(entry['source'], entry['sha256'])
             restored = json.loads(json.dumps(parsed, ensure_ascii=False))
@@ -30,11 +41,18 @@ def audit(root):
                 restored['standard_code'] = original['standard_code']
             if 'schema_migration' in annotations:
                 restored.pop('schema_version')
+            for migration in annotations.get('graph_parameter_migrations', []):
+                target = restored
+                for key in migration['path'][:-1]:
+                    target = target[key]
+                target[migration['path'][-1]] = migration['original']
             if restored != original:
                 raise ValueError('Author content failed exact reconstruction')
             if path.read_text(encoding='utf-8-sig') != source:
                 raise ValueError('Source changed during audit; rerun')
             record.update(status='roundtrip_pass', runtime_sha256=entry['sha256'])
+            if annotations.get('graph_parameter_migrations'):
+                record['graph_parameter_migrations'] = annotations['graph_parameter_migrations']
             runtime.append({'path': record['path'], 'book': parsed})
         except (ValueError, TypeError, KeyError, RecursionError) as error:
             record.update(status='blocked', error=str(error))
@@ -49,6 +67,8 @@ def main():
     parser.add_argument('source_root', type=Path)
     parser.add_argument('--report', type=Path, required=True)
     parser.add_argument('--private-fixture', type=Path)
+    parser.add_argument('--baseline-manifest', type=Path,
+                        help='Freeze a prior compatibility report; never publication approval')
     args = parser.parse_args()
     expected = Path('D:/AIFlow-Workspace/Projects/Aiflow/Upstudy-hotfix').resolve()
     if Path.cwd().resolve() != expected:
@@ -60,7 +80,9 @@ def main():
     for output in (args.report, args.private_fixture):
         if output is not None and not output.resolve().is_relative_to(expected / 'build/temp'):
             raise SystemExit('Private audit output must stay in build/temp')
-    report, fixture = audit(args.source_root)
+    baseline = (json.loads(args.baseline_manifest.read_text(encoding='utf-8'))
+                if args.baseline_manifest else None)
+    report, fixture = audit(args.source_root, baseline)
     args.report.write_text(json.dumps(report, ensure_ascii=False, indent=2), encoding='utf-8')
     if args.private_fixture:
         args.private_fixture.write_text(json.dumps(fixture, ensure_ascii=False), encoding='utf-8')

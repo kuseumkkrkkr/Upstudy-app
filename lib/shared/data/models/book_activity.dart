@@ -147,6 +147,10 @@ class BookActivity {
       case 'steps':
         allowed.add('steps');
         steps = texts(json['steps'], 1, 12);
+      case 'squareRootNumberLine':
+        allowed.addAll({'min', 'max'});
+        if (json['min'] is! int || json['min'] != 1 ||
+            json['max'] is! int || json['max'] != 25) fail();
       case 'parabolaDistance':
         allowed.addAll({'p', 'x'});
         p = number(json['p']);
@@ -206,6 +210,7 @@ class BookActivity {
     if (vectorOperation != null) ...vectorOperation!.toJson(),
     if (vectorInnerProduct != null) ...vectorInnerProduct!.toJson(),
     if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
+    if (kind == 'squareRootNumberLine') ...{'min': 1, 'max': 25},
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.
