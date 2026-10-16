@@ -29,10 +29,10 @@
   "source_interaction_status": "native_quiz_candidates; existing HTML remains independent and unembedded",
   "integration_status": "candidate_for_unit_grouping; not_merged_into_master_book",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null,
-  "runtime_validation_command": null,
-  "runtime_validator_candidate_sha256": null,
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "a8000b1",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (36 tests passed; Math I V2 round-trip and student quiz verified)",
+  "runtime_validator_candidate_sha256": "326044F1A8B301F87E208A582659F81532771227DC2E618DEE21FDA40AE77150",
   "notes": [
     "Nine code gaps are drafted; 12수학Ⅰ02-02 is a tangent-graph addendum to the existing partial sine/cosine graph draft.",
     "No complex exponential/logarithmic calculations or advanced sequence-sum formulas are included."
