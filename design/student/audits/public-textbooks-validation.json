@@ -1,0 +1,34 @@
+{
+  "files": 143,
+  "valid": 136,
+  "errors": [
+    {
+      "file": "공통수학1_인수분해_완전제곱식_BookData_시범.json",
+      "error": "visual: unsupported kind"
+    },
+    {
+      "file": "대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json",
+      "error": "block: unsupported type or activity payload"
+    },
+    {
+      "file": "미적분Ⅰ_2022개정_누락기준_Batch1_BookData_V2_시범.json",
+      "error": "block: unsupported fields: correctIndex, explanation, id, options, question"
+    },
+    {
+      "file": "미적분Ⅰ_극대극소와그래프개형_BookData_시범.json",
+      "error": "graph.parameter: invalid or duplicate identifier"
+    },
+    {
+      "file": "수학Ⅱ_도함수부호와증감_BookData_시범.json",
+      "error": "graph.parameter: invalid or duplicate identifier"
+    },
+    {
+      "file": "수학상_2015개정_초안\\수학(상)_2015개정_태그분권_통합BookData_초안.json",
+      "error": "book.tags: list exceeds 32 entries or is invalid"
+    },
+    {
+      "file": "중학교수학_2015개정_다항식의곱셈과인수분해_BookData_시범.json",
+      "error": "visual: unsupported kind"
+    }
+  ]
+}

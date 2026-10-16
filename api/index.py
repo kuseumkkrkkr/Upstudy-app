@@ -28,6 +28,7 @@ from api.question_bank import (
     get_question_by_codebase_seed as _get_canonical_question_by_seed,
 )
 from api import content_admin
+from api import public_textbooks
 from api.textbook_import import parse_import, validate_book
 from fastapi import Depends, FastAPI, Header, HTTPException, Query, Request, status
 from fastapi.concurrency import run_in_threadpool
@@ -1090,6 +1091,7 @@ def _admin_data_api() -> SupabaseDataApi:
 
 
 content_admin.install(app, lambda: _admin_data_api(), MARKETPLACE_CATALOG, _get_canonical_question)
+public_textbooks.install(app, lambda: _data_api(), _current_user)
 
 
 def _require_ocr_worker_secret(x_worker_secret: str | None) -> None:
@@ -5148,7 +5150,8 @@ def _load_private_textbook(user_id: str, textbook_id: str) -> dict[str, Any] | N
 def list_textbooks(user_id: str = Depends(_current_user)) -> dict[str, list[Any]]:
     """개인 교재와 명시적으로 켠 UI 테스트 콘텐츠만 목록에 제공한다."""
     public_books = copy.deepcopy(UI_TEST_CONTENT["textbooks"]) if UI_TEST_CONTENT else []
-    return {"textbooks": [*public_books, *_load_private_textbooks(user_id)]}
+    return {"textbooks": [*public_books, *_load_private_textbooks(user_id),
+                          *public_textbooks.library(_data_api, user_id)]}
 
 
 @app.post("/textbooks", status_code=status.HTTP_201_CREATED)
@@ -5249,6 +5252,9 @@ def get_textbook(textbook_id: str, _user_id: str = Depends(_current_user)) -> di
     private_book = _load_private_textbook(_user_id, textbook_id)
     if private_book is not None:
         return private_book
+    published_book = public_textbooks.get_owned(_data_api, _user_id, textbook_id)
+    if published_book is not None:
+        return published_book
     book = next((book for book in (UI_TEST_CONTENT or {}).get('textbooks', []) if book['textbook_id'] == textbook_id), None)
     if book is None:
         raise HTTPException(status_code=404, detail='textbook not found')
