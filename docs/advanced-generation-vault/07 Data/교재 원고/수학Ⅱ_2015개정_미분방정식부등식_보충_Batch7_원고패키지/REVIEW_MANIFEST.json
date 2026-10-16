@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_미분방정식부등식_보충_Batch7_BookData_V2_시범.json",
+  "bookdata_sha256": "8AAF6AD414E284E5F60E22A5A8E6A926D352BBD2027C1C943BF38681423375CF",
+  "candidate_code_references": [
+    "12수학Ⅱ02-10"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "equation_root_and_inequality_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; existing_minimum_value_candidate_preserved"
+}

@@ -112,6 +112,7 @@ GENERATORS = [
     ("build_math2_2015_velocity_distance_v2_batch4.py", "main"),
     ("build_math2_2015_continuous_extrema_v2_batch5.py", "main"),
     ("build_math2_2015_derivative_graph_v2_batch6.py", "main"),
+    ("build_math2_2015_derivative_equations_inequalities_v2_batch7.py", "main"),
 ]
 
 
