@@ -1,0 +1,29 @@
+{
+  "bookdata_file": "기하_2022개정_vector_BookData_시범.json",
+  "bookdata_sha256": "28ED8851CF1F388B2243BD5457640F092FD27A630BAC4E3DE12CD14E9872914A",
+  "candidate_code_references": [
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03",
+    "12기하03-04",
+    "12기하03-05"
+  ],
+  "candidate_code_reference_type": "official_2022_hwp_criterion_table",
+  "module_count": 5,
+  "page_count": 25,
+  "native_activity_count": 5,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "example_data_status": "synthetic_original_examples; no commercial text, problem, illustration, or dataset copied",
+  "curriculum_review_status": "official_codes_verified; semester_and_full_scope_pending",
+  "math_review_status": "pending_full_teacher_review",
+  "math_arithmetic_check_status": "pass_for_listed_examples_only",
+  "teacher_review_status": "pending",
+  "rights_status": "newly_authored; publication_rights_decision_pending",
+  "source_interaction_status": "native_quiz_activity_candidate; no source HTML parity claimed",
+  "integration_status": "not_merged_into_master_book",
+  "publication_eligibility": "not_eligible",
+  "runtime_import_status": "passed",
+  "runtime_validator_head": "aaf65ac3c3a70f0321ccb5ca66799930484686ac"
+}

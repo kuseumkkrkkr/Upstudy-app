@@ -1,29 +1,32 @@
 # 남은 교재 제작·출판 체크포인트
 
 기준일: 2026-10-16
-상태: 26개 카탈로그 전수 대조 시작 · 기존 초안 재현 완료 · 출판 경로 미검증
+상태: 26개 카탈로그 성취기준 대조 진행 · tag 기반 후보 원고 확장 중 · 출판 경로 미검증
 
 ## 2026-10-16 이어서 확인한 사항
 
-- 2022 공식 HWP 본문을 pyhwp XHTML로 변환한 결과에서 성취기준 표 190개 고유 코드를 추출했다. 이 중 중학교 9수 60개, 고등학교 해당 과목 기준 130개다. 추출 JSON은 `work/official-curriculum/2022_math_standards.json`; 생성 파이프라인 62단계가 HWP→XHTML→기준 추출→초안→coverage→HTML 자산 인덱스 순서로 동작한다.
+- 2022 공식 HWP 본문을 pyhwp XHTML로 변환한 결과에서 성취기준 표 190개 고유 코드를 추출했다. 이 중 중학교 9수 60개, 고등학교 해당 과목 기준 130개다. 추출 JSON은 `work/official-curriculum/2022_math_standards.json`; 현재 생성 파이프라인은 63단계다.
 - 26개 상품 기준 장부는 2015 PDF 및 2022 HWP 표의 공식 코드를 baseline으로 집계한다. BookData exact tag는 내용 충족이 아니며 학기 배정·상품 전체 coverage·검수는 별도다. 상세 행은 [REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md](REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md) 참조.
 - 공통수학1 추가 3단원 원고의 `10공수1-02-07`, `-02-08`, `-04-02`는 본표 표 23/25의 정식 기준 및 문구와 대조되어 BookData `standard_codes`로 기록했다. guarded hotfix HEAD `79af5fbd9cd7ee54a5cfac77df74670d6751f729` importer 통과, 3모듈/18쪽/quiz 3개. 교사·수학 검토 대기, 권리 상태 unknown, master 미병합, 게시 부적격.
 - 중학수학 2-2 확률 후보에 `discreteExperiment`를 추가했다: 공정 주사위 6면·짝수 성공·누적 상대도수·최대 10,000회. 해당 V2 원고는 importer 통과(4모듈/24쪽/quiz 4개+실험 1개). 원본 HTML은 보존하며 기능 부분 대응이다. HTML↔native 실제 화면 parity와 학기 배정은 미검증이다.
 - 확률과 통계 2022는 추가 V2 후보 16모듈/80쪽(16개 기준)을 작성했다. Batch1–3의 15모듈/75쪽과 Batch4 `12확통02-01` 기본 확률 보완 1모듈/5쪽을 포함한다. 02-01의 예전 통계적 확률 후보는 상대도수 중심이라 기본 성질을 직접 다루지 않아 보완 원고를 추가했다. Batch3 8모듈 중 7개는 본문과 기준을 예비 대조했고, `12확통03-07`에는 mean/proportion `statisticsEstimator` 활동 두 개를 추가했다. 현재 guarded hotfix HEAD `06790094dcfbe226b3106e0ebf371b26dd9f0f59`의 importer, Python 32개 activity/import 테스트, Flutter 9개 estimator/V2 reader 테스트가 통과했다. 원고 JSON의 페이지 ID는 `ps0307-practice`, 정규화 BookData SHA-256은 `28EDFE3363CC976BF899F41AFBCE31C1CE10FF71B547F262915D5449DE4276FA`다 (Windows raw SHA-256 `45CC9070270D74D21E9AF92F2748CAC80E150CA3CF9D5B0AEF0DFC1148C46DBC`는 CRLF 때문에 다르며 API/importer와 manifest는 CRLF→LF canonical digest를 사용한다). 이는 후보 importer/reader widget 검증이며 라이브 배포/실제 브라우저 페이지 캡처 증거가 아니다. 전 모듈 교사 검토·권리 결정·상품 전체 대조는 여전히 대기 중.
-- 전체 파이프라인은 62단계 성공, 93개 원본 BookData 패키지 참조 검증. 재귀 인벤토리 BookData 129개(그중 V2 12), activity 49개(quiz 46, statisticsEstimator 2, discreteExperiment 1), 독립 HTML 106개. 2015+2022 상품 반복 집계는 1,038 상품-기준 행이며 고유 기준 수가 아니다.
+- 이전 스냅샷의 파이프라인은 62단계·93개 원본 BookData 참조·BookData 129개였다. 이후 배치별 현행 값은 아래 최신 실행 결과를 기준으로 한다. 2015+2022 상품 반복 집계 1,038은 중복을 포함한 상품-기준 행 수다.
 
-- 미적분Ⅱ 2022 수열·급수 기준 `12미적Ⅱ-01-01~05`에 새 V2 후보 5모듈/25쪽/퀴즈 5개를 추가했다. 공식 추출 코드 매핑, 극한·급수 계산 assertion, guarded importer가 통과했다. 과목 기준 23개 중 5개 코드만 tag 연결된 후보이며 나머지 18개와 과목 전체 범위는 미완성이다.
+- 미적분Ⅱ 2022 수열·급수 기준 `12미적Ⅱ-01-01~05`는 Batch1 5모듈/25쪽/quiz 5개로, 미분·적분 기준 `12미적Ⅱ-02-01~11`, `03-01~07`은 Batch2 18모듈/90쪽/quiz 18개로 후보 원고를 작성했다. 전 23개 코드가 tag 후보에 연결되고 importer를 통과했다. 단, `12미적Ⅱ-03-01` 공식 HWP 텍스트 추출에서 문구 앞 수식이 누락되어 보이므로 이 원고는 확인 가능한 지수·삼각함수 적분만 다루며 기준 전체 충족으로 보지 않는다. 전 과목 내용 검토와 교사·권리 검토도 미완료다.
 
 - Coverage 재검증은 공식 기준 16개 전체 tag 행과 Batch1 미적분Ⅱ 5개 기준 행을 분리해 확인했다. 이전 임시 assertion은 prefix 전체가 5개라고 잘못 가정해 실패했으며, 판정식을 원장 행/파일 참조 기준으로 고쳐 재검증했다.
 
 - 2015 확률과 통계 공식 코드 `12확통02-05` 조건부확률, `12확통03-03` 이항분포를 기준 원문과 대조해 새 오리지널 V2 후보 2모듈/10쪽/퀴즈 2개를 추가했다. importer 통과, 17개 기준 중 2개만 매핑이며 전체 과목·교사·권리 검토는 미완료다.
-- BookData digest를 CRLF→LF UTF-8 canonical SHA-256으로 통일했다. 재생성된 8개 후보 manifest digest를 canonical 바이트와 대조했고, V2 후보 12개를 importer로 다시 검증했다.
+- 2022 기하에서 앞서 미작성으로 기록된 9개 공식 기준 `12기하02-01~03`, `02-05`, `03-01~05`에 V2 후보 9모듈/45쪽/quiz 9개를 추가했다. guarded hotfix HEAD `aaf65ac3c3a70f0321ccb5ca66799930484686ac`에서 재귀 schema-v2 BookData 14개 importer 통과; 새 2개 후보 manifest의 runtime importer 상태를 pass로 기록했다. 기하 14개 기준 모두 tag 후보가 있으나 본문 충분성·교사 검토·권리 판단은 미완료다.
+- 전체 파이프라인은 64단계 성공, 원본 BookData 96개 참조 검증. 최신 재귀 인벤토리는 BookData 132개(V2 15), 선언형 activity 76개(quiz 73, statisticsEstimator 2, discreteExperiment 1), 독립 HTML 106개다. 총 파일은 폴더 38개, JSON 217개다. 2015+2022 상품 반복 집계는 1,038 상품-기준 행이며 고유 기준 수가 아니다.
+- canonical BookData SHA-256 매니페스트 10개와 schema-v2 후보 15개를 대조했다. guarded hotfix HEAD `aaf65ac3c3a70f0321ccb5ca66799930484686ac`에서 schema-v2 후보 15개가 importer 통과했다.
+- Reader 회귀 근거: `build/temp/bookdata-resize-test.log`의 초기 실패는 `Section prose survives` 보충 설명이 reader에 나타나지 않은 오류였다. 현재 uncommitted Upstudy-hotfix working tree에서는 본문·보충자료 표시를 반영한 `test/bookdata_import_preservation_test.dart` 4/4, `test/book_activity_v2_test.dart` 6/6이 재실행 통과했다. 전자는 섹션 텍스트·페이지 전환, 후자는 일반 V2 activity reader 경로를 확인한다. 이는 새 18모듈 콘텐츠의 전체 화면별 검수나 깨끗한 HEAD 빌드를 뜻하지 않는다.
 
 ## 현재 근거
 
 - 목표 집합은 [개념서 체험콘텐츠 제작규격](개념서_체험콘텐츠_제작규격.md)의 판본별 26종(중등 12, 고등 14)이다. 아래 23개 폴더는 작업 산출물 위치이지 목표 집합이 아니다.
-- 최초 인벤토리: 폴더 23개, BookData JSON 117개(당시 입력 원본 86개와 통합/복제 산출물), JSON 187개, 체험형 HTML 84개. 최신 재귀 실측은 폴더 29개, BookData JSON 124개, JSON 199개, HTML 106개다. 공통수학1 후보는 18쪽·3활동, 확률과 통계 추가 후보는 15쪽·3활동이며 기존 통합 교재에는 미병합이다.
-- `python tool/build_tagged_textbook_drafts.py`: 최신 57단계 성공, 원본 BookData 88개 참조 확인. 기존 태그 패키징 수치: 단원 34, 소단원 109, 개념 199, 보존 지면 1,594. 추가 후보 BookData는 기존 통합본 범위를 늘린 것으로 세지 않는다.
+- 최초 인벤토리: 폴더 23개, BookData JSON 117개, JSON 187개, 체험형 HTML 84개. 현재 재귀 실측은 폴더 38개, BookData JSON 132개, JSON 217개, HTML 106개다.
+- `python tool/build_tagged_textbook_drafts.py`: 최신 64단계 성공, 원본 BookData 96개 참조 확인. 기존 태그 패키징 수치: 단원 34, 소단원 109, 개념 199, 보존 지면 1,594. 추가 후보 BookData는 기존 통합본 범위를 늘린 것으로 세지 않는다.
 - #8·#9·#10·#11 후보 BookData는 schema v2, 각각 4개 선언형 quiz activity다. 2026-10-16 guarded Upstudy-hotfix HEAD `169a2d4bb533229c3032052cf9fe5724119100cd`에서 네 파일 모두 SHA-256 검증을 포함한 importer 통과(각 4모듈/24쪽/4활동). 원고 테스트 #8–#11 각 2건, 총 8건 통과; guarded hotfix `test/book_activity_v2_test.dart` 6건 통과(실제 reader 390px/1280px 포함).
 - #9–#11 HTML 12개를 브라우저에서 열어 직접 조작했다. #9는 원뿔 단면, 이등변삼각형 채점, 직사각형 대각선 성질, 상대도수 비교를 확인했다. #10은 피타고라스 빗변, 삼각비 비율, 곱의 법칙 결과 갱신, 주사위 시행/상대도수 누적을 확인했다. #11은 제곱근 근삿값, 다항식 곱·인수분해 결과, 이차함수 극값 방향 전환을 확인했다. 캡처는 로컬 검수 증거이며 공개 배포 증거가 아니다.
 - #12 schema v2 BookData는 guarded Upstudy-hotfix HEAD `e9028f9da180835d642863d49c09ebdf81341e5d`의 SHA-256 importer 통과(SHA-256 `926AF3444B0DC9BC0C0C621638A30E8958EBD62F9FE3BB6CFF09FFE3D74D533D`); 원고 테스트 2건 통과, guarded hotfix V2 reader 회귀 6건 통과. 네 HTML 페이지의 화면을 캡처하고 조작 확인했다: 조사 인원 20→26명, 제3사분위수 80→81(사분위 범위 25→26), 상관 방향 양→음, 이상값 변경 시 평균·중앙값·최빈값 갱신. 모든 확인은 로컬 후보 검수이며 공개 배포 증거가 아니다.

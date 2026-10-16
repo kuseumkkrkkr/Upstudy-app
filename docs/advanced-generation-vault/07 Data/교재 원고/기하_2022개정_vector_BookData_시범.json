@@ -1,0 +1,694 @@
+{
+  "schema_version": 2,
+  "title": "기하 · 2022 개정 벡터 추가 5모듈 후보",
+  "subtitle": "공식 성취기준 대응을 위한 신규 집필 시범",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "tags": [
+    "기하",
+    "2022 개정",
+    "벡터",
+    "추가 원고 후보",
+    "가상 예시",
+    "학기 배정 미확정"
+  ],
+  "standard_codes": [
+    "12기하03-01",
+    "12기하03-02",
+    "12기하03-03",
+    "12기하03-04",
+    "12기하03-05"
+  ],
+  "chapters": [
+    {
+      "title": "벡터의 덧셈·뺄셈과 실수배",
+      "intro": [
+        "2022 교육과정 공식 기준 12기하03-01에 연결한 신규 집필 후보입니다.",
+        "예제와 수치는 직접 작성한 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo220301-open",
+          "template": "opening",
+          "title": "상황과 조건 살피기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 이동 u=(2,-1), v=(3,4)를 차례로 하면 시작점에서 끝점까지의 변위는 무엇일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도형의 조건이나 벡터 성분을 표시하고, 결론에 필요한 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220301-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "벡터는 크기와 방향을 함께 나타낸다. 성분이 같은 벡터는 위치가 달라도 같은 벡터다. 성분별로 더하고 빼며, 실수 k를 곱하면 각 성분에 k를 곱한다. k<0이면 방향이 반대가 된다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "12기하03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 점·벡터의 순서, 길이와 길이제곱을 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220301-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 이동 u=(2,-1), v=(3,4)를 차례로 하면 시작점에서 끝점까지의 변위는 무엇일까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "u+v=(2+3,-1+4)=(5,3), u-v=(2-3,-1-4)=(-1,-5), 2u=(4,-2), -u=(-2,1)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "성분별 연산 결과와 음수 실수배에서 방향이 반대가 되는지 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "geo220301-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=(-2,3), b=(4,1)일 때 2a+b와 a-b를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "첫째 성분은 2+3입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "2a+b=(-4,6)+(4,1)=(0,7), a-b=(-2,3)-(4,1)=(-6,2)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "2a+b=(-4,6)+(4,1)=(0,7), a-b=(-2,3)-(4,1)=(-6,2)입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo220301-quiz",
+                "kind": "quiz",
+                "prompt": "u=(2,-1), v=(3,4)일 때 u+v는?",
+                "options": [
+                  "(5,3)",
+                  "(1,-5)",
+                  "(6,-4)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "같은 좌표 성분끼리 더해 (2+3,-1+4)=(5,3)입니다.",
+                "incorrect_feedback": "x성분과 y성분을 각각 따로 계산하세요.",
+                "hints": [
+                  "첫째 성분은 2+3입니다.",
+                  "둘째 성분은 -1+4입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo220301-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "벡터의 덧셈·뺄셈과 실수배"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건을 확인하고 계산이나 증명의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "위치벡터와 점의 좌표",
+      "intro": [
+        "2022 교육과정 공식 기준 12기하03-02에 연결한 신규 집필 후보입니다.",
+        "예제와 수치는 직접 작성한 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo220302-open",
+          "template": "opening",
+          "title": "상황과 조건 살피기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "원점 O에서 점 P=(3,-2,5)로 향하는 벡터를 어떻게 나타내고, 좌표와 어떻게 연결할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도형의 조건이나 벡터 성분을 표시하고, 결론에 필요한 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220302-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "원점 O를 시작점으로 하여 점 P에 도달하는 벡터 OP를 P의 위치벡터라고 한다. 좌표공간에서 P=(a,b,c)이면 위치벡터 OP=(a,b,c)로 대응한다. 점은 위치를, 벡터는 크기와 방향을 나타낸다는 차이를 유지한다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "12기하03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 점·벡터의 순서, 길이와 길이제곱을 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220302-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "원점 O에서 점 P=(3,-2,5)로 향하는 벡터를 어떻게 나타내고, 좌표와 어떻게 연결할까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "A=(1,2,-1), B=(4,-2,3)이면 위치벡터 OA=(1,2,-1), OB=(4,-2,3)이고 AB=OB-OA=(3,-4,4)이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "AB=OB-OA 성분을 직접 빼어 (3,1,4)가 되는지 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "geo220302-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A=(-1,2,0), B=(2,3,4)일 때 OA, OB, AB를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "시작점은 O=(0,0,0)입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "OA=(-1,2,0), OB=(2,3,4), AB=OB-OA=(3,1,4)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "OA=(-1,2,0), OB=(2,3,4), AB=OB-OA=(3,1,4)입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo220302-quiz",
+                "kind": "quiz",
+                "prompt": "P=(3,-2,5)의 위치벡터 OP는?",
+                "options": [
+                  "(3,-2,5)",
+                  "(-3,2,-5)",
+                  "(5,-2,3)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "원점에서 P로 향하는 위치벡터의 성분은 P의 좌표와 같습니다.",
+                "incorrect_feedback": "위치벡터는 원점에서 점으로 향합니다. 좌표 부호와 순서를 그대로 옮기세요.",
+                "hints": [
+                  "시작점은 O=(0,0,0)입니다.",
+                  "OP=P-O입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo220302-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "위치벡터와 점의 좌표"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건을 확인하고 계산이나 증명의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "벡터의 내적과 각",
+      "intro": [
+        "2022 교육과정 공식 기준 12기하03-03에 연결한 신규 집필 후보입니다.",
+        "예제와 수치는 직접 작성한 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo220303-open",
+          "template": "opening",
+          "title": "상황과 조건 살피기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "u=(1,2), v=(3,0)일 때 성분의 곱의 합은 두 벡터가 이루는 각과 어떤 관계일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도형의 조건이나 벡터 성분을 표시하고, 결론에 필요한 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220303-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "두 벡터 u, v의 내적은 대응 성분의 곱을 더한 값이다. 또한 u·v=|u||v|cosθ이다. 두 벡터가 모두 영벡터가 아닐 때 내적이 0이면 서로 수직이다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "12기하03-03"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 점·벡터의 순서, 길이와 길이제곱을 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220303-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "u=(1,2), v=(3,0)일 때 성분의 곱의 합은 두 벡터가 이루는 각과 어떤 관계일까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "u=(1,2), v=(3,0)이면 u·v=1·3+2·0=3이다. u=(1,2), w=(2,-1)이면 u·w=2-2=0이므로 두 벡터는 수직이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "두 예제의 내적을 성분식으로 계산하고, 수직 판정에 영벡터가 아님을 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "geo220303-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "a=(2,1), b=(1,-2)의 내적을 구하고 두 벡터의 관계를 말하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "내적은 1·2+2·(-1)입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "a·b=2·1+1·(-2)=0입니다. 두 벡터는 영벡터가 아니므로 서로 수직입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "a·b=2·1+1·(-2)=0입니다. 두 벡터는 영벡터가 아니므로 서로 수직입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo220303-quiz",
+                "kind": "quiz",
+                "prompt": "(1,2)·(2,-1)의 값과 관계는?",
+                "options": [
+                  "0, 수직",
+                  "4, 평행",
+                  "-1, 수직 아님"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "1·2+2·(-1)=0이므로 두 영벡터가 아닌 벡터는 수직입니다.",
+                "incorrect_feedback": "대응 성분끼리 곱한 두 값을 더하고, 0인 경우의 조건을 확인하세요.",
+                "hints": [
+                  "내적은 1·2+2·(-1)입니다.",
+                  "두 벡터가 영벡터가 아니고 내적이 0이면 수직입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo220303-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "벡터의 내적과 각"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건을 확인하고 계산이나 증명의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "벡터로 직선의 방정식 쓰기",
+      "intro": [
+        "2022 교육과정 공식 기준 12기하03-04에 연결한 신규 집필 후보입니다.",
+        "예제와 수치는 직접 작성한 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo220304-open",
+          "template": "opening",
+          "title": "상황과 조건 살피기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "점 A=(1,2,0)을 지나고 방향벡터 d=(2,-1,3)인 직선 위의 점은 어떤 꼴일까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도형의 조건이나 벡터 성분을 표시하고, 결론에 필요한 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220304-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "점 A를 지나고 영벡터가 아닌 방향벡터 d를 갖는 직선의 점 X는 X=A+td (t는 실수)로 나타낸다. 매개변수 t가 모든 실수를 움직일 때 직선 위의 점 전체를 얻는다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "12기하03-04"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 점·벡터의 순서, 길이와 길이제곱을 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220304-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 A=(1,2,0)을 지나고 방향벡터 d=(2,-1,3)인 직선 위의 점은 어떤 꼴일까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "X=(1,2,0)+t(2,-1,3)이므로 x=1+2t, y=2-t, z=3t이다. t=2이면 X=(5,0,6)으로 직선 위에 있다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "t=0에서 기준점 A가 나오고, t=1 및 t=2 점이 같은 직선식에 맞는지 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "geo220304-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "A=(-1,0,2), d=(1,3,-2)인 직선의 벡터식과 t=2일 때 점을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "t=1이면 X=A+d입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "X=(-1,0,2)+t(1,3,-2)이고 t=2이면 X=(1,6,-2)입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "X=(-1,0,2)+t(1,3,-2)이고 t=2이면 X=(1,6,-2)입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo220304-quiz",
+                "kind": "quiz",
+                "prompt": "A=(1,2,0), d=(2,-1,3)인 직선에서 t=1인 점은?",
+                "options": [
+                  "(3,1,3)",
+                  "(2,1,3)",
+                  "(3,2,1)"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "A+d=(1+2,2-1,0+3)=(3,1,3)입니다.",
+                "incorrect_feedback": "방향벡터를 시작점 좌표에 성분별로 더하세요.",
+                "hints": [
+                  "t=1이면 X=A+d입니다.",
+                  "세 좌표를 각각 더합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo220304-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "벡터로 직선의 방정식 쓰기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건을 확인하고 계산이나 증명의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "벡터로 평면과 구의 방정식 나타내기",
+      "intro": [
+        "2022 교육과정 공식 기준 12기하03-05에 연결한 신규 집필 후보입니다.",
+        "예제와 수치는 직접 작성한 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "geo220305-open",
+          "template": "opening",
+          "title": "상황과 조건 살피기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "점 A=(1,0,2)를 지나고 법선벡터 n=(2,-1,2)를 갖는 평면에서 점 X는 어떤 내적 조건을 만족할까?"
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "도형의 조건이나 벡터 성분을 표시하고, 결론에 필요한 관계를 예상합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220305-concept",
+          "template": "concept",
+          "title": "정의와 성질",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "평면 위의 기준점 A와 법선벡터 n을 알면, 평면 위 점 X는 n·(X-A)=0을 만족한다. 중심 C, 반지름 r인 구는 중심에서 점 X까지의 거리 조건 |X-C|=r, 즉 (X-C)·(X-C)=r²로 나타낸다."
+            },
+            {
+              "type": "formula",
+              "title": "연결한 공식 기준",
+              "text": "12기하03-05"
+            },
+            {
+              "type": "misconception",
+              "title": "조건 점검",
+              "text": "정리의 가정, 점·벡터의 순서, 길이와 길이제곱을 구분합니다."
+            }
+          ]
+        },
+        {
+          "id": "geo220305-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "점 A=(1,0,2)를 지나고 법선벡터 n=(2,-1,2)를 갖는 평면에서 점 X는 어떤 내적 조건을 만족할까?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "n=(2,-1,2), A=(1,0,2)이면 2(x-1)-y+2(z-2)=0, 즉 2x-y+2z-6=0이다. 중심 C=(1,0,0), 반지름 2인 구는 (X-C)·(X-C)=4, 곧 (x-1)²+y²+z²=4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "평면 기준점을 대입해 0, 예제 구의 표면점을 대입해 거리제곱 4인지 확인한다."
+            }
+          ]
+        },
+        {
+          "id": "geo220305-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "법선벡터 n=(1,2,-1), 기준점 A=(0,1,2)인 평면의 좌표 방정식을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "구는 중심 C에서 거리가 r인 점들의 모임입니다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "(X-A)·n=0이므로 x+2(y-1)-(z-2)=0, 즉 x+2y-z=0입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "(X-A)·n=0이므로 x+2(y-1)-(z-2)=0, 즉 x+2y-z=0입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "geo220305-quiz",
+                "kind": "quiz",
+                "prompt": "중심 C, 반지름 r인 구를 벡터 내적으로 나타낸 식은?",
+                "options": [
+                  "(X-C)·(X-C)=r²",
+                  "(X-C)·n=0",
+                  "X=C+r"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "구의 정의는 중심에서의 거리 |X-C|가 r이라는 것이므로 거리제곱은 r²입니다.",
+                "incorrect_feedback": "법선벡터와 내적이 0인 조건은 평면에 해당합니다. 구는 거리 조건입니다.",
+                "hints": [
+                  "구는 중심 C에서 거리가 r인 점들의 모임입니다.",
+                  "거리식을 제곱하면 내적 형태가 됩니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "geo220305-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "벡터로 평면과 구의 방정식 나타내기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "공식의 조건을 확인하고 계산이나 증명의 근거를 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
