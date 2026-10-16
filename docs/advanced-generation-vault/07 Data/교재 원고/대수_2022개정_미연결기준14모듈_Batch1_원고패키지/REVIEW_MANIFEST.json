@@ -51,14 +51,18 @@
     }
   ],
   "example_content_status": "newly_authored synthetic examples",
+  "example_question_alignment_status": "explicit_example_question_map_for_all_14_codes; independent review pending",
   "curriculum_review_status": "15 of 18 codes in this batch set have candidate tags; EqEdit Batch2 supplies the remaining three candidate modules, while content and product scope review remain pending",
   "math_review_status": "arithmetic assertions passed for listed checks only; independent review pending",
   "teacher_review_status": "pending",
   "rights_status": "newly authored text pending rights decision; referenced HTML assets pending source review",
-  "interactive_status": "HTML files remain separate; app execution and screen parity unverified",
-  "app_model_roundtrip_status": "pending_current_hash_validation",
+  "interactive_status": "14 native quiz activities verified in student BookWidget; standalone HTML parity remains unverified",
+  "html_parity_status": "standalone HTML assets remain separate; screen and interaction parity unverified",
   "integration_status": "tag-driven unit integration output; source BookData page payloads preserved",
+  "app_model_roundtrip_status": "passed: 14 quiz payloads preserved through BookData round-trip",
   "publication_eligibility": "not_eligible",
-  "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null
+  "runtime_import_status": "passed_flutter_compatibility_suite",
+  "runtime_validator_head": "d94fc1f",
+  "runtime_validation_command": "flutter test test/textbook_activity_compatibility_test.dart (46 tests passed; Algebra Batch1 round-trip and all 14 student quizzes verified)",
+  "runtime_validator_candidate_sha256": "B96DC87267C8D2FF1B072972E16E68273E2235876053AF8F0ADD00840116177E"
 }
