@@ -98,3 +98,23 @@ Resume the live build process, inspect its exit/log, then synchronize fresh buil
 | `lib/shared/services/storage/local_db{,_io,_stub,_web}.dart` | required scoped persistence dependency | Preexisting shared/native storage behavior; not newly authored by this import |
 
 - The source snapshot preserves these full working files for the deployed build; it is not a clean-source commit. Ownership/history uncertainty must remain visible. No claim that the import integration is fully committed merely because the static bundle is committed.
+
+## Encoding/security follow-up deployed
+
+- Security-only selected source commits: `6a580c3da7980721026cce6fd9cc026d57e8f013` and `04fa0e1e66e6c8be3f4c64d26951d49b75acb4e8`. Kept preexisting axis/viewport/pointer styles and the local-only integration checklist above outside those commits.
+- Author curve labels now use `label:{display:'internal',parse:false,useMathJax:false,useKatex:false}`. [JSXGraph Text reference](https://jsxgraph.org/docs/Text.html) documents internal SVG text vs HTML and the parse option; author labels must not become HTML/JessieCode.
+- Generated synthetic fixture (not the manuscript) was browser-tested locally. Quotes, backslash, newline, closing script tag and template marker remain literal SVG `text`; only the two expected script elements exist. No injected script/img/onerror elements. JSXGraph creates one empty hidden foreignObject container; it is a normal library container, not author content. Slider p2->1.5 updates. Evidence `graph-special-characters-live.jpg`; temporary test server stopped afterwards.
+- Focused graph+BookData preservation tests **5 passed**, log `build/temp/bookdata-encoding-label-tests.log`. Renderer+new test analyze **No issues found**, log `build/temp/bookdata-encoding-label-analyze.log`. Static bundle matched known sk-bk/sbp/sb_secret token formats zero times; this limited pattern scan is not a comprehensive secret audit.
+- Fresh D build101.8s; artifact commit `60565564b4ce58d33cc74bdd1daabe90eb349e50`; toolchain/flags unchanged. Final snapshot `build/temp/bookdata-encoding-source-snapshot.tar` SHA `1D2B137C4D8B8B730E88CD2EDA2B1E431642714DBA8593CB024AA2959DD10095` supersedes previous source snapshots for this release.
+- Deployment `dpl_HTYscDjA8dNT521Pjf91UeqJsaF2`, URL `https://aiflow-web-canary-hvv457edo-cw20208021-9200s-projects.vercel.app`; designated alias `https://aiflow-web-canary.vercel.app` verified. No other alias changed.
+- Local / candidate / normal alias / actual loaded browser JS all SHA `7F54EE1424F0982D6C2F461C4744EAADD7954602487576F9C08ECA2E9DB340B8`,7,133,766bytes. Candidate health OK before alias update.
+- Canary actual390x844: same private book after refresh, page2 renders, SVG label namespace checked, p2->1.5 changes curve, sandbox allow-scripts retained. Actual1280x900: page2 preserved on resize, next3 shows verification content, previous2 restores graph; slider works. Screenshots `reader-encoding-390.png`, `reader-encoding-1280.png` supersede older final images for current deployment.
+- Book ID and original source checksum unchanged. No original manuscript source copied into hotfix, no public publish, no credential changes, no additional DB schema/content replacement. Kiln403/response502 limitation remains unresolved; no fresh tutor success claimed.
+
+| Responsibility | Input / output / lifetime |
+|---|---|
+| `buildAiFlowGraphHtml` | Graph document + display flags -> HTML string, no I/O; serializes graph as a data object and substitutes it after trusted renderer placeholders |
+| `escapedPayload` | Local String from jsonEncode, HTML-significant and Unicode separator chars escaped; never manually re-quoted as JavaScript string |
+| Author label policy | Fixed SVG/internal text, parsing/MathJax/KaTeX disabled; does not change stored graph label text |
+
+- Remaining whole-goal constraints unchanged: mixed local-only import/reader/auth/store integration requires provenance review; actual successful tutor response requires Kiln access. Private canary import and viewer/graph delivery are verified, but neither a clean-source-only build nor full original public/admin publication goal is claimed.
