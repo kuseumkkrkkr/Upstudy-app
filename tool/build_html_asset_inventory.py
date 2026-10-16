@@ -104,6 +104,8 @@ def main() -> None:
         "| Asset ID | 발견 내용 | 수정 상태 | 확인 경계 |",
         "|---|---|---|---|",
         "| `html-002d8074c7ebb2fb` | `α=2`에서 `α=−2`로 바꿀 때 기존 응답은 반대 방향·두 배 길이라고 안내했다. 계수 절댓값은 같으므로 길이 변화 설명이 틀렸다. | 선택지를 반대 방향·같은 길이로 수정하고 안내문을 교체했다. | 로컬 브라우저에서 두 Socratic 질문 진행과 정답 선택 후 완료 피드백을 확인하고 화면을 캡처했다. 상품/BookData 연결과 교사 검수는 미확인이다. |",
+        "| `html-002d8074c7ebb2fb`, `html-5f1d5700e9fa1fc1` | hotfix 문서의 `vectorOperation` 원본 자산이다. | `migration_status=not_ported`로 추적한다. | 현재 eligible BookData 후보로의 연결과 importer→실제 reader 검증은 확인되지 않았다. 원본 HTML을 보존하며 기능 보존을 주장하지 않는다. |",
+        "| `html-2a9ff578cf62178d` | hotfix 문서의 `vectorInnerProduct` 원본 자산이다. | `migration_status=not_ported`로 추적한다. | 현재 eligible BookData 후보로의 연결과 importer→실제 reader 검증은 확인되지 않았다. 원본 HTML을 보존하며 기능 보존을 주장하지 않는다. |",
         "| `html-4f713a1ae26d9f06` | 주사위 시행·짝수 사건·상대도수 누적 기능이 독립 HTML에 있다. | BookData V2에 `discreteExperiment`(6면 균등, 짝수 성공 조건)으로 네이티브 부분 대응을 추가했다. | importer는 통과했으나 HTML과 native UI의 실제 화면·상호작용 parity는 별도 브라우저 검수 전이며 원본 HTML은 보존한다. |",
         "",
         "재생성: `python tool/build_html_asset_inventory.py`",

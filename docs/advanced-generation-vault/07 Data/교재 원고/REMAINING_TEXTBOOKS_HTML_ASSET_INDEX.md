@@ -1,6 +1,6 @@
 # 독립 HTML 체험 자산 정적 인덱스
 
-검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `141`개를 대상으로 전체 파일명 문자열을 확인했다.
+검색 결과: HTML `106`개, 총 `956780` bytes; BookData 참조 파일 `143`개를 대상으로 전체 파일명 문자열을 확인했다.
 
 이 자료는 정적 인벤토리다. 스크립트는 실행하지 않았으므로 컨트롤/이벤트/신호는 source text에서 검출한 후보이지 실제 동작 검증이 아니다. `asset_id`는 상대 경로 SHA-256 앞 16자리이며, 콘텐츠 SHA와 inline script SHA도 함께 기록한다.
 BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조만 보여 준다. 이것은 학생용 상품 ID 귀속 또는 앱 runtime 연결 증거가 아니다. 앱 V2 importer는 HTML/JavaScript 실행을 지원하지 않으며, 독립 파일은 activity로 자동 임베드되지 않는다.
@@ -122,6 +122,8 @@ BookData 열은 HTML 파일명이 JSON 본문에 명시된 정확 일치 참조�
 | Asset ID | 발견 내용 | 수정 상태 | 확인 경계 |
 |---|---|---|---|
 | `html-002d8074c7ebb2fb` | `α=2`에서 `α=−2`로 바꿀 때 기존 응답은 반대 방향·두 배 길이라고 안내했다. 계수 절댓값은 같으므로 길이 변화 설명이 틀렸다. | 선택지를 반대 방향·같은 길이로 수정하고 안내문을 교체했다. | 로컬 브라우저에서 두 Socratic 질문 진행과 정답 선택 후 완료 피드백을 확인하고 화면을 캡처했다. 상품/BookData 연결과 교사 검수는 미확인이다. |
+| `html-002d8074c7ebb2fb`, `html-5f1d5700e9fa1fc1` | hotfix 문서의 `vectorOperation` 원본 자산이다. | `migration_status=not_ported`로 추적한다. | 현재 eligible BookData 후보로의 연결과 importer→실제 reader 검증은 확인되지 않았다. 원본 HTML을 보존하며 기능 보존을 주장하지 않는다. |
+| `html-2a9ff578cf62178d` | hotfix 문서의 `vectorInnerProduct` 원본 자산이다. | `migration_status=not_ported`로 추적한다. | 현재 eligible BookData 후보로의 연결과 importer→실제 reader 검증은 확인되지 않았다. 원본 HTML을 보존하며 기능 보존을 주장하지 않는다. |
 | `html-4f713a1ae26d9f06` | 주사위 시행·짝수 사건·상대도수 누적 기능이 독립 HTML에 있다. | BookData V2에 `discreteExperiment`(6면 균등, 짝수 성공 조건)으로 네이티브 부분 대응을 추가했다. | importer는 통과했으나 HTML과 native UI의 실제 화면·상호작용 parity는 별도 브라우저 검수 전이며 원본 HTML은 보존한다. |
 
 재생성: `python tool/build_html_asset_inventory.py`
