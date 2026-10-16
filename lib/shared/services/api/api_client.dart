@@ -1438,6 +1438,11 @@ class ApiClient {
   static final Map<String, _CachedApiResponse> _memoryCache = {};
   static final Map<String, Future<http.Response>> _inflightCacheRequests = {};
   int _cacheGeneration = 0;
+  final _sessionChanges = ValueNotifier<int>(0);
+
+  /// Changes when credentials are restored, replaced or cleared. Readers must
+  /// discard account-local activity state; the value is not a user identifier.
+  ValueListenable<int> get sessionChanges => _sessionChanges;
 
   /// 필요한 변수는 메모리에 적재된 현재 JWT다.
   /// 작동 원리: 라우트가 생성되는 순간 토큰 존재 여부를 동기적으로 확인해, 앱 시작 후 로그인한 세션도 즉시 반영한다.
@@ -1448,7 +1453,10 @@ class ApiClient {
     final prefs = await SharedPreferences.getInstance();
     _token =
         prefs.getString('jwt_token') ?? await AuthStorage.instance.readToken();
-    if (_token != null) return _token!;
+    if (_token != null) {
+      _sessionChanges.value++;
+      return _token!;
+    }
     throw ApiException(statusCode: 401, message: 'Missing auth token');
   }
 
@@ -1459,6 +1467,7 @@ class ApiClient {
       await clearUserCache(token: _token);
     }
     _token = token;
+    _sessionChanges.value++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString('jwt_token', token);
     if (username != null) {
@@ -1472,6 +1481,7 @@ class ApiClient {
   Future<void> clearToken() async {
     await clearUserCache(token: _token);
     _token = null;
+    _sessionChanges.value++;
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove('jwt_token');
     await prefs.remove('username');
@@ -1481,11 +1491,17 @@ class ApiClient {
   /// 테스트에서 라우트의 세션 분기만 검증할 때 사용하는 비영속 토큰 주입이다.
   /// 실제 로그인·로그아웃은 [setToken]/[clearToken]을 사용해 저장소까지 갱신한다.
   @visibleForTesting
-  void setTokenForTest(String token) => _token = token;
+  void setTokenForTest(String token) {
+    _token = token;
+    _sessionChanges.value++;
+  }
 
   /// 테스트 종료 시 네트워크·플랫폼 저장소를 건드리지 않고 메모리 세션만 지운다.
   @visibleForTesting
-  void clearTokenForTest() => _token = null;
+  void clearTokenForTest() {
+    _token = null;
+    _sessionChanges.value++;
+  }
 
   Future<UserProfile> getMyProfile() async {
     final res = await _get<Map<String, dynamic>>(
