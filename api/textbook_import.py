@@ -119,7 +119,7 @@ def validate_graph(graph):
 
 def validate_visual(visual):
     object_fields(visual, 'kind title caption formula items rows image_source', 'visual')
-    if visual.get('kind') not in {'formula', 'steps', 'table', 'numberLine', 'signChart', 'flow', 'image', 'callout'}:
+    if visual.get('kind') not in {'formula', 'steps', 'table', 'signChart', 'flow', 'image', 'callout'}:
         raise ValueError('visual: unsupported kind')
     for field in ('title', 'caption', 'formula', 'image_source'):
         text(visual.get(field, ''), 'visual.' + field)

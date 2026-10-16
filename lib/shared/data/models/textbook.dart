@@ -17,6 +17,9 @@ class BookData {
     this.createdAt,
     this.updatedAt,
     this.createdBy,
+    this.curriculumVersion,
+    this.standardCodes = const [],
+    this.sourceSha256,
   });
 
   final String id;
@@ -31,6 +34,11 @@ class BookData {
   final DateTime? createdAt;
   final DateTime? updatedAt;
   final String? createdBy;
+  final String? curriculumVersion;
+  final List<String> standardCodes;
+
+  /// SHA-256 of the UTF-8 author source, verified by the private import API.
+  final String? sourceSha256;
 
   factory BookData.fromJson(Map<String, dynamic> json) {
     final id = json['textbook_id']?.toString() ?? json['id']?.toString() ?? '';
@@ -58,6 +66,9 @@ class BookData {
       createdAt: createdAt,
       updatedAt: updatedAt,
       createdBy: createdBy,
+      curriculumVersion: json['curriculum_version']?.toString(),
+      standardCodes: _readStringList(json['standard_codes']),
+      sourceSha256: json['source_sha256']?.toString(),
     );
   }
 
@@ -69,6 +80,8 @@ class BookData {
       'tags': tags,
       'chapters': chapters.map((chapter) => chapter.toJson()).toList(),
       if (coverColor != null) 'cover_color': coverColor!.toARGB32(),
+      if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
+      if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
     };
   }
 
@@ -86,6 +99,9 @@ class BookData {
       'created_by': createdBy,
       'progress': progress,
       'progress_label': progressLabel,
+      if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
+      if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
+      if (sourceSha256 != null) 'source_sha256': sourceSha256,
     };
   }
 
@@ -102,6 +118,9 @@ class BookData {
       'created_by': createdBy,
       'progress': progress,
       'progress_label': progressLabel,
+      if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
+      if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
+      if (sourceSha256 != null) 'source_sha256': sourceSha256,
     };
   }
 }
