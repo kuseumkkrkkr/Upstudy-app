@@ -27,6 +27,15 @@
 - 별도 `Upstudy-hotfix`는 `HEAD == origin/hotfix == 2d41372ff6ffdd28168b5e51c11bbc88df71373b`로 동기화됐다. `python -m pytest tests/test_textbook_import.py tests/test_public_textbooks.py tests/test_textbook_create_contract.py -q` 결과는 40 passed, deprecation warning 1건이다. 공개 gate suite도 포함했으며 textbook content는 배포하지 않았다.
 - `REMAINING_TEXTBOOKS_CONTENT_COVERAGE.md`와 package index는 187개 기준이다. 후보의 공개 적격성은 0개이므로 교재 배포를 하지 않았다. 미커밋 사용자 작업은 이번 코드 커밋에 포함하지 않았다.
 
+## 2026-10-17 최신 저장소·검수 스냅샷 — app `5da1fd5`, hotfix `040a20c`
+
+- 현재 app `HEAD == origin/main == 5da1fd57dbd55a0e9c4c6d03b750ea26ce005dfa`; `5da1fd5`는 187개 BookData와 34개 연결 manifest/153개 미연결 항목을 담는 파일별 review queue 및 생성기를 추가했다. latest app code/runtime 검증은 `adbfdf0`이며, app 코드 검증 뒤 이어진 커밋은 체크포인트와 검수 목록 문서·도구만 변경했다.
+- 현재 hotfix `HEAD == origin/hotfix == 040a20cb052fb5520913539fb19c36e34f8f91cd`. `040a20c`는 candidate metadata 및 3종 function explorer의 importer/model/reader 지원을 추가했다. 이전 기준 182/187, 5차단 측정 뒤 최신 재귀 원고 187개 전부 Python·Dart 왕복 통과를 디자이너 작업에서 보고했다. 이 결과는 전체 HTML parity나 사람 승인과 별개다.
+- hotfix 현재 checkout에서 `python -m pytest tests/test_textbook_import.py tests/test_public_textbooks.py tests/test_textbook_create_contract.py tests/test_book_function_explorer.py -q`: 62 passed, Starlette/httpx deprecation warning 1건. `flutter test --no-pub --reporter compact test/book_function_explorer_test.dart test/bookdata_private_corpus_roundtrip_test.dart`도 종료 코드 0; private corpus test가 187개를 검사했다.
+- Upstudy-app checkout에서 `test/book_disclosure_test.dart`, 전체 BookData round-trip 및 activity compatibility를 실행한 결과 131 tests passed (코드 기준 `adbfdf0`). 유리함수와 지수/로그 HTML의 브라우저 조작 비교는 디자이너가 진행 중이며, 대응 무리함수 HTML은 찾지 못했다고 보고했다. 따라서 그 활동은 BookData 동작 기준으로만 확인하고 HTML parity 완료로 세지 않는다.
+- `REMAINING_TEXTBOOKS_REVIEW_QUEUE.md` 현재 생성본은 BookData 187개, 연결 manifest 34개, 미연결 153개, 총 manifest 39개(책 연결 필드 누락 5개), 전체 승인 게이트 명시 승인 0개다. 새 9개 판본/원본 근거 재검토는 진행 전 상태다. 검토가 끝난 뒤 생성기를 재실행해 파일 행 수와 결과를 다시 확인한다.
+- 교재 콘텐츠는 배포하지 않았다. 앱 `ApiClient.createTextbook()`은 stub이므로 원격 저장도 미검증이며, publication·rights·teacher·independent math 승인은 0건이다.
+
 ## 2026-10-17 공식 권리·게시 승인 경로 재확인
 
 - 교육부 공식 [2015-74 고시 페이지](https://www.moe.go.kr/boardCnts/view.do?boardID=141&boardSeq=60747&lev=0&m=0404)는 수학과 교육과정을 별책 8로 지정하고 ZIP 첨부를 제공한다. [2022-33 고시 페이지](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0&m=0404)도 같은 별책 8과 첨부 ZIP을 명시한다. 현재 확인한 페이지 본문에는 첨부 자료의 공공누리 유형이 표시되지 않는다. 이것만으로 ZIP/HWP/PDF 자체의 표시 유무를 단정하지 않는다.
