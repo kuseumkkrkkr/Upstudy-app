@@ -1,0 +1,194 @@
+{
+  "schema_version": 2,
+  "title": "수학Ⅱ · 속도 부호와 이동거리 보충 Batch4",
+  "subtitle": "2015 개정 기준 12수학Ⅱ03-06 · 방향 전환 사례 보완",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2015",
+  "standard_codes": [
+    "12수학Ⅱ03-06"
+  ],
+  "tags": [
+    "수학Ⅱ",
+    "2015 개정",
+    "속도와 거리 보충",
+    "추가 원고 후보",
+    "12수학Ⅱ03-06"
+  ],
+  "chapters": [
+    {
+      "title": "변위와 이동거리",
+      "intro": [
+        "공식 성취기준 12수학Ⅱ03-06에 연결한 보충 후보입니다.",
+        "속도가 부호를 바꾸는 독립 예시이며 Batch1의 상수 속도 사례를 대체하지 않습니다."
+      ],
+      "pages": [
+        {
+          "id": "m2-velocity-b4-open",
+          "template": "opening",
+          "title": "속도가 음수가 되면 거리는 어떻게 셀까?",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "핵심 질문",
+              "text": "속도 v(t)=t−2로 0≤t≤4 동안 움직일 때 변위와 이동거리를 구별합니다."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측하기",
+              "text": "속도 그래프가 시간축 아래에 있는 구간은 이동거리에서 어떻게 계산해야 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "m2-velocity-b4-concept",
+          "template": "concept",
+          "title": "변위와 이동거리",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "부호 있는 변화와 실제 거리",
+              "text": "위치의 변화량인 변위는 속도의 정적분이다. 실제 이동거리는 속력 |v(t)|를 적분한 값이다. v(t)=0인 시각에서 진행 방향이 바뀌면 구간을 나누어 각 거리의 양수 값을 더한다."
+            },
+            {
+              "type": "formula",
+              "title": "두 양의 구분",
+              "text": "변위=∫ₐᵇv(t)dt, 이동거리=∫ₐᵇ|v(t)|dt"
+            },
+            {
+              "type": "graph",
+              "title": "v(t)=t−2",
+              "text": "그래프의 가로축은 시간 t를 나타내도록 x축을 사용했다. t=2에서 속도가 0이 되어 부호가 바뀐다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "velocity-reversal",
+                    "type": "function",
+                    "label": "v(t)=t−2",
+                    "colorHex": "#B42318",
+                    "enabled": true,
+                    "expression": "x-2"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": 0,
+                    "right": 4,
+                    "top": 3,
+                    "bottom": -3
+                  },
+                  "parameters": []
+                }
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-velocity-b4-example",
+          "template": "example",
+          "title": "방향 전환이 있는 예제",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "속도 v(t)=t−2로 0≤t≤4 동안 움직일 때 변위와 이동거리를 각각 구하라."
+            },
+            {
+              "type": "solutionStep",
+              "title": "1단계 · 부호 확인",
+              "text": "v(t)=0은 t=2이다. 0≤t<2에서 v(t)<0이고 2<t≤4에서 v(t)>0이므로 이 시각에 진행 방향이 바뀐다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "2단계 · 변위",
+              "text": "∫₀⁴(t−2)dt=[t²/2−2t]₀⁴=0이다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "3단계 · 이동거리",
+              "text": "∫₀²(2−t)dt+∫₂⁴(t−2)dt=2+2=4이다. 변위는 0이지만 실제로 4만큼 이동했다."
+            }
+          ]
+        },
+        {
+          "id": "m2-velocity-b4-practice",
+          "template": "practice",
+          "title": "연습·해설·퀴즈",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "속도 v(t)=2t−2로 0≤t≤2 동안 움직인다. 변위와 이동거리를 구하고 방향이 바뀌는 시각을 찾으라."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "v(t)=0을 먼저 풀어 적분 구간을 나눈다. 변위에는 부호를 유지하고 이동거리에는 속력 |v(t)|를 사용한다."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "v(t)=0에서 t=1이다. 변위는 ∫₀²(2t−2)dt=[t²−2t]₀²=0이다. 이동거리는 ∫₀¹(2−2t)dt+∫₁²(2t−2)dt=1+1=2이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "방향 전환 시각 1, 변위 0, 이동거리 2"
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "m2-velocity-b4-quiz",
+                "kind": "quiz",
+                "prompt": "속도 v(t)=2t−2로 0≤t≤2 동안 움직일 때 이동거리는?",
+                "options": [
+                  "2",
+                  "0",
+                  "4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "정답입니다. t=1에서 나누어 거리 1과 1을 더합니다.",
+                "incorrect_feedback": "변위는 0이지만 이동거리는 속도의 음수·양수 구간을 나누어 더하므로 2입니다.",
+                "hints": [
+                  "속도가 0이 되는 t=1을 찾으세요.",
+                  "각 구간의 거리 크기를 양수로 더하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "m2-velocity-b4-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "풀이 순서",
+              "text": "변위는 속도를 부호 그대로 적분한다. 이동거리는 속도가 0인 시각을 경계로 나눈 뒤 속력을 적분해 합한다."
+            },
+            {
+              "type": "checklist",
+              "title": "자기 점검",
+              "items": [
+                "속도 부호로 방향을 확인했다.",
+                "방향 전환 시각에서 구간을 나누었다.",
+                "변위와 이동거리를 별도로 계산했다."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "metadata": {
+    "supplement_only": true,
+    "publication_eligibility": "not_eligible",
+    "teacher_review_status": "pending",
+    "math_review_status": "independent_review_pending",
+    "rights_status": "publication_decision_pending"
+  }
+}

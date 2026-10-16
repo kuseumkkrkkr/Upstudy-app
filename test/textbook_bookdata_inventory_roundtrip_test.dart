@@ -22,7 +22,7 @@ void main() {
                 RegExp(r'BookData.*\.json$').hasMatch(file.path),
           )
           .toList();
-      expect(files, hasLength(180));
+      expect(files, hasLength(181));
 
       var activities = 0;
       for (final file in files) {
@@ -142,8 +142,8 @@ void main() {
         }
       }
     }
-    expect(files, hasLength(180));
-    expect(functionItems, 101);
+    expect(files, hasLength(181));
+    expect(functionItems, 102);
   });
 
   test('2015 quadratic graph coefficient control survives graph generation', () {

@@ -1,0 +1,21 @@
+{
+  "bookdata_file": "수학Ⅱ_2015개정_속도거리_보충_Batch4_BookData_V2_시범.json",
+  "bookdata_sha256": "8CB5D7B5BD36F674CAD01CDFBF1AB3BF750251A71FE704A731B9E4E4B3A3CDC8",
+  "candidate_code_references": [
+    "12수학Ⅱ03-06"
+  ],
+  "candidate_code_reference_type": "official_2015_appendix8_math_criteria_table",
+  "module_count": 1,
+  "page_count": 5,
+  "native_activity_count": 1,
+  "native_activity_kinds": [
+    "quiz"
+  ],
+  "native_graph_count": 1,
+  "content_assertion_status": "displacement_and_distance_calculations_checked; independent_review_pending",
+  "teacher_review_status": "pending",
+  "math_review_status": "independent_review_pending",
+  "rights_status": "publication_decision_pending",
+  "publication_eligibility": "not_eligible",
+  "integration_status": "supplement_only; existing_constant_velocity_candidate_preserved"
+}

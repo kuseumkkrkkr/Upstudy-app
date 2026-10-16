@@ -109,6 +109,7 @@ GENERATORS = [
     ("build_html_asset_inventory.py", "main"),
     ("build_math2_2015_limits_continuity_v2_batch2.py", "main"),
     ("build_math2_2015_integral_area_v2_batch3.py", "main"),
+    ("build_math2_2015_velocity_distance_v2_batch4.py", "main"),
 ]
 
 
