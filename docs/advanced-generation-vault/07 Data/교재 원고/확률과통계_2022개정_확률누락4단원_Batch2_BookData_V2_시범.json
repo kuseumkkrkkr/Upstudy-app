@@ -1,0 +1,558 @@
+{
+  "schema_version": 2,
+  "title": "확률과 통계 · 확률분포 추가 4모듈 후보",
+  "subtitle": "독립·곱셈정리·확률분포·기댓값과 표준편차",
+  "category": "concept_textbook_prototype",
+  "curriculum_version": "2022",
+  "tags": [
+    "확률과 통계",
+    "2022 개정",
+    "추가 원고 후보",
+    "가상 예시",
+    "학기 배정 미확정"
+  ],
+  "standard_codes": [
+    "12확통02-05",
+    "12확통02-06",
+    "12확통03-01",
+    "12확통03-02"
+  ],
+  "chapters": [
+    {
+      "title": "사건이 독립인지 자료로 판단하기",
+      "intro": [
+        "공식 기준 12확통02-05에 연결한 새 집필 후보입니다.",
+        "수치와 사례는 개념을 연습하기 위해 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "ps0205-open",
+          "template": "opening",
+          "title": "상황을 먼저 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "가상 주사위 실험에서 A는 첫째 주사위가 짝수인 사건, B는 둘째 주사위가 4보다 큰 사건이다. 두 사건은 독립인가요?"
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "어떤 확률 관계를 비교하거나 계산해야 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "ps0205-concept",
+          "template": "concept",
+          "title": "정의와 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "두 사건 A와 B가 독립이면 P(A∩B)=P(A)P(B)이다. 조건부확률 P(B|A)가 P(B)와 같은지 비교해도 판단할 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12확통02-05"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "사건의 독립 여부나 조건이 바뀌는지 확인한 뒤 곱셈·분포 공식을 선택합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0205-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "가상 주사위 실험에서 A는 첫째 주사위가 짝수인 사건, B는 둘째 주사위가 4보다 큰 사건이다. 두 사건은 독립인가요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "공정한 주사위 두 개를 던진다. A: 첫째 눈이 짝수, B: 둘째 눈이 4보다 큼. P(A)=1/2, P(B)=1/3, P(A∩B)=1/6이고 P(A)P(B)=1/6이므로 독립이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "확률의 합과 계산 결과가 정의한 가상 표본 공간에 맞는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0205-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "공정한 주사위 하나를 던진다. C: 짝수, D: 3보다 큰 수일 때 두 사건은 독립인가요?"
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "사건, 조건, 각 결과의 확률을 따로 적어 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "P(C)=1/2, P(D)=1/2, P(C∩D)=2/6=1/3이다. P(C)P(D)=1/4와 다르므로 독립이 아니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "P(C)=1/2, P(D)=1/2, P(C∩D)=2/6=1/3이다. P(C)P(D)=1/4와 다르므로 독립이 아니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0205-quiz",
+                "kind": "quiz",
+                "prompt": "첫째 주사위가 짝수일 사건과 둘째 주사위가 4보다 클 사건은 독립인가요?",
+                "options": [
+                  "독립이다",
+                  "독립이 아니다",
+                  "확률만으로 판단할 수 없다"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "두 주사위의 결과가 독립이고 P(A∩B)=1/6=P(A)P(B)이므로 독립입니다.",
+                "incorrect_feedback": "각 사건의 확률과 교집합 확률을 곱셈 조건과 비교하세요.",
+                "hints": [
+                  "P(A)=3/6, P(B)=2/6입니다.",
+                  "두 사건이 동시에 일어나는 결과는 36개 중 6개입니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ps0205-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "사건이 독립인지 자료로 판단하기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "확률 관계와 계산 근거를 말로 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "연속해서 일어나는 사건의 곱셈정리",
+      "intro": [
+        "공식 기준 12확통02-06에 연결한 새 집필 후보입니다.",
+        "수치와 사례는 개념을 연습하기 위해 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "ps0206-open",
+          "template": "opening",
+          "title": "상황을 먼저 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "가상 주머니에 빨간 구슬 3개와 파란 구슬 2개가 있다. 되돌려 넣지 않고 두 번 뽑을 때 두 구슬 모두 빨간색일 확률은?"
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "어떤 확률 관계를 비교하거나 계산해야 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "ps0206-concept",
+          "template": "concept",
+          "title": "정의와 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "두 사건 A, B에 대해 P(A∩B)=P(A)P(B|A)이다. 서로 독립인 경우에만 P(B|A)=P(B)로 바꾸어 P(A)P(B)를 쓸 수 있다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12확통02-06"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "사건의 독립 여부나 조건이 바뀌는지 확인한 뒤 곱셈·분포 공식을 선택합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0206-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "가상 주머니에 빨간 구슬 3개와 파란 구슬 2개가 있다. 되돌려 넣지 않고 두 번 뽑을 때 두 구슬 모두 빨간색일 확률은?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "첫 구슬이 빨간색일 확률은 3/5이다. 빨간 구슬을 뽑은 뒤 남은 빨간 구슬은 2개, 전체는 4개이므로 두 번째도 빨간색일 조건부확률은 2/4이다. 따라서 3/5×2/4=3/10이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "확률의 합과 계산 결과가 정의한 가상 표본 공간에 맞는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0206-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "가상 주머니에 흰 구슬 2개와 검은 구슬 3개가 있다. 되돌려 넣지 않고 두 번 뽑을 때 흰색 다음 검은색일 확률을 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "사건, 조건, 각 결과의 확률을 따로 적어 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "첫 흰색 확률은 2/5이고, 그 뒤 검은색은 3/4이므로 2/5×3/4=3/10입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "첫 흰색 확률은 2/5이고, 그 뒤 검은색은 3/4이므로 2/5×3/4=3/10입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0206-quiz",
+                "kind": "quiz",
+                "prompt": "빨간 구슬 3개, 파란 구슬 2개에서 비복원으로 두 번 뽑을 때 두 번 모두 빨간색일 확률은?",
+                "options": [
+                  "3/10",
+                  "9/25",
+                  "2/5"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "첫 빨간색 3/5에 이어 빨간색 2/4이므로 곱은 3/10입니다.",
+                "incorrect_feedback": "첫 번째 결과 뒤에는 주머니 구성이 바뀌므로 두 번째 조건부확률을 새로 계산하세요.",
+                "hints": [
+                  "첫 빨간색 확률을 계산합니다.",
+                  "첫 빨간색을 꺼낸 뒤 남은 빨간색 수와 전체 구슬 수를 사용합니다."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ps0206-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "연속해서 일어나는 사건의 곱셈정리"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "확률 관계와 계산 근거를 말로 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "확률변수와 확률분포 읽기",
+      "intro": [
+        "공식 기준 12확통03-01에 연결한 새 집필 후보입니다.",
+        "수치와 사례는 개념을 연습하기 위해 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "ps0301-open",
+          "template": "opening",
+          "title": "상황을 먼저 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "공정한 동전을 두 번 던진다. 확률변수 X를 앞면이 나온 횟수로 정하면 X는 어떤 값을 가질까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "어떤 확률 관계를 비교하거나 계산해야 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "ps0301-concept",
+          "template": "concept",
+          "title": "정의와 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "확률변수는 시행 결과를 실수 값에 대응시키는 변수이다. 확률분포는 각 값과 그 값이 나올 확률을 함께 나타낸다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12확통03-01"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "사건의 독립 여부나 조건이 바뀌는지 확인한 뒤 곱셈·분포 공식을 선택합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0301-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "공정한 동전을 두 번 던진다. 확률변수 X를 앞면이 나온 횟수로 정하면 X는 어떤 값을 가질까요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "두 번 던진 결과 HH, HT, TH, TT는 같은 확률 1/4이다. 앞면 수 X는 각각 2, 1, 1, 0이므로 P(X=0)=1/4, P(X=1)=1/2, P(X=2)=1/4이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "확률의 합과 계산 결과가 정의한 가상 표본 공간에 맞는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0301-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "위 분포에서 P(X≥1)을 구하고 확률의 합이 1인지 확인하세요."
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "사건, 조건, 각 결과의 확률을 따로 적어 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "P(X≥1)=1/2+1/4=3/4이고 전체 확률은 1/4+1/2+1/4=1입니다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "P(X≥1)=1/2+1/4=3/4이고 전체 확률은 1/4+1/2+1/4=1입니다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0301-quiz",
+                "kind": "quiz",
+                "prompt": "공정한 동전 두 번 던지기에서 앞면 수 X의 P(X=1)은?",
+                "options": [
+                  "1/2",
+                  "1/4",
+                  "3/4"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "HT와 TH 두 결과가 해당하므로 2/4=1/2입니다.",
+                "incorrect_feedback": "순서가 다른 HT와 TH를 각각 가능한 결과로 세세요.",
+                "hints": [
+                  "가능한 결과는 HH, HT, TH, TT 네 가지입니다.",
+                  "앞면이 한 번인 결과를 모두 나열하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ps0301-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "확률변수와 확률분포 읽기"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "확률 관계와 계산 근거를 말로 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "title": "이산확률변수의 기댓값과 표준편차",
+      "intro": [
+        "공식 기준 12확통03-02에 연결한 새 집필 후보입니다.",
+        "수치와 사례는 개념을 연습하기 위해 직접 만든 가상 예시입니다."
+      ],
+      "pages": [
+        {
+          "id": "ps0302-open",
+          "template": "opening",
+          "title": "상황을 먼저 읽기",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "가상 예시",
+              "text": "두 번의 공정한 동전 던지기에서 앞면 수 X의 분포가 (0,1/4), (1,1/2), (2,1/4)이다. 평균과 퍼짐을 어떻게 구할까요?"
+            },
+            {
+              "type": "thinking",
+              "title": "질문",
+              "text": "어떤 확률 관계를 비교하거나 계산해야 할까요?"
+            }
+          ]
+        },
+        {
+          "id": "ps0302-concept",
+          "template": "concept",
+          "title": "정의와 관계",
+          "blocks": [
+            {
+              "type": "definition",
+              "title": "핵심 개념",
+              "text": "이산확률변수 X의 기댓값은 ΣxP(X=x)이고 분산은 Σ(x−E(X))²P(X=x)이다. 표준편차는 분산의 양의 제곱근이다."
+            },
+            {
+              "type": "formula",
+              "title": "공식 기준",
+              "text": "12확통03-02"
+            },
+            {
+              "type": "misconception",
+              "title": "주의",
+              "text": "사건의 독립 여부나 조건이 바뀌는지 확인한 뒤 곱셈·분포 공식을 선택합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0302-example",
+          "template": "example",
+          "title": "예제와 풀이",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "예제",
+              "text": "두 번의 공정한 동전 던지기에서 앞면 수 X의 분포가 (0,1/4), (1,1/2), (2,1/4)이다. 평균과 퍼짐을 어떻게 구할까요?"
+            },
+            {
+              "type": "solutionStep",
+              "title": "풀이",
+              "text": "E(X)=0×1/4+1×1/2+2×1/4=1이다. 분산은 (0−1)²×1/4+(1−1)²×1/2+(2−1)²×1/4=1/2이고 표준편차는 √(1/2)=1/√2이다."
+            },
+            {
+              "type": "verification",
+              "title": "검산",
+              "text": "확률의 합과 계산 결과가 정의한 가상 표본 공간에 맞는지 확인합니다."
+            }
+          ]
+        },
+        {
+          "id": "ps0302-practice",
+          "template": "practice",
+          "title": "연습과 설명",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "분포 (0,1/2), (2,1/2)의 기댓값과 표준편차를 구하세요."
+            },
+            {
+              "type": "hint",
+              "title": "Socratic 힌트",
+              "text": "사건, 조건, 각 결과의 확률을 따로 적어 보세요."
+            },
+            {
+              "type": "solutionStep",
+              "title": "해설",
+              "text": "기댓값은 0×1/2+2×1/2=1이다. 분산은 (0−1)²×1/2+(2−1)²×1/2=1이므로 표준편차는 1이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "기댓값은 0×1/2+2×1/2=1이다. 분산은 (0−1)²×1/2+(2−1)²×1/2=1이므로 표준편차는 1이다."
+            },
+            {
+              "type": "activity",
+              "activity": {
+                "id": "ps0302-quiz",
+                "kind": "quiz",
+                "prompt": "앞면 수 X의 확률분포가 (0,1/4), (1,1/2), (2,1/4)일 때 E(X)는?",
+                "options": [
+                  "1",
+                  "1/2",
+                  "3/2"
+                ],
+                "correct_index": 0,
+                "correct_feedback": "확률가중합은 0×1/4+1×1/2+2×1/4=1입니다.",
+                "incorrect_feedback": "각 값에 그 확률을 곱하고 모두 더하세요.",
+                "hints": [
+                  "값과 확률을 짝지어 곱합니다.",
+                  "0, 1, 2에 각각 1/4, 1/2, 1/4를 곱하세요."
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "id": "ps0302-summary",
+          "template": "summary",
+          "title": "핵심 정리",
+          "blocks": [
+            {
+              "type": "summary",
+              "title": "기억할 점",
+              "text": "이산확률변수의 기댓값과 표준편차"
+            },
+            {
+              "type": "checklist",
+              "title": "스스로 확인",
+              "text": "확률 관계와 계산 근거를 말로 설명할 수 있나요?"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
