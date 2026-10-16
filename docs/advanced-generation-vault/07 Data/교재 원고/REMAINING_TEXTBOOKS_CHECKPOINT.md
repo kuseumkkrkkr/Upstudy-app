@@ -189,3 +189,12 @@
 - scoped Flutter 검증: `textbook_activity_compatibility_test.dart` 97/97 통과, `textbook_bookdata_inventory_roundtrip_test.dart` 3/3 통과. 두 테스트는 공유 캐시 때문에 병렬 실행하지 않고 순차 재실행해 성공 결과를 확인했다.
 - 게시/권리/사람 검토 metadata는 166개 중 `not_eligible` 21, `unspecified` 145; 권리·교사 검토는 `pending` 21, `unspecified` 145; 수학 검토는 저자 점검 기록·독립 검토 대기 20, `pending` 1, `unspecified` 145. 승인 증거가 없어 배포하지 않았다.
 - 2015 고교 상·하 scope audit를 page-level로 보강했다. 기존 41개 코드·제목 대조는 유지하고, 8개 부분 후보의 실제 4쪽 본문 인용을 생성 시 검증하며 확인된 범위와 미확인 기준 요소를 기록한다. 이는 저자 대조이며 독립 수학·교사 검토를 대체하지 않는다.
+
+## 2026-10-17 공식 원문 권리표시 재확인
+
+- 현재 기준 HEAD와 `origin/main`: `37eb4ca963b08d5655c95580e6c33e3877d6b00d`.
+- 로컬 `2015_appendix8_math.pdf`는 2015 교육부 ZIP의 별책 8 파일과 SHA-256이 일치한다(`4bd2b84e978865a71d90577d8eb6240f0ecf24a9884642d627cde460d71ab88e`). 156쪽 전체 PDF 텍스트에서 `공공누리`, `KOGL`, `저작권`, `이용허락` 등 표시 용어는 0건이며 표지와 마지막 PDF 페이지 렌더에서도 라이선스 표시는 보이지 않았다. 이미지 전체의 법적 표시는 이 검사만으로 단정하지 않는다.
+- 로컬 `2022_appendix8_math.hwp`도 2022 교육부 ZIP의 별책 8 파일과 SHA-256이 일치한다(`aab8eed59ecf244223d04afad75f4cf5ac5085fadcfc3cf52c2f6d54ddfc7856`). HWP 텍스트 추출에서 `공공누리`/`KOGL`은 0건이다. `저작권` 1건은 학습자료 출처를 밝히라는 교육과정 문맥이지 이용허락 표시가 아니다. 이미지·시각 요소는 별도 권리 표시 증거로 검증되지 않았다.
+- 교육부 [2015-74 고시 게시물](https://www.moe.go.kr/boardCnts/view.do?boardID=141&boardSeq=60747&lev=0&m=0404)은 별책 1–15 ZIP을 제공하고 별책 8이 수학과임을 명시하지만, 첨부 ZIP에 적용되는 개별 KOGL 표시를 게시물 본문에서 확인하지 못했다. 별도 [2015 교육과정 안내 페이지](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=316&boardSeq=62381&lev=0&m=0302&opType=N&page=1&s=moe&searchType=null&statusYN=C)의 KOGL 제2유형은 그 안내 저작물에 붙은 표시라 별책 ZIP에 전이하지 않는다.
+- 교육부 [2022-33 고시 게시물](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458&lev=0&m=0404)은 수학과 별책 8을 포함하는 ZIP을 제공하지만 첨부별 KOGL 조건은 본문에서 확인되지 않았다. 별도 [2022 개정 교육과정 발표자료](https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=294&boardSeq=93459&lev=0)의 제1유형 표시도 그 발표자료의 저작물 표시이므로 고시 ZIP의 권리 근거로 사용하지 않는다.
+- 교육부 [저작권 정책](https://www.moe.go.kr/sub/infoRenew.do?m=070105&page=070105&s=moe)은 KOGL 부착 자료의 유형별 이용조건을 확인하도록 하고, 표시 없는 자료는 공공저작물 실무 담당자와 사전 협의하도록 안내한다. 따라서 2015·2022 원문과 기존 HTML/외부 요소의 상업 이용·변형 권한은 계속 pending이다. 별책 재사용에 대한 서면 권리 확인 전 배포하지 않는다.
