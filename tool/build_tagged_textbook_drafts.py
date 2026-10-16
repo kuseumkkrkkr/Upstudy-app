@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import argparse
 import runpy
 from pathlib import Path
+from typing import Sequence
 
 ROOT = Path(__file__).resolve().parents[1]
 TOOL = ROOT / "tool"
@@ -107,8 +109,48 @@ def verify_bookdata_references() -> int:
     return len(source_files)
 
 
-def main() -> None:
-    for filename, function_name in GENERATORS:
+def main(argv: Sequence[str] | None = None) -> None:
+    parser = argparse.ArgumentParser(
+        description="Regenerate tag-grouped textbook drafts; resume at a named generator stage."
+    )
+    stage_options = parser.add_mutually_exclusive_group()
+    stage_options.add_argument(
+        "--from-stage",
+        "--resume-from",
+        dest="from_stage",
+        metavar="GENERATOR.py",
+        help="resume at this exact generator filename; earlier outputs must already be valid",
+    )
+    stage_options.add_argument(
+        "--list-stages",
+        action="store_true",
+        help="list generator stages in pipeline order and exit",
+    )
+    args = parser.parse_args(argv)
+
+    if args.list_stages:
+        for index, (filename, _) in enumerate(GENERATORS, start=1):
+            print(f"{index:02d}/{len(GENERATORS)} {filename}")
+        return
+
+    start_index = 0
+    if args.from_stage:
+        names = [filename for filename, _ in GENERATORS]
+        try:
+            start_index = names.index(args.from_stage)
+        except ValueError:
+            parser.error(
+                f"unknown stage {args.from_stage!r}; use --list-stages to see valid filenames"
+            )
+
+    selected_generators = GENERATORS[start_index:]
+    if start_index:
+        print(
+            f"Resuming at stage {start_index + 1}/{len(GENERATORS)} "
+            f"({selected_generators[0][0]})."
+        )
+
+    for filename, function_name in selected_generators:
         path = TOOL / filename
         if not path.is_file():
             raise FileNotFoundError(f"Missing textbook generator: {path}")
@@ -120,7 +162,7 @@ def main() -> None:
         function()
     source_count = verify_bookdata_references()
     print(f"Verified generated package references for all {source_count} BookData source files.")
-    print(f"Completed {len(GENERATORS)} textbook generation steps.")
+    print(f"Completed {len(selected_generators)} textbook generation steps.")
 
 
 if __name__ == "__main__":
