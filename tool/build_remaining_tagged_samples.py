@@ -11,7 +11,7 @@ ROOT = Path(__file__).resolve().parents[1]
 MANUSCRIPTS = ROOT / "docs/advanced-generation-vault/07 Data/교재 원고"
 CODE_RE = re.compile(r"(?:9수\d{2}-\d{2}|10공수2-\d{2}-\d{2}|12대수\d{2}-\d{2}|12확통\d{2}-\d{2})")
 SOURCES = [
-    {"file": "중등수학_일차함수_BookData_시범.json", "folder": "중등수학_2022개정_태그초안", "course": "중등 수학", "edition": "2022 개정 후보", "unit": "일차함수", "subunit": "기울기와 그래프 변화", "expected": ["중등수학", "일차함수", "2022개정"]},
+    {"file": "중등수학_일차함수_BookData_시범.json", "folder": "중등수학_2022개정_태그초안", "course": "중등 수학", "edition": "2022 개정 후보", "unit": "일차함수", "subunit": "기울기와 그래프 변화", "expected": ["중등수학", "일차함수", "2022 개정"]},
     {"file": "중등수학_좌표와순서쌍_BookData_시범.json", "folder": "중학교수학_판본미확인_태그초안", "course": "중학교 수학", "edition": "판본 미확인", "unit": "중1 수학 · 좌표평면", "subunit": "순서쌍", "expected": ["중1 수학", "좌표평면", "순서쌍"]},
     {"file": "중등수학_연립일차방정식_BookData_시범.json", "folder": "중학교수학_판본미확인_태그초안", "course": "중학교 수학", "edition": "판본 미확인", "unit": "중2 수학 · 연립일차방정식", "subunit": "연립방정식과 일차함수", "expected": ["중2 수학", "연립일차방정식"]},
     {"file": "중등수학_제곱근과제곱_개념서_BookData_시범.json", "folder": "중학교수학_판본미확인_태그초안", "course": "중학교 수학", "edition": "판본 미확인", "unit": "중3 수학 · 제곱근", "subunit": "제곱근과 제곱", "expected": ["중3 수학", "제곱근", "제곱"]},
