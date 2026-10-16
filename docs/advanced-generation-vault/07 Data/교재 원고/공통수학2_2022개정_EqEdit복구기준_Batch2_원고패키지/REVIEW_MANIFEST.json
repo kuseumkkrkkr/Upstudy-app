@@ -1,6 +1,6 @@
 {
   "bookdata_file": "공통수학2_2022개정_EqEdit복구기준_Batch2_BookData_V2_시범.json",
-  "bookdata_sha256": "F136B1DCEA4857C3D7C21F25814A590CBCEEDD0BC01ABC28042D6FCE5AA62673",
+  "bookdata_sha256": "4553FF4ED9C69187A348BE863EACB4EB343378D5D2EE04DE42AA02E8F5A54A6C",
   "candidate_code_references": [
     "10공수2-01-07",
     "10공수2-03-04",
@@ -36,5 +36,7 @@
   "integration_status": "candidate_for_unit_grouping; master_not_app_integrated",
   "publication_eligibility": "not_eligible",
   "runtime_import_status": "pending_current_hash_validation",
-  "runtime_validator_head": null
+  "runtime_validator_head": null,
+  "runtime_validation_command": null,
+  "runtime_validator_candidate_sha256": null
 }

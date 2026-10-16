@@ -56,6 +56,12 @@ SPECS = [
     },
 ]
 
+EXAMPLE_QUESTIONS = {
+    "10공수2-01-07": "점 P(2,−3)을 원점, x축, y축, 직선 y=x에 각각 대칭이동한 좌표를 구하세요.",
+    "10공수2-03-04": "f(x)=2/(x−1)+3의 f(0), f(2)를 구하고 정의되지 않는 x를 찾으세요.",
+    "10공수2-03-05": "g(x)=√(2x+2)+1의 정의역과 그래프의 시작점을 구하세요.",
+}
+
 
 def make_quiz(spec: dict, slug: str) -> dict:
     return {
@@ -79,19 +85,24 @@ def main() -> None:
     codes = [spec["code"] for spec in SPECS]
     if len(codes) != 3 or len(set(codes)) != 3 or any(code not in official for code in codes):
         raise RuntimeError("Expected exactly the three HWP EqEdit-recovered Common Math 2 standards")
+    if set(EXAMPLE_QUESTIONS) != set(codes):
+        raise RuntimeError("Every worked example must have a matching explicit question")
     for spec in SPECS:
         observed = set(official[spec["code"]].get("equation_scripts", []))
         if not spec["source_equations"].issubset(observed):
             raise RuntimeError(f"Original EqEdit source evidence missing for {spec['code']}: {observed}")
+        if spec["options"][spec["correct"]] not in spec["answer"]:
+            raise RuntimeError(f"Quiz key does not match its stated answer for {spec['code']}")
 
     chapters = []
     for spec in SPECS:
         slug = spec["code"].replace("10공수2-", "cm2-").replace("-", "")
         code = spec["code"]
+        example_question = EXAMPLE_QUESTIONS[code]
         pages = [
             {"id": slug+"-open", "template": "opening", "title": "상황과 질문", "blocks": [{"type": "lead", "title": "핵심 질문", "text": spec["title"]}, {"type": "thinking", "title": "먼저 살펴보기", "text": "대칭 기준 또는 식의 조건을 말하고, 어떤 성질을 확인할지 예상합니다."}]},
             {"id": slug+"-concept", "template": "concept", "title": "개념과 조건", "blocks": [{"type": "definition", "title": spec["title"], "text": spec["concept"]}, {"type": "formula", "title": "교육부 HWP EqEdit 원문 스크립트", "text": "; ".join(sorted(spec["source_equations"]))}, {"type": "misconception", "title": "조건 점검", "text": "대칭 기준, 분모가 0인 값 또는 제곱근 안의 부호를 확인합니다."}]},
-            {"id": slug+"-example", "template": "example", "title": "예제와 풀이", "blocks": [{"type": "question", "title": "예제", "text": spec["practice"]}, {"type": "solutionStep", "title": "풀이와 추가 예시", "text": spec["example"]}, {"type": "verification", "title": "검산", "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."}]},
+            {"id": slug+"-example", "template": "example", "title": "예제와 풀이", "blocks": [{"type": "question", "title": "예제", "text": example_question}, {"type": "solutionStep", "title": "풀이와 추가 예시", "text": spec["example"]}, {"type": "verification", "title": "검산", "text": "결과를 원래 좌표변환이나 함수식에 대입해 조건을 확인합니다."}]},
             {"id": slug+"-practice", "template": "practice", "title": "연습과 해설", "blocks": [{"type": "question", "title": "연습", "text": spec["practice"]}, {"type": "hint", "title": "힌트", "text": spec["hint"]}, {"type": "solutionStep", "title": "해설", "text": spec["answer"]}, {"type": "answer", "title": "정답", "text": spec["answer"]}, make_quiz(spec, slug)]},
             {"id": slug+"-summary", "template": "summary", "title": "핵심 정리", "blocks": [{"type": "summary", "title": "기억할 점", "text": spec["concept"]}, {"type": "checklist", "title": "스스로 확인", "text": "기준과 정의역을 확인하고 풀이를 설명할 수 있나요?"}]},
         ]
@@ -150,6 +161,8 @@ def main() -> None:
         "publication_eligibility": "not_eligible",
         "runtime_import_status": old.get("runtime_import_status", "pending_current_hash_validation") if same else "pending_current_hash_validation",
         "runtime_validator_head": old.get("runtime_validator_head") if same else None,
+        "runtime_validation_command": old.get("runtime_validation_command") if same else None,
+        "runtime_validator_candidate_sha256": old.get("runtime_validator_candidate_sha256") if same else None,
     }
     manifest_path.write_text(json.dumps(manifest, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     (PACKAGE / "README.md").write_text(
