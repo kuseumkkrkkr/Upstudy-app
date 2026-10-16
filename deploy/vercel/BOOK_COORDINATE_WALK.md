@@ -83,3 +83,12 @@ trajectories is NOT solved by this coordinate walk: probability curves/playback
 need a separate contract. adaptive_socratic_sequences still requires reviewed
 branching/provider behavior, not static quiz/steps. All106 whole-asset migrations
 and author/teacher/rights gates remain distinct from these reusable8 kinds.
+
+## Browser Preview verification
+
+2026-10-17 (Asia/Seoul), committed implementation `4855c1dfd18ac5a71ca7ad6f22ab0a8fa5f1f9c9`:
+
+- Vercel deployment `dpl_8BsKJ29CiQ5MD7YbNviZ6RGYRxCy`, target `preview`, status `Ready`, no production promotion requested. URL: <https://aiflow-web-canary-jgbuxrwhg-cw20208021-9200s-projects.vercel.app>.
+- Opened the protected Preview in the authenticated in-app browser. Screenshot checked the actual BookWidget page. Clicked `이동 시작` and observed the moving point and dashed L path; clicked `좌표 순서 바꾸기` and observed (-3,2) change to (2,-3); clicked `처음 위치로` and observed (-3,2) restored. Unit tests additionally cover pause/resume, reduced motion, remount, visibility and lifecycle cleanup.
+- Browser DevTools `Network.getResponseBody` for the loaded `/main.dart.js` returned 4,983,652 bytes and SHA-256 `5713FF5DF66360210BC6304B16969DD6F3E39F377F37684594BB5262BE25FD73`, equal to the local release build. Unauthenticated PowerShell requests receive Vercel protection HTML; that response is not the app bundle and was not used for comparison.
+- This is a synthetic in-memory integration Preview. It has no product import or server persistence, and does not establish teacher/rights review or textbook readiness.
