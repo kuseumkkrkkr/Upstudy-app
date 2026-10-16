@@ -1,5 +1,7 @@
 # BookData 튜터와 그래프 호환성
 
+> 이후 변경: 아래 진단은 `b22cd34` 작업본을 기록한 것이다. 최근 대화 전달은 이 파일 마지막의 ‘대화 이력 구현 체크포인트’에서 별도로 확장했다. 그래프 현재 조작값 전달과 운영 배포는 여전히 미완료다.
+
 2026-10-17, D: `Upstudy-hotfix`의 `hotfix` 작업본 기준. **그래프는 선언형 `graph` JSON으로 실행하고, 튜터는 리더의 현재 페이지 질문 동작에서 서버 채팅으로 연결한다.** 임의 JSX 컴포넌트나 교재 HTML 스크립트를 실행하는 구조가 아니다.
 
 ## 저장과 실제 실행
@@ -90,3 +92,35 @@
 - 실제 모델의 연속 대화 품질, 학생이 조작한 slider 값 전달, 실서비스 rate limit/동시성은 이 결과로 증명하지 않는다.
 - 확인 시작 HEAD는 `b22cd34`이며 reader·chat UI·graph builder·web embed에 기존 미커밋 변경이 있다. 페이지 문맥 연결과 격리 개선을 포함한 현재 작업본 결과를 운영 배포 결과로 바꾸어 표현하지 않는다.
 - 이번 작업은 호환성 메모만 추가한다. 원고 원문 노출·실제 AI 요청·DB 쓰기·공개 bundle 편입·Vercel 배포 및 alias 변경은 없다.
+
+## 대화 이력 구현 체크포인트
+
+기존 `/serverchat/message`에 선택 필드 `history`를 추가했다. 예전 클라이언트가 필드를 생략하면 기존 단일 요청과 호환된다. BookData 스키마나 게시 승인 조건은 바꾸지 않는다.
+
+제공자 요청은 [Kiln 공식 Chat completions 문서](https://kiln.bricksum.com/docs/en/api-reference/chat-completions)의 user/assistant 텍스트 메시지 형식을 따른다. 제공자가 지원하는 tool 호출이나 저자 시스템 지시는 이 앱의 이력 계약에서 허용하지 않는다.
+
+```json
+{
+  "user_message": "넓어졌습니다.", "mode": "socratic", "ephemeral": true,
+  "history": [
+    {"role": "user", "content": "같은 높이에서 비교하겠습니다."},
+    {"role": "assistant", "content": "그때 가로 거리는 어떻게 달라졌나요?"}
+  ]
+}
+```
+
+| 책임 단위 | 계약과 상태 |
+|---|---|
+| `api/tutor_history.py` | `TutorTurn`은 user/assistant 역할과 1~2,000자 content만 허용한다. 최대8턴·총6,000자·완전한 user/assistant 쌍을 검증하며 system/tool 역할·추가 필드·순서 오류는422로 거절한다. 인증도 기존대로 필수다. |
+| `_request_tutor_reply` | 정적인 서버 시스템 지시를 유지하고 현재 페이지 문맥 → 검증한 이전 턴 → 현재 질문 순으로 제공자에게 전달한다. 이력을 권한·채점 증명으로 사용하지 않는다. |
+| `TutorHistory` | 한 화면의 메모리에서 성공한 대화만 쌍으로 기억한다. 오래된 쌍부터 제거하고 긴 내용을 말줄임표 포함2,000 Unicode code point로 제한한다. 인사·오류·실패 제출은 넣지 않는다. DB 쓰기는 없다. |
+| Chat UI와 API adapter | 매 전송에 snapshot과 현재 세션을 연결한다. 재시도는 같은 성공 이력만 전송하며 실패 질문을 중복 적재하지 않는다. 세션 변경·dispose 시 이력을 비우고, 세대 검사로 이전 응답/재시도와 다른 계정 문맥을 차단한다. |
+
+`history`는 클라이언트가 전하는 참고 자료이지 서버가 보증하는 대화 원장이 아니다. 영속 대화 ID·기기 간 복구·제공자의 무보관·소크라틱 응답 품질·200 동시 세션 성능을 보장하지 않는다. 현재 그래프 조작값도 아직 포함하지 않는다.
+
+- Python 이력·기존 Kiln/채팅·BookData/public 회귀: **43 passed**, 기존 경고5.
+- Flutter 이력 serializer2·새 전송3·기존 전달6·reader4: **15 passed**. 계정 전환 뒤 늦은 A 응답을 버리고 B 요청에서 A의 flow/title/history가 빠지는 것을 확인한다.
+- 신규 Dart helper/테스트3파일 집중 analyze: **No issues found**.
+- 첫 widget 컴파일의 nullable index/조건식 구문 오류는 명시적 getter 블록으로 고쳤다. 검사 삭제나 기대값 완화는 없다.
+- 백엔드·순수 serializer와 그 테스트는 독립 체크포인트다. Chat UI/API adapter의 새 연결은 기존 미검토 dirty 세션 기반에 의존하므로 그 전체 변경을 묶어 커밋한 것으로 표시하지 않는다. `tutor_history_delivery_test.dart`도 이 작업본 통합 검사이며 clean HEAD 제품 검증이 아니다.
+- 실제 제공자 호출·교재 게시·DB 쓰기는0이다. 합성 Preview는 후속 증거이며 실제 AI 또는 운영 배포로 취급하지 않는다.
