@@ -1,0 +1,42 @@
+{
+  "target": "중학수학 3-1 개념서 · 2022 개정 후보 시범",
+  "status": "candidate_partial_draft",
+  "semester_assignment": "editorial_candidate_not_officially_confirmed",
+  "standards": [
+    "9수01-08",
+    "9수02-19",
+    "9수02-19",
+    "9수02-22"
+  ],
+  "standard_source_url": "https://www.moe.go.kr/boardCnts/viewRenew.do?boardID=141&boardSeq=93458",
+  "source_hwp_sha256": "AAB8EED59ECF244223D04AFAD75F4CF5AC5085FADCFC3CF52C2F6D54DDFC7856",
+  "source_archive_sha256": "B37A372A90D6D00BB3985888BBB41CAAE7A35F28877DC243A6F4B28861C53146",
+  "content_rights": "newly authored draft; publication rights decision pending",
+  "math_review": "worked examples checked arithmetically; teacher review pending",
+  "features": [
+    {
+      "standard": "9수01-08",
+      "html": "중학수학3-1_2022개정_제곱근수직선_체험형_시범.html",
+      "type": "sqrt",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수02-19",
+      "html": "중학수학3-1_2022개정_다항식넓이모형_체험형_시범.html",
+      "type": "poly-product",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수02-19",
+      "html": "중학수학3-1_2022개정_인수분해짝찾기_체험형_시범.html",
+      "type": "factorization",
+      "runtime": "standalone source asset; not app-integrated"
+    },
+    {
+      "standard": "9수02-22",
+      "html": "중학수학3-1_2022개정_이차함수꼭짓점_체험형_시범.html",
+      "type": "quadratic",
+      "runtime": "standalone source asset; not app-integrated"
+    }
+  ]
+}
