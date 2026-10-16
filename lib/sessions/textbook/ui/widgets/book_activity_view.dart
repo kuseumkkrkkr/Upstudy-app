@@ -119,6 +119,7 @@ class _BookActivityViewState extends State<BookActivityView>
           'statisticsEstimator',
           'rightTriangle',
           'coordinatePoint',
+          'coordinateWalk',
         }.contains(a.kind)) {
       _restored = true;
       final saved = BookActivityKeyScope.read(context, a);
@@ -213,7 +214,7 @@ class _BookActivityViewState extends State<BookActivityView>
     if (a.kind == 'rightTriangle') {
       return BookRightTriangleView(activity: a);
     }
-    if (a.kind == 'coordinatePoint') {
+    if (a.kind == 'coordinatePoint' || a.kind == 'coordinateWalk') {
       return BookCoordinatePointView(activity: a);
     }
     BookActivityKeyScope.save(context, a, {

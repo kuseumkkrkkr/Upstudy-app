@@ -23,6 +23,7 @@ class BookActivity {
     this.legA,
     this.legB,
     this.point,
+    this.walkDurationMs,
   );
 
   final String id, kind, prompt, correctFeedback, incorrectFeedback;
@@ -34,6 +35,7 @@ class BookActivity {
   final BookStatisticsEstimator? statistics;
   final int legA, legB;
   final BookCoordinatePoint? point;
+  final int walkDurationMs;
 
   factory BookActivity.fromJson(Map<String, dynamic> json) {
     Never fail() =>
@@ -67,6 +69,7 @@ class BookActivity {
     BookStatisticsEstimator? statistics;
     var legA = 6, legB = 8;
     BookCoordinatePoint? point;
+    var walkDurationMs = 0;
     switch (kind) {
       case 'quiz':
         allowed.addAll({
@@ -114,6 +117,11 @@ class BookActivity {
       case 'coordinatePoint':
         allowed.addAll({'x', 'y'});
         point = BookCoordinatePoint.fromJson({'x': json['x'], 'y': json['y']});
+      case 'coordinateWalk':
+        allowed.addAll({'x', 'y', 'duration_ms'});
+        point = BookCoordinatePoint.fromJson({'x': json['x'], 'y': json['y']});
+        if (json['duration_ms'] is! int || json['duration_ms'] != 1500) fail();
+        walkDurationMs = json['duration_ms'] as int;
       case 'rightTriangle':
         allowed.addAll({'a', 'b'});
         int leg(dynamic value) {
@@ -153,6 +161,7 @@ class BookActivity {
       legA,
       legB,
       point,
+      walkDurationMs,
     );
   }
 
@@ -178,6 +187,7 @@ class BookActivity {
     if (statistics != null) 'statistics': statistics!.toJson(),
     if (kind == 'rightTriangle') ...{'a': legA, 'b': legB},
     if (point != null) ...point!.toJson(),
+    if (kind == 'coordinateWalk') 'duration_ms': walkDurationMs,
   };
 
   /// Finite decimal or a single fraction only; no evaluation of author/user code.

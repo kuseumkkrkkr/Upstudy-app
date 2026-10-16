@@ -88,8 +88,10 @@ def validate_activity(value):
                 raise ValueError('activity: invalid sample counts')
         else:
             raise ValueError('activity: unsupported estimation mode')
-    elif kind == 'coordinatePoint':
-        fields(value, common + ' x y')
+    elif kind in ('coordinatePoint', 'coordinateWalk'):
+        fields(value, common + ' x y' + (' duration_ms' if kind == 'coordinateWalk' else ''))
+        if kind == 'coordinateWalk' and (type(value.get('duration_ms')) is not int or value['duration_ms'] != 1500):
+            raise ValueError('activity: coordinate walk duration must be integer 1500ms')
         for name in ('x', 'y'):
             if type(value.get(name)) is not int or not -5 <= value[name] <= 5:
                 raise ValueError('activity: coordinates require integers -5..5')

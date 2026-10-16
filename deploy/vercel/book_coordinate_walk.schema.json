@@ -1,0 +1,17 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "BookData V2 coordinateWalk registered activity",
+  "description": "Definition only. Runtime requires integer JSON tokens (not decimal 2.0). Requires BookData V2; no imported playback state or executable callback.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["id", "kind", "prompt", "x", "y", "duration_ms"],
+  "properties": {
+    "id": {"type": "string", "minLength": 1, "maxLength": 80, "pattern": "\\S"},
+    "kind": {"const": "coordinateWalk"},
+    "prompt": {"type": "string", "minLength": 1, "maxLength": 2000, "pattern": "\\S"},
+    "hints": {"type": "array", "maxItems": 8, "items": {"type": "string", "minLength": 1, "maxLength": 2000, "pattern": "\\S"}},
+    "x": {"type": "integer", "minimum": -5, "maximum": 5},
+    "y": {"type": "integer", "minimum": -5, "maximum": 5},
+    "duration_ms": {"type": "integer", "const": 1500}
+  }
+}

@@ -178,6 +178,7 @@ Each activity occupies one indivisible `pages[].blocks[]` entry:
 | `statisticsEstimator` (local reader verified, not deployed) | `statistics` mean values or proportion counts; strict bounded input | Editable sample estimate/interpretation/variability/reset/hints; contract `BOOK_STATISTICS_ESTIMATOR.md`; no confidence intervals/tests |
 | `rightTriangle` (bounded native extension; no production manuscript) | Required integer `a`,`b` in1..12 | Keyboard sliders, live sqrt(a²+b²), proportional diagram, local hints/reset; contract `BOOK_RIGHT_TRIANGLE.md`; broader derived-metric scenes unsupported |
 | `coordinatePoint` (bounded native extension; no production manuscript) | Required integer `x`,`y` in-5..5 | Direct point pointer/touch drag, arrow-key movement, sliders, quadrant/axis/origin, three movement stages; `BOOK_COORDINATE_POINT.md`; not arbitrary JSX |
+| `coordinateWalk` (separate bounded kind; no production manuscript) | Integer `x`,`y` in-5..5 and exact `duration_ms:1500` | Swap, horizontal/vertical walk, pause/resume/reset, reduced-motion and paused reader restore; `BOOK_COORDINATE_WALK.md` |
 
 Common: `id` nonempty max80, unique in book; `prompt` nonempty max2000;
 optional `hints` at most8 strings max2000. No asset IDs, author JavaScript,
