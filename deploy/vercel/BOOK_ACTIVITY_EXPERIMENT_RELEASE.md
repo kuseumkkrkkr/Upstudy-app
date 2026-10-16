@@ -34,8 +34,24 @@
 
 ## Deployment gates
 
-- Standard Preview deployment requested without --prod or domain changes.
-  Candidate URL/hash/boot results will be recorded after READY, not assumed.
+- Standard Preview READY `dpl_B7eo2ZPyR5TypsehzHG3seFdvwwW`:
+  https://aiflow-web-canary-8mgr29ja9-cw20208021-9200s-projects.vercel.app
+  target=null, aliases=[] from deployment API. GitRef/GitSha/GitDirty fields
+  were unavailable in the inspected metadata; not asserted from missing values.
+  Public artifact commit `36e48ffd5bae7d162ab23b2d6ee9e71d706b5dd2`, pushed.
+- Real authenticated browser booted the current AIFlow welcome UI. CDP network
+  main.dart.js response body7157176 bytes SHA256
+  `DA4910F2C02651760008559AE811B3B4AEB7780BF5090136404C975FC447F849`,
+  exactly matching local public. Capture `preview-boot.png` in capabilities evidence.
+  This verifies code bundle/boot, not remote manuscript UI or live persistence.
+- Unauthenticated HttpClient followed Preview protection to an HTML200 response
+  (333927 bytes), NOT JavaScript. Its different hash is not a deployed-bundle
+  mismatch; only authenticated browser network bytes were used as bundle proof.
+- Alias listing after Preview still maps canonical and secondary project URL to
+  `aiflow-web-canary-hvv457edo-cw20208021-9200s-projects.vercel.app`.
+  Canonical main.dart.js remains7133766 bytes SHA256
+  `7F54EE1424F0982D6C2F461C4744EAADD7954602487576F9C08ECA2E9DB340B8`.
+  No aliases were changed by this Preview deployment.
 - Preview has no independent DB/JWT environment configuration. No Production
   secrets copied. Build-time API URL still points canonical; Preview API storage
   cannot be claimed verified. Never promote an env-empty Preview to Production.
