@@ -8,6 +8,12 @@
 - Root 교재 원고 폴더를 비재귀 집계해 Markdown 110개, BookData JSON 115개, HTML 86개, 전체 JSON 120개를 확인했다. 전체 JSON의 첫 태그는 17종이며 대시보드 표 합계도 120으로 동기화했다.
 
 - `flutter test --no-pub --reporter compact test/concept_textbook_html_motion_test.dart test/concept_textbook_prototype_json_test.dart test/perfect_square_textbook_data_test.dart`: 209개 통과. 여기에는 사용자 작업트리의 dashboard inventory assertion 수정이 포함된다.
+### 다음 제작 세션 handoff
+
+- 다음 한정 배치는 2022 대수 1단원(`12대수01-01`–`12대수01-08`)의 기존 Batch1 8개 후보를 공식 HWP 기준·본문·풀이·퀴즈 기준으로 대조하는 것이다. 공식 기준 원천은 `work/official-curriculum/2022_math_standards.json`; 현재 생성 후보는 `tool/build_algebra_2022_remaining_v2_batch1.py`에 이미 있으므로 검토 없이 재생성하지 않는다.
+
+- 95단계 파이프라인은 stage 95까지 완료했고, 전체 392개 판본-기준 쌍 모두 구조 신호가 있다. 75개 chapter 연결은 후보 상태라 태그만으로 새 원고 부족을 단정하지 않는다. 8개 기준 대조 후 실질 공백이 확인될 때만 좁은 보충 생성기를 추가하고, `python tool/build_tagged_textbook_drafts.py --from-stage <new_generator_filename.py>`로 새 stage부터 재개한다.
+
 
 ## 2026-10-17 현재 작업트리 재검증
 
