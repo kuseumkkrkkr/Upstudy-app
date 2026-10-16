@@ -156,6 +156,8 @@ class BookChapter {
     required this.sections,
     this.visuals = const [],
     this.pages = const [],
+    this.tags = const [],
+    this.standardCodes = const [],
   });
 
   final String title;
@@ -164,6 +166,10 @@ class BookChapter {
   final List<BookVisual> visuals;
   final List<BookPage> pages;
 
+  /// Author-supplied chapter metadata; preserved independently of book tags.
+  final List<String> tags;
+  final List<String> standardCodes;
+
   factory BookChapter.fromJson(Map<String, dynamic> json) {
     return BookChapter(
       title: json['title']?.toString() ?? '',
@@ -171,12 +177,16 @@ class BookChapter {
       sections: _readSections(json['sections']),
       visuals: _readVisuals(json['visuals']),
       pages: _readPages(json['pages']),
+      tags: _readStringList(json['tags']),
+      standardCodes: _readStringList(json['standard_codes']),
     );
   }
 
   Map<String, dynamic> toJson() {
     return {
       'title': title,
+      if (tags.isNotEmpty) 'tags': tags,
+      if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
       'intro': intro,
       'sections': sections.map((section) => section.toJson()).toList(),
       if (visuals.isNotEmpty)

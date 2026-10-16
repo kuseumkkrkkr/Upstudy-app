@@ -171,8 +171,10 @@ def validate_book(book):
     if not chapters:
         raise ValueError('book.chapters: required')
     for chapter in chapters:
-        object_fields(chapter, 'title intro sections visuals pages', 'chapter')
+        object_fields(chapter, 'title intro sections visuals pages tags standard_codes', 'chapter')
         text(chapter.get('title'), 'chapter.title', 160)
+        strings(chapter.get('tags', []), 'chapter.tags', 64, 80)
+        strings(chapter.get('standard_codes', []), 'chapter.standard_codes', 32, 80)
         strings(chapter.get('intro', []), 'chapter.intro')
         for visual in sequence(chapter.get('visuals', []), 'chapter.visuals'):
             validate_visual(visual)

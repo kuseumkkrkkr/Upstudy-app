@@ -133,3 +133,19 @@ def test_baseline_manifest_detects_source_drift_and_excludes_new_siblings(tmp_pa
     report, _ = audit(tmp_path, baseline)
     assert report['blocked'] == 1
     assert 'Baseline source hash changed' in report['records'][0]['error']
+
+
+def test_chapter_tags_and_standard_codes_are_runtime_content_not_dropped_annotations(tmp_path):
+    original = draft()
+    chapter = original['chapters'][0]
+    chapter.update(tags=['chapter-specific'], standard_codes=['synthetic-standard'])
+    entry = prepare(json.dumps(original))
+    assert json.loads(entry['source']) == original
+    assert not entry['source_metadata']['annotations']['chapters'][0]
+    chapter['tags'] = ['tag'] * 65
+    with pytest.raises(ValueError, match='chapter.tags'):
+        validate_book(original)
+    chapter['tags'] = []
+    chapter['standard_codes'] = ['code'] * 33
+    with pytest.raises(ValueError, match='chapter.standard_codes'):
+        validate_book(original)
