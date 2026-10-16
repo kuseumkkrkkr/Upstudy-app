@@ -59,6 +59,10 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
 
   int _currentPageIndex = 0;
 
+  int _focusedQuestionIndex = 0;
+  int? _focusedExamQuestionKey;
+  final Set<int> _examQuestionsMarkedForReview = <int>{};
+
   bool _sidebarVisible = false;
 
   Size? _viewportSize;
