@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
@@ -8,7 +9,7 @@ import 'package:s11/shared/services/textbook_reader_preferences.dart';
 import 'package:s11/shared/theme/app_colors.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
@@ -166,6 +167,7 @@ class _ProfilePageState extends State<ProfilePage> {
   }
 
   Future<void> _saveProfile({GlobalKey<FormState>? formKey}) async {
+    if (_saving) return;
     if (!(formKey ?? _formKey).currentState!.validate()) return;
     final newPassword = _passwordController.text.trim();
     final confirmPassword = _passwordConfirmController.text.trim();
@@ -268,76 +270,163 @@ class _ProfilePageState extends State<ProfilePage> {
   Future<void> _openDeleteModal() async {
     _deletePasswordController.clear();
     final formKey = GlobalKey<FormState>();
-    final delete = await showDialog<bool>(
+    final delete = await showGeneralDialog<bool>(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: .48),
-      builder: (dialogContext) => Dialog(
-        insetPadding: const EdgeInsets.symmetric(horizontal: 20),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(28)),
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              const Text(
-                'DANGER ZONE',
-                style: TextStyle(
-                  fontSize: 10,
-                  letterSpacing: 1.6,
-                  color: Colors.redAccent,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 10),
-              const Text(
-                '계정 삭제',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                '계정 삭제는 되돌릴 수 없으며 현재 비밀번호 확인이 필요합니다.',
-                style: TextStyle(color: Colors.black54, height: 1.45),
-              ),
-              const SizedBox(height: 20),
-              Form(
-                key: formKey,
-                child: _field(
-                  controller: _deletePasswordController,
-                  label: '현재 비밀번호',
-                  obscureText: true,
-                  validator: (value) => value == null || value.trim().isEmpty
-                      ? '현재 비밀번호를 입력해 주세요.'
-                      : null,
-                ),
-              ),
-              const SizedBox(height: 18),
-              Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => Navigator.of(dialogContext).pop(false),
-                      child: const Text('취소'),
-                    ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: FilledButton(
-                      onPressed: () {
-                        if (formKey.currentState?.validate() != true) return;
-                        Navigator.of(dialogContext).pop(true);
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: Colors.redAccent,
-                      ),
-                      child: const Text('계정 삭제'),
-                    ),
-                  ),
-                ],
-              ),
-            ],
+      barrierDismissible: true,
+      barrierLabel: '계정 삭제 닫기',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (dialogContext, animation, secondaryAnimation) => Stack(
+        children: [
+          Positioned.fill(
+            left: MediaQuery.sizeOf(dialogContext).width <= 720 ? 0 : 76,
+            top: MediaQuery.sizeOf(dialogContext).width <= 720 ? 0 : 62,
+            child: GestureDetector(
+              onTap: () => Navigator.of(dialogContext).pop(false),
+              child: const ColoredBox(color: Color(0xA309090B)),
+            ),
           ),
-        ),
+          Dialog(
+            alignment: MediaQuery.sizeOf(dialogContext).width <= 720
+                ? Alignment.bottomCenter
+                : Alignment.center,
+            constraints: BoxConstraints(
+              maxWidth: MediaQuery.sizeOf(dialogContext).width <= 720
+                  ? MediaQuery.sizeOf(dialogContext).width
+                  : 440,
+            ),
+            insetPadding: MediaQuery.sizeOf(dialogContext).width <= 720
+                ? EdgeInsets.zero
+                // HTML desktop dialog is centered in the profile body after the
+                // 76px rail and 62px command bar, not in the entire viewport.
+                : const EdgeInsets.fromLTRB(92, 78, 16, 16),
+            shape: const RoundedRectangleBorder(),
+            backgroundColor: const Color(0xFFFDFDFE),
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: const Color(0xFF09090B)),
+              ),
+              child: Padding(
+                padding: MediaQuery.sizeOf(dialogContext).width <= 720
+                    ? const EdgeInsets.symmetric(horizontal: 20, vertical: 24)
+                    : const EdgeInsets.all(30),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: SizedBox(
+                        width: 48,
+                        height: 48,
+                        child: ColoredBox(
+                          color: Color(0xFFA72724),
+                          child: Center(
+                            child: SvgPicture.string(
+                              '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v5c0 4.6 2.9 8 7 10 4.1-2 7-5.4 7-10V6z"/><path d="m9 12 2 2 4-5"/></svg>',
+                              width:
+                                  22 *
+                                  (isStudentDensityMobile(dialogContext)
+                                      ? StudentDensityTokens
+                                            .mobileIconMultiplier
+                                      : 1),
+                              height:
+                                  22 *
+                                  (isStudentDensityMobile(dialogContext)
+                                      ? StudentDensityTokens
+                                            .mobileIconMultiplier
+                                      : 1),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 28),
+                    const Text(
+                      '계정을 삭제할까요?',
+                      style: TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.w900,
+                        letterSpacing: -1.54,
+                        height: 1.5,
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '현재 비밀번호를 확인한 뒤 계정과 로그인 정보를 영구 삭제합니다.',
+                      style: TextStyle(
+                        color: Color(0xFF71717A),
+                        fontSize: 12,
+                        height: 1.6,
+                      ),
+                    ),
+                    const SizedBox(height: 22),
+                    Form(
+                      key: formKey,
+                      child: _managementField(
+                        _deletePasswordController,
+                        '현재 비밀번호',
+                        password: true,
+                        hint: '현재 비밀번호 입력',
+                      ),
+                    ),
+                    // Empty HTML validation row: margin 10 + minimum 18 + CTA gap 8.
+                    const SizedBox(height: 36),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton(
+                            onPressed: () =>
+                                Navigator.of(dialogContext).pop(false),
+                            style: OutlinedButton.styleFrom(
+                              visualDensity: VisualDensity.standard,
+                              textStyle: Theme.of(dialogContext)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                              minimumSize: const Size.fromHeight(48),
+                              foregroundColor: const Color(0xFF09090B),
+                              side: const BorderSide(color: Color(0xFF09090B)),
+                              shape: const RoundedRectangleBorder(),
+                            ),
+                            child: const Text('취소'),
+                          ),
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: FilledButton(
+                            onPressed: () {
+                              if (formKey.currentState?.validate() != true)
+                                return;
+                              Navigator.of(dialogContext).pop(true);
+                            },
+                            style: FilledButton.styleFrom(
+                              visualDensity: VisualDensity.standard,
+                              textStyle: Theme.of(dialogContext)
+                                  .textTheme
+                                  .labelLarge
+                                  ?.copyWith(
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                              backgroundColor: const Color(0xFFA72724),
+                              minimumSize: const Size.fromHeight(48),
+                              shape: const RoundedRectangleBorder(),
+                            ),
+                            child: const Text('계정 삭제'),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
     if (delete == true && mounted) await _deleteAccount(skipConfirmation: true);
@@ -527,8 +616,8 @@ class _ProfilePageState extends State<ProfilePage> {
   Widget _buildHtmlIdentity(String name, {bool mobile = false}) {
     final username = _usernameController.text.trim();
     final metrics = <({String label, String value})>[
-      (label: 'OVR', value: _formatProfileOvr(_rating?.ovr)),
-      (label: '티어', value: _profileTier(_rating?.rating)),
+      (label: '레벨리티', value: '기준 보정 중'),
+      (label: '최근 추이', value: '준비 중'),
       (label: '누적 풀이', value: _totalSolvedCount?.toString() ?? '--'),
     ];
     return Container(
@@ -846,146 +935,514 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 저장 시 기존 서버 프로필 계약을 호출하는 것이다.
   Future<void> _openProfileSheet({required bool security}) async {
     final sheetFormKey = GlobalKey<FormState>();
-    await showModalBottomSheet<void>(
+    final controllers = [
+      _nameController,
+      _usernameController,
+      _trackController,
+      _gradeController,
+      _subjectController,
+      _schoolController,
+      _emailController,
+    ];
+    final originalValues = controllers
+        .map((controller) => controller.text)
+        .toList();
+    _passwordController.clear();
+    _passwordConfirmController.clear();
+    _errorText = null;
+    final saved = await showGeneralDialog<bool>(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: const Color(0xFFFDFDFE),
-      builder: (sheetContext) => FractionallySizedBox(
-        heightFactor: .94,
-        child: Material(
-          color: const Color(0xFFFDFDFE),
-          child: Form(
-            key: sheetFormKey,
-            child: Column(
-              children: [
-                ListTile(
-                  title: Text(
-                    security ? '계정 보안' : '학생 정보 관리',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  subtitle: const Text('PRIVATE MANAGEMENT'),
-                  trailing: IconButton(
-                    tooltip: '닫기',
-                    onPressed: () => Navigator.of(sheetContext).pop(),
-                    icon: const Icon(Icons.close),
-                  ),
-                ),
-                Expanded(
-                  child: ListView(
-                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
-                    children: security
-                        ? _securityEditFields()
-                        : _studentEditFields(),
-                  ),
-                ),
-                SafeArea(
-                  top: false,
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(18, 8, 18, 14),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton(
-                            onPressed: () => Navigator.of(sheetContext).pop(),
-                            child: const Text('취소'),
+      barrierDismissible: true,
+      barrierLabel: '관리 패널 닫기',
+      barrierColor: const Color(0x9409090B),
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (sheetContext, animation, secondaryAnimation) => Align(
+        alignment: Alignment.centerRight,
+        child: SizedBox(
+          width: MediaQuery.sizeOf(sheetContext).width <= 720
+              ? double.infinity
+              : (MediaQuery.sizeOf(sheetContext).width - 80).clamp(0, 680),
+          height: MediaQuery.sizeOf(sheetContext).height,
+          child: Material(
+            color: const Color(0xFFFDFDFE),
+            child: Container(
+              decoration: BoxDecoration(
+                border: MediaQuery.sizeOf(sheetContext).width <= 720
+                    ? null
+                    : const Border(left: BorderSide(color: Color(0xFF09090B))),
+              ),
+              child: StatefulBuilder(
+                builder: (sheetContext, refreshSheet) => Form(
+                  key: sheetFormKey,
+                  child: Column(
+                    children: [
+                      Container(
+                        constraints: BoxConstraints(
+                          minHeight:
+                              MediaQuery.sizeOf(sheetContext).width <= 720
+                              ? 88
+                              : 114,
+                        ),
+                        padding: EdgeInsets.symmetric(
+                          horizontal:
+                              MediaQuery.sizeOf(sheetContext).width <= 720
+                              ? 18
+                              : 28,
+                          vertical: MediaQuery.sizeOf(sheetContext).width <= 720
+                              ? 18
+                              : 24,
+                        ),
+                        decoration: const BoxDecoration(
+                          border: Border(
+                            bottom: BorderSide(color: Color(0xFF09090B)),
                           ),
                         ),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: FilledButton(
-                            onPressed: _saving
-                                ? null
-                                : () => _saveProfile(formKey: sheetFormKey),
-                            style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF111113),
-                              shape: const RoundedRectangleBorder(
-                                borderRadius: BorderRadius.zero,
+                        child: Row(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  if (MediaQuery.sizeOf(sheetContext).width >
+                                      720)
+                                    const Text(
+                                      'PRIVATE MANAGEMENT',
+                                      style: TextStyle(
+                                        fontSize: 9,
+                                        letterSpacing: 1.26,
+                                        color: Color(0xFF71717A),
+                                        fontWeight: FontWeight.w900,
+                                      ),
+                                    ),
+                                  if (MediaQuery.sizeOf(sheetContext).width >
+                                      720)
+                                    const SizedBox(height: 8),
+                                  Text(
+                                    security ? '계정 보안' : '학생 정보 관리',
+                                    style: TextStyle(
+                                      fontSize:
+                                          MediaQuery.sizeOf(
+                                                sheetContext,
+                                              ).width <=
+                                              720
+                                          ? 26
+                                          : 30,
+                                      height: 1.2,
+                                      letterSpacing:
+                                          MediaQuery.sizeOf(
+                                                sheetContext,
+                                              ).width <=
+                                              720
+                                          ? -1.43
+                                          : -1.65,
+                                      fontWeight: FontWeight.w900,
+                                    ),
+                                  ),
+                                ],
                               ),
                             ),
-                            child: const Text('변경 내용 저장'),
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                border: Border.all(
+                                  color: const Color(0xFF09090B),
+                                ),
+                              ),
+                              child: IconButton(
+                                tooltip: '닫기',
+                                onPressed: () =>
+                                    Navigator.of(sheetContext).pop(),
+                                icon: const StudentHtmlGlyph(
+                                  icon: StudentHtmlIcon.close,
+                                  color: Color(0xFF09090B),
+                                  size: 20,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Expanded(
+                        child: ListView(
+                          padding: EdgeInsets.zero,
+                          children: security
+                              ? _securityEditFields()
+                              : _studentEditFields(),
+                        ),
+                      ),
+                      if (_errorText != null)
+                        Padding(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 18,
+                            vertical: 8,
+                          ),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _errorText!,
+                              key: const ValueKey('profile-management-error'),
+                              style: const TextStyle(
+                                color: Color(0xFFA72724),
+                                fontSize: 11,
+                              ),
+                            ),
                           ),
                         ),
-                      ],
-                    ),
+                      SafeArea(
+                        top: false,
+                        child: Container(
+                          constraints: const BoxConstraints(minHeight: 76),
+                          decoration: const BoxDecoration(
+                            border: Border(
+                              top: BorderSide(color: Color(0xFF09090B)),
+                            ),
+                          ),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 12,
+                          ),
+                          child: Row(
+                            children: [
+                              OutlinedButton(
+                                onPressed: () =>
+                                    Navigator.of(sheetContext).pop(),
+                                style: OutlinedButton.styleFrom(
+                                  minimumSize: const Size(0, 50),
+                                  visualDensity: VisualDensity.standard,
+                                  foregroundColor: const Color(0xFF09090B),
+                                  side: const BorderSide(
+                                    color: Color(0xFF09090B),
+                                  ),
+                                  shape: const RoundedRectangleBorder(),
+                                ),
+                                child: const Text('취소'),
+                              ),
+                              const SizedBox(width: 12),
+                              if (MediaQuery.sizeOf(sheetContext).width > 720)
+                                const Expanded(
+                                  child: Text(
+                                    '저장된 상태',
+                                    textAlign: TextAlign.right,
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      color: Color(0xFF71717A),
+                                    ),
+                                  ),
+                                ),
+                              if (MediaQuery.sizeOf(sheetContext).width > 720)
+                                const SizedBox(width: 12),
+                              Flexible(
+                                flex:
+                                    MediaQuery.sizeOf(sheetContext).width <= 720
+                                    ? 1
+                                    : 0,
+                                fit:
+                                    MediaQuery.sizeOf(sheetContext).width <= 720
+                                    ? FlexFit.tight
+                                    : FlexFit.loose,
+                                child: FilledButton(
+                                  onPressed: _saving
+                                      ? null
+                                      : () async {
+                                          final request = _saveProfile(
+                                            formKey: sheetFormKey,
+                                          );
+                                          refreshSheet(() {});
+                                          await request;
+                                          if (sheetContext.mounted)
+                                            refreshSheet(() {});
+                                        },
+                                  style: FilledButton.styleFrom(
+                                    visualDensity: VisualDensity.standard,
+                                    fixedSize:
+                                        MediaQuery.sizeOf(sheetContext).width >
+                                            720
+                                        ? const Size(144, 50)
+                                        : null,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                    ),
+                                    textStyle: Theme.of(sheetContext)
+                                        .textTheme
+                                        .labelLarge
+                                        ?.copyWith(
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.w900,
+                                        ),
+                                    backgroundColor: const Color(0xFF111113),
+                                    minimumSize: const Size(0, 50),
+                                    shape: const RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.zero,
+                                    ),
+                                  ),
+                                  child: const Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      StudentHtmlGlyph(
+                                        icon: StudentHtmlIcon.check,
+                                        color: Colors.white,
+                                        size: 18,
+                                      ),
+                                      SizedBox(width: 9),
+                                      Text('변경 내용 저장'),
+                                    ],
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-              ],
+              ),
             ),
           ),
         ),
       ),
     );
+    if (!mounted) return;
+    if (saved != true) {
+      for (var index = 0; index < controllers.length; index++) {
+        controllers[index].text = originalValues[index];
+      }
+    }
+    _passwordController.clear();
+    _passwordConfirmController.clear();
   }
 
   List<Widget> _studentEditFields() => [
-    const _ProfileEditGroupLabel(
-      title: '기본 정보',
-      description: '계정에서 사용하는 이름과 아이디입니다.',
-    ),
-    _field(
-      controller: _nameController,
-      label: '이름',
-      square: true,
-      validator: (value) =>
-          value == null || value.trim().isEmpty ? '이름을 입력해 주세요.' : null,
-    ),
-    const SizedBox(height: 14),
-    _field(
-      controller: _usernameController,
-      label: '아이디',
-      square: true,
-      validator: (value) =>
-          value == null || value.trim().isEmpty ? 'ID를 입력해 주세요.' : null,
-    ),
-    const SizedBox(height: 20),
-    const _ProfileEditGroupLabel(
-      title: '학습 기준',
-      description: '코스 추천과 학습 분석에 반영됩니다.',
-    ),
-    _field(controller: _trackController, label: '과정', square: true),
-    const SizedBox(height: 14),
-    _field(controller: _gradeController, label: '학년', square: true),
-    const SizedBox(height: 14),
-    _field(controller: _subjectController, label: '과목', square: true),
-    const SizedBox(height: 20),
-    const _ProfileEditGroupLabel(
-      title: '학교와 연락처',
-      description: '선택 정보이며 비워두어도 저장할 수 있습니다.',
-    ),
-    _field(controller: _schoolController, label: '학교', square: true),
-    const SizedBox(height: 14),
-    _field(
-      controller: _emailController,
-      label: '이메일',
-      square: true,
-      keyboardType: TextInputType.emailAddress,
-    ),
+    _editGroup('기본 정보', '계정에서 사용하는 이름과 아이디입니다.', [
+      _managementField(_nameController, '이름', required: true),
+      _managementField(_usernameController, '아이디', required: true),
+    ]),
+    _editGroup('학습 기준', '코스 추천과 학습 분석에 반영됩니다.', [
+      _managementSelect(_trackController, '과정', ['중학교', '고등학교']),
+      _managementSelect(_gradeController, '학년', ['1학년', '2학년', '3학년']),
+      _managementSelect(_subjectController, '과목', ['수학', '확률과통계', '미적분', '기하']),
+    ]),
+    _editGroup('학교와 연락처', '선택 정보이며 비워두어도 저장할 수 있습니다.', [
+      _managementField(_schoolController, '학교', hint: '학교명을 입력하세요'),
+      _managementField(
+        _emailController,
+        '이메일',
+        hint: 'student@example.com',
+        keyboardType: TextInputType.emailAddress,
+      ),
+    ]),
   ];
 
+  /// CSS focus 배경을 Flutter 입력 상태에 대응하며, 저장 상태는 변경하지 않는다.
+  WidgetStateColor get _managementFillColor => WidgetStateColor.resolveWith(
+    (states) => states.contains(WidgetState.focused)
+        ? const Color(0xFFFDFDFE)
+        : const Color(0xFFF7F7F8),
+  );
+
+  /// HTML 선택 목록을 사용하되 목록 밖의 기존 서버 값도 보존한다.
+  Widget _managementSelect(
+    TextEditingController controller,
+    String label,
+    List<String> options,
+  ) {
+    final values = {
+      ...options,
+      if (controller.text.isNotEmpty) controller.text,
+    }.toList();
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+        ),
+        const SizedBox(height: 8),
+        DropdownButtonFormField<String>(
+          initialValue: controller.text.isEmpty ? null : controller.text,
+          isExpanded: true,
+          decoration: InputDecoration(
+            constraints: BoxConstraints(
+              minHeight: MediaQuery.sizeOf(context).width <= 720 ? 52 : 50,
+            ),
+            filled: true,
+            fillColor: _managementFillColor,
+            hoverColor: Colors.transparent,
+            border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(color: Color(0x1A09090B)),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.zero,
+              borderSide: BorderSide(color: Color(0xFF09090B)),
+            ),
+            contentPadding: EdgeInsets.symmetric(horizontal: 14, vertical: 15),
+          ),
+          items: values
+              .map(
+                (value) => DropdownMenuItem(
+                  value: value,
+                  child: Text(value, style: const TextStyle(fontSize: 13)),
+                ),
+              )
+              .toList(),
+          onChanged: (value) => controller.text = value ?? '',
+        ),
+      ],
+    );
+  }
+
+  Widget _managementField(
+    TextEditingController controller,
+    String label, {
+    bool required = false,
+    bool password = false,
+    String? hint,
+    TextInputType keyboardType = TextInputType.text,
+  }) => Column(
+    crossAxisAlignment: CrossAxisAlignment.start,
+    children: [
+      Text.rich(
+        TextSpan(
+          text: label,
+          children: [
+            if (!required)
+              const TextSpan(
+                text: ' 선택',
+                style: TextStyle(
+                  fontSize: 9,
+                  color: Color(0xFF71717A),
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+          ],
+        ),
+        style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w800),
+      ),
+      const SizedBox(height: 8),
+      TextFormField(
+        controller: controller,
+        cursorColor: const Color(0xFF09090B),
+        autofocus:
+            controller == _nameController ||
+            controller == _passwordController ||
+            controller == _deletePasswordController,
+        obscureText: password,
+        keyboardType: keyboardType,
+        style: const TextStyle(fontSize: 13),
+        validator: (value) {
+          final input = value ?? '';
+          if (controller == _deletePasswordController && input.trim().isEmpty)
+            return '현재 비밀번호를 입력해 주세요.';
+          if (required && input.trim().isEmpty) return '$label을 입력해 주세요.';
+          if (keyboardType == TextInputType.emailAddress &&
+              input.isNotEmpty &&
+              !RegExp(r'^[^\s@]+@[^\s@]+\.[^\s@]+$').hasMatch(input))
+            return '이메일 형식을 확인해 주세요.';
+          if (controller == _passwordController &&
+              input.isNotEmpty &&
+              !RegExp(
+                r'^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,20}$',
+              ).hasMatch(input))
+            return '새 비밀번호는 영문과 숫자를 포함한 8–20자로 입력해 주세요.';
+          if (controller == _passwordConfirmController &&
+              input != _passwordController.text)
+            return '새 비밀번호가 서로 일치하지 않습니다.';
+          return null;
+        },
+        decoration: InputDecoration(
+          constraints: BoxConstraints(
+            minHeight: MediaQuery.sizeOf(context).width <= 720 ? 52 : 50,
+          ),
+          hintText: hint,
+          filled: true,
+          fillColor: _managementFillColor,
+          hoverColor: Colors.transparent,
+          border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
+          enabledBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: BorderSide(color: Color(0x1A09090B)),
+          ),
+          focusedBorder: const OutlineInputBorder(
+            borderRadius: BorderRadius.zero,
+            borderSide: BorderSide(color: Color(0xFF09090B)),
+          ),
+          contentPadding: const EdgeInsets.symmetric(
+            horizontal: 14,
+            vertical: 15,
+          ),
+        ),
+      ),
+    ],
+  );
+
+  Widget _editGroup(String title, String description, List<Widget> fields) =>
+      LayoutBuilder(
+        builder: (context, constraints) {
+          final mobile = MediaQuery.sizeOf(context).width <= 720;
+          final padding = mobile ? 18.0 : 28.0;
+          final gap = mobile ? 14.0 : 16.0;
+          final fieldWidth = mobile
+              ? constraints.maxWidth - padding * 2
+              : (constraints.maxWidth - padding * 2 - gap) / 2;
+          return Container(
+            constraints: title == '계정 보안'
+                ? BoxConstraints(
+                    minHeight:
+                        (MediaQuery.sizeOf(context).height -
+                                (mobile ? 88 : 114) -
+                                76)
+                            .clamp(0, double.infinity),
+                  )
+                : const BoxConstraints(),
+            padding: EdgeInsets.fromLTRB(
+              padding,
+              title == '계정 보안' && !mobile
+                  ? 42
+                  : mobile
+                  ? 22
+                  : 28,
+              padding,
+              mobile ? 22 : 28,
+            ),
+            decoration: const BoxDecoration(
+              border: Border(bottom: BorderSide(color: Color(0x1A09090B))),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _ProfileEditGroupLabel(title: title, description: description),
+                Wrap(
+                  spacing: gap,
+                  runSpacing: gap,
+                  children: fields
+                      .map((field) => SizedBox(width: fieldWidth, child: field))
+                      .toList(),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+
   List<Widget> _securityEditFields() => [
-    const _ProfileEditGroupLabel(
-      title: '계정 보안',
-      description: '새 비밀번호는 영문과 숫자를 포함한 8–20자로 설정합니다.',
-    ),
-    _field(
-      controller: _passwordController,
-      label: '새 비밀번호',
-      square: true,
-      hintText: '8–20자 영문+숫자',
-      obscureText: true,
-    ),
-    const SizedBox(height: 14),
-    _field(
-      controller: _passwordConfirmController,
-      label: '새 비밀번호 확인',
-      square: true,
-      hintText: '한 번 더 입력',
-      obscureText: true,
-    ),
+    _editGroup('계정 보안', '새 비밀번호는 영문과 숫자를 포함한 8–20자로 설정합니다.', [
+      _managementField(
+        _passwordController,
+        '새 비밀번호',
+        password: true,
+        hint: '8–20자 영문+숫자',
+      ),
+      _managementField(
+        _passwordConfirmController,
+        '새 비밀번호 확인',
+        password: true,
+        hint: '한 번 더 입력',
+      ),
+    ]),
   ];
 
   Widget _buildLegacyHtmlProfile(BuildContext context) {
@@ -1014,7 +1471,6 @@ class _ProfilePageState extends State<ProfilePage> {
       includeHeader: false,
       child: Scaffold(
         backgroundColor: const Color(0xFFF4F4F6),
-        drawer: const AppDrawer(),
         body: SafeArea(
           child: Column(
             children: [
@@ -1022,7 +1478,7 @@ class _ProfilePageState extends State<ProfilePage> {
                 builder: (context) => Ios26TopBar(
                   brandColor: Colors.black,
                   showLevelIndicator: false,
-                  onMenu: () => toggleAppDrawer(context),
+                  onMenu: () => MobileStudentBottomAppBar.openMore(context),
                   onTitleTap: () =>
                       Navigator.of(context).pushNamedAndRemoveUntil(
                         '/student/dashboard',
@@ -1332,7 +1788,6 @@ class _ProfilePageState extends State<ProfilePage> {
   /// 작동 원리는 HTML의 본문 1열과 계정 보조 패널 1열을 분리해 PC에서 정보 밀도를 유지하고, 기존 API 저장 동작은 그대로 재사용한다.
   Widget _buildDesktopProfile(BuildContext context, String name) => Scaffold(
     backgroundColor: const Color(0xFFF4F4F6),
-    drawer: const AppDrawer(),
     body: SafeArea(
       child: Column(
         children: [
@@ -1340,7 +1795,7 @@ class _ProfilePageState extends State<ProfilePage> {
             builder: (context) => Ios26TopBar(
               brandColor: Colors.black,
               showLevelIndicator: false,
-              onMenu: () => toggleAppDrawer(context),
+              onMenu: () => MobileStudentBottomAppBar.openMore(context),
               onTitleTap: () => Navigator.of(
                 context,
               ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
@@ -2280,14 +2735,8 @@ class _ProfileHero extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  _ProfileMetric(
-                    label: '현재 OVR',
-                    value: _formatProfileOvr(rating?.ovr),
-                  ),
-                  _ProfileMetric(
-                    label: '티어',
-                    value: _profileTier(rating?.rating),
-                  ),
+                  _ProfileMetric(label: '레벨리티', value: '기준 보정 중'),
+                  _ProfileMetric(label: '최근 추이', value: '준비 중'),
                   _ProfileMetric(
                     label: '누적 풀이',
                     value: totalSolvedCount?.toString() ?? '--',
@@ -2380,14 +2829,8 @@ class _ProfileHero extends StatelessWidget {
             ),
             child: Row(
               children: [
-                _ProfileMetric(
-                  label: '현재 OVR',
-                  value: _formatProfileOvr(rating?.ovr),
-                ),
-                _ProfileMetric(
-                  label: '티어',
-                  value: _profileTier(rating?.rating),
-                ),
+                _ProfileMetric(label: '레벨리티', value: '기준 보정 중'),
+                _ProfileMetric(label: '최근 추이', value: '준비 중'),
                 _ProfileMetric(
                   label: '누적 풀이',
                   value: totalSolvedCount?.toString() ?? '--',
@@ -2411,47 +2854,50 @@ class _ProfileEditGroupLabel extends StatelessWidget {
   final String description;
 
   @override
-  Widget build(BuildContext context) => Padding(
-    padding: const EdgeInsets.only(bottom: 12),
-    child: Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          title,
-          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 5),
-        Text(
-          description,
-          style: const TextStyle(color: Color(0xFF71717A), fontSize: 11),
-        ),
-      ],
-    ),
-  );
-}
-
-const double _profileRatingFloor = 1200;
-const double _profileOvrDivider = 128;
-
-/// 필요한 변수는 서버의 원본 OVR 값이다.
-/// 작동 원리는 레거시 표시 OVR은 그대로 쓰고 원본 레이팅 축은 대시보드와 같은 공식으로 환산하는 것이다.
-String _formatProfileOvr(double? value) {
-  if (value == null || value.isNaN || value <= 0) return '--';
-  if (value < _profileRatingFloor) return value.toStringAsFixed(1);
-  return ((value - _profileRatingFloor) / _profileOvrDivider).toStringAsFixed(
-    1,
-  );
-}
-
-/// 필요한 변수는 서버의 현재 사용자 레이팅이다.
-/// 작동 원리는 서버 아레나와 동일한 고정 경계로 A~E 티어를 계산해 화면 간 등급 불일치를 막는 것이다.
-String _profileTier(double? rating) {
-  if (rating == null || rating.isNaN || rating <= 0) return '--';
-  if (rating >= 2000) return 'A';
-  if (rating >= 1750) return 'B';
-  if (rating >= 1500) return 'C';
-  if (rating >= 1000) return 'D';
-  return 'E';
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    final titleWidget = Text(
+      title,
+      style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+    );
+    final descriptionWidget = Text(
+      description,
+      textAlign: mobile ? TextAlign.left : TextAlign.right,
+      style: const TextStyle(
+        color: Color(0xFF71717A),
+        fontSize: 10,
+        height: 1.5,
+      ),
+    );
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 20),
+      child: mobile
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleWidget,
+                const SizedBox(height: 7),
+                descriptionWidget,
+              ],
+            )
+          : Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                titleWidget,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: ConstrainedBox(
+                      constraints: const BoxConstraints(maxWidth: 280),
+                      child: descriptionWidget,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+    );
+  }
 }
 
 class _ProfileMetric extends StatelessWidget {

@@ -3,24 +3,12 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/api_contract.dart';
-import 'package:web_socket_channel/web_socket_channel.dart';
 
-class ArenaSocket {
-  ArenaSocket(this._channel);
-
-  final WebSocketChannel _channel;
-
-  /// 필요한 변수는 WebSocket 원시 프레임이다.
-  /// UTF-8 JSON 객체만 아레나 이벤트 Map으로 정규화한다.
-  Stream<Map<String, dynamic>> get events => _channel.stream.map(
-    (event) => Map<String, dynamic>.from(jsonDecode(event.toString()) as Map),
-  );
-
-  /// 필요한 변수는 이벤트 본문이다. 서버 계약에 맞춰 JSON 문자열로 전송한다.
-  void send(Map<String, dynamic> event) => _channel.sink.add(jsonEncode(event));
-
-  /// 필요한 변수 없음. 화면 종료 시 소켓과 서버 자원을 함께 정리한다.
-  Future<void> close() => _channel.sink.close();
+/// Optional event source used by widget tests; production arena traffic is REST-only.
+abstract interface class ArenaSocket {
+  Stream<Map<String, dynamic>> get events;
+  void send(Map<String, dynamic> event);
+  Future<void> close();
 }
 
 /// 아레나 API 래퍼.
@@ -93,10 +81,37 @@ class ArenaApi {
       );
 
   /// 필요한 변수: 대결 큐 유형. 봇을 제외한 실제 참가자 랭킹을 짧게 조회한다.
-  Future<Map<String, dynamic>> rankings(String queueType) => _getCached(
-    '/arena/rankings?queue_type=$queueType',
-    cacheTtl: const Duration(seconds: 30),
-  );
+  Future<Map<String, dynamic>> rankings(
+    String queueType, {
+    int limit = 100,
+    int offset = 0,
+    String query = '',
+    String scope = 'all',
+    bool forceRefresh = false,
+  }) {
+    final search = query.trim();
+    if (limit < 1 ||
+        limit > 100 ||
+        offset < 0 ||
+        query.length > 80 ||
+        !const {'all', 'my_tier', 'friends'}.contains(scope)) {
+      throw ArgumentError('랭킹 페이지 범위가 올바르지 않습니다.');
+    }
+    return _getCached(
+      Uri(
+        path: '/arena/rankings',
+        queryParameters: {
+          'queue_type': queueType,
+          'limit': '$limit',
+          'offset': '$offset',
+          if (search.isNotEmpty) 'query': search,
+          if (scope != 'all') 'scope': scope,
+        },
+      ).toString(),
+      cacheTtl: const Duration(seconds: 30),
+      forceRefresh: forceRefresh,
+    );
+  }
 
   // 매칭 큐 참가.
   // 필요 변수: queueType(큐 타입).
@@ -129,38 +144,37 @@ class ArenaApi {
   Future<Map<String, dynamic>> matchState(String matchId) =>
       _getCached('/arena/matches/$matchId', useCache: false);
 
-  /// 필요한 변수는 선택 경기 ID와 현재 인증 토큰이다.
-  /// `/ws/arena`에 연결해 매칭·상태·답안·채팅·종료 이벤트를 수신한다.
-  Future<ArenaSocket> connect({String? matchId}) async {
-    final token = await ApiClient.instance.requireToken();
-    final channel = WebSocketChannel.connect(
-      ApiContract.webSocketUri(
-        '/ws/arena',
-        query: {
-          'token': token,
-          if (matchId != null && matchId.isNotEmpty) 'match_id': matchId,
-        },
-      ),
-    );
-    await channel.ready;
-    return ArenaSocket(channel);
-  }
-
-  // 답안 제출.
-  // 필요 변수: matchId, questionId, answer.
-  // 동작: 정답 제출은 매번 상태 변경이 일어나므로 캐시 미적용 POST로 처리한다.
+  /// 실제 경기·문항·답안을 제출하며 네트워크 재시도에는 같은 [idempotencyKey]를 쓴다.
+  /// 응답의 문항과 채점 타입을 검증한다. 서버 멱등 보장은 서버 계약이 별도로 필요하다.
   Future<Map<String, dynamic>> submit(
     String matchId,
     String questionId,
-    String answer,
-  ) => _postRequest(
-    '/arena/matches/$matchId/answers',
-    body: {
-      'question_id': questionId,
-      'answer': answer,
-      'idempotency_key': '${DateTime.now().microsecondsSinceEpoch}-$questionId',
-    },
-  );
+    String answer, {
+    String? idempotencyKey,
+  }) async {
+    if (idempotencyKey != null &&
+        (idempotencyKey.trim().isEmpty || idempotencyKey.length > 128)) {
+      throw ArgumentError('답안 요청 키가 올바르지 않습니다.');
+    }
+    final result = await _postRequest(
+      '/arena/matches/${Uri.encodeComponent(matchId)}/answers',
+      body: {
+        'question_id': questionId,
+        'answer': answer,
+        'idempotency_key':
+            idempotencyKey ??
+            '${DateTime.now().microsecondsSinceEpoch}-$questionId',
+      },
+    );
+    if (result['correct'] is! bool ||
+        result['finished'] is! bool ||
+        (result['question_id'] != null &&
+            result['question_id'].toString() != questionId)) {
+      throw const FormatException('답안 채점 응답을 확인하지 못했습니다.');
+    }
+    // Legacy canary omits the ID; retain the ID of this accepted HTTP request.
+    return {...result, 'question_id': questionId};
+  }
 
   /// 필요한 변수: 종료된 경기 ID.
   /// 작동 원리: 캐시를 사용하지 않고 참가자 전용 결과·문항별 분석을 즉시 조회한다.
@@ -173,19 +187,20 @@ class ArenaApi {
     return result;
   }
 
+  /// 결과를 떠난 본인의 임시 답안만 서버에서 파기한다. 계정이 바뀌면 서버가 거절한다.
+  Future<void> acknowledgeResult(
+    String matchId,
+    String expectedViewerUserId,
+  ) async {
+    await _postRequest(
+      '/arena/matches/${Uri.encodeComponent(matchId)}/result/ack',
+      body: {'expected_viewer_user_id': expectedViewerUserId},
+    );
+  }
+
   /// 필요한 변수 없음. 경기 종료 뒤 요약·랭킹이 이전 레이팅을 재사용하지 않도록 아레나 캐시를 비운다.
   Future<void> invalidateSummary() async {
     await ApiClient.instance.invalidateCachePath('/arena');
     resultRevision.value++;
-  }
-
-  // 매치 채팅 전송.
-  // 필요 변수: matchId, message.
-  // 동작: 채팅은 실시간성 때문에 즉시 처리 POST로 호출한다.
-  Future<void> chat(String matchId, String message) async {
-    await _postRequest(
-      '/arena/matches/$matchId/chat',
-      body: {'message': message},
-    );
   }
 }

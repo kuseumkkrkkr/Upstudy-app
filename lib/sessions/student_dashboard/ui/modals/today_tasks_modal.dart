@@ -7,11 +7,13 @@ class TodayTaskEntry {
     required this.title,
     required this.caption,
     required this.icon,
+    this.timeLabel,
   });
 
   final String title;
   final String caption;
   final IconData icon;
+  final String? timeLabel;
 }
 
 /// 필요한 변수는 오늘 할 일 카드와 항목별 화면 이동 콜백이다.

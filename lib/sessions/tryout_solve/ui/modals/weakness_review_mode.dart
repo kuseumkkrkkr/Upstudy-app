@@ -70,7 +70,7 @@ class WeaknessReviewModal extends StatefulWidget {
   State<WeaknessReviewModal> createState() => _WeaknessReviewModalState();
 }
 
-enum _ReviewSection { problemRedo, concept, oxQuiz }
+enum _ReviewSection { problemRedo, concept, socratic, oxQuiz }
 
 class _ReviewActionEntry {
   const _ReviewActionEntry({required this.section, required this.label});
@@ -152,7 +152,8 @@ class _OxQuestion {
 class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   static const _actions = [
     _ReviewActionEntry(section: _ReviewSection.problemRedo, label: '문제 다시풀기'),
-    _ReviewActionEntry(section: _ReviewSection.concept, label: '개념 다시보기'),
+    _ReviewActionEntry(section: _ReviewSection.concept, label: '약점 개념'),
+    _ReviewActionEntry(section: _ReviewSection.socratic, label: '질문형 복습'),
     _ReviewActionEntry(section: _ReviewSection.oxQuiz, label: 'OX퀴즈 풀기'),
   ];
 
@@ -220,14 +221,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
   bool _selectMode = false;
   final Set<String> _selectedAttemptKeys = {};
   bool _chatSending = false;
-  final List<_ChatMessage> _chatMessages = [
-    _ChatMessage(sender: 'Tutor', text: '틀린 문제의 핵심 개념을 짧게 리마인드해 드릴게요.'),
-    _ChatMessage(sender: 'Student', text: '적분의 평균값 정리를 자꾸 헷갈려요.'),
-    _ChatMessage(
-      sender: 'Tutor',
-      text: '먼저 함수 연속성과 도함수 존재 조건을 체크하고, 평균값 정리의 가정이 맞는지 확인해 보세요.',
-    ),
-  ];
+  final List<_ChatMessage> _chatMessages = [];
 
   @override
   void initState() {
@@ -299,16 +293,22 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     required String emptyMessage,
   }) {
     final now = DateTime.now().toUtc();
-    final recent = _weaknessTags.where((item) {
-      final updatedAt = item.updatedAt;
-      if (updatedAt == null) return false;
-      final parsed = DateTime.tryParse(updatedAt)?.toUtc();
-      if (parsed == null) return false;
-      final age = now.difference(parsed);
-      return age >= Duration.zero && age <= window;
-    }).map((item) => item.tag).where((tag) => tag.trim().isNotEmpty).toSet();
+    final recent = _weaknessTags
+        .where((item) {
+          final updatedAt = item.updatedAt;
+          if (updatedAt == null) return false;
+          final parsed = DateTime.tryParse(updatedAt)?.toUtc();
+          if (parsed == null) return false;
+          final age = now.difference(parsed);
+          return age >= Duration.zero && age <= window;
+        })
+        .map((item) => item.tag)
+        .where((tag) => tag.trim().isNotEmpty)
+        .toSet();
     if (recent.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(emptyMessage)));
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text(emptyMessage)));
       return;
     }
     setState(() => _selectedWeakTags.addAll(recent));
@@ -426,6 +426,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
       children: [
         _buildProblemRedoBody(scale: scale, gap: gap),
         _buildConceptPanel(scale),
+        _buildChatPanel(scale),
         _buildOxQuizPanel(scale),
       ],
     );
@@ -1426,18 +1427,32 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     _chatController.clear();
     await _appendChatMessage(_ChatMessage(sender: 'Student', text: text));
     setState(() => _chatSending = true);
-    // 간단한 모의 튜터 응답
-    await Future<void>.delayed(const Duration(milliseconds: 420));
-    if (!mounted) return;
-    await _appendChatMessage(
-      _ChatMessage(
-        sender: 'Tutor',
-        text:
-            '이 부분은 베타 버전입니다. 곧 실시간 튜터 응답이 연결됩니다.\n지금은 먼저 핵심 정의와 대표 예제를 3분 안에 복습해 보세요.',
-      ),
-    );
-    if (!mounted) return;
-    setState(() => _chatSending = false);
+    try {
+      final response = await ApiClient.instance.sendServerChatMessage(
+        message: text,
+        mode: 'socratic',
+        questTitle: _selectedWeakTags.isEmpty
+            ? null
+            : '복습할 약점 태그: ${_selectedWeakTags.join(', ')}',
+      );
+      if (!mounted) return;
+      final reply = response.assistantMessage.trim();
+      if (reply.isEmpty) throw StateError('Empty Socratic tutor response');
+      await _appendChatMessage(_ChatMessage(sender: 'Tutor', text: reply));
+    } catch (error) {
+      if (!mounted) return;
+      await _appendChatMessage(
+        _ChatMessage(
+          sender: 'Tutor',
+          text: studentFacingApiError(
+            error,
+            fallback: '질문형 복습 응답을 가져오지 못했어요. 잠시 후 다시 시도해 주세요.',
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _chatSending = false);
+    }
   }
 
   // 필요 변수: 조회 기간·선택 문제·화면 배율. 작동 원리: 기간 필터와 일괄 다시 풀기 동작을 한 패널로 구성한다.
@@ -1605,14 +1620,12 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
     );
   }
 
-  // 베타 채팅은 실제 서버 계약이 연결되기 전까지 사용자 복습 화면에서는 호출하지 않는다.
-  // ignore: unused_element
   Widget _buildChatPanel(double scale) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          '채팅형 복습 (베타)',
+          '질문형 복습',
           style: GoogleFonts.inter(
             fontSize: 18 * scale,
             fontWeight: FontWeight.w700,
@@ -1620,7 +1633,7 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
         ),
         SizedBox(height: 10 * scale),
         Text(
-          '약점 태그나 개념을 적어 보내면 곧바로 짧은 리마인드가 돌아옵니다. (현재는 베타 응답)',
+          '정답을 먼저 알려주지 않고, 한 번에 하나씩 질문하며 풀이 생각을 돕습니다.',
           style: TextStyle(fontSize: 12 * scale, color: Colors.grey.shade700),
         ),
         SizedBox(height: 10 * scale),
@@ -1632,40 +1645,56 @@ class _WeaknessReviewModalState extends State<WeaknessReviewModal> {
               border: Border.all(color: const Color(0xFFE5E7EB)),
             ),
             padding: EdgeInsets.all(12 * scale),
-            child: ListView.separated(
-              controller: _chatScrollController,
-              itemCount: _chatMessages.length,
-              separatorBuilder: (_, __) => SizedBox(height: 8 * scale),
-              itemBuilder: (context, index) {
-                final message = _chatMessages[index];
-                final sender = message.sender;
-                final text = message.text;
-                final isTutor = sender == 'Tutor';
-                return Align(
-                  alignment: isTutor
-                      ? Alignment.centerLeft
-                      : Alignment.centerRight,
-                  child: Container(
-                    padding: EdgeInsets.symmetric(
-                      horizontal: 12 * scale,
-                      vertical: 10 * scale,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isTutor
-                          ? Colors.white
-                          : const Color(0xFF1B402B).withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(10 * scale),
-                      border: Border.all(
-                        color: isTutor
-                            ? const Color(0xFFE5E7EB)
-                            : const Color(0xFF1B402B).withValues(alpha: 0.4),
+            child: _chatMessages.isEmpty
+                ? Center(
+                    child: Text(
+                      '복습할 오답이나 막힌 풀이 단계를 적어 주세요.\n튜터가 첫 질문부터 시작합니다.',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13 * scale,
+                        color: Colors.grey.shade700,
                       ),
                     ),
-                    child: Text(text, style: TextStyle(fontSize: 13 * scale)),
+                  )
+                : ListView.separated(
+                    controller: _chatScrollController,
+                    itemCount: _chatMessages.length,
+                    separatorBuilder: (_, __) => SizedBox(height: 8 * scale),
+                    itemBuilder: (context, index) {
+                      final message = _chatMessages[index];
+                      final isTutor = message.sender == 'Tutor';
+                      return Align(
+                        alignment: isTutor
+                            ? Alignment.centerLeft
+                            : Alignment.centerRight,
+                        child: Container(
+                          padding: EdgeInsets.symmetric(
+                            horizontal: 12 * scale,
+                            vertical: 10 * scale,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isTutor
+                                ? Colors.white
+                                : const Color(
+                                    0xFF1B402B,
+                                  ).withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(10 * scale),
+                            border: Border.all(
+                              color: isTutor
+                                  ? const Color(0xFFE5E7EB)
+                                  : const Color(
+                                      0xFF1B402B,
+                                    ).withValues(alpha: 0.4),
+                            ),
+                          ),
+                          child: Text(
+                            message.text,
+                            style: TextStyle(fontSize: 13 * scale),
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
           ),
         ),
         SizedBox(height: 10 * scale),

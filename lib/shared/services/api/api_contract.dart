@@ -16,11 +16,8 @@ class ApiContract {
     defaultValue: '',
   );
 
-  /// Vercel 비동기 OCR 큐 주소. 비어 있으면 기존 단일 FastAPI 경로를 유지한다.
-  static const String ocrQueueBaseUrl = String.fromEnvironment(
-    'OCR_QUEUE_BASE_URL',
-    defaultValue: '',
-  );
+  /// OCR 큐도 제품 API와 같은 Vercel origin에서 제공한다.
+  static String get ocrQueueBaseUrl => url('/api/ocr');
 
   /// Path-level compatibility overrides for backend contract changes.
   static const Map<String, String> pathOverrides = <String, String>{};
@@ -35,12 +32,6 @@ class ApiContract {
 
   static String url(String path, {Map<String, String>? query}) {
     return uri(path, query: query).toString();
-  }
-
-  static Uri webSocketUri(String path, {Map<String, String>? query}) {
-    final httpUri = uri(path, query: query);
-    final scheme = httpUri.scheme == 'https' ? 'wss' : 'ws';
-    return httpUri.replace(scheme: scheme);
   }
 
   static String resolvePath(String path) {
@@ -104,12 +95,13 @@ class ApiPaths {
   static const questsGenerateStatus = '/quests/generate/status';
   static const questsGenerateStream = '/quests/generate/stream';
   static const questsTray = '/quests/tray';
+  static const problemHabits = '/habit/problem';
+  static const problemHabitReplay = '/habit/problem/replay';
   static const variantFromFlowDraft = '/quests/variants/from-flow-draft';
   static const variantFromPromptNote = '/quests/variants/from-prompt-note';
   static const variantConvertMcq = '/quests/variants/convert-mcq';
 
   static const analysisSolve = '/analysis/solve';
-  static const analysisOcr = '/analysis/ocr';
   static const analysisVariantGrade = '/analysis/solve/variant-grade';
 
   static const exams = '/exams';
@@ -117,7 +109,6 @@ class ApiPaths {
   static const oxQuizGenerate = '/ox_quiz/generate';
   static const serverChatConfig = '/serverchat/config';
   static const serverChatMessage = '/serverchat/message';
-  static const socialWs = '/ws/social';
 
   static String userStorage(String key) =>
       '/user/storage/${Uri.encodeComponent(key)}';

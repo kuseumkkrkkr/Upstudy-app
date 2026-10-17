@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -19,7 +18,9 @@ class FocusModePage extends StatefulWidget {
 
 class _FocusModePageState extends State<FocusModePage> {
   static const int _maxMinutes = 720;
-  int _selectedMinutes = 60;
+  int _selectedMinutes = 25;
+  int _selectedTab = 0;
+  bool _settingsOpen = false;
   int _remainingSeconds = 0;
   bool _running = false;
   bool _unlocking = false;
@@ -102,7 +103,9 @@ class _FocusModePageState extends State<FocusModePage> {
     final h = seconds ~/ 3600;
     final m = (seconds % 3600) ~/ 60;
     final s = seconds % 60;
-    return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    final minutes =
+        '${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    return h == 0 ? minutes : '${h.toString().padLeft(2, '0')}:$minutes';
   }
 
   String _formatSelectedTime(int minutes) {
@@ -122,40 +125,397 @@ class _FocusModePageState extends State<FocusModePage> {
       key: const ValueKey('focus-tool-page'),
       title: '집중 모드',
       activeRoute: '/tools',
+      railWidth: MediaQuery.sizeOf(context).width > 1040 ? 84 : 72,
+      mobileBackButton: true,
       showContextAside: MediaQuery.sizeOf(context).width > 1040,
       onMenu: () => Navigator.maybePop(context),
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: SingleChildScrollView(
         physics: const BouncingScrollPhysics(),
-        child: StudentDensityPage(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
-                children: [
-                  StudentDensityPageHeader(
-                    eyebrow: 'LEARNING TOOL',
-                    title: '집중 모드',
-                    description: '정한 시간 동안 학습에만 집중할 수 있도록 합니다.',
-                    showMobileDescription: true,
-                    action: StudentDensityButton(
-                      label: '도구 닫기',
-                      icon: Icons.close_rounded,
-                      onPressed: () => Navigator.maybePop(context),
+        child: Padding(
+          padding: EdgeInsets.all(
+            mobile
+                ? 10
+                : MediaQuery.sizeOf(context).width > 1040
+                ? 38
+                : 28,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _referenceTabs(mobile),
+              const SizedBox(height: 20),
+              if (mobile) ...[
+                _referenceSettings(),
+                const SizedBox(height: 30),
+                _referenceMetrics(true),
+                const SizedBox(height: 30),
+                _referenceClock(true),
+              ] else
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final rightWidth =
+                        ((constraints.maxWidth - 18) * .42 / 1.42).clamp(
+                          240.0,
+                          double.infinity,
+                        );
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: SizedBox(
+                            height: 440,
+                            child: _referenceSettings(),
+                          ),
+                        ),
+                        const SizedBox(width: 18),
+                        SizedBox(
+                          width: rightWidth,
+                          child: Column(
+                            children: [
+                              _referenceMetrics(false),
+                              const SizedBox(height: 18),
+                              _referenceClock(false),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              SizedBox(height: mobile ? 30 : 18),
+              _surface(
+                Padding(
+                  padding: EdgeInsets.all(mobile ? 7 : 10),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    children: [
+                      if (mobile)
+                        Expanded(
+                          flex: 115,
+                          child: _action(
+                            _running
+                                ? (_unlocking ? '해제 취소' : '집중 해제')
+                                : '집중 모드 시작',
+                            _running
+                                ? (_unlocking ? _cancelUnlock : _startUnlock)
+                                : _startFocus,
+                            dark: true,
+                            arrow: true,
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          width: 180,
+                          child: _action(
+                            _running
+                                ? (_unlocking ? '해제 취소' : '집중 해제')
+                                : '집중 모드 시작',
+                            _running
+                                ? (_unlocking ? _cancelUnlock : _startUnlock)
+                                : _startFocus,
+                            dark: true,
+                            arrow: true,
+                          ),
+                        ),
+                      const SizedBox(width: 9),
+                      if (mobile)
+                        Expanded(
+                          flex: 85,
+                          child: _action(
+                            '세부 설정',
+                            () =>
+                                setState(() => _settingsOpen = !_settingsOpen),
+                          ),
+                        )
+                      else
+                        SizedBox(
+                          width: 78.15625,
+                          child: _action(
+                            '세부 설정',
+                            () =>
+                                setState(() => _settingsOpen = !_settingsOpen),
+                          ),
+                        ),
+                    ],
+                  ),
+                ),
+                key: const ValueKey('focus-reference-actions'),
+              ),
+              if (_settingsOpen && !_running) ...[
+                const SizedBox(height: 18),
+                _buildSetup(),
+              ],
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  /// HTML utility의 직각 표면. 테마 카드의 모서리/그림자를 적용하지 않는다.
+  Widget _surface(Widget child, {Key? key}) => Container(
+    key: key,
+    decoration: BoxDecoration(
+      color: const Color(0xFFFDFDFE),
+      border: Border.all(color: const Color(0x1A09090B)),
+    ),
+    child: child,
+  );
+
+  /// The reference toolbar uses a full-width mobile strip and 194px desktop strip.
+  Widget _referenceTabs(bool mobile) => _surface(
+    SizedBox(
+      height: mobile ? 50 : 54,
+      child: Padding(
+        padding: EdgeInsets.all(mobile ? 5 : 6),
+        child: Align(
+          alignment: Alignment.centerLeft,
+          child: SizedBox(
+            width: mobile ? double.infinity : 194,
+            child: Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: StudentDensityTokens.line),
+              ),
+              child: Row(
+                children: List.generate(
+                  3,
+                  (index) => Expanded(
+                    child: Semantics(
+                      selected: _selectedTab == index,
+                      child: _action(
+                        ['집중', '화면', '알림'][index],
+                        () => setState(() => _selectedTab = index),
+                        dark: _selectedTab == index,
+                        tab: true,
+                      ),
                     ),
                   ),
-                  SizedBox(height: mobile ? 16 : 22),
-                  _running ? _buildRunning() : _buildSetup(),
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    ),
+    key: const ValueKey('focus-reference-toolbar'),
+  );
+
+  Widget _action(
+    String label,
+    VoidCallback onTap, {
+    bool dark = false,
+    bool tab = false,
+    bool arrow = false,
+  }) => SizedBox(
+    height: tab ? (isStudentDensityMobile(context) ? 38 : 40) : 44,
+    child: TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        visualDensity: VisualDensity.standard,
+        padding: EdgeInsets.symmetric(horizontal: tab ? 9 : 16),
+        backgroundColor: dark
+            ? const Color(0xFF09090B)
+            : const Color(0xFFFDFDFE),
+        foregroundColor: dark
+            ? Colors.white
+            : tab
+            ? StudentDensityTokens.muted
+            : StudentDensityTokens.ink,
+        side: tab ? null : const BorderSide(color: StudentDensityTokens.ink),
+        shape: const RoundedRectangleBorder(),
+        textStyle: TextStyle(
+          fontSize: tab ? 10 : 11,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+      child: arrow
+          ? Row(
+              children: [
+                Expanded(child: Text(label, maxLines: 1, softWrap: false)),
+                const SizedBox(width: 8),
+                const StudentHtmlGlyph(
+                  icon: StudentHtmlIcon.arrow,
+                  color: Colors.white,
+                  size: 17,
+                ),
+              ],
+            )
+          : Text(label, maxLines: 1, softWrap: false),
+    ),
+  );
+
+  Widget _referenceSettings() => _surface(
+    Padding(
+      padding: EdgeInsets.symmetric(
+        horizontal: isStudentDensityMobile(context) ? 10 : 16,
+        vertical: isStudentDensityMobile(context) ? 6 : 10,
+      ),
+      child: Column(
+        children: List.generate(
+          2,
+          (index) => SizedBox(
+            height: isStudentDensityMobile(context) ? 66 : 70,
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 12),
+              decoration: const BoxDecoration(
+                border: Border(bottom: BorderSide(color: Color(0x1A09090B))),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: isStudentDensityMobile(context) ? 50 : 62,
+                    child: Align(
+                      alignment: Alignment.centerLeft,
+                      child: Container(
+                        height: 28,
+                        padding: const EdgeInsets.symmetric(horizontal: 9),
+                        color: StudentDensityTokens.surfaceMuted,
+                        child: Center(
+                          widthFactor: 1,
+                          child: Text(
+                            index == 0 ? '화면' : '소리',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                              color: StudentDensityTokens.ink,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isStudentDensityMobile(context) ? 9 : 14),
+                  Expanded(
+                    child: Text(
+                      index == 0 ? '현재 문제만 표시' : '완료 알림만',
+                      style: TextStyle(
+                        fontSize: isStudentDensityMobile(context) ? 13 : 14,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                  SizedBox(width: isStudentDensityMobile(context) ? 9 : 14),
+                  Container(
+                    width: 44,
+                    height: 36,
+                    alignment: Alignment.center,
+                    decoration: BoxDecoration(
+                      border: Border.all(color: StudentDensityTokens.line),
+                    ),
+                    child: const Text(
+                      'ON',
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
           ),
         ),
       ),
+    ),
+    key: const ValueKey('focus-reference-settings'),
+  );
+
+  Widget _referenceMetrics(bool mobile) {
+    final values = ['$_selectedMinutes분', '숨김', '—'];
+    final valueSize = mobile
+        ? 18.0
+        : (MediaQuery.sizeOf(context).width * .02).clamp(19.0, 28.0);
+    final cells = List.generate(
+      3,
+      (index) => Container(
+        key: ValueKey('focus-reference-metric-$index'),
+        height: mobile ? 74 : 90,
+        padding: EdgeInsets.all(
+          mobile ? 12 : 14,
+        ).copyWith(left: mobile ? 10 : 14, right: mobile ? 10 : 14),
+        decoration: BoxDecoration(
+          border: index < 2
+              ? (mobile
+                    ? const Border(
+                        right: BorderSide(color: StudentDensityTokens.line),
+                      )
+                    : const Border(
+                        bottom: BorderSide(color: StudentDensityTokens.line),
+                      ))
+              : null,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const SizedBox(height: 5),
+            Text(
+              values[index],
+              style: TextStyle(
+                fontSize: valueSize,
+                fontWeight: FontWeight.w900,
+                height: 1.5,
+                letterSpacing: -valueSize * .06,
+              ),
+            ),
+            const SizedBox(height: 3),
+            Text(
+              ['시간', '알림', '목표'][index],
+              style: const TextStyle(
+                fontSize: 10,
+                height: 1.5,
+                color: Color(0xFF71717A),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    return _surface(
+      mobile
+          ? Row(children: cells.map((cell) => Expanded(child: cell)).toList())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: cells,
+            ),
+      key: const ValueKey('focus-reference-metrics'),
     );
   }
+
+  Widget _referenceClock(bool mobile) => _surface(
+    SizedBox(
+      width: double.infinity,
+      height: mobile ? 124 : 148,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _running ? (_unlocking ? '해제까지 $_unlockCountdown초' : '집중 중') : '준비',
+            style: const TextStyle(
+              fontSize: 10,
+              color: Color(0xFF71717A),
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            child: Text(
+              _formatTime(_running ? _remainingSeconds : _selectedMinutes * 60),
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: mobile ? 38 : 62,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -1.9,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+    key: const ValueKey('focus-reference-clock'),
+  );
 
   /// 시간 선택 컨트롤을 레퍼런스의 흰색 카드 안에 구성한다.
   /// 필요한 변수: [_selectedMinutes]와 프리셋 목록.
@@ -189,9 +549,9 @@ class _FocusModePageState extends State<FocusModePage> {
             ),
             child: Slider(
               value: _selectedMinutes.toDouble(),
-              min: 30,
+              min: 5,
               max: _maxMinutes.toDouble(),
-              divisions: (_maxMinutes - 30) ~/ 30,
+              divisions: (_maxMinutes - 5) ~/ 5,
               onChanged: (value) =>
                   setState(() => _selectedMinutes = value.round()),
             ),
@@ -200,7 +560,7 @@ class _FocusModePageState extends State<FocusModePage> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                '30분',
+                '5분',
                 style: TextStyle(fontSize: 11, color: Color(0xFF71717A)),
               ),
               Text(
@@ -214,7 +574,7 @@ class _FocusModePageState extends State<FocusModePage> {
             spacing: 8,
             runSpacing: 8,
             alignment: WrapAlignment.center,
-            children: [30, 60, 120, 240]
+            children: [25, 30, 60, 120]
                 .map(
                   (minutes) => _TimePreset(
                     label: _formatSelectedTime(minutes),
@@ -230,84 +590,6 @@ class _FocusModePageState extends State<FocusModePage> {
             icon: Icons.play_arrow_rounded,
             onTap: _startFocus,
           ),
-        ],
-      ),
-    );
-  }
-
-  /// 남은 시간과 해제 확인만 노출해 집중 중 시각적 방해를 줄인다.
-  /// 필요한 변수: 전체 시간 대비 남은 시간, 해제 확인 상태.
-  Widget _buildRunning() {
-    final progress = 1 - (_remainingSeconds / (_selectedMinutes * 60));
-    return _ToolSurface(
-      key: const ValueKey('focus-running-surface'),
-      child: Column(
-        children: [
-          SizedBox(
-            width: 224,
-            height: 224,
-            child: Stack(
-              alignment: Alignment.center,
-              children: [
-                Container(
-                  width: 224,
-                  height: 224,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(
-                      color: const Color(0xFFE4E4E7),
-                      width: 8,
-                    ),
-                  ),
-                ),
-                CustomPaint(
-                  size: const Size(224, 224),
-                  painter: _FocusRingPainter(
-                    progress: progress.clamp(0.0, 1.0),
-                  ),
-                ),
-                Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      _formatTime(_remainingSeconds),
-                      style: const TextStyle(
-                        fontSize: 38,
-                        fontWeight: FontWeight.w300,
-                        letterSpacing: -1,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    const Text(
-                      '남은 시간',
-                      style: TextStyle(color: Color(0xFF71717A)),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 36),
-          const Text(
-            '집중 중',
-            style: TextStyle(fontSize: 21, fontWeight: FontWeight.w800),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            _unlocking
-                ? '집중을 끝내려면 $_unlockCountdown초 기다려주세요.'
-                : '필요할 때만 집중을 해제할 수 있어요.',
-            style: const TextStyle(color: Color(0xFF71717A)),
-          ),
-          const SizedBox(height: 28),
-          if (_unlocking)
-            OutlinedButton(onPressed: _cancelUnlock, child: const Text('취소'))
-          else
-            OutlinedButton.icon(
-              onPressed: _startUnlock,
-              icon: const Icon(Icons.lock_open_rounded, size: 18),
-              label: const Text('집중 해제'),
-            ),
         ],
       ),
     );
@@ -364,28 +646,4 @@ class _BlackButton extends StatelessWidget {
     primary: true,
     onPressed: onTap,
   );
-}
-
-class _FocusRingPainter extends CustomPainter {
-  const _FocusRingPainter({required this.progress});
-  final double progress;
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = const Color(0xFF09090B)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 8
-      ..strokeCap = StrokeCap.round;
-    canvas.drawArc(
-      Rect.fromLTWH(4, 4, size.width - 8, size.height - 8),
-      -math.pi / 2,
-      2 * math.pi * progress,
-      false,
-      paint,
-    );
-  }
-
-  @override
-  bool shouldRepaint(covariant _FocusRingPainter oldDelegate) =>
-      oldDelegate.progress != progress;
 }

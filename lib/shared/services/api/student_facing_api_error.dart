@@ -11,9 +11,11 @@ String studentFacingApiError(
   if (error is! ApiException) {
     return '$fallback 네트워크 연결을 확인한 뒤 다시 시도해 주세요.';
   }
+  if (error.code == 'session_changed') return '로그인 상태가 바뀌었어요. 화면을 다시 열어 주세요.';
 
   if (error.statusCode == 401) {
-    return '로그인 시간이 만료되었어요. 다시 로그인해 주세요.';
+    if (error.code == 'auth_required') return '로그인이 필요해요. 로그인 후 다시 시도해 주세요.';
+    return '로그인 정보를 확인할 수 없어요. 다시 로그인해 주세요.';
   }
   if (error.statusCode == 403) {
     return '이 기능을 사용할 권한이 없어요.';

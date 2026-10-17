@@ -130,7 +130,7 @@ class _OwnedMarketplaceModalState extends State<_OwnedMarketplaceModal> {
                   }) async {
                     await ApiClient.instance.updateMarketplaceProgress(
                       listingId: listingId,
-                      progressIndex: itemIndex + 1,
+                      progressIndex: itemIndex,
                       completed: false,
                     );
                   },

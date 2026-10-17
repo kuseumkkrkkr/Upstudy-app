@@ -9,7 +9,7 @@ import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
 import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
@@ -24,7 +24,6 @@ enum OpenDesignIconName {
   back,
   search,
   bell,
-  analytics,
   graph,
 }
 
@@ -45,7 +44,6 @@ class OpenDesignIcon extends StatelessWidget {
       OpenDesignIconName.back => Icons.arrow_back,
       OpenDesignIconName.search => Icons.search,
       OpenDesignIconName.bell => Icons.notifications_none,
-      OpenDesignIconName.analytics => Icons.bar_chart,
       OpenDesignIconName.graph => Icons.show_chart,
     },
     size: size,
@@ -526,7 +524,19 @@ class _CourseCatalogPageState extends State<CourseCatalogPage> {
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
-      builder: (context) => _MobileCourseAnalysisSheet(courses: courses),
+      constraints: const BoxConstraints(maxWidth: 620),
+      builder: (sheetContext) => _MobileCourseAnalysisSheet(
+        courses: courses,
+        onOpenCourse: courses.isEmpty
+            ? null
+            : (course) {
+                Navigator.of(sheetContext).pushReplacement(
+                  MaterialPageRoute(
+                    builder: (_) => CourseDetailPage(course: course),
+                  ),
+                );
+              },
+      ),
     );
   }
 
@@ -664,10 +674,6 @@ class _DesktopCourseShell extends StatelessWidget {
             key: const ValueKey('course-desktop-panel'),
             decoration: const BoxDecoration(
               color: StudentDensityTokens.surface,
-              border: Border(
-                top: BorderSide(color: StudentDensityTokens.ink),
-                right: BorderSide(color: StudentDensityTokens.ink),
-              ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -692,7 +698,7 @@ class _DesktopCourseShell extends StatelessWidget {
                     children: [
                       _DesktopCourseActionRow(
                         key: const ValueKey('course-desktop-discover'),
-                        icon: OpenDesignIconName.search,
+                        icon: StudentHtmlIcon.search,
                         title: '새 코스 찾기',
                         detail: '자료실에서 내 학습에 맞는 코스 찾기',
                         action: '찾기',
@@ -700,7 +706,7 @@ class _DesktopCourseShell extends StatelessWidget {
                       ),
                       _DesktopCourseActionRow(
                         key: const ValueKey('course-desktop-analysis'),
-                        icon: OpenDesignIconName.analytics,
+                        icon: StudentHtmlIcon.chart,
                         title: '코스 진행 분석',
                         detail: active.isEmpty
                             ? '평균 진행 0% · 학습 중 0개'
@@ -772,7 +778,7 @@ class _DesktopCourseRail extends StatelessWidget {
         _DesktopCourseRailItem(
           icon: OpenDesignIconName.more,
           label: '더보기',
-          onTap: () => toggleAppDrawer(context),
+          onTap: () => MobileStudentBottomAppBar.openMore(context),
         ),
         const Spacer(),
         Container(
@@ -929,12 +935,6 @@ class _DesktopCourseGroup extends StatelessWidget {
   @override
   Widget build(BuildContext context) => Container(
     padding: const EdgeInsets.fromLTRB(34, 30, 34, 28),
-    decoration: const BoxDecoration(
-      border: Border(
-        left: BorderSide(color: StudentDensityTokens.ink),
-        bottom: BorderSide(color: StudentDensityTokens.ink),
-      ),
-    ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -1023,7 +1023,11 @@ class _DesktopOwnedCourseRow extends StatelessWidget {
           children: [
             const SizedBox(
               width: 24,
-              child: OpenDesignIcon(OpenDesignIconName.courses, size: 22),
+              child: StudentHtmlGlyph(
+                icon: StudentHtmlIcon.courseBookmark,
+                color: StudentDensityTokens.ink,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -1121,7 +1125,7 @@ class _DesktopCourseActionRow extends StatelessWidget {
     required this.onTap,
   });
 
-  final OpenDesignIconName icon;
+  final StudentHtmlIcon icon;
   final String title;
   final String detail;
   final String action;
@@ -1137,7 +1141,14 @@ class _DesktopCourseActionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(width: 24, child: OpenDesignIcon(icon, size: 22)),
+          SizedBox(
+            width: 24,
+            child: StudentHtmlGlyph(
+              icon: icon,
+              color: StudentDensityTokens.ink,
+              size: 22,
+            ),
+          ),
           const SizedBox(width: 14),
           Expanded(
             child: Column(
@@ -1190,12 +1201,18 @@ class _MobileCourseSheetHeader extends StatelessWidget {
     required this.title,
     required this.onClose,
     this.height = 58,
+    this.titleFontSize = 16,
+    this.closeSize = 48,
+    this.trailingPadding = 6,
     this.closeKey,
   });
 
   final String title;
   final VoidCallback onClose;
   final double height;
+  final double titleFontSize;
+  final double closeSize;
+  final double trailingPadding;
   final Key? closeKey;
 
   @override
@@ -1207,16 +1224,20 @@ class _MobileCourseSheetHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            style: TextStyle(
+              fontSize: titleFontSize,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ),
         _MobileCourseTopAction(
           key: closeKey,
           tooltip: '닫기',
           icon: Icons.close,
+          size: closeSize,
           onPressed: onClose,
         ),
-        const SizedBox(width: 6),
+        SizedBox(width: trailingPadding),
       ],
     ),
   );
@@ -1343,14 +1364,22 @@ class _AtlasMobileCourseCatalog extends StatelessWidget {
           children: [
             _AtlasMobileCourseActionRow(
               key: const ValueKey('course-mobile-discover'),
-              icon: Icons.search,
+              icon: StudentHtmlGlyph(
+                icon: StudentHtmlIcon.search,
+                color: StudentDensityTokens.ink,
+                size: 22,
+              ),
               title: '새 코스 찾기',
               detail: '자료실에서 내 학습에 맞는 코스 찾기',
               onTap: onDiscover,
             ),
             _AtlasMobileCourseActionRow(
               key: const ValueKey('course-mobile-analysis'),
-              icon: Icons.bar_chart,
+              icon: StudentHtmlGlyph(
+                icon: StudentHtmlIcon.chart,
+                color: StudentDensityTokens.ink,
+                size: 22,
+              ),
               title: '코스 진행 분석',
               detail: active.isEmpty
                   ? '평균 진행 0% · 학습 중 0개'
@@ -1374,66 +1403,128 @@ int _averageProgress(List<Course> courses) {
 }
 
 class _MobileCourseAnalysisSheet extends StatelessWidget {
-  const _MobileCourseAnalysisSheet({required this.courses});
+  const _MobileCourseAnalysisSheet({
+    required this.courses,
+    required this.onOpenCourse,
+  });
+
+  final List<Course> courses;
+  final ValueChanged<Course>? onOpenCourse;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxHeight = MediaQuery.sizeOf(context).height * .88;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxHeight: maxHeight),
+      child: Material(
+        key: const ValueKey('course-mobile-analysis-sheet'),
+        color: StudentDensityTokens.surface,
+        shape: const RoundedRectangleBorder(),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _MobileCourseSheetHeader(
+                title: '코스 진행 분석',
+                titleFontSize: 18,
+                closeSize: 40,
+                trailingPadding: 14,
+                onClose: () => Navigator.of(context).pop(),
+              ),
+              _MobileCourseAnalysisSummary(courses: courses),
+              if (courses.isEmpty)
+                const SizedBox(height: 18)
+              else
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 18),
+                  child: Column(
+                    children: [
+                      for (final course in courses)
+                        _MobileCourseAnalysisRow(course: course),
+                    ],
+                  ),
+                ),
+              Padding(
+                padding: const EdgeInsets.fromLTRB(18, 14, 18, 18),
+                child: SizedBox(
+                  width: double.infinity,
+                  height: 50,
+                  child: FilledButton(
+                    key: const ValueKey('course-analysis-detail-cta'),
+                    onPressed: onOpenCourse == null
+                        ? null
+                        : () => onOpenCourse!(courses.first),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: StudentDensityTokens.dark,
+                      disabledBackgroundColor:
+                          StudentDensityTokens.surfaceMuted,
+                      foregroundColor: Colors.white,
+                      disabledForegroundColor: StudentDensityTokens.muted,
+                      shape: const RoundedRectangleBorder(),
+                      textStyle: const TextStyle(
+                        fontFamily: 'Noto Sans KR',
+                        fontSize: 10,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    child: const Text(
+                      '현재 코스 자세히 보기 →',
+                      style: TextStyle(fontFamily: 'Noto Sans KR'),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _MobileCourseAnalysisSummary extends StatelessWidget {
+  const _MobileCourseAnalysisSummary({required this.courses});
 
   final List<Course> courses;
 
   @override
-  Widget build(BuildContext context) => FractionallySizedBox(
-    heightFactor: .72,
-    child: Material(
-      key: const ValueKey('course-mobile-analysis-sheet'),
-      color: StudentDensityTokens.surface,
-      shape: const RoundedRectangleBorder(),
-      child: SafeArea(
-        top: false,
-        child: Column(
-          children: [
-            _MobileCourseSheetHeader(
-              title: '코스 진행 분석',
-              onClose: () => Navigator.of(context).pop(),
-            ),
-            Container(
-              padding: const EdgeInsets.all(18),
-              color: StudentDensityTokens.dark,
-              child: Row(
-                children: [
-                  const Expanded(
-                    child: Text(
-                      '보유한 코스의 진행 상태를 비교합니다.',
-                      style: TextStyle(color: Colors.white70, fontSize: 10),
-                    ),
-                  ),
-                  Text(
-                    '${_averageProgress(courses)}%',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 34,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ],
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    height: 78,
+    padding: const EdgeInsets.all(18),
+    color: StudentDensityTokens.dark,
+    child: Row(
+      children: [
+        const Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                '평균 진행',
+                style: TextStyle(
+                  color: Color(0xFFA1A1AA),
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
               ),
-            ),
-            Expanded(
-              child: courses.isEmpty
-                  ? const Center(
-                      child: Text(
-                        '분석할 진행 중 코스가 없어요',
-                        style: TextStyle(fontWeight: FontWeight.w800),
-                      ),
-                    )
-                  : ListView(
-                      padding: const EdgeInsets.symmetric(horizontal: 18),
-                      children: [
-                        for (final course in courses)
-                          _MobileCourseAnalysisRow(course: course),
-                      ],
-                    ),
-            ),
-          ],
+              SizedBox(height: 7),
+              Text(
+                '보유한 코스의 진행 상태를 비교합니다.',
+                style: TextStyle(color: Color(0xFFD4D4D8), fontSize: 9),
+              ),
+            ],
+          ),
         ),
-      ),
+        Text(
+          '${_averageProgress(courses)}%',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 36,
+            height: 1,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
     ),
   );
 }
@@ -1446,31 +1537,64 @@ class _MobileCourseAnalysisRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = course.progress.clamp(0.0, 1.0);
-    return SizedBox(
-      height: 60,
-      child: Row(
+    return Container(
+      key: ValueKey('course-analysis-row-${course.id}'),
+      constraints: const BoxConstraints(minHeight: 72),
+      padding: const EdgeInsets.symmetric(vertical: 8),
+      decoration: const BoxDecoration(
+        border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Expanded(
-            child: Text(
-              course.title,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          Transform.translate(
+            offset: const Offset(0, -5),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        course.title,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        course.lastAction ?? course.description,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Text(
+                  '${(progress * 100).round()}%',
+                  style: const TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
           ),
-          SizedBox(
-            width: 96,
-            child: LinearProgressIndicator(
-              value: progress,
-              minHeight: 4,
-              color: StudentDensityTokens.dark,
-              backgroundColor: StudentDensityTokens.surfaceMuted,
-            ),
-          ),
-          const SizedBox(width: 10),
-          Text(
-            '${(progress * 100).round()}%',
-            style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+          const SizedBox(height: 8),
+          LinearProgressIndicator(
+            value: progress,
+            minHeight: 4,
+            color: StudentDensityTokens.dark,
+            backgroundColor: StudentDensityTokens.surfaceMuted,
           ),
         ],
       ),
@@ -1589,7 +1713,11 @@ class _AtlasMobileOwnedCourseRow extends StatelessWidget {
           children: [
             const SizedBox(
               width: 24,
-              child: Icon(Icons.bookmark_border, size: 21),
+              child: StudentHtmlGlyph(
+                icon: StudentHtmlIcon.courseBookmark,
+                color: StudentDensityTokens.ink,
+                size: 22,
+              ),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1678,7 +1806,7 @@ class _AtlasMobileCourseActionRow extends StatelessWidget {
     required this.onTap,
   });
 
-  final IconData icon;
+  final Widget icon;
   final String title;
   final String detail;
   final VoidCallback onTap;
@@ -1693,7 +1821,7 @@ class _AtlasMobileCourseActionRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          SizedBox(width: 24, child: Icon(icon, size: 21)),
+          SizedBox(width: 24, child: icon),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -1745,7 +1873,14 @@ class _AtlasMobileCourseEmptyRow extends StatelessWidget {
       ),
       child: const Row(
         children: [
-          SizedBox(width: 24, child: Icon(Icons.bookmark_border, size: 21)),
+          SizedBox(
+            width: 24,
+            child: StudentHtmlGlyph(
+              icon: StudentHtmlIcon.courseBookmark,
+              color: StudentDensityTokens.ink,
+              size: 22,
+            ),
+          ),
           SizedBox(width: 12),
           Expanded(
             child: Text(

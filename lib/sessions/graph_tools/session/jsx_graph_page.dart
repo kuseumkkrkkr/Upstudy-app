@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:math' as math;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter_math_fork/flutter_math.dart';
+import 'package:flutter/services.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_example_catalog.dart';
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_expression.dart';
@@ -55,7 +56,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   bool _lockViewport = false;
   bool _degreeMode = false;
   bool _catalogDialogOpen = false;
-  bool _hasActiveExampleContext = true;
   String? _editorMessage;
   bool _advancedMode = true;
   bool _sampling = false;
@@ -64,6 +64,11 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   Timer? _sampleDebounce;
   int _sampleRevision = 0;
   _GraphTrayState _mobileTrayState = _GraphTrayState.compact;
+  String? _graphCommand;
+  int _graphCommandRevision = 0;
+  AiFlowGraphViewport? _viewport;
+  final _workspaceKey = GlobalKey();
+  final _exampleButtonFocus = FocusNode(debugLabel: 'Graph examples');
 
   @override
   void initState() {
@@ -81,6 +86,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     _beginnerA.dispose();
     _beginnerB.dispose();
     _beginnerC.dispose();
+    _exampleButtonFocus.dispose();
     super.dispose();
   }
 
@@ -94,6 +100,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
     _selectedExample = aiFlowGraphExamples.first;
     final nextId = _nextDraftId++;
+    _viewport = const AiFlowGraphViewport(left: -5, right: 5, top: 5, bottom: -5);
     _drafts
       ..clear()
       ..add(
@@ -110,7 +117,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     _activeMobileDraftId = nextId;
     _parameters.clear();
     _sampledItems.clear();
-    _hasActiveExampleContext = false;
     _showAxes = true;
     _showGrid = true;
     _lockViewport = false;
@@ -152,7 +158,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     _sampledItems.clear();
 
     _selectedExample = example;
-    _hasActiveExampleContext = true;
+    _viewport = example.document.settings.viewport;
     _showAxes = example.document.settings.showAxes;
     _showGrid = example.document.settings.showGrid;
     _lockViewport = example.document.settings.lockViewport;
@@ -162,12 +168,16 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
   AiFlowGraphDocument _buildDocument() {
     return AiFlowGraphDocument(
-      items: List<AiFlowGraphItem>.unmodifiable(_sampledItems),
+      items: List<AiFlowGraphItem>.unmodifiable([
+        ..._sampledItems.where((item) => _drafts.any((draft) => draft.enabled && item.id.startsWith('${draft.itemId}-'))),
+        ..._drafts.where((draft) => draft.enabled && draft.type != AiFlowGraphItemType.function).map((draft) => draft.toItem()),
+      ]),
       settings: _selectedExample.document.settings.copyWith(
         showAxes: _showAxes,
         showGrid: _showGrid,
         lockViewport: _lockViewport,
         degreeMode: _degreeMode,
+        viewport: _viewport,
         parameters: _parameters.map((draft) => draft.toParameter()).toList(),
       ),
     );
@@ -188,6 +198,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
         ),
       );
       _activeMobileDraftId = nextId;
+      _mobileTrayState = _GraphTrayState.expanded;
       _editorMessage = null;
       _sampledItems.clear();
     });
@@ -198,7 +209,6 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       _drafts.remove(draft);
       draft.dispose();
       if (_drafts.isEmpty) {
-        _hasActiveExampleContext = false;
         _parameters.clear();
       }
       if (_activeMobileDraftId == draft.localId) {
@@ -268,7 +278,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
       _editorMessage = null;
     });
     try {
-      final viewport = _selectedExample.document.settings.viewport;
+      final viewport = _viewport ?? _selectedExample.document.settings.viewport;
       final response =
           await (widget.sampleGraph ?? ApiClient.instance.sampleGraph)({
             'expressions': [
@@ -395,12 +405,19 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
   }
 
   Future<void> _showInfoDialog() async {
+    final box = _workspaceKey.currentContext?.findRenderObject() as RenderBox?;
+    if (box == null) return;
+    final workspace = box.localToGlobal(Offset.zero) & box.size;
     setState(() {
       _catalogDialogOpen = true;
     });
-    final selected = await showDialog<AiFlowGraphExample>(
+    final selected = await showGeneralDialog<AiFlowGraphExample>(
       context: context,
-      builder: (_) => _GraphCatalogDialog(initialExample: _selectedExample),
+      barrierDismissible: true,
+      barrierLabel: '예제 탐색 닫기',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (_, __, ___) => _GraphCatalogDialog(workspace: workspace),
     );
 
     if (!mounted) {
@@ -410,6 +427,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     setState(() {
       _catalogDialogOpen = false;
     });
+    _exampleButtonFocus.requestFocus();
 
     if (selected == null) {
       return;
@@ -418,6 +436,7 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
     setState(() {
       _loadExample(selected);
     });
+    if (_drafts.any((draft) => draft.type == AiFlowGraphItemType.function)) _scheduleGraphApply();
     unawaited(
       ActivityStore.recordGraphPractice(
         graphId: selected.id,
@@ -432,507 +451,133 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width < 720;
     final isLinux = !kIsWeb && defaultTargetPlatform == TargetPlatform.linux;
-
     return StudentHtmlShell(
-      title: '그래프 탐색기',
-      activeRoute: '/learning-tools',
-      // HTML graph-tool 셸은 일반 학생 셸보다 넓은 84px 레일을 사용한다.
-      railWidth: 84,
-      // HTML의 is-graph-tool 셸은 우측 컨텍스트 영역 없이 작업면을 채운다.
-      showContextAside: false,
-      mobileBackButton: true,
+      title: '그래프 탐색기', activeRoute: '/learning-tools', railWidth: 84,
+      showContextAside: false, showBottomNavigation: false, mobileBackButton: true,
       onMenu: () => Navigator.of(context).maybePop(),
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(0, 0, 0, 12),
-        child: Column(
-          children: [
-            _buildToolStrip(),
-            const SizedBox(height: 12),
-            Expanded(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: LayoutBuilder(
-                  builder: (context, constraints) {
-                    final compact = constraints.maxWidth < 1120;
-                    final mobileLayout = constraints.maxWidth < 720;
-                    final graphPanel = _buildGraphPanel(isLinux: isLinux);
-                    final editorPanel = _buildEditorPanel(
-                      compactMobile: mobileLayout,
-                    );
-
-                    if (mobileLayout) {
-                      return _buildMobileGraphLayout(
-                        constraints: constraints,
-                        graphPanel: graphPanel,
-                        editorPanel: editorPanel,
-                      );
-                    }
-
-                    if (compact) {
-                      return ListView(
-                        children: [
-                          SizedBox(height: 520, child: graphPanel),
-                          const SizedBox(height: 12),
-                          editorPanel,
-                        ],
-                      );
-                    }
-
-                    return Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(child: graphPanel),
-                        const SizedBox(width: 12),
-                        SizedBox(
-                          width: 380,
-                          height: constraints.maxHeight,
-                          child: editorPanel,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+      headerTrailing: Row(mainAxisSize: MainAxisSize.min, children: [
+        SizedBox.square(dimension: 48, child: IconButton(tooltip: '새 그래프', onPressed: () { _resetToBlankGraph(); _sendGraphCommand('reset'); }, icon: const Icon(Icons.stacked_line_chart_rounded, size: 18))),
+        SizedBox.square(dimension: 48, child: IconButton(key: const ValueKey('graph-zoom-out'), tooltip: '축소', onPressed: _lockViewport ? null : () => _sendGraphCommand('zoomOut'), icon: const Icon(Icons.remove, size: 18))),
+        SizedBox.square(dimension: 48, child: IconButton(key: const ValueKey('graph-zoom-in'), tooltip: '확대', onPressed: _lockViewport ? null : () => _sendGraphCommand('zoomIn'), icon: const Icon(Icons.add, size: 18))),
+      ]),
+      child: ColoredBox(key: _workspaceKey, color: const Color(0xFFEAEAED), child: LayoutBuilder(builder: (context, constraints) {
+        final board = _buildGraphPanel(isLinux: isLinux);
+        if (mobile) return _buildMobileGraphLayout(constraints: constraints, graphPanel: board);
+        return Padding(padding: const EdgeInsets.all(12), child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+          Expanded(child: board), const SizedBox(width: 12),
+          SizedBox(width: 368, child: _buildEditorPanel()),
+        ]));
+      })),
     );
   }
 
-  /// HTML 그래프 도구의 모바일 보드·하단 트레이 구조를 유지한다.
-  /// compact를 기본으로 보여 주고 손잡이를 누르면 expanded/collapsed를
-  /// 순환시켜 작은 화면에서도 그래프와 입력을 모두 다시 볼 수 있다.
-  Widget _buildMobileGraphLayout({
-    required BoxConstraints constraints,
-    required Widget graphPanel,
-    required Widget editorPanel,
-  }) {
+  /// revision identifies a user action; viewport callback aligns sampling bounds with the live board.
+  void _sendGraphCommand(String command) {
+    setState(() { _graphCommand = command; _graphCommandRevision++; });
+  }
+
+  void _onViewportChanged(AiFlowGraphViewport viewport) {
+    if (_viewport?.toJson().toString() == viewport.toJson().toString()) return;
+    _viewport = viewport;
+    if (_drafts.any((draft) => draft.expressionController?.text.trim().isNotEmpty ?? false)) _scheduleGraphApply();
+  }
+
+  void _cycleTray() {
+    setState(() {
+      _mobileTrayState = switch (_mobileTrayState) {
+        _GraphTrayState.collapsed => _GraphTrayState.compact,
+        _GraphTrayState.compact => _GraphTrayState.expanded,
+        _GraphTrayState.expanded => _GraphTrayState.collapsed,
+      };
+    });
+  }
+
+  Widget _buildMobileGraphLayout({required BoxConstraints constraints, required Widget graphPanel}) {
+    final viewportHeight = MediaQuery.sizeOf(context).height;
     final trayHeight = switch (_mobileTrayState) {
       _GraphTrayState.collapsed => 76.0,
-      _GraphTrayState.compact => (constraints.maxHeight * .42)
-          .clamp(310.0, 350.0)
-          .toDouble(),
-      _GraphTrayState.expanded => (constraints.maxHeight * .70)
-          .clamp(420.0, 590.0)
-          .toDouble(),
+      _GraphTrayState.compact => (viewportHeight * .42).clamp(310.0, 350.0).toDouble(),
+      _GraphTrayState.expanded => (viewportHeight * .70).clamp(76.0, 590.0).toDouble(),
     };
-    return Stack(
-      clipBehavior: Clip.none,
-      children: [
-        Positioned.fill(
-          bottom: trayHeight - 18,
-          child: graphPanel,
-        ),
-        AnimatedPositioned(
-          duration: const Duration(milliseconds: 190),
-          curve: Curves.easeOutCubic,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          height: trayHeight,
-          child: Material(
-            color: _kSurface,
-            elevation: 8,
-            shadowColor: Colors.black26,
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
-            ),
-            clipBehavior: Clip.antiAlias,
-            child: Column(
-              children: [
-                GestureDetector(
-                  behavior: HitTestBehavior.opaque,
-                  onTap: () => setState(() {
-                    _mobileTrayState = switch (_mobileTrayState) {
-                      _GraphTrayState.collapsed => _GraphTrayState.compact,
-                      _GraphTrayState.compact => _GraphTrayState.expanded,
-                      _GraphTrayState.expanded => _GraphTrayState.collapsed,
-                    };
-                  }),
-                  child: SizedBox(
-                    height: 40,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 4,
-                          decoration: BoxDecoration(
-                            color: _kMuted,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                        const SizedBox(height: 5),
-                        Text(
-                          switch (_mobileTrayState) {
-                            _GraphTrayState.collapsed => '입력 트레이 열기',
-                            _GraphTrayState.compact => '입력 트레이',
-                            _GraphTrayState.expanded => '입력 트레이 닫기',
-                          },
-                          style: const TextStyle(
-                            color: _kMuted,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-                if (_mobileTrayState == _GraphTrayState.collapsed)
-                  const Expanded(
-                    child: Align(
-                      alignment: Alignment.topCenter,
-                      child: Text(
-                        '수식을 입력해 그래프를 확인하세요.',
-                        style: TextStyle(color: _kMuted, fontSize: 11),
-                      ),
-                    ),
-                  )
-                else
-                  Expanded(child: editorPanel),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
+    return Stack(children: [
+      Positioned.fill(bottom: trayHeight - 18, child: graphPanel),
+      AnimatedPositioned(duration: const Duration(milliseconds: 190), left: 0, right: 0, bottom: 0, height: trayHeight,
+        child: Material(color: _kSurface, elevation: 8, shadowColor: Colors.black26,
+          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(18))),
+          clipBehavior: Clip.antiAlias, child: _buildEditorPanel(compactMobile: true))),
+    ]);
   }
 
-  Widget _buildToolStrip() {
-    // Widget tests can supply a logical surface narrower than MediaQuery's
-    // default view; 900 keeps the mobile tool strip safely icon-only.
-    final compact = MediaQuery.sizeOf(context).width < 900;
-    if (compact) {
-      return Container(
-        height: 58,
-        padding: const EdgeInsets.symmetric(horizontal: 12),
-        decoration: const BoxDecoration(
-          color: Colors.white,
-          border: Border(bottom: BorderSide(color: _kBorder)),
-        ),
-        child: Row(
-          children: [
-            const Spacer(),
-            IconButton(
-              tooltip: '새 그래프',
-              onPressed: _resetToBlankGraph,
-              icon: const Icon(Icons.stacked_line_chart_rounded, size: 20),
-            ),
-            IconButton(
-              tooltip: '예제 불러오기',
-              onPressed: _showInfoDialog,
-              icon: const Icon(Icons.menu_book_outlined, size: 20),
-            ),
-          ],
-        ),
-      );
-    }
-    return Container(
-      height: 58,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(bottom: BorderSide(color: _kBorder)),
-      ),
-      child: Row(
-        children: [
-          Expanded(
-            child: OutlinedButton.icon(
-              onPressed: _resetToBlankGraph,
-              icon: const Icon(
-                Icons.square_rounded,
-                size: 12,
-                color: Color(0xFF2F6DF6),
-              ),
-              label: const Align(
-                alignment: Alignment.centerLeft,
-                child: Text('새 그래프'),
-              ),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: _kGreen,
-                alignment: Alignment.centerLeft,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
-                side: const BorderSide(color: _kBorder),
-              ),
-            ),
-          ),
-          const SizedBox(width: 18),
-          TextButton.icon(
-            onPressed: _resetToBlankGraph,
-            icon: const Icon(Icons.stacked_line_chart_rounded, size: 17),
-            label: const Text('새 그래프'),
-          ),
-          const SizedBox(width: 8),
-          OutlinedButton.icon(
-            onPressed: _showInfoDialog,
-            icon: const Icon(Icons.menu_book_outlined, size: 17),
-            label: const Text('예제 불러오기'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: _kGreen,
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-              side: const BorderSide(color: _kBorder),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  /// 필요한 변수는 플랫폼 지원 여부와 현재 그래프 문서다.
-  /// 작동 원리는 모든 화면 크기에서 JSXGraph를 유지하고, 모바일은 iframe 로드
-  /// 완료 뒤 최신 수식을 다시 전달해 좌표평면과 수식 상태를 일치시키는 것이다.
   Widget _buildGraphPanel({required bool isLinux}) {
-    final mobile = MediaQuery.sizeOf(context).width < 720;
-    final board = _catalogDialogOpen
-        ? const _GraphHiddenWhileDialogOpen()
-        : isLinux
-        ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
-        : widget.embedEnabled
-        ? buildJsxGraphEmbed(
-            _buildDocument(),
-            showParameterControls: false,
-            directManipulationMode: true,
-          )
-        : const _GraphEmbedDisabledForTesting();
+    final board = isLinux ? const Center(child: Text('이 그래프 웹뷰는 Linux에서 지원되지 않습니다.'))
+        : widget.embedEnabled ? buildJsxGraphEmbed(
+            _buildDocument(), showParameterControls: false, directManipulationMode: true,
+            command: _graphCommand, commandRevision: _graphCommandRevision, onViewportChanged: _onViewportChanged,
+            interactive: !_catalogDialogOpen,
+          ) : const _GraphEmbedDisabledForTesting();
     return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: Color(0xFFEAEAED),
-        border: Border.fromBorderSide(BorderSide(color: _kBorder)),
-      ),
-      child: Padding(
-        padding: mobile ? EdgeInsets.zero : const EdgeInsets.all(12),
-        child: DecoratedBox(
-          decoration: const BoxDecoration(
-            color: Color(0xFFFAFAFB),
-            border: Border.fromBorderSide(BorderSide(color: _kBorder)),
-          ),
-          child: board,
-        ),
-      ),
+      key: const ValueKey('graph-html-board'),
+      decoration: BoxDecoration(color: const Color(0xFFFAFAFB), border: Border.all(color: _kBorder)),
+      child: Stack(children: [
+        Positioned.fill(child: board),
+        if (_drafts.every((draft) => draft.expressionController?.text.trim().isEmpty ?? false))
+          Center(child: Container(width: 220, padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 15),
+            decoration: BoxDecoration(color: const Color(0xEBFDFDFE), border: Border.all(color: _kBorder)),
+            child: const Column(mainAxisSize: MainAxisSize.min, children: [
+              Text('식에서 그래프로', style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              SizedBox(height: 7), Text('아래에 수식을 입력하면 바로 그려져요.', style: TextStyle(fontSize: 11, color: _kMuted)),
+            ]))),
+        Positioned(right: 8, bottom: 8, child: IgnorePointer(child: Container(height: 32, alignment: Alignment.center, padding: const EdgeInsets.symmetric(horizontal: 10),
+          decoration: BoxDecoration(color: const Color(0xEBFDFDFE), border: Border.all(color: _kBorder)),
+          child: Text(_lockViewport ? '보기 고정 켜짐' : '드래그 이동 · ± 확대', style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700, color: _kMuted))))),
+      ]),
     );
   }
 
-  /// 필요한 변수는 세로 모바일용 축약 여부와 현재 수식 초안이다.
-  /// 작동 원리는 모바일에서 큰 설명·여러 줄 입력을 줄이고 한 줄 수식 입력과
-  /// 고정된 전체 폭 갱신 행동을 앞세워 그래프 확인까지의 단계를 짧게 만드는 것이다.
+  /// Reuses expression drafts, examples and debounced sampling; compact tray shows only its first expression.
   Widget _buildEditorPanel({bool compactMobile = false}) {
-    final editorContent = Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          '함수 그리기',
-          style: const TextStyle(
-            color: _kGreen,
-            fontSize: 22,
-            fontWeight: FontWeight.w800,
-          ),
-        ),
-        const SizedBox(height: 6),
-        Text(
-          compactMobile ? '함수식을 입력한 뒤 그래프에 반영하세요.' : '함수식을 입력한 뒤 그래프에 반영하세요.',
-          style: const TextStyle(color: _kMuted, fontSize: 12.5, height: 1.45),
-        ),
-        if (_hasActiveExampleContext) ...[
-          const SizedBox(height: 10),
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _kSurfaceTint,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: _kBorder),
-            ),
-            child: Row(
-              children: [
-                const Icon(Icons.lightbulb_outline_rounded, size: 18),
-                const SizedBox(width: 8),
-                Expanded(
-                  child: Text(
-                    '예제에서 시작: ${_selectedExample.title}',
-                    style: const TextStyle(
-                      color: _kGreen,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  tooltip: '빈 그래프로 전환',
-                  onPressed: _resetToBlankGraph,
-                  visualDensity: VisualDensity.compact,
-                  icon: const Icon(Icons.close_rounded, size: 18),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(height: 10),
+    final collapsed = compactMobile && _mobileTrayState == _GraphTrayState.collapsed;
+    final showSettings = !compactMobile || _mobileTrayState == _GraphTrayState.expanded;
+    final visibleDrafts = compactMobile && !showSettings ? _drafts.take(1) : _drafts;
+    final content = Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+      if (compactMobile) GestureDetector(key: const ValueKey('graph-tray-handle'), onTap: _cycleTray, behavior: HitTestBehavior.opaque,
+        child: Center(child: Padding(padding: const EdgeInsets.only(top: 2, bottom: 8), child: Container(width: 44, height: 4, decoration: BoxDecoration(color: _kMuted, borderRadius: BorderRadius.circular(4)))))),
+      Row(children: [
+        if (!compactMobile) ...[Container(width: 18, height: 4, color: _kMuted), const SizedBox(width: 9)],
+        Expanded(child: GestureDetector(onTap: _cycleTray, child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text('수식 ' + _drafts.length.toString() + '개', style: const TextStyle(fontSize: 17, fontWeight: FontWeight.w700)),
+          const SizedBox(height: 2), Text(collapsed ? '그래프 크게 보기' : showSettings ? '전체 편집' : '빠른 편집', style: const TextStyle(fontSize: 10, color: _kMuted)),
+        ]))),
+        TextButton(onPressed: _cycleTray, style: TextButton.styleFrom(minimumSize: const Size(48, 48), padding: const EdgeInsets.symmetric(horizontal: 8)), child: Text(collapsed ? '수식 열기' : showSettings ? '그래프 크게' : '전체 편집', style: const TextStyle(fontSize: 10, color: _kMuted))),
+        if (!collapsed) ...[
+          TextButton(key: const ValueKey('graph-examples-open'), focusNode: _exampleButtonFocus, onPressed: _showInfoDialog, style: TextButton.styleFrom(minimumSize: const Size(48, 48), padding: const EdgeInsets.symmetric(horizontal: 8)), child: const Text('예제', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
+          TextButton(onPressed: _addFunctionDraft, style: TextButton.styleFrom(minimumSize: const Size(48, 48), padding: const EdgeInsets.symmetric(horizontal: 8)), child: const Text('+ 식', style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800))),
         ],
-        Align(
-          alignment: Alignment.centerRight,
-          child: TextButton.icon(
-            onPressed: _addFunctionDraft,
-            icon: const Icon(Icons.add_rounded),
-            label: const Text('식 추가'),
-          ),
-        ),
-        if (_parameters.isNotEmpty) ...[
-          _PracticePanel(
-            parameters: _parameters,
-            onChanged: (parameter, value) {
-              setState(() {
-                parameter.value = value;
-              });
-              _scheduleGraphApply();
-            },
-          ),
-          const SizedBox(height: 10),
-        ],
-        ListView.separated(
-          shrinkWrap: true,
-          physics: const NeverScrollableScrollPhysics(),
-          itemCount: _drafts.length,
-          separatorBuilder: (_, __) => const SizedBox(height: 10),
-          itemBuilder: (context, index) =>
-              _buildDraftTile(_drafts[index], compact: compactMobile),
-        ),
+      ]),
+      if (!collapsed) ...[
         const SizedBox(height: 10),
-        Wrap(
-          spacing: 8,
-          runSpacing: 8,
-          children: [
-            FilterChip(
-              label: const Text('축'),
-              selected: _showAxes,
-              onSelected: (value) {
-                setState(() {
-                  _showAxes = value;
-                });
-              },
-            ),
-            FilterChip(
-              label: const Text('격자'),
-              selected: _showGrid,
-              onSelected: (value) {
-                setState(() {
-                  _showGrid = value;
-                });
-              },
-            ),
-            FilterChip(
-              label: const Text('뷰 고정'),
-              selected: _lockViewport,
-              onSelected: (value) {
-                setState(() {
-                  _lockViewport = value;
-                });
-              },
-            ),
-            FilterChip(
-              label: Text(_degreeMode ? '도 단위' : '라디안'),
-              selected: _degreeMode,
-              onSelected: (value) {
-                setState(() {
-                  _degreeMode = value;
-                });
-                _applyCurrentDrafts();
-              },
-            ),
-          ],
-        ),
-        if (_editorMessage != null) ...[
-          const SizedBox(height: 10),
-          Text(
-            _editorMessage!,
-            style: const TextStyle(
-              color: Color(0xFFB33A3A),
-              fontSize: 12.5,
-              fontWeight: FontWeight.w700,
-            ),
-          ),
+        for (final draft in visibleDrafts) ...[_buildDraftTile(draft, compact: compactMobile), const SizedBox(height: 9)],
+        if (showSettings) ...[
+          const SizedBox(height: 6), const Divider(height: 1, color: _kBorder), const SizedBox(height: 13),
+          const Text('보기 설정', style: TextStyle(fontSize: 13, fontWeight: FontWeight.w700)), const SizedBox(height: 8),
+          Row(children: [Expanded(child: _viewOption('축', _showAxes, (value) => setState(() => _showAxes = value))), const SizedBox(width: 6), Expanded(child: _viewOption('격자', _showGrid, (value) => setState(() => _showGrid = value)))]),
+          const SizedBox(height: 6),
+          Row(children: [Expanded(child: _viewOption('뷰 고정', _lockViewport, (value) => setState(() => _lockViewport = value))), const SizedBox(width: 6), Expanded(child: _viewOption(_degreeMode ? '도 단위' : '라디안', _degreeMode, (value) { setState(() => _degreeMode = value); _applyCurrentDrafts(); }))]),
+          if (_parameters.isNotEmpty) _PracticePanel(parameters: _parameters, onChanged: (parameter, value) { setState(() => parameter.value = value); _scheduleGraphApply(); }),
         ],
-        const SizedBox(height: 10),
-        if (!compactMobile)
-          Align(
-            alignment: Alignment.centerRight,
-            child: SizedBox(
-              width: null,
-              child: FilledButton.icon(
-                onPressed: _applyCurrentDrafts,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _kGreen,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 18,
-                    vertical: 14,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: const Icon(Icons.stacked_line_chart_rounded),
-                label: const Text('그래프 갱신'),
-              ),
-            ),
-          ),
+        if (_editorMessage != null) Padding(padding: const EdgeInsets.only(top: 9), child: Text(_editorMessage!, style: const TextStyle(color: Color(0xFFB33A3A), fontSize: 11, fontWeight: FontWeight.w700))),
       ],
-    );
-
-    if (compactMobile) {
-      return _SurfaceCard(
-        child: Column(
-          children: [
-            Expanded(
-              child: SingleChildScrollView(
-                key: const ValueKey('mobile-graph-page-scroll'),
-                child: editorContent,
-              ),
-            ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                key: const ValueKey('mobile-graph-apply'),
-                onPressed: _sampling ? null : _applyCurrentDrafts,
-                style: FilledButton.styleFrom(
-                  backgroundColor: _kGreen,
-                  foregroundColor: Colors.white,
-                  minimumSize: const Size.fromHeight(52),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                icon: _sampling
-                    ? const SizedBox.square(
-                        dimension: 18,
-                        child: CircularProgressIndicator(
-                          strokeWidth: 2,
-                          color: Colors.white,
-                        ),
-                      )
-                    : const Icon(Icons.stacked_line_chart_rounded),
-                label: Text(
-                  _sampling ? '좌표 가져오는 중' : '그래프에 반영하기',
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return _SurfaceCard(child: SingleChildScrollView(child: editorContent));
+    ]);
+    return DecoratedBox(key: const ValueKey('graph-html-editor'), decoration: BoxDecoration(color: _kSurface, border: compactMobile ? null : Border.all(color: _kBorder)),
+      child: SingleChildScrollView(key: compactMobile ? const ValueKey('mobile-graph-page-scroll') : null,
+        padding: EdgeInsets.fromLTRB(compactMobile ? 12 : 14, compactMobile ? 8 : 14, compactMobile ? 12 : 14, compactMobile ? 10 : 14), child: content));
   }
+
+  Widget _viewOption(String title, bool selected, ValueChanged<bool> onChanged) => SizedBox(height: 48,
+    child: OutlinedButton(onPressed: () => onChanged(!selected),
+      style: OutlinedButton.styleFrom(backgroundColor: selected ? const Color(0xFF09090B) : Colors.white, foregroundColor: selected ? Colors.white : const Color(0xFF09090B), side: BorderSide(color: selected ? const Color(0xFF09090B) : _kBorder), shape: const RoundedRectangleBorder(), textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)), child: Text(title)));
 
   // Retained only for a future opt-in editor; the Atlas mobile entry point
   // deliberately uses the direct function editor above.
@@ -1185,861 +830,135 @@ class _JsxGraphPageState extends State<JsxGraphPage> {
 }
 
 class _GraphCatalogDialog extends StatefulWidget {
-  const _GraphCatalogDialog({required this.initialExample});
-
-  final AiFlowGraphExample initialExample;
+  const _GraphCatalogDialog({required this.workspace});
+  final Rect workspace;
 
   @override
   State<_GraphCatalogDialog> createState() => _GraphCatalogDialogState();
 }
 
 class _GraphCatalogDialogState extends State<_GraphCatalogDialog> {
-  late final TextEditingController _searchController;
-  late AiFlowGraphSubjectCatalog _selectedCatalog;
-  late String _selectedSubject;
-  late String _selectedUnit;
-  AiFlowGraphFormulaSummary? _selectedFormula;
-  AiFlowGraphExample? _selectedExample;
+  final _searchController = TextEditingController();
+  final _searchFocus = FocusNode();
   String _query = '';
 
   @override
   void initState() {
     super.initState();
-    _selectedCatalog = _findCatalogForExample(widget.initialExample);
-    _selectedSubject = _selectedCatalog.subject;
-    _selectedUnit = widget.initialExample.unit;
-    _selectedExample = widget.initialExample;
-    _searchController = TextEditingController();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _searchFocus.requestFocus();
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _searchFocus.dispose();
     super.dispose();
   }
 
-  AiFlowGraphSubjectCatalog get _subjectCatalog => _selectedCatalog;
-
-  /// 필요한 변수는 처음 선택된 예제와 전체 과목 카탈로그다.
-  /// 작동 원리는 예제의 표시용 과목명이 아닌 예제 ID의 실제 포함 관계로 소속 카탈로그를 찾는다.
-  AiFlowGraphSubjectCatalog _findCatalogForExample(AiFlowGraphExample example) {
-    for (final catalog in aiFlowGraphCatalog) {
-      if (catalog.examples.any((item) => item.id == example.id)) {
-        return catalog;
-      }
-    }
-
-    // 페이지 초기 예제도 같은 목록에서 가져오므로 정상 데이터에서는 도달하지 않는다.
-    return aiFlowGraphCatalog.first;
-  }
-
-  List<AiFlowGraphFormulaSummary> get _filteredFormulas {
-    final query = _query.trim().toLowerCase();
-    final formulas = _subjectCatalog.formulas.where((formula) {
-      if (_selectedUnit.isNotEmpty && formula.unit != _selectedUnit) {
-        return false;
-      }
-      return query.isEmpty || formula.searchIndex.contains(query);
-    }).toList();
-    return formulas;
-  }
-
-  List<AiFlowGraphExample> get _filteredExamples {
-    final query = _query.trim().toLowerCase();
-    return _subjectCatalog.examples.where((example) {
-      if (_selectedUnit.isNotEmpty && example.unit != _selectedUnit) {
-        return false;
-      }
-      return query.isEmpty || example.searchIndex.contains(query);
-    }).toList();
-  }
-
-  void _selectSubject(String subject) {
-    AiFlowGraphSubjectCatalog? catalog;
-    for (final item in aiFlowGraphCatalog) {
-      if (item.subject == subject) {
-        catalog = item;
-        break;
-      }
-    }
-    if (catalog == null) {
-      return;
-    }
-
-    setState(() {
-      _selectedCatalog = catalog!;
-      _selectedSubject = subject;
-      _selectedUnit = catalog.units.isNotEmpty ? catalog.units.first : '';
-      _query = '';
-      _searchController.clear();
-      _selectedFormula = catalog.formulas.isNotEmpty
-          ? catalog.formulas.first
-          : null;
-      _selectedExample = catalog.examples.isNotEmpty
-          ? catalog.examples.first
-          : null;
-    });
-  }
-
-  void _selectUnit(String unit) {
-    setState(() {
-      _selectedUnit = unit;
-      _selectedFormula = null;
-      _selectedExample = null;
-    });
-  }
-
-  void _ensureSelection() {
-    final formulas = _filteredFormulas;
-    final examples = _filteredExamples;
-
-    if (_selectedFormula != null &&
-        !formulas.any((formula) => identical(formula, _selectedFormula))) {
-      _selectedFormula = null;
-    }
-    if (_selectedExample != null &&
-        !examples.any((example) => example.id == _selectedExample!.id)) {
-      _selectedExample = null;
-    }
-
-    _selectedFormula ??= formulas.isNotEmpty ? formulas.first : null;
-    _selectedExample ??= examples.isNotEmpty ? examples.first : null;
-  }
-
+  /// Searches the existing complete catalogue; selection returns its original document unchanged.
   @override
   Widget build(BuildContext context) {
-    _ensureSelection();
-    final formulas = _filteredFormulas;
-    final examples = _filteredExamples;
-
-    return Dialog(
-      backgroundColor: Colors.white,
-      surfaceTintColor: Colors.white,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+    final mobile = MediaQuery.sizeOf(context).width < 720;
+    final query = _query.trim().toLowerCase();
+    final examples = aiFlowGraphExamples.where((example) => query.isEmpty || example.searchIndex.contains(query)).toList();
+    final viewport = MediaQuery.sizeOf(context);
+    final bounds = widget.workspace.intersect(Rect.fromLTWH(0, 0, viewport.width, math.max(0, viewport.height - MediaQuery.viewInsetsOf(context).bottom)));
+    // The HTML sheet is content-sized for short lists and capped at 78% of the workspace on mobile.
+    final contentHeight = 68.0 + 16 + 52 + 12 + 18 + (examples.isEmpty ? 68 : examples.length * 82 + math.max(0, examples.length - 1) * 8);
+    final sheetHeight = mobile ? math.min(bounds.height * .78, contentHeight) : bounds.height;
+    final sheetWidth = mobile ? bounds.width : math.min(430.0, bounds.width);
+    final sheet = Material(
+      key: const ValueKey('graph-example-sheet'),
+      color: _kSurface,
+      shape: RoundedRectangleBorder(
+        borderRadius: mobile ? const BorderRadius.vertical(top: Radius.circular(18)) : BorderRadius.zero,
+        side: const BorderSide(color: _kBorder),
+      ),
       clipBehavior: Clip.antiAlias,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 1360, maxHeight: 820),
-        child: Material(
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        '예제 탐색',
-                        style: TextStyle(
-                          color: _kGreen,
-                          fontSize: 26,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      icon: const Icon(Icons.close_rounded, size: 30),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                Expanded(
-                  child: LayoutBuilder(
-                    builder: (context, constraints) {
-                      final compact = constraints.maxWidth < 1040;
-                      if (compact) {
-                        return Column(
-                          children: [
-                            SizedBox(
-                              height: 220,
-                              child: _ExplorerSidebar(
-                                selectedSubject: _selectedSubject,
-                                selectedUnit: _selectedUnit,
-                                onSelectSubject: _selectSubject,
-                                onSelectUnit: _selectUnit,
-                              ),
-                            ),
-                            const SizedBox(height: 12),
-                            Expanded(
-                              child: _ExplorerMainPane(
-                                searchController: _searchController,
-                                onSearchChanged: (value) =>
-                                    setState(() => _query = value),
-                                selectedSubject: _selectedSubject,
-                                selectedUnit: _selectedUnit,
-                                formulas: formulas,
-                                examples: examples,
-                                selectedFormula: _selectedFormula,
-                                selectedExample: _selectedExample,
-                                onSelectFormula: (formula) {
-                                  setState(() {
-                                    _selectedFormula = formula;
-                                    _selectedExample = null;
-                                  });
-                                },
-                                onSelectExample: (example) {
-                                  setState(() {
-                                    _selectedExample = example;
-                                    _selectedFormula = null;
-                                  });
-                                },
-                                onApplyExample: (example) =>
-                                    Navigator.of(context).pop(example),
-                              ),
-                            ),
-                          ],
-                        );
-                      }
-
-                      return Row(
-                        children: [
-                          SizedBox(
-                            width: 280,
-                            child: _ExplorerSidebar(
-                              selectedSubject: _selectedSubject,
-                              selectedUnit: _selectedUnit,
-                              onSelectSubject: _selectSubject,
-                              onSelectUnit: _selectUnit,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: _ExplorerMainPane(
-                              searchController: _searchController,
-                              onSearchChanged: (value) =>
-                                  setState(() => _query = value),
-                              selectedSubject: _selectedSubject,
-                              selectedUnit: _selectedUnit,
-                              formulas: formulas,
-                              examples: examples,
-                              selectedFormula: _selectedFormula,
-                              selectedExample: _selectedExample,
-                              onSelectFormula: (formula) {
-                                setState(() {
-                                  _selectedFormula = formula;
-                                  _selectedExample = null;
-                                });
-                              },
-                              onSelectExample: (example) {
-                                setState(() {
-                                  _selectedExample = example;
-                                  _selectedFormula = null;
-                                });
-                              },
-                              onApplyExample: (example) =>
-                                  Navigator.of(context).pop(example),
-                            ),
-                          ),
-                        ],
-                      );
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ),
+      child: Column(children: [
+        Container(
+          height: 68,
+          padding: const EdgeInsets.symmetric(horizontal: 18),
+          decoration: const BoxDecoration(border: Border(bottom: BorderSide(color: _kBorder))),
+          child: Row(children: [
+            const Expanded(child: Text('예제 탐색', style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: 0))),
+            SizedBox.square(dimension: 48, child: IconButton(key: const ValueKey('graph-example-close'), tooltip: '닫기', onPressed: () => Navigator.of(context).pop(), icon: const Icon(Icons.close, size: 20))),
+          ]),
         ),
-      ),
-    );
-  }
-}
-
-class _ExplorerSidebar extends StatelessWidget {
-  const _ExplorerSidebar({
-    required this.selectedSubject,
-    required this.selectedUnit,
-    required this.onSelectSubject,
-    required this.onSelectUnit,
-  });
-
-  final String selectedSubject;
-  final String selectedUnit;
-  final ValueChanged<String> onSelectSubject;
-  final ValueChanged<String> onSelectUnit;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, 10),
-            child: Text(
-              '탐색기',
-              style: TextStyle(
-                color: _kGreen,
-                fontSize: 16,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(10),
-              children: [
-                for (final subject in aiFlowGraphCatalog) ...[
-                  _ExplorerNode(
-                    icon: Icons.folder_open_rounded,
-                    title: subject.subject,
-                    selected: subject.subject == selectedSubject,
-                    depth: 0,
-                    onTap: () => onSelectSubject(subject.subject),
-                  ),
-                  if (subject.subject == selectedSubject)
-                    for (final unit in subject.units)
-                      _ExplorerNode(
-                        icon: Icons.folder_outlined,
-                        title: unit,
-                        selected: unit == selectedUnit,
-                        depth: 1,
-                        onTap: () => onSelectUnit(unit),
-                      ),
-                ],
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ExplorerMainPane extends StatelessWidget {
-  const _ExplorerMainPane({
-    required this.searchController,
-    required this.onSearchChanged,
-    required this.selectedSubject,
-    required this.selectedUnit,
-    required this.formulas,
-    required this.examples,
-    required this.selectedFormula,
-    required this.selectedExample,
-    required this.onSelectFormula,
-    required this.onSelectExample,
-    required this.onApplyExample,
-  });
-
-  final TextEditingController searchController;
-  final ValueChanged<String> onSearchChanged;
-  final String selectedSubject;
-  final String selectedUnit;
-  final List<AiFlowGraphFormulaSummary> formulas;
-  final List<AiFlowGraphExample> examples;
-  final AiFlowGraphFormulaSummary? selectedFormula;
-  final AiFlowGraphExample? selectedExample;
-  final ValueChanged<AiFlowGraphFormulaSummary> onSelectFormula;
-  final ValueChanged<AiFlowGraphExample> onSelectExample;
-  final ValueChanged<AiFlowGraphExample> onApplyExample;
-
-  @override
-  Widget build(BuildContext context) {
-    final listPane = Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '$selectedSubject > $selectedUnit',
-                  style: const TextStyle(
-                    color: _kGreen,
-                    fontSize: 17,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 10),
-                TextField(
-                  controller: searchController,
-                  onChanged: onSearchChanged,
-                  decoration: InputDecoration(
-                    hintText: '예: 접선, 지수함수, 타원, 산점도',
-                    prefixIcon: const Icon(Icons.manage_search_rounded),
-                    filled: true,
-                    fillColor: Colors.white,
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: _kBorder),
-                    ),
-                    enabledBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: _kBorder),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      borderSide: const BorderSide(color: Color(0xFF89A489)),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const Divider(height: 1),
-          Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(12),
-              children: [
-                _ExplorerSectionHeader(title: '공식 파일', count: formulas.length),
-                if (formulas.isEmpty)
-                  const _ExplorerEmpty(label: '공식 항목이 없습니다.')
-                else
-                  for (final formula in formulas)
-                    _ExplorerFileRow(
-                      icon: Icons.functions_rounded,
-                      title: formula.title,
-                      subtitle: formula.formula,
-                      subtitleIsLatex: true,
-                      meta: formula.unit,
-                      selected: identical(formula, selectedFormula),
-                      onTap: () => onSelectFormula(formula),
-                    ),
-                const SizedBox(height: 14),
-                _ExplorerSectionHeader(title: '예제 파일', count: examples.length),
-                if (examples.isEmpty)
-                  const _ExplorerEmpty(label: '예제 항목이 없습니다.')
-                else
-                  for (final example in examples)
-                    _ExplorerFileRow(
-                      icon: Icons.stacked_line_chart_rounded,
-                      title: example.title,
-                      subtitle: example.summary,
-                      meta: example.unit,
-                      selected: selectedExample?.id == example.id,
-                      onTap: () => onSelectExample(example),
-                    ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-
-    final detailPane = _ExplorerDetailPane(
-      formula: selectedFormula,
-      example: selectedExample,
-      onApplyExample: onApplyExample,
-    );
-
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        if (constraints.maxWidth < 900) {
-          return Column(
-            children: [
-              Expanded(child: listPane),
-              const SizedBox(height: 12),
-              SizedBox(height: 320, child: detailPane),
-            ],
-          );
-        }
-
-        return Row(
-          children: [
-            Expanded(child: listPane),
-            const SizedBox(width: 14),
-            SizedBox(width: 360, child: detailPane),
-          ],
-        );
-      },
-    );
-  }
-}
-
-class _ExplorerDetailPane extends StatelessWidget {
-  const _ExplorerDetailPane({
-    required this.formula,
-    required this.example,
-    required this.onApplyExample,
-  });
-
-  final AiFlowGraphFormulaSummary? formula;
-  final AiFlowGraphExample? example;
-  final ValueChanged<AiFlowGraphExample> onApplyExample;
-
-  @override
-  Widget build(BuildContext context) {
-    final showExample = example != null;
-
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(18),
-        child: showExample
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '예제 상세',
-                    style: TextStyle(
-                      color: _kGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    example!.title,
-                    style: const TextStyle(
-                      color: _kGreen,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${example!.subject} · ${example!.unit}',
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    example!.summary,
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12.5,
-                      height: 1.45,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _kSurfaceTint,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _kBorder),
-                    ),
-                    child: Text(
-                      example!.document.items
-                          .map((item) => item.expression ?? item.label)
-                          .join('\n'),
-                      style: const TextStyle(
-                        color: _kGreen,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.5,
-                      ),
-                    ),
-                  ),
-                  const Spacer(),
-                  Text(
-                    '출처: ${example!.sourceLabel}',
-                    style: const TextStyle(color: _kMuted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    example!.sourceUrl,
-                    style: const TextStyle(color: _kMuted, fontSize: 12),
-                  ),
-                  const SizedBox(height: 14),
-                  SizedBox(
-                    width: double.infinity,
-                    child: FilledButton(
-                      onPressed: () => onApplyExample(example!),
-                      style: FilledButton.styleFrom(
-                        backgroundColor: _kGreen,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 15),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                      ),
-                      child: const Text('이 예제 불러오기'),
-                    ),
-                  ),
-                ],
-              )
-            : formula != null
-            ? Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    '공식 상세',
-                    style: TextStyle(
-                      color: _kGreen,
-                      fontSize: 16,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  Text(
-                    formula!.title,
-                    style: const TextStyle(
-                      color: _kGreen,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w800,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    formula!.unit,
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  _LatexFormula(formula: formula!.formula, fontSize: 17),
-                  const SizedBox(height: 12),
-                  Text(
-                    formula!.summary,
-                    style: const TextStyle(
-                      color: _kMuted,
-                      fontSize: 12.5,
-                      height: 1.5,
-                    ),
-                  ),
-                  const Spacer(),
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: _kSurfaceTint,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: _kBorder),
-                    ),
-                    child: const Text(
-                      '그래프로 옮길 여지가 있는 공식은 단원별로 예제와 함께 같은 폴더에 묶어 두었습니다.',
-                      style: TextStyle(
-                        color: _kGreen,
-                        fontSize: 12.5,
-                        fontWeight: FontWeight.w700,
-                        height: 1.45,
-                      ),
-                    ),
-                  ),
-                ],
-              )
-            : const Center(
-                child: Text(
-                  '왼쪽에서 공식 또는 예제를 선택하세요.',
-                  style: TextStyle(color: _kMuted),
-                ),
-              ),
-      ),
-    );
-  }
-}
-
-class _ExplorerNode extends StatelessWidget {
-  const _ExplorerNode({
-    required this.icon,
-    required this.title,
-    required this.selected,
-    required this.depth,
-    required this.onTap,
-  });
-
-  final IconData icon;
-  final String title;
-  final bool selected;
-  final int depth;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: EdgeInsets.only(left: depth * 18.0, bottom: 4),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-            decoration: BoxDecoration(
-              color: selected ? const Color(0xFFF2F7F2) : Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(
-                color: selected ? const Color(0xFF8DAC90) : Colors.transparent,
-              ),
-            ),
-            child: Row(
-              children: [
-                Icon(icon, size: 18, color: _kGreen),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    title,
-                    style: const TextStyle(
-                      color: _kGreen,
-                      fontSize: 13.5,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+        Container(
+          height: 52,
+          margin: const EdgeInsets.fromLTRB(18, 16, 18, 12),
+          padding: const EdgeInsets.symmetric(horizontal: 13),
+          decoration: BoxDecoration(color: _kSurfaceTint, border: Border.all(color: _kBorder)),
+          child: Row(children: [
+            const Icon(Icons.search, size: 18), const SizedBox(width: 9),
+            Expanded(child: TextField(
+              key: const ValueKey('graph-example-search'),
+              controller: _searchController, focusNode: _searchFocus,
+              onChanged: (value) => setState(() => _query = value),
+              style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w600, letterSpacing: 0),
+              decoration: const InputDecoration(hintText: '함수나 단원을 검색하세요', border: InputBorder.none, enabledBorder: InputBorder.none, focusedBorder: InputBorder.none, filled: false, isDense: true, contentPadding: EdgeInsets.zero),
+            )),
+          ]),
         ),
-      ),
-    );
-  }
-}
-
-class _ExplorerSectionHeader extends StatelessWidget {
-  const _ExplorerSectionHeader({required this.title, required this.count});
-
-  final String title;
-  final int count;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Row(
-        children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: _kGreen,
-              fontSize: 15,
-              fontWeight: FontWeight.w800,
-            ),
-          ),
-          const SizedBox(width: 8),
-          _MiniBadge(label: '$count개'),
-        ],
-      ),
-    );
-  }
-}
-
-class _ExplorerFileRow extends StatelessWidget {
-  const _ExplorerFileRow({
-    required this.icon,
-    required this.title,
-    required this.subtitle,
-    required this.meta,
-    required this.selected,
-    required this.onTap,
-    this.subtitleIsLatex = false,
-  });
-
-  final IconData icon;
-  final String title;
-  final String subtitle;
-  final String meta;
-  final bool selected;
-  final VoidCallback onTap;
-  final bool subtitleIsLatex;
-
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 8),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(16),
-          child: Container(
-            padding: const EdgeInsets.all(14),
-            decoration: BoxDecoration(
-              color: selected ? const Color(0xFFF6FAF6) : Colors.white,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: selected ? const Color(0xFF90AA91) : _kBorder,
-              ),
-            ),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Icon(icon, color: _kGreen, size: 20),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        title,
-                        style: const TextStyle(
-                          color: _kGreen,
-                          fontSize: 14.5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        meta,
-                        style: const TextStyle(
-                          color: _kMuted,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                      const SizedBox(height: 6),
-                      subtitleIsLatex
-                          ? _LatexFormula(formula: subtitle, fontSize: 13)
-                          : Text(
-                              subtitle,
-                              maxLines: 2,
-                              overflow: TextOverflow.ellipsis,
-                              style: const TextStyle(
-                                color: _kMuted,
-                                fontSize: 12.5,
-                                height: 1.4,
-                              ),
-                            ),
-                    ],
+        Expanded(child: examples.isEmpty
+          ? const Padding(padding: EdgeInsets.all(18), child: Text('일치하는 예제가 없습니다.', style: TextStyle(fontSize: 13, color: _kMuted)))
+          : ListView.separated(
+              key: const ValueKey('graph-example-list'),
+              padding: const EdgeInsets.fromLTRB(18, 0, 18, 18),
+              itemCount: examples.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final example = examples[index];
+                final expression = example.document.items.where((item) => item.expression != null).map((item) => item.expression!).join(' · ');
+                return Semantics(
+                  button: true,
+                  label: example.title + ' 불러오기',
+                  child: OutlinedButton(
+                    key: ValueKey('graph-example-' + example.id),
+                    onPressed: () => Navigator.of(context).pop(example),
+                    style: OutlinedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+                      minimumSize: const Size.fromHeight(82),
+                      visualDensity: VisualDensity.standard,
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      foregroundColor: _kGreen,
+                      side: const BorderSide(color: _kBorder),
+                      shape: const RoundedRectangleBorder(),
+                    ),
+                    child: Row(children: [
+                      SizedBox(width: 78, child: Center(child: Text(example.subject, style: const TextStyle(fontSize: 11, color: _kMuted, letterSpacing: 0)))),
+                      Container(width: 1, height: 54, color: _kBorder),
+                      const SizedBox(width: 12),
+                      Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+                        Text(example.title, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w700, letterSpacing: 0)),
+                        const SizedBox(height: 4),
+                        Text(expression, maxLines: 2, overflow: TextOverflow.ellipsis, style: const TextStyle(fontSize: 12, color: Color(0xFF2F7CF6), fontWeight: FontWeight.w800, letterSpacing: 0)),
+                      ])),
+                    ]),
                   ),
-                ),
-                if (selected)
-                  const Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.check_circle_rounded, color: _kGreen),
-                  ),
-              ],
-            ),
-          ),
+                );
+              },
+            )),
+      ]),
+    );
+    return CallbackShortcuts(
+      bindings: {const SingleActivator(LogicalKeyboardKey.escape): () => Navigator.of(context).pop()},
+      child: Stack(children: [
+        Positioned.fromRect(rect: bounds, child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
+          onTap: () => Navigator.of(context).pop(),
+          child: ColoredBox(color: mobile ? const Color(0x4709090B) : Colors.transparent),
+        )),
+        Positioned(
+          right: viewport.width - bounds.right,
+          bottom: viewport.height - bounds.bottom,
+          width: sheetWidth, height: sheetHeight,
+          child: sheet,
         ),
-      ),
-    );
-  }
-}
-
-class _ExplorerEmpty extends StatelessWidget {
-  const _ExplorerEmpty({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(color: _kMuted, fontSize: 12.5),
-      ),
+      ]),
     );
   }
 }
@@ -2062,23 +981,6 @@ class _SurfaceCard extends StatelessWidget {
   }
 }
 
-class _GraphHiddenWhileDialogOpen extends StatelessWidget {
-  const _GraphHiddenWhileDialogOpen();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Center(
-      child: Text(
-        '예제 탐색 중에는 그래프를 잠시 숨깁니다.',
-        style: TextStyle(
-          color: _kMuted,
-          fontSize: 12.5,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-}
 
 class _GraphEmbedDisabledForTesting extends StatelessWidget {
   const _GraphEmbedDisabledForTesting();
@@ -2489,66 +1391,6 @@ class _CalculatorKey {
   final String value;
 }
 
-class _LatexFormula extends StatelessWidget {
-  const _LatexFormula({required this.formula, required this.fontSize});
-
-  final String formula;
-  final double fontSize;
-
-  @override
-  Widget build(BuildContext context) {
-    try {
-      return SingleChildScrollView(
-        scrollDirection: Axis.horizontal,
-        child: Math.tex(
-          formula,
-          textStyle: TextStyle(
-            color: _kGreen,
-            fontSize: fontSize,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-      );
-    } catch (_) {
-      return Text(
-        formula,
-        maxLines: 2,
-        overflow: TextOverflow.ellipsis,
-        style: TextStyle(
-          color: _kGreen,
-          fontSize: fontSize,
-          fontWeight: FontWeight.w700,
-        ),
-      );
-    }
-  }
-}
-
-class _MiniBadge extends StatelessWidget {
-  const _MiniBadge({required this.label});
-
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 7),
-      decoration: BoxDecoration(
-        color: _kSurfaceTint,
-        borderRadius: BorderRadius.circular(999),
-        border: Border.all(color: _kBorder),
-      ),
-      child: Text(
-        label,
-        style: const TextStyle(
-          color: _kGreen,
-          fontSize: 12,
-          fontWeight: FontWeight.w700,
-        ),
-      ),
-    );
-  }
-}
 
 class _FunctionDraftTile extends StatefulWidget {
   const _FunctionDraftTile({
@@ -2607,197 +1449,52 @@ class _FunctionDraftTileState extends State<_FunctionDraftTile> {
     super.dispose();
   }
 
-  /// 필요한 변수는 수식 초안·입력란 포커스 상태·모바일 축약 여부다.
-  /// 작동 원리는 데스크톱에서는 여러 줄 입력과 계산 패드를 제공하고,
-  /// 모바일에서는 시스템 키보드에 맞춘 한 줄 입력으로 편집 영역을 줄이는 것이다.
+  /// Single 48px input row matches HTML; the existing focus node and draft callbacks retain calculation behavior.
   @override
   Widget build(BuildContext context) {
+    final color = _hexToColor(draft.colorHex);
+    final border = OutlineInputBorder(borderRadius: BorderRadius.zero, borderSide: const BorderSide(color: _kBorder));
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-      decoration: BoxDecoration(
-        color: _kSurfaceTint,
-        borderRadius: BorderRadius.zero,
-        border: Border.all(
-          color: draft.errorText == null ? _kBorder : const Color(0xFFE4AEAE),
+      padding: EdgeInsets.all(compact ? 6 : 8),
+      decoration: BoxDecoration(color: _kSurfaceTint, border: Border.all(color: draft.errorText == null ? _kBorder : const Color(0xFFB33A3A))),
+      child: TextFieldTapRegion(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+        Row(children: [
+          SizedBox.square(dimension: 48, child: IconButton(tooltip: draft.label + ' 표시 전환', onPressed: onToggle, icon: Container(width: 18, height: 5, color: draft.enabled ? color : _kBorder))),
+          const SizedBox(width: 3),
+          SizedBox(width: compact ? 26 : 30, child: Text('y =', style: TextStyle(color: color, fontSize: 14, fontWeight: FontWeight.w700))),
+          const SizedBox(width: 3),
+          Expanded(child: SizedBox(height: 48, child: TextField(
+            key: compact ? ValueKey('mobile-math-expression-' + draft.localId.toString()) : ValueKey('graph-expression-' + draft.localId.toString()),
+            controller: draft.expressionController, focusNode: _expressionFocusNode,
+            minLines: 1, maxLines: 1, keyboardType: TextInputType.text, textInputAction: TextInputAction.done,
+            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+            onChanged: (_) => onChanged(), onSubmitted: onSubmitted, onTap: widget.onActivated,
+            onTapOutside: (_) => _expressionFocusNode.unfocus(),
+            decoration: InputDecoration(border: border, enabledBorder: border, focusedBorder: border.copyWith(borderSide: const BorderSide(color: Color(0xFF2F7CF6))), filled: true, fillColor: Colors.white, contentPadding: const EdgeInsets.symmetric(horizontal: 11, vertical: 13), isDense: true, hintText: '예: x^2 - 3'),
+          ))),
+          const SizedBox(width: 3),
+          SizedBox.square(dimension: 48, child: IconButton(tooltip: draft.label + ' 삭제', onPressed: onRemove, icon: const Icon(Icons.close, size: 18))),
+        ]),
+        Padding(padding: EdgeInsets.fromLTRB(compact ? 77 : 83, 6, 4, 0), child: ValueListenableBuilder<TextEditingValue>(
+          valueListenable: draft.expressionController!,
+          builder: (context, value, _) => Text(draft.errorText ?? (value.text.trim().isEmpty ? '수식을 입력하세요' : 'y = ' + value.text.trim()), style: TextStyle(fontSize: 11, height: 1.45, fontWeight: FontWeight.w600, color: draft.errorText == null ? _kMuted : const Color(0xFFB33A3A))),
+        )),
+        if (_expressionFocusNode.hasFocus) Padding(
+          padding: const EdgeInsets.only(top: 7),
+          child: Row(children: [
+            for (final token in const ['x', '^2', 'sin()', 'cos()', '(', ')'])
+              Expanded(child: Padding(padding: const EdgeInsets.symmetric(horizontal: 2), child: SizedBox(height: 48, child: OutlinedButton(
+                onPressed: () { draft.insertToken(token); onChanged(); },
+                style: OutlinedButton.styleFrom(padding: EdgeInsets.zero, shape: const RoundedRectangleBorder(), side: const BorderSide(color: _kBorder), backgroundColor: Colors.white, textStyle: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800)),
+                child: Text(token == '^2' ? 'x²' : token.replaceAll('()', '')),
+              )))),
+          ]),
         ),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              GestureDetector(
-                onTap: onToggle,
-                child: Container(
-                  width: 30,
-                  height: 30,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: draft.enabled
-                        ? _hexToColor(draft.colorHex)
-                        : Colors.white,
-                    border: Border.all(
-                      color: _hexToColor(draft.colorHex),
-                      width: 2,
-                    ),
-                  ),
-                  child: Icon(
-                    draft.enabled ? Icons.check_rounded : Icons.close_rounded,
-                    size: 17,
-                    color: draft.enabled
-                        ? Colors.white
-                        : _hexToColor(draft.colorHex),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Text(
-                  draft.label,
-                  style: TextStyle(
-                    color: _hexToColor(draft.colorHex),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ),
-              IconButton(
-                onPressed: onRemove,
-                icon: const Icon(Icons.close_rounded),
-              ),
-            ],
-          ),
-          TextFieldTapRegion(
-            child: Column(
-              children: [
-                TextField(
-                  key: compact
-                      ? ValueKey('mobile-math-expression-${draft.localId}')
-                      : null,
-                  controller: draft.expressionController,
-                  focusNode: _expressionFocusNode,
-                  showCursor: true,
-                  enableInteractiveSelection: true,
-                  minLines: compact ? 1 : 2,
-                  maxLines: compact ? 1 : 4,
-                  keyboardType: compact
-                      ? TextInputType.text
-                      : TextInputType.multiline,
-                  textInputAction: compact
-                      ? TextInputAction.done
-                      : TextInputAction.newline,
-                  onChanged: (_) => onChanged(),
-                  onSubmitted: onSubmitted,
-                  onTap: widget.onActivated,
-                  onTapOutside: (_) => _expressionFocusNode.unfocus(),
-                  decoration: InputDecoration(
-                    border: compact
-                        ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: _kBorder),
-                          )
-                        : InputBorder.none,
-                    enabledBorder: compact
-                        ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(color: _kBorder),
-                          )
-                        : InputBorder.none,
-                    focusedBorder: compact
-                        ? OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: const BorderSide(
-                              color: Color(0xFF2F7CF6),
-                              width: 1.5,
-                            ),
-                          )
-                        : InputBorder.none,
-                    contentPadding: compact
-                        ? const EdgeInsets.symmetric(
-                            horizontal: 14,
-                            vertical: 12,
-                          )
-                        : null,
-                    isDense: true,
-                    hintText: '예: sin(x), x^2-1, log(x)',
-                  ),
-                ),
-                _ExpressionPreview(controller: draft.expressionController),
-                AnimatedSize(
-                  duration: const Duration(milliseconds: 160),
-                  alignment: Alignment.topCenter,
-                  child: !compact && _expressionFocusNode.hasFocus
-                      ? Padding(
-                          padding: const EdgeInsets.only(top: 8),
-                          child: _CalculatorKeypad(
-                            onInsert: (token) {
-                              draft.insertToken(token);
-                              onChanged();
-                            },
-                          ),
-                        )
-                      : const SizedBox.shrink(),
-                ),
-              ],
-            ),
-          ),
-          if (draft.errorText != null)
-            Text(
-              draft.errorText!,
-              style: const TextStyle(
-                color: Color(0xFFB33A3A),
-                fontSize: 12,
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-        ],
-      ),
+      ])),
     );
   }
 }
 
-class _ExpressionPreview extends StatelessWidget {
-  const _ExpressionPreview({required this.controller});
-
-  final TextEditingController? controller;
-
-  @override
-  Widget build(BuildContext context) {
-    final listenable = controller;
-    if (listenable == null) {
-      return const SizedBox.shrink();
-    }
-
-    return AnimatedBuilder(
-      animation: listenable,
-      builder: (context, _) {
-        final raw = listenable.text.trim();
-        if (raw.isEmpty) {
-          return const SizedBox.shrink();
-        }
-        final normalized = normalizeAiFlowExpression(raw);
-        final latex = _expressionToLatex(normalized);
-        return Container(
-          width: double.infinity,
-          margin: const EdgeInsets.only(top: 4),
-          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: _kBorder),
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.functions_rounded, size: 16, color: _kGreen),
-              const SizedBox(width: 8),
-              Expanded(child: _LatexFormula(formula: 'y=$latex', fontSize: 14)),
-            ],
-          ),
-        );
-      },
-    );
-  }
-}
 
 class _ReadonlySeriesTile extends StatelessWidget {
   const _ReadonlySeriesTile({required this.draft});
@@ -3032,17 +1729,6 @@ String _formatNumber(double value) {
       .replaceFirst(RegExp(r'\.$'), '');
 }
 
-String _expressionToLatex(String expression) {
-  return expression
-      .replaceAll('*', r'\cdot ')
-      .replaceAllMapped(RegExp(r'\bpi\b', caseSensitive: false), (_) => r'\pi')
-      .replaceAllMapped(RegExp(r'\bsqrt\s*\(([^()]+)\)'), (match) {
-        return '\\sqrt{${match.group(1) ?? ''}}';
-      })
-      .replaceAllMapped(RegExp(r'\b(abs|sin|cos|tan|log|ln)\s*\('), (match) {
-        return '\\${match.group(1)}(';
-      });
-}
 
 Color _hexToColor(String hex) {
   final normalized = hex.replaceFirst('#', '');

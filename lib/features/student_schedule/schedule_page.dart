@@ -1,6 +1,7 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
+import 'package:s11/app/student_route_registry.dart';
 
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
@@ -155,194 +156,325 @@ class _SchedulePageState extends State<SchedulePage> {
   }
 
   /// 필요한 변수는 선택 날짜와 모바일 화면 문맥이다.
-  /// 작동 원리: 레퍼런스형 둥근 바텀시트에서 제목·날짜를 검증하고 사용자가 저장을 확정한 경우에만 서버 동기화를 시작한다.
+  /// HTML 개인 일정 시트에서 입력을 검증하고 확정한 경우에만 서버를 동기화한다.
   Future<void> _openAddPersonalSchedule() async {
     final titleController = TextEditingController();
     final formKey = GlobalKey<FormState>();
     var draftDate = _selectedDate;
-    var draftStart = const TimeOfDay(hour: 18, minute: 0);
-    var draftEnd = const TimeOfDay(hour: 19, minute: 0);
+    var draftStart = const TimeOfDay(hour: 19, minute: 0);
+    var draftEnd = const TimeOfDay(hour: 19, minute: 30);
     final draft = await showModalBottomSheet<_PersonalScheduleDraft>(
       context: context,
       isScrollControlled: true,
+      constraints: const BoxConstraints(maxWidth: 540),
       backgroundColor: Colors.transparent,
-      barrierColor: Colors.black.withValues(alpha: .52),
+      barrierColor: const Color(0xFF0D1117).withValues(alpha: .5),
       builder: (sheetContext) => StatefulBuilder(
         builder: (context, setSheetState) => Padding(
           padding: EdgeInsets.only(
             bottom: MediaQuery.viewInsetsOf(context).bottom,
           ),
           child: Container(
-            padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+            key: const ValueKey('personal-schedule-sheet'),
+            padding: const EdgeInsets.all(22),
             decoration: const BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.vertical(top: Radius.circular(30)),
+              borderRadius: BorderRadius.zero,
             ),
             child: SafeArea(
               top: false,
               child: Form(
                 key: formKey,
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 42,
-                        height: 5,
-                        decoration: BoxDecoration(
-                          color: const Color(0xFF4B4B54),
-                          borderRadius: BorderRadius.circular(99),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    const Text(
-                      '개인 일정 추가',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    const SizedBox(height: 7),
-                    const Text(
-                      '날짜와 시작·종료 시간을 지정해 학습 계획에 추가하세요.',
-                      style: TextStyle(
-                        color: Colors.black54,
-                        fontSize: 14,
-                        height: 1.45,
-                      ),
-                    ),
-                    const SizedBox(height: 22),
-                    TextFormField(
-                      key: const ValueKey('personal-schedule-title'),
-                      controller: titleController,
-                      autofocus: true,
-                      textInputAction: TextInputAction.done,
-                      maxLength: 60,
-                      validator: (value) =>
-                          value == null || value.trim().isEmpty
-                          ? '일정 제목을 입력해 주세요.'
-                          : null,
-                      decoration: const InputDecoration(
-                        labelText: '일정 제목',
-                        hintText: '예: 이차함수 오답 복습',
-                        prefixIcon: Icon(Icons.edit_calendar_rounded),
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    OutlinedButton.icon(
-                      key: const ValueKey('personal-schedule-date'),
-                      onPressed: () async {
-                        final selected = await showDatePicker(
-                          context: context,
-                          initialDate: draftDate,
-                          firstDate: DateTime.now().subtract(
-                            const Duration(days: 365),
-                          ),
-                          lastDate: DateTime.now().add(
-                            const Duration(days: 730),
-                          ),
-                        );
-                        if (selected == null) return;
-                        setSheetState(
-                          () => draftDate = DateUtils.dateOnly(selected),
-                        );
-                      },
-                      icon: const Icon(Icons.calendar_month_rounded),
-                      label: Text(_scheduleDateLabel(draftDate)),
-                      style: OutlinedButton.styleFrom(
-                        minimumSize: const Size.fromHeight(54),
-                        alignment: Alignment.centerLeft,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            key: const ValueKey('personal-schedule-start'),
-                            onPressed: () async {
-                              final selected = await showTimePicker(
-                                context: context,
-                                initialTime: draftStart,
-                              );
-                              if (selected == null) return;
-                              setSheetState(() {
-                                draftStart = selected;
-                                if (_minutesOf(draftEnd) <=
-                                    _minutesOf(draftStart)) {
-                                  draftEnd = selected.hour == 23
-                                      ? const TimeOfDay(hour: 23, minute: 59)
-                                      : TimeOfDay(
-                                          hour: selected.hour + 1,
-                                          minute: selected.minute,
-                                        );
-                                }
-                              });
-                            },
-                            icon: const Icon(Icons.schedule_rounded),
-                            label: Text('시작 ${_timeLabel(draftStart)}'),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: OutlinedButton.icon(
-                            key: const ValueKey('personal-schedule-end'),
-                            onPressed: () async {
-                              final selected = await showTimePicker(
-                                context: context,
-                                initialTime: draftEnd,
-                              );
-                              if (selected == null) return;
-                              if (!context.mounted) return;
-                              if (_minutesOf(selected) <=
-                                  _minutesOf(draftStart)) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                    content: Text('종료 시간은 시작 시간보다 늦어야 합니다.'),
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior:
+                      ScrollViewKeyboardDismissBehavior.onDrag,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Row(
+                        key: const ValueKey('personal-schedule-header'),
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                SizedBox(
+                                  key: const ValueKey(
+                                    'personal-schedule-header-small-linebox',
                                   ),
-                                );
-                                return;
-                              }
-                              setSheetState(() => draftEnd = selected);
-                            },
-                            icon: const Icon(Icons.schedule_outlined),
-                            label: Text('종료 ${_timeLabel(draftEnd)}'),
+                                  height: MediaQuery.textScalerOf(
+                                    context,
+                                  ).scale(18),
+                                  child: const Align(
+                                    alignment: Alignment.bottomLeft,
+                                    child: Text(
+                                      'PERSONAL SCHEDULE',
+                                      style: TextStyle(
+                                        fontSize: 10,
+                                        fontWeight: FontWeight.w900,
+                                        letterSpacing: 1,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                const Text(
+                                  '개인 일정 추가',
+                                  style: TextStyle(
+                                    fontSize: 22,
+                                    height: 32 / 22,
+                                    fontWeight: FontWeight.w700,
+                                  ),
+                                ),
+                              ],
+                            ),
                           ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 16),
-                    FilledButton(
-                      key: const ValueKey('personal-schedule-save'),
-                      onPressed: () {
-                        if (formKey.currentState?.validate() != true) return;
-                        Navigator.of(sheetContext).pop(
-                          _PersonalScheduleDraft(
-                            title: titleController.text.trim(),
-                            date: draftDate,
-                            startTime: _timeValue(draftStart),
-                            endTime: _timeValue(draftEnd),
+                          SizedBox(
+                            width: 48,
+                            height: 48,
+                            child: OutlinedButton(
+                              key: const ValueKey('personal-schedule-close'),
+                              onPressed: () => Navigator.of(sheetContext).pop(),
+                              style: OutlinedButton.styleFrom(
+                                padding: EdgeInsets.zero,
+                                visualDensity: VisualDensity.standard,
+                                foregroundColor: const Color(0xFF0D1117),
+                                backgroundColor: Colors.white,
+                                side: const BorderSide(
+                                  color: Color(0xFFD9DDE3),
+                                ),
+                                shape: const RoundedRectangleBorder(),
+                              ),
+                              child: const Text(
+                                '×',
+                                semanticsLabel: '닫기',
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.w400,
+                                ),
+                              ),
+                            ),
                           ),
-                        );
-                      },
-                      style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFF202022),
-                        minimumSize: const Size.fromHeight(56),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(17),
-                        ),
+                        ],
                       ),
-                      child: const Text(
-                        '일정 저장',
+                      const SizedBox(height: 20),
+                      const Text(
+                        '일정 이름',
                         style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w900,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
                         ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 8),
+                      TextFormField(
+                        key: const ValueKey('personal-schedule-title'),
+                        controller: titleController,
+                        cursorColor: Colors.black,
+                        autofocus: true,
+                        textInputAction: TextInputAction.done,
+                        maxLength: 60,
+                        validator: (value) =>
+                            value == null || value.trim().isEmpty
+                            ? '일정 제목을 입력해 주세요.'
+                            : null,
+                        decoration: const InputDecoration(
+                          hintText: '예: 수학 오답 복습',
+                          counterText: '',
+                          isDense: true,
+                          contentPadding: EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 16,
+                          ),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.zero,
+                            borderSide: BorderSide(
+                              color: StudentDensityTokens.line,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Text(
+                        '날짜',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      OutlinedButton(
+                        key: const ValueKey('personal-schedule-date'),
+                        onPressed: () async {
+                          final selected = await showDatePicker(
+                            context: context,
+                            initialDate: draftDate,
+                            firstDate: DateTime.now().subtract(
+                              const Duration(days: 365),
+                            ),
+                            lastDate: DateTime.now().add(
+                              const Duration(days: 730),
+                            ),
+                          );
+                          if (selected == null) return;
+                          setSheetState(
+                            () => draftDate = DateUtils.dateOnly(selected),
+                          );
+                        },
+                        child: Row(
+                          children: [
+                            Expanded(child: Text(_scheduleDateKey(draftDate))),
+                            const Icon(Icons.calendar_month_outlined, size: 16),
+                          ],
+                        ),
+                        style: OutlinedButton.styleFrom(
+                          minimumSize: const Size.fromHeight(48),
+                          visualDensity: VisualDensity.standard,
+                          foregroundColor: StudentDensityTokens.ink,
+                          backgroundColor: Colors.white,
+                          side: const BorderSide(
+                            color: StudentDensityTokens.line,
+                          ),
+                          textStyle: const TextStyle(fontSize: 14),
+                          shape: const RoundedRectangleBorder(),
+                          alignment: Alignment.centerLeft,
+                        ),
+                      ),
+                      const SizedBox(height: 15),
+                      const Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              '시작',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 10),
+                          Expanded(
+                            child: Text(
+                              '종료',
+                              style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          Expanded(
+                            child: OutlinedButton(
+                              key: const ValueKey('personal-schedule-start'),
+                              onPressed: () async {
+                                final selected = await showTimePicker(
+                                  context: context,
+                                  initialTime: draftStart,
+                                );
+                                if (selected == null) return;
+                                setSheetState(() {
+                                  draftStart = selected;
+                                  if (_minutesOf(draftEnd) <=
+                                      _minutesOf(draftStart)) {
+                                    draftEnd = selected.hour == 23
+                                        ? const TimeOfDay(hour: 23, minute: 59)
+                                        : TimeOfDay(
+                                            hour: selected.hour + 1,
+                                            minute: selected.minute,
+                                          );
+                                  }
+                                });
+                              },
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _scheduleInputTimeLabel(draftStart),
+                                    ),
+                                  ),
+                                  const Icon(Icons.schedule_outlined, size: 18),
+                                ],
+                              ),
+                              style: _scheduleInputButtonStyle(),
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: OutlinedButton(
+                              key: const ValueKey('personal-schedule-end'),
+                              onPressed: () async {
+                                final selected = await showTimePicker(
+                                  context: context,
+                                  initialTime: draftEnd,
+                                );
+                                if (selected == null) return;
+                                if (!context.mounted) return;
+                                if (_minutesOf(selected) <=
+                                    _minutesOf(draftStart)) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('종료 시간은 시작 시간보다 늦어야 합니다.'),
+                                    ),
+                                  );
+                                  return;
+                                }
+                                setSheetState(() => draftEnd = selected);
+                              },
+                              child: Row(
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      _scheduleInputTimeLabel(draftEnd),
+                                    ),
+                                  ),
+                                  const Icon(Icons.schedule_outlined, size: 18),
+                                ],
+                              ),
+                              style: _scheduleInputButtonStyle(),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 48),
+                      FilledButton(
+                        key: const ValueKey('personal-schedule-save'),
+                        onPressed: () {
+                          if (formKey.currentState?.validate() != true) return;
+                          Navigator.of(sheetContext).pop(
+                            _PersonalScheduleDraft(
+                              title: titleController.text.trim(),
+                              date: draftDate,
+                              startTime: _timeValue(draftStart),
+                              endTime: _timeValue(draftEnd),
+                            ),
+                          );
+                        },
+                        style: FilledButton.styleFrom(
+                          backgroundColor: StudentDensityTokens.ink,
+                          minimumSize: const Size.fromHeight(52),
+                          visualDensity: VisualDensity.standard,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.zero,
+                          ),
+                        ),
+                        child: const Text(
+                          '일정 저장',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
@@ -414,17 +546,40 @@ class _SchedulePageState extends State<SchedulePage> {
       _selectedDate.year,
       _selectedDate.month + delta,
     );
-    final targetDay = _selectedDate.day.clamp(
-      1,
-      DateUtils.getDaysInMonth(targetMonth.year, targetMonth.month),
-    );
-    setState(
-      () => _selectedDate = DateTime(
-        targetMonth.year,
-        targetMonth.month,
-        targetDay,
-      ),
-    );
+    setState(() => _selectedDate = targetMonth);
+  }
+
+  /// 서버 일정의 명시된 목적지만 연다. 식별자가 없으면 임의 홈/코스로 이동하지 않는다.
+  void _openScheduleEvent(Map<String, dynamic> item) {
+    final target = item['target']?.toString();
+    final spec = target == null ? null : StudentRouteRegistry.byId(target);
+    if (spec == null) {
+      _showScheduleMessage('이 일정에 연결된 학습 화면 정보가 없습니다.');
+      return;
+    }
+    if (target == 'course-runtime') {
+      final courseId = item['course_id']?.toString().trim() ?? '';
+      if (courseId.isEmpty) {
+        _showScheduleMessage('연결된 코스 ID가 없어 학습을 시작할 수 없습니다.');
+        return;
+      }
+      Navigator.of(context).pushNamed(
+        Uri(
+          path: spec.route,
+          queryParameters: {'courseId': courseId},
+        ).toString(),
+      );
+      return;
+    }
+    if (target == 'course-detail') {
+      _showScheduleMessage('일정에서 코스 상세로 연결하는 경로가 아직 준비되지 않았습니다.');
+      return;
+    }
+    if (target == 'wrong-list' || target == 'schedule') {
+      Navigator.of(context).pushNamed(spec.route, arguments: spec.destination);
+      return;
+    }
+    _showScheduleMessage('이 일정의 상세 연결을 확인할 수 없습니다.');
   }
 
   /// 필요한 변수는 화면 너비·주간/월간 상태·선택 날짜·런타임 일정이다.
@@ -455,34 +610,26 @@ class _SchedulePageState extends State<SchedulePage> {
     final selectedSchedule = visibleSchedule
         .where((item) => _scheduleMatchesDate(item, _selectedDate))
         .toList(growable: false);
-    final scheduleCard = _loading
-        ? const _ScheduleLoadingCard()
-        : _error != null
-        ? _EmptyScheduleCard(message: _error!)
-        : _daily
-        ? _DailyScheduleCard(
-            selectedDate: _selectedDate,
-            schedule: selectedSchedule,
-          )
-        : _MonthlyScheduleCard(
-            selectedDate: _selectedDate,
-            schedule: visibleSchedule,
-            onSelectDate: (date) => setState(() => _selectedDate = date),
-            onMoveMonth: _moveMonth,
-          );
-    final summaryCard = _TodaySummaryCard(
+    final scheduleCard = _MonthlyScheduleCard(
+      selectedDate: _selectedDate,
+      schedule: visibleSchedule,
+      onSelectDate: (date) => setState(() => _selectedDate = date),
+      onMoveMonth: _moveMonth,
+    );
+    final summaryCard = _ScheduleAgenda(
       selectedDate: _selectedDate,
       schedule: selectedSchedule,
       savingPersonalTask: _savingPersonalTask,
-      title: _daily ? '오늘 일정' : '선택한 날짜',
       onAddPersonalSchedule: _openAddPersonalSchedule,
       onDeletePersonalSchedule: _deletePersonalSchedule,
+      onOpenEvent: _openScheduleEvent,
     );
 
     return StudentHtmlShell(
       title: '학습 일정',
       activeRoute: SchedulePage.routeName,
-      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      mobileBackButton: true,
+      showContextAside: false,
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
       child: RefreshIndicator(
@@ -492,53 +639,250 @@ class _SchedulePageState extends State<SchedulePage> {
           children: [
             StudentDensityPage(
               padding: EdgeInsets.fromLTRB(
-                studentDensityHorizontalPadding(context),
-                studentDensityVerticalPadding(context),
-                studentDensityHorizontalPadding(context),
-                40,
+                mobile ? 0 : 20,
+                mobile ? 0 : 20,
+                mobile ? 0 : 20,
+                20,
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  StudentDensityPageHeader(
-                    eyebrow: _monthLabel(_selectedDate),
-                    title: '학습 일정',
-                    description: '오늘의 시간표와 월간 계획을 한 화면에서 전환해 확인합니다.',
-                    action: _ScheduleModeSwitch(
-                      daily: _daily,
-                      onChanged: (value) => setState(() {
-                        _daily = value;
-                        if (value) {
-                          _selectedDate = DateUtils.dateOnly(DateTime.now());
-                        }
-                      }),
+                  Column(
+                    key: ValueKey(
+                      mobile
+                          ? 'schedule-mobile-layout'
+                          : 'schedule-desktop-layout',
                     ),
+                    children: [
+                      scheduleCard,
+                      if (_loading) const LinearProgressIndicator(),
+                      if (_error != null)
+                        Padding(
+                          padding: const EdgeInsets.all(12),
+                          child: Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                        ),
+                      summaryCard,
+                    ],
                   ),
-                  SizedBox(height: mobile ? 14 : 20),
-                  if (mobile)
-                    Column(
-                      key: const ValueKey('schedule-mobile-layout'),
-                      children: [
-                        scheduleCard,
-                        const SizedBox(height: 14),
-                        summaryCard,
-                      ],
-                    )
-                  else
-                    Row(
-                      key: const ValueKey('schedule-desktop-layout'),
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(flex: 155, child: scheduleCard),
-                        const SizedBox(width: 14),
-                        Expanded(flex: 65, child: summaryCard),
-                      ],
-                    ),
                 ],
               ),
             ),
           ],
         ),
+      ),
+    );
+  }
+}
+
+/// 선택 날짜의 실제 일정 전체를 HTML의 시간·구분선·본문 순서로 표시한다.
+class _ScheduleAgenda extends StatelessWidget {
+  const _ScheduleAgenda({
+    required this.selectedDate,
+    required this.schedule,
+    required this.savingPersonalTask,
+    this.onAddPersonalSchedule,
+    this.onDeletePersonalSchedule,
+    required this.onOpenEvent,
+  });
+  final DateTime selectedDate;
+  final List<Map<String, dynamic>> schedule;
+  final bool savingPersonalTask;
+  final VoidCallback? onAddPersonalSchedule;
+  final ValueChanged<String>? onDeletePersonalSchedule;
+  final ValueChanged<Map<String, dynamic>> onOpenEvent;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 760;
+    const weekdays = ['일요일', '월요일', '화요일', '수요일', '목요일', '금요일', '토요일'];
+    return Container(
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(top: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      padding: EdgeInsets.fromLTRB(mobile ? 15 : 20, 20, mobile ? 15 : 20, 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text(
+                      '선택한 날짜',
+                      style: TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${selectedDate.month}월 ${selectedDate.day}일 ${weekdays[selectedDate.weekday % 7]}',
+                      style: const TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Text(
+                '${schedule.length}개',
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(width: 12),
+              SizedBox(
+                height: 48,
+                child: FilledButton(
+                  onPressed: savingPersonalTask ? null : onAddPersonalSchedule,
+                  style: FilledButton.styleFrom(
+                    visualDensity: VisualDensity.standard,
+                    shape: const RoundedRectangleBorder(),
+                    backgroundColor: StudentDensityTokens.ink,
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
+                  ),
+                  child: Text(
+                    savingPersonalTask ? '저장 중…' : '+ 일정',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          const Divider(height: 1, color: StudentDensityTokens.line),
+          if (schedule.isEmpty)
+            ConstrainedBox(
+              key: const ValueKey('schedule-empty'),
+              constraints: const BoxConstraints(minHeight: 150),
+              child: const Center(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text('선택한 날짜의 일정이 없습니다.'),
+                    SizedBox(height: 6),
+                    Text(
+                      '개인 일정을 추가해 학습 계획을 세워보세요.',
+                      style: TextStyle(
+                        fontSize: 13,
+                        color: StudentDensityTokens.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            )
+          else
+            for (final item in schedule)
+              InkWell(
+                onTap: () => onOpenEvent(item),
+                child: Container(
+                  constraints: const BoxConstraints(minHeight: 92),
+                  decoration: const BoxDecoration(
+                    border: Border(
+                      bottom: BorderSide(color: StudentDensityTokens.line),
+                    ),
+                  ),
+                  child: IntrinsicHeight(
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: mobile ? 46 : 52,
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item['start_time']?.toString() ??
+                                    item['time']?.toString() ??
+                                    '—',
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w900,
+                                ),
+                              ),
+                              if (item['end_time'] != null)
+                                Text(
+                                  item['end_time'].toString(),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    color: StudentDensityTokens.muted,
+                                  ),
+                                ),
+                            ],
+                          ),
+                        ),
+                        SizedBox(width: mobile ? 10 : 14),
+                        Container(
+                          width: 2,
+                          margin: const EdgeInsets.symmetric(vertical: 15),
+                          color: const Color(0xFF2F6CF5),
+                        ),
+                        SizedBox(width: mobile ? 10 : 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                item['type']?.toString() ?? '학습',
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w800,
+                                  color: Color(0xFF2F6CF5),
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                item['title']?.toString() ?? '학습 일정',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                item['status']?.toString() ?? '예정',
+                                style: const TextStyle(
+                                  color: StudentDensityTokens.muted,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        if (item['personal_task_id'] != null)
+                          IconButton(
+                            tooltip: '일정 삭제',
+                            onPressed: savingPersonalTask
+                                ? null
+                                : () => onDeletePersonalSchedule?.call(
+                                    item['personal_task_id'].toString(),
+                                  ),
+                            icon: const Icon(Icons.delete_outline, size: 18),
+                          ),
+                        const Icon(
+                          Icons.chevron_right,
+                          size: 18,
+                          color: StudentDensityTokens.muted,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+        ],
       ),
     );
   }
@@ -1203,30 +1547,38 @@ class _MonthlyScheduleCard extends StatelessWidget {
       selectedDate.year,
       selectedDate.month,
     );
-    final leading = first.weekday - 1;
+    final leading = first.weekday % 7;
+    final mobile = MediaQuery.sizeOf(context).width <= 760;
     return Container(
-      padding: const EdgeInsets.all(20),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 15 : 20,
+        mobile ? 15 : 20,
+        mobile ? 15 : 20,
+        26,
+      ),
       decoration: _cardDecoration(),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Expanded(
-                child: Text(
-                  _monthLabel(selectedDate),
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              ),
               _CircleAction(
                 key: const ValueKey('schedule-previous-month'),
                 icon: Icons.chevron_left,
                 onTap: () => onMoveMonth(-1),
               ),
-              const SizedBox(width: 8),
+              SizedBox(width: MediaQuery.sizeOf(context).width <= 390 ? 6 : 12),
+              Expanded(
+                child: Text(
+                  _monthLabel(selectedDate),
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+              SizedBox(width: MediaQuery.sizeOf(context).width <= 390 ? 6 : 12),
               _CircleAction(
                 key: const ValueKey('schedule-next-month'),
                 icon: Icons.chevron_right,
@@ -1234,30 +1586,105 @@ class _MonthlyScheduleCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
+          const SizedBox(height: 20),
+          Row(
+            children: [
+              for (final day in ['일', '월', '화', '수', '목', '금', '토'])
+                Expanded(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 8),
+                    child: Text(
+                      day,
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: StudentDensityTokens.muted,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
           GridView.builder(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
               crossAxisCount: 7,
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
+              mainAxisExtent: 54,
             ),
-            itemCount: leading + days,
+            itemCount: 42,
             itemBuilder: (context, index) {
-              if (index < leading) return const SizedBox.shrink();
+              if (index < leading || index >= leading + days) {
+                final previousDays = DateTime(
+                  selectedDate.year,
+                  selectedDate.month,
+                  0,
+                ).day;
+                final outside = index < leading
+                    ? previousDays - leading + index + 1
+                    : index - leading - days + 1;
+                return Container(
+                  alignment: Alignment.center,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFAFAFA),
+                    border: Border.all(color: const Color(0xFFEEF0F3)),
+                  ),
+                  child: Text(
+                    '$outside',
+                    style: const TextStyle(color: Color(0xFFBCC1C8)),
+                  ),
+                );
+              }
               final day = index - leading + 1;
               final date = DateTime(selectedDate.year, selectedDate.month, day);
               final selected = DateUtils.isSameDay(date, selectedDate);
-              final hasSchedule = schedule.any((item) {
+              final count = schedule.where((item) {
                 final itemDate = _scheduleItemDate(item);
                 return itemDate != null && DateUtils.isSameDay(itemDate, date);
-              });
-              return _MonthDayButton(
-                date: date,
-                selected: selected,
-                hasTask: hasSchedule,
-                onTap: onSelectDate,
+              }).length;
+              return Material(
+                color: selected ? StudentDensityTokens.ink : Colors.white,
+                child: InkWell(
+                  key: ValueKey('schedule-date-${_scheduleDateKey(date)}'),
+                  onTap: () => onSelectDate(date),
+                  child: Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFEEF0F3)),
+                    ),
+                    child: Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        Text(
+                          '$day',
+                          style: TextStyle(
+                            color: selected
+                                ? Colors.white
+                                : StudentDensityTokens.ink,
+                          ),
+                        ),
+                        if (count > 0)
+                          Positioned(
+                            right: 5,
+                            bottom: 4,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 3,
+                              ),
+                              color: const Color(0xFF2F6CF5),
+                              child: Text(
+                                '$count',
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+                ),
               );
             },
           ),
@@ -1279,6 +1706,9 @@ class _CircleAction extends StatelessWidget {
     onPressed: onTap,
     icon: Icon(icon),
     style: IconButton.styleFrom(
+      fixedSize: Size(MediaQuery.sizeOf(context).width <= 390 ? 44 : 48, 48),
+      visualDensity: VisualDensity.standard,
+      shape: const RoundedRectangleBorder(),
       backgroundColor: Colors.white,
       side: const BorderSide(color: Color(0xFFE0E0E2)),
     ),
@@ -1314,24 +1744,26 @@ class _ScheduleLoadingCard extends StatelessWidget {
 }
 
 /// 필요한 변수는 날짜다.
-/// 작동 원리는 영문 월과 연도를 시안 상단 레이블 형식으로 변환하는 것이다.
+/// HTML 일정 헤더의 연·월 표기를 반환한다.
 String _monthLabel(DateTime date) {
-  const months = [
-    'January',
-    'February',
-    'March',
-    'April',
-    'May',
-    'June',
-    'July',
-    'August',
-    'September',
-    'October',
-    'November',
-    'December',
-  ];
-  return '${months[date.month - 1]} ${date.year}';
+  return '${date.year}년 ${date.month}월';
 }
+
+/// HTML time input의 한국어 로컬 표시만 변환한다. 서버에는 24시간 값을 유지한다.
+String _scheduleInputTimeLabel(TimeOfDay time) =>
+    '${time.hour < 12 ? '오전' : '오후'} ${(time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod).toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+
+/// HTML 48px 흰 입력 면을 Flutter 테마의 compact density와 분리한다.
+ButtonStyle _scheduleInputButtonStyle() => OutlinedButton.styleFrom(
+  minimumSize: const Size.fromHeight(48),
+  visualDensity: VisualDensity.standard,
+  shape: const RoundedRectangleBorder(),
+  backgroundColor: Colors.white,
+  foregroundColor: StudentDensityTokens.ink,
+  side: const BorderSide(color: StudentDensityTokens.line),
+  textStyle: const TextStyle(fontSize: 14),
+  padding: const EdgeInsets.symmetric(horizontal: 12),
+);
 
 /// 필요한 변수는 개인 일정 날짜다.
 /// 작동 원리: API 동기화에 사용하는 로컬 시간대의 YYYY-MM-DD 키를 만든다.
@@ -1405,6 +1837,6 @@ String _timeFromDueDate(dynamic value) {
 /// 작동 원리는 모든 일정 섹션에 동일한 흰색 표면·둥근 모서리·얕은 테두리를 제공하는 것이다.
 BoxDecoration _cardDecoration() => BoxDecoration(
   color: Colors.white,
-  borderRadius: BorderRadius.circular(24),
+  borderRadius: BorderRadius.zero,
   border: Border.all(color: const Color(0xFFE1E1E3)),
 );

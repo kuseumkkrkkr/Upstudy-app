@@ -186,7 +186,8 @@ class CourseService {
     Map<String, dynamic> payload;
     try {
       payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
-    } on ApiException {
+    } on ApiException catch (error) {
+      if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       return const <Course>[];
     }
     final data = payload['data'] is Map<String, dynamic>
@@ -213,8 +214,9 @@ class CourseService {
             ? Map<String, dynamic>.from(body['data'] as Map)
             : body;
         courses.add(_courseFromJson(raw));
-      } catch (_) {
-        // Ignore broken assignment records so the rest of the list can render.
+      } on ApiException catch (error) {
+        // Missing legacy records are compatible; failed reads are not empty.
+        if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       }
     }
     return courses;
@@ -278,13 +280,14 @@ class CourseService {
     await ApiClient.instance.invalidateCachePath('/courses');
   }
 
-  static Future<Course> fetchCourse(String courseId) async {
-    final v2 = await _fetchV2Course(courseId);
+  static Future<Course> fetchCourse(String courseId, {bool forceRefresh = false}) async {
+    final v2 = await _fetchV2Course(courseId, forceRefresh: forceRefresh);
     if (v2 != null) return v2;
 
     final uri = ApiContract.uri(ApiPaths.course(courseId));
     final payload = await _getCachedJson(
       uri,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 10),
     );
     if (payload.isEmpty) {
@@ -296,14 +299,7 @@ class CourseService {
   static Future<Map<String, dynamic>> runtimeState(String courseId) async {
     final normalizedId = courseId.trim();
     if (normalizedId.isEmpty) {
-      return const <String, dynamic>{
-        'status': 'in_progress',
-        'pause_reason': '',
-        'curriculum': <String, dynamic>{
-          'enabled': false,
-          'schedule': <dynamic>[],
-        },
-      };
+      throw ArgumentError('실제 코스 ID가 필요합니다.');
     }
 
     final candidates = <Uri>[
@@ -336,6 +332,9 @@ class CourseService {
             ? List<dynamic>.from(data['completed_modules'] as List)
             : const <dynamic>[],
         'module_count': (data['module_count'] as num?)?.toInt() ?? 0,
+        'student_state': data['student_state'] is Map
+            ? Map<String, dynamic>.from(data['student_state'] as Map)
+            : const <String, dynamic>{},
         'curriculum': <String, dynamic>{
           'enabled': curriculum['enabled'] == true,
           'schedule': curriculum['schedule'] is List
@@ -345,14 +344,7 @@ class CourseService {
       };
     }
 
-    return const <String, dynamic>{
-      'status': 'in_progress',
-      'pause_reason': '',
-      'curriculum': <String, dynamic>{
-        'enabled': false,
-        'schedule': <dynamic>[],
-      },
-    };
+    throw StateError('코스 진행 상태를 불러오지 못했습니다. 다시 시도해 주세요.');
   }
 
   /// 필요한 변수는 코스 ID·진도 자료·비율·선택 마지막 동작이다.
@@ -417,11 +409,11 @@ class CourseService {
     );
   }
 
-  static Future<Course?> _fetchV2Course(String courseId) async {
+  static Future<Course?> _fetchV2Course(String courseId, {bool forceRefresh = false}) async {
     final v2Uri = ApiContract.uri(ApiPaths.courseV2(courseId));
     final payload = await _getCachedJson(
       v2Uri,
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 10),
     );
     final raw = payload['data'] is Map<String, dynamic>
@@ -438,7 +430,8 @@ class CourseService {
     Map<String, dynamic> payload;
     try {
       payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 2));
-    } on ApiException {
+    } on ApiException catch (error) {
+      if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       return const <Course>[];
     }
 
@@ -465,8 +458,8 @@ class CourseService {
             lastAction: map['last_action']?.toString(),
           ),
         );
-      } catch (_) {
-        // Ignore broken course records so the rest can load.
+      } on ApiException catch (error) {
+        if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       }
     }
     return courses;
@@ -482,7 +475,8 @@ class CourseService {
     Map<String, dynamic> payload;
     try {
       payload = await _getCachedJson(uri, cacheTtl: const Duration(minutes: 5));
-    } on ApiException {
+    } on ApiException catch (error) {
+      if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       return const <Course>[];
     }
     return _extractCourseItems(payload)
@@ -506,7 +500,8 @@ class CourseService {
         uri,
         cacheTtl: const Duration(minutes: 10),
       );
-    } on ApiException {
+    } on ApiException catch (error) {
+      if (error.statusCode != 404 && error.statusCode != 405) rethrow;
       return const <Course>[];
     }
     final courses = (payload['courses'] as List<dynamic>? ?? [])

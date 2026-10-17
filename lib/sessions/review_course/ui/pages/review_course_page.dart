@@ -9,6 +9,9 @@ import 'package:s11/shared/ui/ios26/ios26_modal.dart';
 import 'package:s11/sessions/review_course/business/review_course_store.dart';
 import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+import 'package:s11/app/student_route_registry.dart';
+import 'package:s11/shared/ui/student_density/student_density.dart';
+import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
@@ -30,9 +33,24 @@ Future<T?> showReviewCoursePage<T>({required BuildContext context}) {
 }
 
 class ReviewCoursePage extends StatefulWidget {
-  const ReviewCoursePage({super.key, this.embedded = false});
+  const ReviewCoursePage({
+    super.key,
+    this.embedded = false,
+    this.initialCourseId,
+    this.initialTaskId,
+    this.startManualSelection = false,
+    this.reviewSnapshotLoader,
+  });
 
   final bool embedded;
+
+  /// Existing snapshot identifiers only; a missing record is not synthesized.
+  final String? initialCourseId;
+  final String? initialTaskId;
+  final bool startManualSelection;
+
+  /// Tests replace reading only. Production retains the existing store initializer.
+  final Future<ReviewCourseSnapshot> Function()? reviewSnapshotLoader;
 
   @override
   State<ReviewCoursePage> createState() => _ReviewCoursePageState();
@@ -44,6 +62,8 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
   ReviewCourse? _selectedCourse;
   bool _loading = true;
   String? _error;
+  bool _initialActionOpened = false;
+  int _detailTab = 0;
 
   @override
   void initState() {
@@ -57,13 +77,57 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
       _error = null;
     });
     try {
-      final snapshot = await _store.generateMissingCourses();
+      final loader =
+          widget.reviewSnapshotLoader ?? _store.generateMissingCourses;
+      final snapshot = await loader();
       if (!mounted) return;
       setState(() {
         _snapshot = snapshot;
         _selectedCourse = _syncSelected(snapshot);
         _loading = false;
       });
+      if (!_initialActionOpened) {
+        if (widget.startManualSelection) {
+          _initialActionOpened = true;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (mounted) unawaited(_createManualCourse());
+          });
+        } else if (widget.initialCourseId != null) {
+          ReviewCourse? course;
+          for (final candidate in snapshot.visibleCourses) {
+            if (candidate.id == widget.initialCourseId) {
+              course = candidate;
+              break;
+            }
+          }
+          ReviewTask? task;
+          if (course != null) {
+            for (final candidate in course.tasks) {
+              if (candidate.id == widget.initialTaskId &&
+                  !candidate.completed) {
+                task = candidate;
+                break;
+              }
+            }
+          }
+          if (course == null ||
+              (widget.initialTaskId != null && task == null)) {
+            setState(() => _error = '저장된 복습 코스 또는 과제를 찾을 수 없습니다.');
+          } else {
+            _initialActionOpened = true;
+            final selectedCourse = course;
+            final selectedTask = task;
+            setState(() => _selectedCourse = selectedCourse);
+            if (selectedTask != null) {
+              WidgetsBinding.instance.addPostFrameCallback((_) {
+                if (mounted) {
+                  unawaited(_startTask(selectedCourse, selectedTask));
+                }
+              });
+            }
+          }
+        }
+      }
     } catch (error) {
       if (!mounted) return;
       setState(() {
@@ -271,26 +335,50 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
       );
     }
 
-    return Scaffold(
-      backgroundColor: _surface,
-      appBar: AppBar(
-        backgroundColor: _green,
-        foregroundColor: Colors.white,
-        title: const Text('복습 코스'),
-        actions: [
-          IconButton(
-            tooltip: '중간복습 하기',
-            onPressed: _createManualCourse,
-            icon: const Icon(Icons.calendar_month),
-          ),
-          IconButton(
-            tooltip: '새로고침',
-            onPressed: _load,
-            icon: const Icon(Icons.refresh),
-          ),
-        ],
-      ),
-      body: _buildContent(),
+    final width = MediaQuery.sizeOf(context).width;
+    return StudentHtmlShell(
+      key: const ValueKey('standalone-review-course-page'),
+      title: '복습 코스',
+      activeRoute: StudentRouteRegistry.byId('home')!.route,
+      railWidth: width > 1040 ? 84 : 72,
+      showContextAside: width > 1040,
+      mobileBackButton: true,
+      onMenu: () {
+        if (Navigator.of(context).canPop()) {
+          Navigator.of(context).pop();
+        } else {
+          Navigator.of(context).pushReplacementNamed(
+            StudentRouteRegistry.byId('wrong-list')!.route,
+          );
+        }
+      },
+      child: _loading
+          ? const Center(child: CircularProgressIndicator())
+          : _error != null
+          ? _ErrorState(message: _error!, onRetry: _load)
+          : _selectedCourse != null
+          ? _ReviewDetailBody(
+              course: _selectedCourse!,
+              selectedTab: _detailTab,
+              onTab: (value) => setState(() => _detailTab = value),
+              onStartTask: (task) =>
+                  unawaited(_startTask(_selectedCourse!, task)),
+              onList: () => Navigator.of(
+                context,
+              ).pushNamed(StudentRouteRegistry.byId('wrong-list')!.route),
+            )
+          : Column(
+              children: [
+                const Padding(
+                  padding: EdgeInsets.all(18),
+                  child: Text(
+                    '실제 복습 코스를 선택해 주세요.',
+                    key: ValueKey('review-course-selection-required'),
+                  ),
+                ),
+                Expanded(child: _buildContent()),
+              ],
+            ),
     );
   }
 
@@ -319,6 +407,368 @@ class _ReviewCoursePageState extends State<ReviewCoursePage> {
       snapshot: snapshot,
       onSelectCourse: (course) => setState(() => _selectedCourse = course),
       onManualReview: _createManualCourse,
+    );
+  }
+}
+
+/// The reference's final renderer contains a toolbar, metrics and item list,
+/// not the obsolete hero/headline declarations earlier in its stylesheet.
+class _ReviewDetailBody extends StatelessWidget {
+  const _ReviewDetailBody({
+    required this.course,
+    required this.selectedTab,
+    required this.onTab,
+    required this.onStartTask,
+    required this.onList,
+  });
+  final ReviewCourse course;
+  final int selectedTab;
+  final ValueChanged<int> onTab;
+  final ValueChanged<ReviewTask> onStartTask;
+  final VoidCallback onList;
+
+  ReviewTask? get nextTask {
+    if (course.status == ReviewCourseStatus.completed) return null;
+    for (final task in course.tasks) {
+      if (task.required && !task.completed && task.id.isNotEmpty) return task;
+    }
+    return null;
+  }
+
+  Widget _surface(Widget child, {Key? key}) => Container(
+    key: key,
+    decoration: BoxDecoration(
+      color: const Color(0xFFFDFDFE),
+      border: Border.all(color: const Color(0x1A09090B)),
+    ),
+    child: child,
+  );
+
+  Widget _action(
+    String label,
+    VoidCallback? onTap,
+    bool mobile, {
+    bool primary = false,
+  }) => SizedBox(
+    height: mobile ? 38 : 42,
+    child: TextButton(
+      onPressed: onTap,
+      style: TextButton.styleFrom(
+        minimumSize: Size.zero,
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        padding: EdgeInsets.symmetric(horizontal: mobile ? 11 : 16),
+        shape: const RoundedRectangleBorder(),
+        side: const BorderSide(color: Color(0xFF09090B)),
+        foregroundColor: primary ? Colors.white : const Color(0xFF09090B),
+        backgroundColor: primary
+            ? const Color(0xFF09090B)
+            : const Color(0xFFFDFDFE),
+        textStyle: const TextStyle(
+          fontSize: 11,
+          height: 1.2,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 0,
+        ),
+      ),
+      child: Row(
+        mainAxisSize: primary && !mobile ? MainAxisSize.max : MainAxisSize.min,
+        mainAxisAlignment: primary
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.center,
+        children: [
+          Text(label),
+          if (primary) ...[
+            const SizedBox(width: 12),
+            const Icon(Icons.arrow_forward, size: 18),
+          ],
+        ],
+      ),
+    ),
+  );
+
+  Widget _toolbar(bool mobile) => _surface(
+    Padding(
+      padding: EdgeInsets.all(mobile ? 5 : 6),
+      child: Row(
+        children: [
+          if (mobile) Expanded(child: _tabs(mobile)) else _tabs(mobile),
+          SizedBox(width: mobile ? 6 : 8),
+          SizedBox(
+            width: mobile ? null : 180,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(minWidth: mobile ? 118 : 180),
+              child: _action(
+                '${course.estimatedMinutes}분 복습 시작',
+                nextTask == null ? null : () => onStartTask(nextTask!),
+                mobile,
+                primary: true,
+              ),
+            ),
+          ),
+          if (!mobile) ...[
+            const SizedBox(width: 9),
+            _action('문제 목록', onList, mobile),
+          ],
+        ],
+      ),
+    ),
+    key: const ValueKey('review-detail-toolbar'),
+  );
+
+  Widget _tabs(bool mobile) => _surface(
+    Row(
+      mainAxisSize: mobile ? MainAxisSize.max : MainAxisSize.min,
+      children: List.generate(3, (index) {
+        final tab = Semantics(
+          selected: selectedTab == index,
+          button: true,
+          child: Container(
+            height: mobile ? 38 : 40,
+            width: mobile ? null : 64,
+            foregroundDecoration: index == 2
+                ? null
+                : const BoxDecoration(
+                    border: Border(right: BorderSide(color: Color(0x1A09090B))),
+                  ),
+            child: TextButton(
+              onPressed: () => onTab(index),
+              style: TextButton.styleFrom(
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                padding: EdgeInsets.symmetric(horizontal: mobile ? 9 : 14),
+                shape: const RoundedRectangleBorder(),
+                backgroundColor: selectedTab == index
+                    ? const Color(0xFF09090B)
+                    : const Color(0xFFFDFDFE),
+                foregroundColor: selectedTab == index
+                    ? Colors.white
+                    : const Color(0xFF71717A),
+                textStyle: const TextStyle(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: 0,
+                ),
+              ),
+              child: Text(['개요', '구성', '기록'][index]),
+            ),
+          ),
+        );
+        return mobile ? Expanded(child: tab) : tab;
+      }),
+    ),
+  );
+
+  Widget _metrics(bool mobile, double viewportWidth) {
+    final target = course.tasks
+        .where((task) => task.isProblemTask)
+        .fold<int>(0, (sum, task) => sum + task.targetQuestionCount);
+    final concepts = {
+      ...course.summaryTags.keys,
+      ...course.tasks.expand((task) => task.tags),
+    };
+    final values = [
+      '$target',
+      '${concepts.length}',
+      '${course.estimatedMinutes}분',
+    ];
+    final size = mobile ? 18.0 : (viewportWidth * .02).clamp(19.0, 28.0);
+    return _surface(
+      Row(
+        children: List.generate(
+          3,
+          (index) => Expanded(
+            child: Container(
+              height: mobile ? 74 : 90,
+              padding: mobile
+                  ? const EdgeInsets.symmetric(horizontal: 10, vertical: 12)
+                  : const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                border: !mobile || index == 2
+                    ? null
+                    : const Border(right: BorderSide(color: Color(0x1A09090B))),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 5),
+                  Text(
+                    values[index],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: size,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: -size * .06,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    ['문제', '개념', '예상'][index],
+                    style: const TextStyle(
+                      fontSize: 10,
+                      color: Color(0xFF71717A),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+      key: const ValueKey('review-detail-metrics'),
+    );
+  }
+
+  String _kind(ReviewTask task) => switch (task.kind) {
+    ReviewTaskKind.redoProblems => '오답',
+    ReviewTaskKind.conceptReading => '교재',
+    ReviewTaskKind.tagSummary => '태그',
+    ReviewTaskKind.stats => '통계',
+    _ => '개념',
+  };
+
+  Widget _list(bool mobile) => _surface(
+    ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: 238),
+      child: Padding(
+        padding: mobile
+            ? const EdgeInsets.symmetric(horizontal: 10, vertical: 6)
+            : const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+        child: Column(
+          children: [
+            for (final task in course.tasks)
+              Material(
+                color: const Color(0xFFFDFDFE),
+                child: InkWell(
+                  key: ValueKey('review-detail-task-${task.id}'),
+                  onTap:
+                      task.completed ||
+                          course.status == ReviewCourseStatus.completed
+                      ? null
+                      : () => onStartTask(task),
+                  child: Container(
+                    constraints: const BoxConstraints(minHeight: 62),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 4,
+                      vertical: 12,
+                    ),
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Color(0x1A09090B)),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: mobile ? 50 : 62,
+                          child: Align(
+                            alignment: Alignment.centerLeft,
+                            child: IntrinsicWidth(
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 8,
+                                ),
+                                height: 28,
+                                alignment: Alignment.center,
+                                color: const Color(0xFFF3F3F5),
+                                child: Text(
+                                  _kind(task),
+                                  style: const TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: mobile ? 9 : 14),
+                        Expanded(
+                          child: Text(
+                            task.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              fontSize: mobile ? 13 : 14,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0,
+                            ),
+                          ),
+                        ),
+                        SizedBox(width: mobile ? 9 : 14),
+                        Container(
+                          constraints: const BoxConstraints(minWidth: 44),
+                          height: 36,
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          alignment: Alignment.center,
+                          decoration: BoxDecoration(
+                            border: Border.all(color: const Color(0x1A09090B)),
+                          ),
+                          child: Text(
+                            task.completed
+                                ? '완료'
+                                : task.required
+                                ? '필수'
+                                : '선택',
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        ),
+      ),
+    ),
+    key: const ValueKey('review-detail-list'),
+  );
+
+  @override
+  Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final mobile = isStudentDensityMobile(context);
+    final padding = mobile
+        ? 10.0
+        : width > 1040
+        ? 38.0
+        : 28.0;
+    return SingleChildScrollView(
+      child: Padding(
+        padding: EdgeInsets.all(padding),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _toolbar(mobile),
+            SizedBox(height: mobile ? 2 : 20),
+            _metrics(mobile, width),
+            SizedBox(height: mobile ? 12 : 18),
+            if (mobile)
+              _list(true)
+            else
+              LayoutBuilder(
+                builder: (_, constraints) => Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Expanded(child: SizedBox()),
+                    const SizedBox(width: 18),
+                    SizedBox(
+                      width: math.max(
+                        230,
+                        (constraints.maxWidth - 18) * .55 / 1.75,
+                      ),
+                      child: _list(false),
+                    ),
+                  ],
+                ),
+              ),
+          ],
+        ),
+      ),
     );
   }
 }

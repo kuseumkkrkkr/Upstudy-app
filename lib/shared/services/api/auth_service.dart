@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'api_client.dart';
 import 'api_contract.dart';
 
 class AuthService {
@@ -52,7 +53,10 @@ class AuthService {
       body: jsonEncode({'username': username, 'password': password}),
     );
     if (response.statusCode != 200) {
-      throw Exception('로그인 실패 (status ${response.statusCode})');
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: _errorDetail(response, fallback: '로그인 실패'),
+      );
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;
@@ -117,7 +121,10 @@ class AuthService {
       }),
     );
     if (response.statusCode != 200 && response.statusCode != 201) {
-      throw Exception(_errorDetail(response, fallback: '회원가입 실패'));
+      throw ApiException(
+        statusCode: response.statusCode,
+        message: _errorDetail(response, fallback: '회원가입 실패'),
+      );
     }
     final payload = jsonDecode(response.body) as Map<String, dynamic>;
     final token = (payload['token'] ?? payload['access_token']) as String?;

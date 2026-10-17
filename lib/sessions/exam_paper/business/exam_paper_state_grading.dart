@@ -217,7 +217,7 @@ mixin _ExamPaperGradingMixin
       return;
     }
 
-    unawaited(_submitExamRatings());
+    await _submitExamRatings();
     final passed = await _completeCourseModuleIfPassed();
     await _openGradingReport(passed: passed);
   }
@@ -246,9 +246,12 @@ mixin _ExamPaperGradingMixin
           quest: quest,
         );
       }
+      final submissionId =
+          'exam:${_examStartedAt.toUtc().millisecondsSinceEpoch}:${item.itemIndex}:$questId';
       final result = await ApiClient.instance.gradeVariantSolve(
         questId: questId,
         selectedIndex: selectedIndex,
+        submissionId: submissionId,
       );
       final isCorrect = result['raw_correct'] == true || result['pass'] == true;
       return ExamGradeResult.success(
@@ -256,6 +259,7 @@ mixin _ExamPaperGradingMixin
         analysis: '',
         warnings: const <String>[],
         isCorrect: isCorrect,
+        gradeProof: result['grade_proof']?.toString(),
         quest: quest,
       );
     }
@@ -312,10 +316,15 @@ mixin _ExamPaperGradingMixin
       'step_correctness': const <dynamic>[],
       'time_weakness': const <dynamic>[],
     };
+    final questId = item.questId?.trim() ?? '';
+    final submissionId =
+        'exam:${_examStartedAt.toUtc().millisecondsSinceEpoch}:${item.itemIndex}:$questId';
     final response = await ApiClient.instance.submitSolveAnalysis(
+      examId: widget.examId,
       payload: payload,
       studentWorkImage: imageBytes,
       heatmapImage: heatmapImage,
+      submissionId: submissionId,
     );
     final analysis = '';
     final stepCorrectness = _resolveStepCorrectness(response: response);
@@ -325,6 +334,7 @@ mixin _ExamPaperGradingMixin
       analysis: analysis,
       warnings: response.warnings,
       isCorrect: isCorrect,
+      gradeProof: response.gradeProof,
       stepCorrectness: stepCorrectness,
       quest: quest,
     );
@@ -792,26 +802,25 @@ mixin _ExamPaperGradingMixin
     final results = _gradeResults.values.toList()
       ..sort((a, b) => a.itemIndex.compareTo(b.itemIndex));
 
-    final completed = await Navigator.of(context).push<bool>(
-      MaterialPageRoute(
-        builder: (_) => ExamGradingReportPage(
-          results: results,
+    final completed = await Navigator.of(context).pushNamed<bool>(
+      AppRoutes.examReport,
+      arguments: ExamReportRouteArguments(
+        results: results,
 
-          totalQuestions: _gradingTotal,
+        totalQuestions: _gradingTotal,
 
-          examId: widget.examId,
-          passRate: widget.passRate.clamp(0, 100),
-          passed: passed,
-          moduleSubmissionRequired: requiresModuleSubmission,
-          moduleSubmissionSucceeded:
-              !requiresModuleSubmission || _courseModuleCompletionSubmitted,
-          onRetryModuleSubmission: requiresModuleSubmission
-              ? () async {
-                  await _completeCourseModuleIfPassed();
-                  return _courseModuleCompletionSubmitted;
-                }
-              : null,
-        ),
+        examId: widget.examId,
+        passRate: widget.passRate.clamp(0, 100),
+        passed: passed,
+        moduleSubmissionRequired: requiresModuleSubmission,
+        moduleSubmissionSucceeded:
+            !requiresModuleSubmission || _courseModuleCompletionSubmitted,
+        onRetryModuleSubmission: requiresModuleSubmission
+            ? () async {
+                await _completeCourseModuleIfPassed();
+                return _courseModuleCompletionSubmitted;
+              }
+            : null,
       ),
     );
     if (completed == true && mounted) {
@@ -833,7 +842,7 @@ mixin _ExamPaperGradingMixin
 
   Future<void> _submitExamRatings() async {
     if (_gradeResults.isEmpty) return;
-    final futures = <Future<void>>[];
+    final futures = <Future<bool>>[];
     for (final result in _gradeResults.values) {
       if (result.quest == null) continue;
       if (result.isCorrect == null) continue;
@@ -845,22 +854,29 @@ mixin _ExamPaperGradingMixin
       final tags = (info['hash_tag'] as List<dynamic>? ?? [])
           .map((tag) => tag.toString())
           .toList();
-      futures.add(
-        ApiClient.instance
-            .submitRating(
-              questId: questId,
-              isCorrect: result.isCorrect ?? false,
-              tags: tags,
-              stepCorrectness: result.stepCorrectness,
-            )
-            .then(RatingStore.updateFromRating)
-            .catchError((_) {}),
-      );
+      futures.add(() async {
+        try {
+          final rating = await ApiClient.instance.submitRating(
+            questId: questId,
+            isCorrect: result.isCorrect ?? false,
+            tags: tags,
+            stepCorrectness: result.stepCorrectness,
+            submissionId:
+                'exam:${_examStartedAt.toUtc().millisecondsSinceEpoch}:${result.itemIndex}:$questId',
+            gradeProof: result.gradeProof ?? '',
+          );
+          RatingStore.updateFromRating(rating);
+          return true;
+        } catch (_) {
+          return false;
+        }
+      }());
     }
     if (futures.isEmpty) return;
-    try {
-      await Future.wait(futures);
-    } catch (_) {}
+    final saved = await Future.wait(futures);
+    if (saved.any((success) => !success) && mounted) {
+      _showMessage('채점 결과는 확인했지만 레이팅 저장에 실패한 문제가 있어요.');
+    }
   }
 }
 

@@ -46,7 +46,6 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   Timer? _pollTimer;
   Timer? _examCountdownTimer;
   int? _remainingSeconds;
-  bool _timerVisible = true;
   final DateTime _examStartedAt = DateTime.now();
   bool _courseModuleCompletionSubmitted = false;
   bool _continueLoaded = false;
@@ -62,10 +61,15 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
   int _currentPageIndex = 0;
 
   int _focusedQuestionIndex = 0;
+
   int? _focusedExamQuestionKey;
+
   final Set<int> _examQuestionsMarkedForReview = <int>{};
 
   bool _sidebarVisible = false;
+
+  /// 모바일 도구막대의 남은 시간 텍스트 표시 여부. 숨겨도 카운트다운은 계속 진행한다.
+  bool _timerVisible = true;
 
   Size? _viewportSize;
 
@@ -170,13 +174,22 @@ abstract class _ExamPaperStateBase extends State<ExamPaperPage> {
         kind: 'exam',
         targetId: examId,
       );
-      if (state == null) return;
+      if (!mounted || widget.examId?.trim() != examId || state == null) return;
       // 빈 스트로크라도 이어하기로 불러와 바로 적용할 수 있도록 허용
       _applyContinueStrokes(state.strokes);
       _continueLoaded = true;
       setState(() {});
     } catch (_) {
-      // ignore load failures
+      if (!mounted || widget.examId?.trim() != examId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('이어하기 필기를 불러오지 못했어요. 현재 필기는 유지됩니다.'),
+          action: SnackBarAction(
+            label: '다시 시도',
+            onPressed: () => unawaited(_loadContinueStrokesIfAny()),
+          ),
+        ),
+      );
     }
   }
 

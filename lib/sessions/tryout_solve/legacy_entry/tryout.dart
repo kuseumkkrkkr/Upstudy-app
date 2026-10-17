@@ -8,6 +8,7 @@ import 'package:flutter/rendering.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_analysis_page.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/batch_grading_report_page.dart';
 import 'package:s11/sessions/tryout_solve/ui/pages/solve_debug_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';

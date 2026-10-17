@@ -12,12 +12,17 @@ import 'package:s11/sessions/textbook/ui/pages/book_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/server_chat_page.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 
+/// 서로 다른 HTML 화면을 같은 실제 문제 모델로 표시한다.
+enum FlowViewScene { solution, overview }
+
 class FlowViewPage extends StatefulWidget {
   final Map<String, dynamic> quest;
   final String title;
   final List<Map<String, dynamic>>? stepCorrectness;
   final bool sharedMode;
   final SharedMeta? sharedMeta;
+  final FlowViewScene scene;
+  final int? problemIndex, problemCount;
 
   const FlowViewPage({
     super.key,
@@ -26,6 +31,9 @@ class FlowViewPage extends StatefulWidget {
     this.stepCorrectness,
     this.sharedMode = false,
     this.sharedMeta,
+    this.scene = FlowViewScene.solution,
+    this.problemIndex,
+    this.problemCount,
   });
 
   @override
@@ -51,6 +59,7 @@ class SharedMeta {
 }
 
 class _FlowViewPageState extends State<FlowViewPage> {
+  late FlowViewScene _scene;
   late final _FlowGraph _graph;
   _FlowNode? _selected;
   late final Map<String, _FlowNodeState> _nodeStates;
@@ -92,6 +101,7 @@ class _FlowViewPageState extends State<FlowViewPage> {
   @override
   void initState() {
     super.initState();
+    _scene = widget.sharedMode ? FlowViewScene.solution : widget.scene;
     _graph = _FlowGraphBuilder().build(widget.quest['solves']);
     _nodeStates = _buildNodeStates(widget.stepCorrectness);
     _allStepsCorrect = _areAllStepsCorrect(widget.stepCorrectness);
@@ -262,66 +272,642 @@ class _FlowViewPageState extends State<FlowViewPage> {
 
   @override
   Widget build(BuildContext context) {
-    final questData = widget.quest['data'] as Map<String, dynamic>? ?? {};
-    final questTitleBlocks = parseContentBlocks(questData['quest_title']);
-    final questAnswerBlocks = parseContentBlocks(questData['quest_answer']);
-    final questAnswerRiddle = parseContentBlocks(questData['answer_riddle']);
-    final allFormulas = questData['all_formulas'];
-    final flow = Stack(
-      children: [
-        _fullScreen
-            ? _buildFocusWorkspace(
-                questTitleBlocks,
-                questAnswerBlocks,
-                questAnswerRiddle,
-              )
-            : Column(
+    return _scene == FlowViewScene.overview && !widget.sharedMode
+        ? _buildAtlasOverview()
+        : _buildAtlasSolution();
+  }
+
+  /// 실제 parser 결과를 그대로 표시하고 shell/질문/캔버스를 HTML graph 장면에 맞춘다.
+  Widget _buildAtlasSolution() {
+    final raw = widget.quest['data'];
+    final data = raw is Map ? raw : const {};
+    final title = parseContentBlocks(data['quest_title']);
+    final numbered =
+        widget.problemIndex != null &&
+        widget.problemCount != null &&
+        widget.problemIndex! > 0 &&
+        widget.problemCount! >= widget.problemIndex!;
+    return Scaffold(
+      backgroundColor: const Color(0xFFE7E7E9),
+      body: SafeArea(
+        child: Center(
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              maxWidth: _fullScreen ? double.infinity : 620,
+            ),
+            child: ColoredBox(
+              color: const Color(0xFFFDFDFE),
+              child: Column(
+                key: ValueKey(
+                  widget.sharedMode ? 'shared-flow-root' : 'solution-flow-root',
+                ),
                 children: [
-                  _buildFlowChrome(),
+                  Container(
+                    height: 64,
+                    decoration: const BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(color: Color(0xFFDEDEE2)),
+                      ),
+                    ),
+                    child: Row(
+                      children: [
+                        SizedBox(
+                          width: 58,
+                          child: IconButton(
+                            tooltip: '이전 화면으로',
+                            onPressed: _returnToPreviousPage,
+                            icon: const Icon(Icons.chevron_left, size: 20),
+                          ),
+                        ),
+                        Expanded(
+                          child: Text(
+                            widget.sharedMode ? '공유 Flow' : '해설 Flow',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ),
+                        SizedBox(
+                          width: 58,
+                          child: Text(
+                            numbered
+                                ? '${widget.problemIndex} / ${widget.problemCount}'
+                                : widget.sharedMode
+                                ? '공유'
+                                : '풀이',
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                   Expanded(
-                    child: _buildFlowWorkspace(
-                      questTitleBlocks,
-                      questAnswerBlocks,
-                      questAnswerRiddle,
+                    child: SingleChildScrollView(
+                      child: Column(
+                        children: [
+                          if (!_fullScreen)
+                            Container(
+                              key: const ValueKey('solution-question-strip'),
+                              constraints: const BoxConstraints(minHeight: 72),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 17,
+                                vertical: 14,
+                              ),
+                              decoration: const BoxDecoration(
+                                border: Border(
+                                  bottom: BorderSide(color: Color(0xFFDEDEE2)),
+                                ),
+                              ),
+                              child: Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  SizedBox(
+                                    width: 36,
+                                    child: TextButton(
+                                      onPressed: _showAtlasProblemSheet,
+                                      style: TextButton.styleFrom(
+                                        visualDensity: VisualDensity.standard,
+                                        minimumSize: const Size(34, 26),
+                                        tapTargetSize:
+                                            MaterialTapTargetSize.shrinkWrap,
+                                        padding: EdgeInsets.zero,
+                                        backgroundColor: const Color(
+                                          0xFF111113,
+                                        ),
+                                        foregroundColor: Colors.white,
+                                        shape: const RoundedRectangleBorder(),
+                                        textStyle: Theme.of(context)
+                                            .textTheme
+                                            .labelSmall!
+                                            .copyWith(
+                                              fontSize: 10,
+                                              fontWeight: FontWeight.w900,
+                                            ),
+                                      ),
+                                      child: Text(
+                                        widget.sharedMode ? '공유' : '문제',
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 11),
+                                  Expanded(
+                                    child: title.isEmpty
+                                        ? const Text(
+                                            '문제 정보가 없습니다.',
+                                            style: TextStyle(fontSize: 13),
+                                          )
+                                        : ContentBlocksView(
+                                            blocks: title,
+                                            textStyle: const TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w700,
+                                              height: 1.42,
+                                            ),
+                                            latexStyle: const TextStyle(
+                                              fontSize: 16,
+                                            ),
+                                            inline: true,
+                                          ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          _buildAtlasGraphViewport(),
+                        ],
+                      ),
                     ),
                   ),
                 ],
               ),
-        if (widget.sharedMode && _formulaModalVisible)
-          Positioned(
-            left: _formulaModalOffset.dx,
-            top: _formulaModalOffset.dy,
-            child: Draggable(
-              feedback: _FormulaModal(
-                allFormulas: allFormulas?.toString() ?? '',
-                onClose: _toggleFormulaModal,
-                isPreview: true,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAtlasGraphViewport() => LayoutBuilder(
+    builder: (context, constraints) {
+      final width = math.max(constraints.maxWidth, _graph.size.width);
+      final height = math.max(760.0, _graph.size.height);
+      return SizedBox(
+        key: const ValueKey('solution-flow-viewport'),
+        height: height,
+        child: ColoredBox(
+          color: const Color(0xFFF7F7F8),
+          child: Stack(
+            children: [
+              const Positioned.fill(
+                child: CustomPaint(painter: _FlowDotGridPainter()),
               ),
-              childWhenDragging: const SizedBox.shrink(),
-              onDraggableCanceled: (_, offset) =>
-                  setState(() => _formulaModalOffset = offset),
-              child: _FormulaModal(
-                allFormulas: allFormulas?.toString() ?? '',
-                onClose: _toggleFormulaModal,
+              if (_graph.nodes.isEmpty)
+                const Center(child: Text('No flow data.'))
+              else
+                InteractiveViewer(
+                  transformationController: _canvasController,
+                  constrained: false,
+                  minScale: .6,
+                  maxScale: 1.8,
+                  boundaryMargin: const EdgeInsets.all(100),
+                  child: SizedBox(
+                    width: width,
+                    height: height,
+                    child: Align(
+                      alignment: Alignment.topCenter,
+                      child: _FlowCanvas(
+                        graph: _graph,
+                        selected: _selected,
+                        nodeStates: _nodeStates,
+                        onNodeTap: _showAtlasNodeSheet,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        ),
+      );
+    },
+  );
+
+  /// 문제 정보/기존 작업은 별도 읽기 시트에서 유지하고 graph 기본 화면을 덮지 않는다.
+  void _showAtlasProblemSheet() {
+    final raw = widget.quest['data'];
+    final data = raw is Map
+        ? Map<String, dynamic>.from(raw)
+        : <String, dynamic>{};
+    _showAtlasSheet(
+      Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (widget.sharedMeta != null)
+            _buildSharedMetaCard(widget.sharedMeta!),
+          _buildLeftPanel(
+            parseContentBlocks(data['quest_title']),
+            parseContentBlocks(data['quest_answer']),
+            parseContentBlocks(data['answer_riddle']),
+          ),
+          _buildFlowChrome(),
+          Row(
+            children: [
+              IconButton(
+                tooltip: '축소',
+                onPressed: () => _setCanvasScale(_canvasScale - .2),
+                icon: const Icon(Icons.remove),
+              ),
+              Text('${(_canvasScale * 100).round()}%'),
+              IconButton(
+                tooltip: '확대',
+                onPressed: () => _setCanvasScale(_canvasScale + .2),
+                icon: const Icon(Icons.add),
+              ),
+              TextButton(
+                onPressed: _resetCanvasScale,
+                child: const Text('초기화'),
+              ),
+              IconButton(
+                tooltip: '전체화면',
+                onPressed: _toggleFullScreen,
+                icon: const Icon(Icons.fullscreen),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showAtlasNodeSheet(_FlowNode node) {
+    setState(() => _selected = node);
+    final state = _nodeStates[node.id] ?? _FlowNodeState.normal;
+    _showAtlasSheet(
+      Padding(
+        padding: const EdgeInsets.fromLTRB(19, 8, 19, 18),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Center(
+              child: Container(
+                width: 38,
+                height: 4,
+                color: const Color(0xFFD4D4D8),
+              ),
+            ),
+            const SizedBox(height: 9),
+            SizedBox(
+              height: 48,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      state == _FlowNodeState.correct
+                          ? '맞은 단계'
+                          : state == _FlowNodeState.incorrect
+                          ? '다시 볼 단계'
+                          : state == _FlowNodeState.dim
+                          ? '이후 단계'
+                          : '풀이 노드',
+                      style: const TextStyle(
+                        color: Color(0xFF2E7D57),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ],
+              ),
+            ),
+            ContentBlocksView(
+              blocks: node.flow,
+              textStyle: const TextStyle(
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                letterSpacing: -.99,
+              ),
+              latexStyle: const TextStyle(fontSize: 22),
+            ),
+            const SizedBox(height: 8),
+            if (state != _FlowNodeState.correct)
+              _atlasNodeDetailRow('도움말', node.hintRiddle),
+            if (state == _FlowNodeState.correct ||
+                state == _FlowNodeState.normal)
+              _atlasNodeDetailRow(
+                widget.sharedMode ? '공유 풀이' : '공식 풀이',
+                node.answerRiddle,
+              ),
+            _buildConceptRow(node.hashTags),
+            const SizedBox(height: 16),
+            FilledButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                _openInstantChat(
+                  node.flow,
+                  node.answerRiddle,
+                  widget.quest['data'] is Map
+                      ? widget.quest['data']['all_formulas']
+                      : null,
+                );
+              },
+              style: FilledButton.styleFrom(
+                visualDensity: VisualDensity.standard,
+                minimumSize: const Size.fromHeight(52),
+                backgroundColor: const Color(0xFF111113),
+                foregroundColor: Colors.white,
+                shape: const RoundedRectangleBorder(),
+              ),
+              child: const Text('AI 튜터에 질문하기'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _atlasNodeDetailRow(String label, List<ContentBlock> blocks) =>
+      Container(
+        padding: const EdgeInsets.symmetric(vertical: 13),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Color(0xFFDEDEE2))),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            SizedBox(
+              width: 76,
+              child: Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 11,
+                  color: Color(0xFF71717A),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: blocks.isEmpty
+                  ? const Text(
+                      '미제공',
+                      style: TextStyle(fontSize: 13, color: Color(0xFF71717A)),
+                    )
+                  : ContentBlocksView(
+                      blocks: blocks,
+                      textStyle: const TextStyle(fontSize: 13, height: 1.45),
+                      latexStyle: const TextStyle(fontSize: 13),
+                      inline: true,
+                    ),
+            ),
+          ],
+        ),
+      );
+
+  void _showAtlasSheet(Widget child) {
+    showDialog<void>(
+      context: context,
+      barrierColor: const Color(0x7A09090B),
+      builder: (context) => Dialog(
+        alignment: Alignment.bottomCenter,
+        insetPadding: EdgeInsets.zero,
+        backgroundColor: const Color(0xFFFDFDFE),
+        surfaceTintColor: Colors.transparent,
+        elevation: 0,
+        shape: const RoundedRectangleBorder(),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(
+            maxWidth: 620,
+            maxHeight: MediaQuery.sizeOf(context).height * .86,
+          ),
+          child: SingleChildScrollView(child: child),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAtlasOverview() {
+    final width = MediaQuery.sizeOf(context).width;
+    final mobile = width <= 720;
+    final nodes = _graph.nodes.values.toList()
+      ..sort((a, b) => _nodeIndex(a.id).compareTo(_nodeIndex(b.id)));
+    final firstWrong = nodes.indexWhere(
+      (node) => _nodeStates[node.id] == _FlowNodeState.incorrect,
+    );
+    return StudentHtmlShell(
+      key: const ValueKey('flow-overview-root'),
+      title: '풀이 흐름',
+      railWidth: width > 1040 ? 84 : 72,
+      reserveContextTrack: width > 1040,
+      onMenu: _returnToPreviousPage,
+      mobileBackButton: true,
+      child: SingleChildScrollView(
+        padding: EdgeInsets.all(
+          mobile
+              ? 10
+              : width > 1040
+              ? 38
+              : 28,
+        ),
+        child: Column(
+          children: [
+            _atlasOverviewToolbar(mobile),
+            SizedBox(height: mobile ? 2 : 20),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  flex: 100,
+                  child: _atlasOverviewMap(nodes, firstWrong, mobile),
+                ),
+                if (!mobile) ...[
+                  const SizedBox(width: 18),
+                  Expanded(
+                    flex: 42,
+                    child: Container(
+                      key: const ValueKey('flow-overview-metrics'),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFDFDFE),
+                        border: Border.all(color: const Color(0x1A09090B)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _atlasMetric('${nodes.length}', '단계'),
+                          _atlasMetric(
+                            firstWrong < 0 ? '없음' : '${firstWrong + 1}단계',
+                            '막힘',
+                          ),
+                          _atlasMetric('미제공', '다시 시도'),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _atlasOverviewToolbar(bool mobile) => Container(
+    height: mobile ? 52 : 56,
+    padding: EdgeInsets.all(mobile ? 5 : 6),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFDFDFE),
+      border: Border.all(color: const Color(0x1A09090B)),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Row(
+            children: [
+              Expanded(child: _atlasTab('내 풀이', true, null)),
+              Expanded(child: _atlasTab('비교', false, null)),
+              Expanded(
+                child: _atlasTab(
+                  '해설',
+                  false,
+                  () => setState(() => _scene = FlowViewScene.solution),
+                ),
+              ),
+            ],
+          ),
+        ),
+        SizedBox(width: mobile ? 6 : 8),
+        FilledButton(
+          onPressed: null,
+          style: FilledButton.styleFrom(
+            minimumSize: Size(mobile ? 118 : 180, mobile ? 38 : 42),
+            visualDensity: VisualDensity.standard,
+            shape: const RoundedRectangleBorder(),
+          ),
+          child: const Text('다음 문제  →'),
+        ),
+        if (!mobile) ...[
+          const SizedBox(width: 8),
+          OutlinedButton(
+            onPressed: _returnToPreviousPage,
+            style: OutlinedButton.styleFrom(
+              visualDensity: VisualDensity.standard,
+              shape: const RoundedRectangleBorder(),
+            ),
+            child: const Text('내 풀이 다시 보기'),
+          ),
+        ],
+      ],
+    ),
+  );
+
+  Widget _atlasOverviewMap(
+    List<_FlowNode> nodes,
+    int firstWrong,
+    bool mobile,
+  ) => Container(
+    key: const ValueKey('flow-overview-map'),
+    padding: EdgeInsets.all(mobile ? 12 : 22),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFDFDFE),
+      border: Border.all(color: const Color(0x1A09090B)),
+    ),
+    child: nodes.isEmpty
+        ? const Padding(
+            padding: EdgeInsets.all(24),
+            child: Text('No flow data.'),
+          )
+        : Column(
+            children: List.generate(
+              nodes.length,
+              (index) => Column(
+                children: [
+                  _atlasOverviewRow(nodes[index], index, index == firstWrong),
+                  if (index < nodes.length - 1)
+                    const SizedBox(
+                      height: 28,
+                      child: Icon(Icons.arrow_downward, size: 20),
+                    ),
+                ],
               ),
             ),
           ),
-      ],
-    );
-    if (_fullScreen) {
-      return Scaffold(
-        backgroundColor: StudentDensityTokens.background,
-        body: SafeArea(child: flow),
+  );
+
+  Widget _atlasOverviewRow(_FlowNode node, int index, bool wrong) => Container(
+    constraints: const BoxConstraints(minHeight: 59),
+    decoration: BoxDecoration(
+      color: wrong ? const Color(0xFFF3F3F5) : const Color(0xFFFDFDFE),
+      border: Border(
+        left: BorderSide(
+          color: wrong ? const Color(0xFF111113) : const Color(0x1A09090B),
+          width: wrong ? 4 : 1,
+        ),
+        top: const BorderSide(color: Color(0x1A09090B)),
+        right: const BorderSide(color: Color(0x1A09090B)),
+        bottom: const BorderSide(color: Color(0x1A09090B)),
+      ),
+    ),
+    child: TextButton(
+      onPressed: () => _showAtlasNodeSheet(node),
+      style: TextButton.styleFrom(
+        visualDensity: VisualDensity.standard,
+        padding: const EdgeInsets.all(16),
+        foregroundColor: const Color(0xFF09090B),
+        shape: const RoundedRectangleBorder(),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 50,
+            child: Text(
+              '${index + 1}'.padLeft(2, '0'),
+              style: const TextStyle(fontSize: 11, color: Color(0xFF71717A)),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: ContentBlocksView(
+              blocks: node.flow,
+              textStyle: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+              ),
+              latexStyle: const TextStyle(fontSize: 14),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _atlasTab(String title, bool active, VoidCallback? onTap) =>
+      TextButton(
+        onPressed:
+            onTap ?? (active ? () => setState(() => _selected = null) : null),
+        style: TextButton.styleFrom(
+          visualDensity: VisualDensity.standard,
+          backgroundColor: active
+              ? const Color(0xFF09090B)
+              : const Color(0xFFFDFDFE),
+          foregroundColor: active ? Colors.white : const Color(0xFF71717A),
+          shape: const RoundedRectangleBorder(),
+          padding: EdgeInsets.zero,
+          textStyle: Theme.of(context).textTheme.labelSmall!.copyWith(
+            fontSize: 10,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        child: Text(title),
       );
-    }
-    return StudentHtmlShell(
-      title: '풀이 흐름 분석',
-      activeRoute: '/wrong_answers',
-      showContextAside: true,
-      onMenu: _returnToPreviousPage,
-      child: flow,
-    );
-  }
+  Widget _atlasMetric(String value, String label) => Padding(
+    padding: const EdgeInsets.fromLTRB(0, 10, 0, 28),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          value,
+          style: const TextStyle(fontSize: 28, fontWeight: FontWeight.w900),
+        ),
+        const SizedBox(height: 5),
+        Text(
+          label,
+          style: const TextStyle(fontSize: 10, color: Color(0xFF71717A)),
+        ),
+      ],
+    ),
+  );
 
   /// 필요한 변수는 문제·정답 블록과 현재 화면 폭이다.
   /// 작동 원리는 세로 길이는 페이지 스크롤에 맡기고, 카드형 좌우 정보는 긴 Flow를 읽는 동안 같은 문맥으로 따라오게 배치하는 것이다.
@@ -871,7 +1457,13 @@ class _FlowViewPageState extends State<FlowViewPage> {
   }
 
   void _toggleFormulaModal() {
-    setState(() => _formulaModalVisible = !_formulaModalVisible);
+    final data = widget.quest['data'];
+    _showAtlasSheet(
+      _FormulaModal(
+        allFormulas: data is Map ? data['all_formulas']?.toString() ?? '' : '',
+        onClose: () => Navigator.of(context).pop(),
+      ),
+    );
   }
 
   Widget _buildSharedAnalysisCard(Map<String, dynamic> questData) {
@@ -1380,39 +1972,88 @@ class _FlowNodeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final baseBorder = selected ? Colors.black : const Color(0xFFD8D8DC);
-    final style = _NodeStyle.fromState(state, baseBorder);
-    return GestureDetector(
-      onTap: onTap,
-      child: Opacity(
-        opacity: style.opacity,
+    final correct = state == _FlowNodeState.correct;
+    final wrong = state == _FlowNodeState.incorrect;
+    final dim = state == _FlowNodeState.dim;
+    final marker = correct
+        ? const Color(0xFF2E7D57)
+        : wrong
+        ? const Color(0xFFA33434)
+        : const Color(0xFFB8B8BF);
+    final detail = correct || state == _FlowNodeState.normal
+        ? node.answerRiddle
+        : node.hintRiddle;
+    return Material(
+      color: dim ? const Color(0xFFEEEEF0) : const Color(0xFFFDFDFE),
+      child: InkWell(
+        onTap: onTap,
         child: Container(
-          padding: const EdgeInsets.all(8),
+          key: ValueKey('flow-node-${node.id}'),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: style.background,
-            borderRadius: BorderRadius.circular(10),
-            border: Border.all(color: style.border, width: selected ? 2 : 1),
-            boxShadow: const [
-              BoxShadow(
-                color: Color(0x12000000),
-                blurRadius: 8,
-                offset: Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Center(
-            child: ClipRect(
-              child: ContentBlocksView(
-                blocks: node.flow.isEmpty
-                    ? [const ContentBlock(type: 'text', content: '-')]
-                    : node.flow,
-                textStyle: const TextStyle(fontSize: 12, height: 1.3),
-                latexStyle: const TextStyle(fontSize: 12, height: 1.3),
-                textAlign: TextAlign.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                spacing: 2,
-              ),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xFF111113)
+                  : const Color(0xFFBABAC1),
             ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              SizedBox(
+                height: 28,
+                child: Align(
+                  alignment: Alignment.topLeft,
+                  child: Container(
+                    width: 24,
+                    height: 24,
+                    color: marker,
+                    alignment: Alignment.center,
+                    child: Text(
+                      correct
+                          ? '✓'
+                          : wrong
+                          ? '×'
+                          : '·',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 3),
+              ContentBlocksView(
+                blocks: node.flow,
+                textStyle: TextStyle(
+                  fontSize: 14,
+                  height: 1.35,
+                  fontWeight: FontWeight.w700,
+                  color: dim
+                      ? const Color(0xFF8E8E96)
+                      : const Color(0xFF111113),
+                ),
+                latexStyle: const TextStyle(fontSize: 14),
+              ),
+              if (detail.isNotEmpty) ...[
+                const SizedBox(height: 3),
+                Expanded(
+                  child: ClipRect(
+                    child: ContentBlocksView(
+                      blocks: detail,
+                      textStyle: const TextStyle(
+                        fontSize: 11,
+                        height: 1.35,
+                        color: Color(0xFF71717A),
+                      ),
+                      latexStyle: const TextStyle(fontSize: 11),
+                    ),
+                  ),
+                ),
+              ],
+            ],
           ),
         ),
       ),
@@ -1515,7 +2156,7 @@ class _FlowEdgePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = Colors.black26
+      ..color = const Color(0xFF74747D)
       ..strokeWidth = 2
       ..style = PaintingStyle.stroke;
 
@@ -1542,18 +2183,15 @@ class _FlowEdgePainter extends CustomPainter {
         from.dy + fromSize.height,
       );
       final end = Offset(to.dx + toSize.width / 2, to.dy);
-      final controlDistance = (end.dy - start.dy).abs() * .52;
-      final path = Path()
-        ..moveTo(start.dx, start.dy)
-        ..cubicTo(
-          start.dx,
-          start.dy + controlDistance,
-          end.dx,
-          end.dy - controlDistance,
-          end.dx,
-          end.dy,
+      canvas.drawLine(start, end, paint);
+      final angle = math.atan2(end.dy - start.dy, end.dx - start.dx);
+      for (final side in [-.75, .75]) {
+        canvas.drawLine(
+          end,
+          end - Offset(math.cos(angle + side) * 7, math.sin(angle + side) * 7),
+          paint,
         );
-      canvas.drawPath(path, paint);
+      }
     }
   }
 
@@ -1709,14 +2347,15 @@ class _FlowGraph {
 }
 
 class _FlowGraphBuilder {
-  static const double nodeWidth = 220;
-  static const double nodeMinHeight = 80;
-  static const double nodePadding = 8;
-  static const double nodeTextFontSize = 12;
-  static const double nodeTextLineHeight = 1.3;
-  static const double horizontalGap = 140;
-  static const double verticalGap = 90;
-  static const double canvasPadding = 32;
+  static const double nodeWidth = 156;
+  static const double nodeMinHeight = 112;
+  static const double nodePadding = 12;
+  static const double nodeTextFontSize = 14;
+  static const double nodeTextLineHeight = 1.35;
+  // Existing branch columns are two units apart: 128px units give 256px lanes.
+  static const double horizontalGap = -28;
+  static const double verticalGap = 84;
+  static const double canvasPadding = 4;
 
   int _counter = 0;
 
@@ -1749,33 +2388,37 @@ class _FlowGraphBuilder {
       rowHeights.putIfAbsent(row, () => nodeMinHeight);
     }
     final rowOffsets = <int, double>{};
-    var cursorY = canvasPadding;
+    var cursorY = 24.0;
     for (var row = 0; row < rowCount; row++) {
       rowOffsets[row] = cursorY;
       cursorY += rowHeights[row]! + verticalGap;
     }
 
+    final columnCount = metrics.maxCol - metrics.minCol + 1;
+    final contentWidth =
+        columnCount * nodeWidth +
+        (columnCount - 1) * horizontalGap +
+        canvasPadding * 2;
+    final width = math.max(420.0, contentWidth);
+    final horizontalOffset = (width - contentWidth) / 2;
     final positions = <String, Offset>{};
     for (final entry in gridPositions.entries) {
       final col = entry.value.col - metrics.minCol;
       final row = entry.value.row;
       positions[entry.key] = Offset(
-        canvasPadding + col * (nodeWidth + horizontalGap),
+        canvasPadding + horizontalOffset + col * (nodeWidth + horizontalGap),
         rowOffsets[row] ?? canvasPadding,
       );
     }
 
-    final columnCount = metrics.maxCol - metrics.minCol + 1;
-    final width =
-        columnCount * nodeWidth +
-        (columnCount - 1) * horizontalGap +
-        canvasPadding * 2;
     final totalRowHeight = rowHeights.values.fold(
       0.0,
       (sum, height) => sum + height,
     );
-    final height =
-        totalRowHeight + (rowCount - 1) * verticalGap + canvasPadding * 2;
+    final height = math.max(
+      760.0,
+      totalRowHeight + (rowCount - 1) * verticalGap + 48,
+    );
     final nodeSizes = {for (final node in allNodes.values) node.id: node.size};
     return _FlowGraph(
       nodes: allNodes,

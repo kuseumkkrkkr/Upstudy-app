@@ -95,6 +95,7 @@ class AIFlowApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       title: 'AIFlow',
       theme: _studentDensityTheme(),
+      builder: (context, child) => StudentMobileReadability(child: child ?? const SizedBox.shrink()),
       initialRoute: initialToken.isNotEmpty
           ? AppRoutes.studentDashboard
           : AppRoutes.landing,
@@ -114,6 +115,8 @@ ThemeData _studentDensityTheme() {
   );
   return ThemeData(
     useMaterial3: true,
+    // Keep HTML-sized controls identical on desktop and mobile platforms.
+    visualDensity: VisualDensity.standard,
     fontFamily: 'Noto Sans KR',
     colorScheme: scheme,
     scaffoldBackgroundColor: StudentDensityTokens.background,

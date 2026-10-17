@@ -1,3 +1,5 @@
+import 'dart:math' as math;
+
 import 'package:flutter/material.dart';
 
 import 'package:s11/shared/business/repositories/activity_store.dart';
@@ -41,10 +43,9 @@ class HtmlHomeDashboard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final hero = _HtmlHomeHero(
+    final hero = _HtmlStudyMateHero(
       username: username,
       activeCourse: activeCourse,
-      onResume: onResume,
     );
     final actions = _HtmlHomeActions(
       onResume: onResume,
@@ -78,7 +79,6 @@ class HtmlHomeDashboard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           top,
-          const SizedBox(height: 10),
           _HtmlMyDashboard(
             todayTaskCount: todayTaskCount,
             onAction: onDashboardAction,
@@ -89,27 +89,51 @@ class HtmlHomeDashboard extends StatelessWidget {
   }
 }
 
-class _HtmlHomeHero extends StatelessWidget {
-  const _HtmlHomeHero({
+class _HtmlStudyMateHero extends StatefulWidget {
+  const _HtmlStudyMateHero({
     required this.username,
     required this.activeCourse,
-    required this.onResume,
   });
 
   final String? username;
   final Course? activeCourse;
-  final VoidCallback onResume;
+  @override
+  State<_HtmlStudyMateHero> createState() => _HtmlStudyMateHeroState();
+}
+
+class _HtmlStudyMateHeroState extends State<_HtmlStudyMateHero> {
+  bool _cheered = false;
+
+  void _requestCheer() {
+    if (_cheered) return;
+    setState(() => _cheered = true);
+  }
 
   @override
   Widget build(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final name = username?.trim().isNotEmpty == true ? username!.trim() : '사용자';
+    final viewportWidth = MediaQuery.sizeOf(context).width;
+    final activeCourse = widget.activeCourse;
     final course = activeCourse?.title.trim();
-    final progress = activeCourse == null
-        ? null
-        : activeCourse!.progress.clamp(0.0, 1.0).toDouble();
+    final progress = activeCourse?.progress.clamp(0.0, 1.0).toDouble();
+    final hasCourse = activeCourse != null;
+    final nearFinish = (progress ?? 0) >= .75;
+    final moodBadge = !hasCourse
+        ? Icons.add
+        : nearFinish
+        ? Icons.star
+        : Icons.menu_book;
+    final message = _cheered
+        ? '좋아요! 오늘도 할 수 있는 만큼만 같이 해봐요.'
+        : !hasCourse
+        ? '오늘은 어떤 코스부터 시작해볼까요?'
+        : nearFinish
+        ? '마지막 구간이에요. 같이 마무리해요.'
+        : '오늘도 한 문제씩 같이 풀어봐요.';
+    final actionLabel = _cheered ? '응원 받았어요' : '응원 받기';
     return Container(
-      height: mobile ? 198 : 244,
+      key: const ValueKey('home-study-mate-hero'),
+      height: mobile ? 168 : 208,
       clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
         color: StudentDensityTokens.surface,
@@ -119,19 +143,50 @@ class _HtmlHomeHero extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           SizedBox(
-            width: mobile ? 58 : 84,
+            width: mobile ? 86 : 112,
             child: ColoredBox(
-              color: StudentDensityTokens.dark,
-              child: Align(
-                alignment: Alignment.topCenter,
-                child: Padding(
-                  padding: EdgeInsets.only(top: mobile ? 17 : 24),
-                  child: Text(
-                    'A',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: mobile ? 18 : 22,
-                      fontWeight: FontWeight.w900,
+              color: StudentDensityTokens.surfaceMuted,
+              child: Center(
+                child: Semantics(
+                  button: true,
+                  label:
+                      '${widget.username?.trim().isNotEmpty == true ? '${widget.username!.trim()}님, ' : ''}학습 메이트 응원 받기',
+                  child: InkWell(
+                    key: const ValueKey('home-study-mate-character'),
+                    customBorder: const CircleBorder(),
+                    onTap: () => setState(() => _cheered = !_cheered),
+                    child: AnimatedSwitcher(
+                      duration: const Duration(milliseconds: 220),
+                      transitionBuilder: (child, animation) =>
+                          ScaleTransition(scale: animation, child: child),
+                      child: Stack(
+                        key: ValueKey(_cheered),
+                        alignment: Alignment.center,
+                        children: [
+                          CustomPaint(
+                            size: Size.square(mobile ? 56 : 66),
+                            painter: _StudyMateFacePainter(cheered: _cheered),
+                          ),
+                          Positioned(
+                            right: 0,
+                            bottom: 0,
+                            child: Container(
+                              width: 22,
+                              height: 22,
+                              decoration: const BoxDecoration(
+                                color: StudentDensityTokens.dark,
+                                shape: BoxShape.circle,
+                              ),
+                              alignment: Alignment.center,
+                              child: Icon(
+                                _cheered ? Icons.favorite : moodBadge,
+                                size: 13,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                 ),
@@ -140,87 +195,71 @@ class _HtmlHomeHero extends StatelessWidget {
           ),
           Expanded(
             child: Padding(
-              padding: EdgeInsets.all(mobile ? 16 : 22),
+              padding: EdgeInsets.all(mobile ? 12 : 18),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Expanded(
-                    child: Align(
-                      alignment: Alignment.topLeft,
-                      child: Text(
-                        '$name님,\n다시 만나 반가워요.',
-                        style: TextStyle(
-                          color: StudentDensityTokens.ink,
-                          fontSize: mobile ? 27 : 38,
-                          height: 1.08,
-                          letterSpacing: -1.4,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
+                  Text(
+                    '오늘의 학습 메이트',
+                    style: TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: mobile ? 11 : 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.1,
                     ),
                   ),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          course ?? '현재 코스 없음',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: StudentDensityTokens.ink,
-                            fontSize: 10,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
-                      ),
-                      Text(
-                        progress == null ? '—' : '${(progress * 100).round()}%',
-                        style: const TextStyle(
-                          color: StudentDensityTokens.ink,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 7),
-                  ClipRRect(
-                    child: SizedBox(
-                      height: 3,
-                      child: LinearProgressIndicator(
-                        value: progress,
-                        backgroundColor: StudentDensityTokens.surfaceMuted,
-                        valueColor: const AlwaysStoppedAnimation(
-                          StudentDensityTokens.dark,
-                        ),
-                      ),
+                  const SizedBox(height: 6),
+                  Text(
+                    message,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: mobile
+                          ? 17
+                          : (viewportWidth * .018).clamp(18, 23).toDouble(),
+                      height: 1.2,
+                      letterSpacing: -.4,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  if (hasCourse) ...[
+                    const SizedBox(height: 5),
+                    Text(
+                      '${course ?? '현재 코스'} · ${((progress ?? 0) * 100).round()}%',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                      ),
+                    ),
+                  ],
+                  const Spacer(),
                   Semantics(
+                    key: const ValueKey('home-study-mate-action'),
                     button: true,
-                    label: '이어 학습하기',
+                    label: actionLabel,
                     child: InkWell(
-                      onTap: onResume,
+                      onTap: _requestCheer,
                       child: Container(
-                        constraints: const BoxConstraints(minHeight: 50),
-                        padding: const EdgeInsets.symmetric(horizontal: 14),
+                        constraints: const BoxConstraints(minHeight: 42),
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
                         color: StudentDensityTokens.dark,
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text(
-                              '이어 학습하기',
-                              style: TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.w900,
+                            Flexible(
+                              child: Text(
+                                actionLabel,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w900,
+                                ),
                               ),
-                            ),
-                            Icon(
-                              Icons.arrow_forward,
-                              color: Colors.white,
-                              size: 18,
                             ),
                           ],
                         ),
@@ -235,6 +274,59 @@ class _HtmlHomeHero extends StatelessWidget {
       ),
     );
   }
+}
+
+class _StudyMateFacePainter extends CustomPainter {
+  const _StudyMateFacePainter({required this.cheered});
+
+  final bool cheered;
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final scale = size.width / 66;
+    canvas.save();
+    canvas.scale(scale);
+    final dark = Paint()..color = StudentDensityTokens.dark;
+    final white = Paint()..color = StudentDensityTokens.surface;
+    final line = Paint()
+      ..color = StudentDensityTokens.dark
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = 2.4
+      ..strokeCap = StrokeCap.round;
+    final ears = Path()
+      ..moveTo(12, 25)
+      ..lineTo(18, 5)
+      ..lineTo(29, 20)
+      ..moveTo(37, 20)
+      ..lineTo(48, 5)
+      ..lineTo(54, 25);
+    canvas.drawPath(ears, dark);
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(8, 15, 50, 45),
+        const Radius.circular(18),
+      ),
+      dark,
+    );
+    canvas.drawRRect(
+      RRect.fromRectAndRadius(
+        const Rect.fromLTWH(14, 21, 38, 31),
+        const Radius.circular(14),
+      ),
+      white,
+    );
+    canvas.drawCircle(const Offset(26, 34), 2, dark);
+    canvas.drawCircle(const Offset(40, 34), 2, dark);
+    final smile = Path()
+      ..moveTo(27, cheered ? 39 : 41)
+      ..quadraticBezierTo(33, cheered ? 51 : 47, 39, cheered ? 39 : 41);
+    canvas.drawPath(smile, line);
+    canvas.restore();
+  }
+
+  @override
+  bool shouldRepaint(covariant _StudyMateFacePainter oldDelegate) =>
+      oldDelegate.cheered != cheered;
 }
 
 class _HtmlHomeActions extends StatelessWidget {
@@ -264,99 +356,103 @@ class _HtmlHomeActions extends StatelessWidget {
     }
 
     final entries =
-        <({String id, String label, IconData icon, VoidCallback onTap})>[
+        <({String id, String label, StudentHtmlIcon icon, VoidCallback onTap})>[
           (
             id: 'resume',
             label: '이어하기',
-            icon: Icons.play_arrow_outlined,
+            icon: StudentHtmlIcon.play,
             onTap: () => open('resume', onResume),
           ),
           (
             id: 'courses',
             label: '코스보기',
-            icon: Icons.view_list_outlined,
+            icon: StudentHtmlIcon.courses,
             onTap: () => open('courses', onBrowseCourses),
           ),
           (
             id: 'review',
             label: '복습',
-            icon: Icons.check,
+            icon: StudentHtmlIcon.check,
             onTap: () => open('review', onReview),
           ),
           (
             id: 'problemsets',
             label: '문제세트',
-            icon: Icons.auto_awesome_outlined,
+            icon: StudentHtmlIcon.spark,
             onTap: () => open('problemsets', onProblemSets),
           ),
           (
             id: 'exams',
             label: '시험지',
-            icon: Icons.calendar_today_outlined,
+            icon: StudentHtmlIcon.calendar,
             onTap: () => open('exams', onExams),
           ),
           (
             id: 'textbooks',
             label: '교재보기',
-            icon: Icons.menu_book_outlined,
+            icon: StudentHtmlIcon.book,
             onTap: () => open('textbooks', onTextbooks),
           ),
         ];
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: mobile ? 2 : 3,
-        mainAxisExtent: mobile ? 72 : 121,
-        crossAxisSpacing: 1,
-        mainAxisSpacing: 1,
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: StudentDensityTokens.line),
       ),
-      itemCount: entries.length,
-      itemBuilder: (context, index) {
-        final entry = entries[index];
-        return Semantics(
-          button: true,
-          label: entry.label,
-          child: Material(
-            color: StudentDensityTokens.surface,
-            child: InkWell(
-              onTap: entry.onTap,
-              child: Padding(
-                padding: EdgeInsets.all(mobile ? 10 : 14),
-                child: Row(
-                  children: [
-                    SizedBox(
-                      width: 28,
-                      height: 28,
-                      child: Icon(
-                        entry.icon,
-                        size: 19,
-                        color: StudentDensityTokens.ink,
-                      ),
-                    ),
-                    const SizedBox(width: 9),
-                    Expanded(
-                      child: Text(
-                        entry.label,
-                        style: const TextStyle(
-                          color: StudentDensityTokens.ink,
-                          fontSize: 11,
-                          fontWeight: FontWeight.w900,
+      child: GridView.builder(
+        shrinkWrap: true,
+        physics: const NeverScrollableScrollPhysics(),
+        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: mobile ? 2 : 3,
+          mainAxisExtent: mobile ? 72 : 121,
+          crossAxisSpacing: 1,
+          mainAxisSpacing: 1,
+        ),
+        itemCount: entries.length,
+        itemBuilder: (context, index) {
+          final entry = entries[index];
+          return Semantics(
+            button: true,
+            label: entry.label,
+            child: Material(
+              color: StudentDensityTokens.surface,
+              child: InkWell(
+                onTap: entry.onTap,
+                child: Padding(
+                  padding: EdgeInsets.all(mobile ? 10 : 14),
+                  child: Row(
+                    children: [
+                      SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: Center(
+                          child: StudentHtmlGlyph(
+                            key: ValueKey('home-action-glyph-${entry.id}'),
+                            icon: entry.icon,
+                            size: 20,
+                            scaleForMobile: false,
+                            color: StudentDensityTokens.ink,
+                          ),
                         ),
                       ),
-                    ),
-                    const Icon(
-                      Icons.arrow_forward,
-                      size: 15,
-                      color: StudentDensityTokens.ink,
-                    ),
-                  ],
+                      const SizedBox(width: 9),
+                      Expanded(
+                        child: Text(
+                          entry.label,
+                          style: const TextStyle(
+                            color: StudentDensityTokens.ink,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ),
-          ),
-        );
-      },
+          );
+        },
+      ),
     );
   }
 }
@@ -376,20 +472,6 @@ class _HtmlMyDashboard extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        Container(
-          constraints: const BoxConstraints(minHeight: 42),
-          alignment: Alignment.centerLeft,
-          decoration: const BoxDecoration(
-            border: Border(
-              bottom: BorderSide(color: StudentDensityTokens.lineStrong),
-            ),
-          ),
-          child: const Text(
-            '마이 대시보드',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
-          ),
-        ),
-        const SizedBox(height: 8),
         ValueListenableBuilder<AccountSummary?>(
           valueListenable: ActivityStore.accountSummaryNotifier,
           builder: (context, account, _) {
@@ -420,11 +502,13 @@ class _HtmlMyDashboard extends StatelessWidget {
                       onTap: () => onAction('streak'),
                     );
                     final achievementsCard = _DashboardCard(
+                      key: const ValueKey('home-achievements-card'),
                       icon: Icons.emoji_events_outlined,
                       title: '업적',
                       value: '데이터 없음',
                       onTap: () => onAction('achievements'),
                       spanOnMobile: true,
+                      isAchievement: true,
                     );
                     final weekCard = _WeekCard(
                       activity: activity,
@@ -497,15 +581,19 @@ class _HtmlDashboardLayout extends StatelessWidget {
   final Widget arena;
   final Widget tutor;
 
-  Widget _row(List<Widget> children, {required double height}) {
+  Widget _row(
+    List<Widget> children, {
+    required double height,
+    List<int>? flexes,
+  }) {
     return SizedBox(
       height: height,
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           for (var i = 0; i < children.length; i++) ...[
-            if (i > 0) const SizedBox(width: 8),
-            Expanded(child: children[i]),
+            if (i > 0) SizedBox(width: mobile ? 8 : 10),
+            Expanded(flex: flexes?[i] ?? 1, child: children[i]),
           ],
         ],
       ),
@@ -514,40 +602,52 @@ class _HtmlDashboardLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final gap = const SizedBox(height: 8);
+    final gap = SizedBox(height: mobile ? 8 : 10);
     if (mobile) {
-      return Column(
-        crossAxisAlignment: CrossAxisAlignment.stretch,
-        children: [
-          account,
-          gap,
-          ovr,
-          gap,
-          SizedBox(height: 104, child: _row([today, streak], height: 104)),
-          gap,
-          SizedBox(height: 84, child: achievements),
-          gap,
-          SizedBox(height: 132, child: week),
-          gap,
-          _row([weakness, arena], height: 104),
-          gap,
-          SizedBox(height: 96, child: tutor),
-        ],
+      return Container(
+        key: const ValueKey('home-dashboard-grid-outline-mobile'),
+        child: Padding(
+          padding: const EdgeInsets.only(top: 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              account,
+              gap,
+              ovr,
+              gap,
+              SizedBox(height: 104, child: _row([today, streak], height: 104)),
+              gap,
+              SizedBox(height: 84, child: achievements),
+              gap,
+              SizedBox(height: 132, child: week),
+              gap,
+              _row([weakness, arena], height: 104),
+              gap,
+              tutor,
+            ],
+          ),
+        ),
       );
     }
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        SizedBox(height: 64, child: account),
-        gap,
-        _row([ovr, today, streak], height: 158),
-        gap,
-        SizedBox(height: 92, child: achievements),
-        gap,
-        _row([week, weakness, arena], height: 138),
-        gap,
-        SizedBox(height: 92, child: tutor),
-      ],
+    return Container(
+      key: const ValueKey('home-dashboard-grid-outline-desktop'),
+      child: Padding(
+        padding: const EdgeInsets.only(top: 10),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(height: 64, child: account),
+            gap,
+            _row([ovr, today, streak], height: 158, flexes: const [2, 1, 1]),
+            gap,
+            SizedBox(height: 92, child: achievements),
+            gap,
+            _row([week, weakness, arena], height: 138),
+            gap,
+            SizedBox(height: 92, child: tutor),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -641,8 +741,6 @@ class _AccountCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const Icon(Icons.arrow_forward, size: 16),
             ],
           ),
         ),
@@ -659,26 +757,29 @@ class _OvrCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final value = rating.isLoaded ? rating.ovr.toStringAsFixed(1) : '—';
+    final mobile = isStudentDensityMobile(context);
+    final tier = rating.levelity?.tier;
+    final tierColor = _levelityAccent(tier);
     return Semantics(
       button: true,
-      label: '내 오버롤 $value',
+      label: '레벨리티 ${tier ?? '배정 전'}, 최근 학습 지표',
       child: InkWell(
         onTap: onTap,
         child: Container(
-          height: isStudentDensityMobile(context) ? 138 : 158,
+          key: const ValueKey('home-dashboard-ovr-card'),
+          height: mobile ? 138 : 158,
           padding: const EdgeInsets.all(16),
-          color: StudentDensityTokens.dark,
+          color: tier == null ? StudentDensityTokens.dark : tierColor,
           child: Row(
             children: [
-              SizedBox(
-                width: 84,
+              Expanded(
+                flex: 36,
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     const Text(
-                      'MY OVR',
+                      '학습 지표',
                       style: TextStyle(
                         color: Colors.white70,
                         fontSize: 9,
@@ -687,23 +788,26 @@ class _OvrCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 10),
                     Text(
-                      value,
+                      '레벨리티',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 34,
+                        fontSize: 23,
                         fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Text(
+                      tier ?? (rating.isLoaded ? '배정 전' : '데이터 확인 중'),
+                      style: const TextStyle(
+                        color: Colors.white70,
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
                       ),
                     ),
                   ],
                 ),
               ),
-              Expanded(
-                child: CustomPaint(
-                  painter: _OvrPainter(),
-                  child: const SizedBox.expand(),
-                ),
-              ),
-              const Icon(Icons.arrow_forward, color: Colors.white, size: 16),
+              Expanded(flex: 64, child: _RatingSignal(rating: rating)),
             ],
           ),
         ),
@@ -711,6 +815,63 @@ class _OvrCard extends StatelessWidget {
     );
   }
 }
+
+class _RatingSignal extends StatelessWidget {
+  const _RatingSignal({required this.rating});
+
+  final RatingSnapshot rating;
+
+  @override
+  Widget build(BuildContext context) {
+    final accuracy = rating.recentAccuracy <= 1
+        ? rating.recentAccuracy
+        : rating.recentAccuracy / 100;
+    final normalized = accuracy.clamp(0.0, 1.0);
+    return Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          '최근 정답률',
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.w700,
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          rating.isLoaded ? '${(normalized * 100).round()}%' : '—',
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 22,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+        const SizedBox(height: 8),
+        LinearProgressIndicator(
+          value: rating.isLoaded ? normalized : null,
+          minHeight: 5,
+          backgroundColor: Colors.white24,
+          valueColor: const AlwaysStoppedAnimation(Colors.white),
+        ),
+      ],
+    );
+  }
+}
+
+Color _levelityAccent(String? tier) => switch (tier) {
+  'Cheer Up' => const Color(0xFF355E47),
+  'Plain 0' => const Color(0xFF59616B),
+  'Plain+' => const Color(0xFF96512A),
+  'Insane 0' => const Color(0xFF986315),
+  'Insane+' => const Color(0xFF4F5C18),
+  'Powerful 0' => const Color(0xFF00675D),
+  'Powerful+' => const Color(0xFF173D85),
+  'Prime 0' => const Color(0xFF7D3357),
+  'Prime+' => const Color(0xFF141414),
+  _ => StudentDensityTokens.dark,
+};
 
 class _StreakCard extends StatelessWidget {
   const _StreakCard({required this.days, required this.onTap});
@@ -780,7 +941,6 @@ class _WeekCard extends StatelessWidget {
                 ),
               ),
               SizedBox(width: 124, child: _WeekBars(activity: activity)),
-              const Icon(Icons.arrow_forward, size: 16),
             ],
           ),
         ),
@@ -838,52 +998,82 @@ class _TutorCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final copy = Row(
+      children: [
+        const Expanded(
+          flex: 40,
+          child: Row(
+            children: [
+              StudentHtmlGlyph(
+                icon: StudentHtmlIcon.spark,
+                color: StudentDensityTokens.muted,
+                size: 20,
+              ),
+              SizedBox(width: 7),
+              Text(
+                'AI 튜터',
+                style: TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: .45,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 8),
+        const Expanded(
+          flex: 60,
+          child: Text(
+            '궁금한 풀이를 바로 물어보세요.',
+            style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ],
+    );
+    final action = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      color: StudentDensityTokens.dark,
+      child: Row(
+        mainAxisAlignment: mobile
+            ? MainAxisAlignment.spaceBetween
+            : MainAxisAlignment.start,
+        mainAxisSize: mobile ? MainAxisSize.max : MainAxisSize.min,
+        children: [
+          const Text(
+            '대화하기',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+          const SizedBox(width: 9),
+        ],
+      ),
+    );
     return Semantics(
       button: true,
       label: 'AI 튜터에게 묻기',
       child: InkWell(
         onTap: onTap,
         child: Container(
-          constraints: const BoxConstraints(minHeight: 96),
+          constraints: BoxConstraints(minHeight: mobile ? 96 : 92),
           padding: const EdgeInsets.all(14),
           color: StudentDensityTokens.surface,
-          child: Row(
-            children: [
-              const Expanded(
-                child: Text(
-                  'AI 튜터',
-                  style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
-                ),
-              ),
-              const Expanded(
-                child: Text(
-                  '궁금한 풀이를 바로 물어보세요.',
-                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 10,
-                ),
-                color: StudentDensityTokens.dark,
-                child: const Row(
+          child: mobile
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [copy, const SizedBox(height: 8), action],
+                )
+              : Row(
                   children: [
-                    Text(
-                      '튜터에게 묻기',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 10,
-                        fontWeight: FontWeight.w900,
-                      ),
-                    ),
-                    SizedBox(width: 9),
-                    Icon(Icons.arrow_forward, color: Colors.white, size: 15),
+                    Expanded(child: copy),
+                    action,
                   ],
                 ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -895,6 +1085,7 @@ class _DashboardCard extends StatelessWidget {
     super.key,
     this.icon,
     this.leading,
+    this.isAchievement = false,
     required this.title,
     required this.value,
     required this.onTap,
@@ -904,6 +1095,7 @@ class _DashboardCard extends StatelessWidget {
 
   final IconData? icon;
   final Widget? leading;
+  final bool isAchievement;
   final String title;
   final String value;
   final String? meta;
@@ -921,61 +1113,141 @@ class _DashboardCard extends StatelessWidget {
           constraints: const BoxConstraints(minHeight: 104),
           padding: const EdgeInsets.all(13),
           color: StudentDensityTokens.surface,
-          child: Stack(
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Row(
-                    children: [
-                      leading ??
-                          (icon == null
-                              ? const SizedBox.shrink()
-                              : Icon(icon, size: 18)),
-                      if (icon != null || leading != null)
-                        const SizedBox(width: 7),
-                      Text(
-                        title,
+          child: isAchievement
+              ? Row(
+                  children: [
+                    Expanded(
+                      flex: 7,
+                      child: Row(
+                        children: [
+                          if (icon != null) Icon(icon, size: 18),
+                          const SizedBox(width: 7),
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 10,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Expanded(
+                      flex: 6,
+                      child: Text(
+                        value,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 10,
+                          fontSize: 15,
                           fontWeight: FontWeight.w900,
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 17,
-                      fontWeight: FontWeight.w900,
                     ),
-                  ),
-                  if (meta != null) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      meta!,
-                      style: const TextStyle(
-                        color: StudentDensityTokens.muted,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
+                    Expanded(
+                      flex: 9,
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 24,
+                            height: 24,
+                            decoration: const BoxDecoration(
+                              color: StudentDensityTokens.ink,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Transform.rotate(
+                            angle: math.pi / 4,
+                            child: Container(
+                              width: 20,
+                              height: 20,
+                              color: StudentDensityTokens.ink,
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          ClipPath(
+                            clipper: const _AchievementHexagonClipper(),
+                            child: Container(
+                              width: 24,
+                              height: 24,
+                              color: StudentDensityTokens.ink,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
-                ],
-              ),
-              const Positioned(
-                right: 0,
-                top: 0,
-                child: Icon(Icons.arrow_forward, size: 16),
-              ),
-            ],
-          ),
+                )
+              : Stack(
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          children: [
+                            leading ??
+                                (icon == null
+                                    ? const SizedBox.shrink()
+                                    : Icon(icon, size: 18)),
+                            if (icon != null || leading != null)
+                              const SizedBox(width: 7),
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 10,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 17,
+                            fontWeight: FontWeight.w900,
+                          ),
+                        ),
+                        if (meta != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            meta!,
+                            style: const TextStyle(
+                              color: StudentDensityTokens.muted,
+                              fontSize: 9,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ],
+                ),
         ),
       ),
     );
   }
+}
+
+class _AchievementHexagonClipper extends CustomClipper<Path> {
+  const _AchievementHexagonClipper();
+
+  @override
+  Path getClip(Size size) {
+    return Path()
+      ..moveTo(size.width * .25, size.height * .07)
+      ..lineTo(size.width * .75, size.height * .07)
+      ..lineTo(size.width, size.height * .5)
+      ..lineTo(size.width * .75, size.height * .93)
+      ..lineTo(size.width * .25, size.height * .93)
+      ..lineTo(0, size.height * .5)
+      ..close();
+  }
+
+  @override
+  bool shouldReclip(covariant _AchievementHexagonClipper oldClipper) => false;
 }
 
 int _activityStreak(ActivitySnapshot snapshot) {
@@ -990,32 +1262,4 @@ int _activityStreak(ActivitySnapshot snapshot) {
     day = day.subtract(const Duration(days: 1));
   }
   return streak;
-}
-
-class _OvrPainter extends CustomPainter {
-  @override
-  void paint(Canvas canvas, Size size) {
-    final paint = Paint()
-      ..color = Colors.white
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = 3;
-    final points = <Offset>[
-      Offset(0, size.height * .78),
-      Offset(size.width * .16, size.height * .68),
-      Offset(size.width * .32, size.height * .72),
-      Offset(size.width * .48, size.height * .45),
-      Offset(size.width * .64, size.height * .57),
-      Offset(size.width * .8, size.height * .2),
-      Offset(size.width, size.height * .28),
-    ];
-    if (points.isEmpty) return;
-    final path = Path()..moveTo(points.first.dx, points.first.dy);
-    for (final point in points.skip(1)) {
-      path.lineTo(point.dx, point.dy);
-    }
-    canvas.drawPath(path, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

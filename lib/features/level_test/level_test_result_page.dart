@@ -13,12 +13,14 @@ class LevelTestResultPage extends StatelessWidget {
     this.totalCount = 0,
     this.passed = false,
     this.placementResult,
+    this.onStartAnotherTest,
   });
 
   final int correctCount;
   final int totalCount;
   final bool passed;
   final LevelTestPlacementResult? placementResult;
+  final VoidCallback? onStartAnotherTest;
 
   /// 필요한 값은 정답 수와 전체 문항 수다.
   /// 0문항 응답에서도 0으로 안전하게 표시해 결과 화면 렌더링을 보장한다.
@@ -40,16 +42,20 @@ class LevelTestResultPage extends StatelessWidget {
           )
         : _LevelResultReport.placement(placement);
 
-    return _LevelResultScaffold(report: report);
+    return _LevelResultScaffold(
+      report: report,
+      onStartAnotherTest: onStartAnotherTest,
+    );
   }
 }
 
 /// HTML 시안의 결과 리포트 구조를 PC의 2열, 모바일의 단일 열로 전환한다.
 /// 결과 데이터는 [_LevelResultReport]로 정규화하여 API·일반 시험 흐름이 같은 위젯을 재사용한다.
 class _LevelResultScaffold extends StatelessWidget {
-  const _LevelResultScaffold({required this.report});
+  const _LevelResultScaffold({required this.report, this.onStartAnotherTest});
 
   final _LevelResultReport report;
+  final VoidCallback? onStartAnotherTest;
 
   /// 필요한 값은 화면 폭과 결과 요약이다.
   /// 780px 이하에서는 읽기 순서를 유지한 단일 열, 그보다 넓으면 요약과 분석을 분리한 2열로 배치한다.
@@ -72,6 +78,7 @@ class _LevelResultScaffold extends StatelessWidget {
               child: _ResultBody(
                 report: report,
                 compact: constraints.maxWidth <= 720,
+                onStartAnotherTest: onStartAnotherTest,
               ),
             ),
           ),
@@ -142,10 +149,15 @@ class _ResultTopBar extends StatelessWidget {
 /// 결과 카드·태그 분석·다음 행동을 시안의 읽기 순서로 조합한다.
 /// PC와 모바일 모두 같은 데이터이지만 폭에 따라 레이아웃만 달라져 분석 정보가 누락되지 않는다.
 class _ResultBody extends StatelessWidget {
-  const _ResultBody({required this.report, required this.compact});
+  const _ResultBody({
+    required this.report,
+    required this.compact,
+    this.onStartAnotherTest,
+  });
 
   final _LevelResultReport report;
   final bool compact;
+  final VoidCallback? onStartAnotherTest;
 
   @override
   Widget build(BuildContext context) {
@@ -234,18 +246,22 @@ class _ResultBody extends StatelessWidget {
         _ResultTagSection(
           index: '01',
           title: '강점 태그',
-          description: '전체 기준점보다 안정적으로 응답한 영역입니다.',
+          description: '이번 진단에서 정답률이 높았던 개념입니다.',
           tags: strongTags,
           compact: compact,
         ),
         _ResultTagSection(
           index: '02',
           title: '보완 태그',
-          description: '다음 학습에서 먼저 확인하면 좋은 영역입니다.',
+          description: '이번 진단에서 추가로 확인할 개념입니다.',
           tags: weakTags,
           compact: compact,
         ),
-        _ResultNextSection(report: report, compact: compact),
+        _ResultNextSection(
+          report: report,
+          compact: compact,
+          onStartAnotherTest: onStartAnotherTest,
+        ),
       ],
     );
   }
@@ -261,7 +277,7 @@ class _ResultOvrValue extends StatelessWidget {
     crossAxisAlignment: CrossAxisAlignment.start,
     children: [
       const Text(
-        'MY OVR',
+        '진단 결과',
         style: TextStyle(
           color: Colors.white70,
           fontSize: 10,
@@ -482,10 +498,15 @@ class _ResultTagRow extends StatelessWidget {
 }
 
 class _ResultNextSection extends StatelessWidget {
-  const _ResultNextSection({required this.report, required this.compact});
+  const _ResultNextSection({
+    required this.report,
+    required this.compact,
+    this.onStartAnotherTest,
+  });
 
   final _LevelResultReport report;
   final bool compact;
+  final VoidCallback? onStartAnotherTest;
 
   @override
   Widget build(BuildContext context) {
@@ -521,17 +542,29 @@ class _ResultNextSection extends StatelessWidget {
         minimumSize: const Size.fromHeight(44),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
-      child: const Text('추천 코스 보기'),
+      child: const Text('코스 목록 보기'),
     );
     Widget reviewAction() => OutlinedButton(
-      onPressed: () => Navigator.of(context).pop(),
+      onPressed: () => Navigator.of(
+        context,
+      ).pushNamedAndRemoveUntil('/student/dashboard', (route) => false),
       style: OutlinedButton.styleFrom(
         foregroundColor: _LevelResultTokens.ink,
         minimumSize: const Size.fromHeight(44),
         side: const BorderSide(color: _LevelResultTokens.line),
         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
       ),
-      child: const Text('문항별 결과 보기'),
+      child: const Text('학생 홈으로'),
+    );
+    Widget anotherTestAction() => OutlinedButton(
+      onPressed: onStartAnotherTest,
+      style: OutlinedButton.styleFrom(
+        foregroundColor: _LevelResultTokens.ink,
+        minimumSize: const Size.fromHeight(44),
+        side: const BorderSide(color: _LevelResultTokens.line),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ),
+      child: const Text('다른 유형 진단하기'),
     );
     return Container(
       padding: EdgeInsets.all(compact ? 18 : 28),
@@ -543,18 +576,17 @@ class _ResultNextSection extends StatelessWidget {
         ),
         color: StudentDensityTokens.surfaceMuted,
       ),
-      child: compact
-          ? Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                copy,
-                const SizedBox(height: 16),
-                SizedBox(width: double.infinity, child: courseAction()),
-                const SizedBox(height: 8),
-                SizedBox(width: double.infinity, child: reviewAction()),
-              ],
-            )
-          : Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          if (compact) ...[
+            copy,
+            const SizedBox(height: 16),
+            SizedBox(width: double.infinity, child: courseAction()),
+            const SizedBox(height: 8),
+            SizedBox(width: double.infinity, child: reviewAction()),
+          ] else
+            Row(
               children: [
                 Expanded(child: copy),
                 const SizedBox(width: 12),
@@ -563,6 +595,12 @@ class _ResultNextSection extends StatelessWidget {
                 Expanded(child: reviewAction()),
               ],
             ),
+          if (report.isPlacement && onStartAnotherTest != null) ...[
+            const SizedBox(height: 8),
+            SizedBox(width: double.infinity, child: anotherTestAction()),
+          ],
+        ],
+      ),
     );
   }
 }
@@ -587,7 +625,7 @@ class _ResultOverview extends StatelessWidget {
           Row(
             children: [
               const Text(
-                'MY OVR',
+                '레벨 테스트 진단',
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 11,
@@ -667,7 +705,7 @@ class _ResultAnalysis extends StatelessWidget {
           ),
           const SizedBox(height: 7),
           Text(
-            report.isPlacement ? 'OVR 배정 결과' : '다음 학습을 위한 분석',
+            report.isPlacement ? '진단 상세 결과' : '다음 학습을 위한 분석',
             style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
           ),
           const SizedBox(height: 22),
@@ -856,23 +894,34 @@ class _LevelResultReport {
   }
 
   factory _LevelResultReport.placement(LevelTestPlacementResult result) {
-    final confidence = (result.confidence * 100).round();
-    final correctCount = (result.recentAccuracy * 25).round();
+    final minutes = result.elapsedSeconds ~/ 60;
+    final seconds = result.elapsedSeconds % 60;
+    final duration = '$minutes분 ${seconds.toString().padLeft(2, '0')}초';
+    final percentage = result.accuracy * 100;
+    final assessmentLabel = [
+      result.trackLabel,
+      if (result.form.isNotEmpty) '${result.form}형 · ${result.formLabel}',
+    ].where((part) => part.trim().isNotEmpty).join(' · ');
     return _LevelResultReport._(
       isPlacement: true,
-      primaryValue: result.ovr > 0 ? result.ovr.toStringAsFixed(1) : '--',
-      primaryCaption: '레벨 테스트로 배정된 첫 OVR',
-      statusLabel: 'MEASURED',
+      primaryValue: '${percentage.toStringAsFixed(0)}%',
+      primaryCaption: '${result.correctCount} / ${result.questionCount} 문항 정답',
+      statusLabel: 'DIAGNOSTIC',
       firstMetricLabel: '정답 수',
-      firstMetricValue: '$correctCount / 25',
-      secondMetricLabel: '제한 시간',
-      secondMetricValue: '60분',
-      analysisState: 'OVR 배정',
-      description: '25문항의 전체 답안을 한 번에 채점해 첫 OVR을 배정했습니다.',
-      confidenceCopy: '측정 신뢰도 $confidence% · 이 시험 결과는 첫 OVR 배정에 사용됩니다.',
+      firstMetricValue: '${result.correctCount} / ${result.questionCount}',
+      secondMetricLabel: '풀이 시간',
+      secondMetricValue: duration,
+      analysisState: '채점 완료',
+      description: assessmentLabel.isEmpty
+          ? '제출한 답안을 서버에서 채점해 정답률과 난이도·태그별 결과를 정리했습니다.'
+          : '$assessmentLabel 진단 결과입니다. 정답률과 태그별 결과를 확인하세요.',
+      confidenceCopy: [
+        if (assessmentLabel.isNotEmpty) '$assessmentLabel 진단입니다.',
+        '정답률·태그 분석 결과입니다. 점수에 따른 코스 배정 기준이 연결되지 않아 배정은 보류됩니다.',
+      ].join(' '),
       strongTags: result.strongTags,
       weakTags: result.weakTags,
-      nextTitle: '첫 OVR 배정이 완료됐어요.',
+      nextTitle: '진단 결과를 확인했어요.',
       nextDescription: '학습 홈으로 돌아가 원하는 학습을 시작하세요.',
     );
   }
@@ -931,6 +980,12 @@ class _TagGroup extends StatelessWidget {
                 .map((tag) {
                   final label = (tag['tag'] ?? '학습 태그').toString();
                   final rating = (tag['rating'] as num?)?.toDouble();
+                  final accuracy = (tag['accuracy'] as num?)?.toDouble();
+                  final score = rating != null
+                      ? rating.toStringAsFixed(1)
+                      : accuracy != null
+                      ? '${(accuracy * 100).round()}%'
+                      : null;
                   return Container(
                     padding: const EdgeInsets.symmetric(
                       horizontal: 10,
@@ -943,9 +998,7 @@ class _TagGroup extends StatelessWidget {
                       borderRadius: BorderRadius.circular(99),
                     ),
                     child: Text(
-                      rating == null
-                          ? '#$label'
-                          : '#$label ${rating.toStringAsFixed(1)}',
+                      score == null ? '#$label' : '#$label $score',
                       style: TextStyle(
                         fontSize: 12,
                         fontWeight: FontWeight.w800,

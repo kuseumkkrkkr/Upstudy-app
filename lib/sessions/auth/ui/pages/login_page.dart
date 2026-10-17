@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/app/student_route_registry.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/services/auth/kakao_login_service.dart';
@@ -16,6 +17,7 @@ class LoginPage extends StatefulWidget {
     this.embedded = false,
     this.initialUsername,
     this.initialPassword,
+    this.authService,
   });
 
   /// Dialog로 사용할 때 모달 형태로 렌더링합니다.
@@ -25,6 +27,7 @@ class LoginPage extends StatefulWidget {
   final bool embedded;
   final String? initialUsername;
   final String? initialPassword;
+  final AuthService? authService;
 
   @override
   State<LoginPage> createState() => _LoginPageState();
@@ -64,13 +67,14 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _submit() async {
+    if (_loading) return;
     if (!_formKey.currentState!.validate()) return;
     setState(() {
       _loading = true;
       _errorText = null;
     });
     try {
-      final token = await AuthService().login(
+      final token = await (widget.authService ?? AuthService()).login(
         username: _idController.text.trim(),
         password: _pwController.text,
       );
@@ -82,6 +86,9 @@ class _LoginPageState extends State<LoginPage> {
       final navigator = Navigator.of(context, rootNavigator: true);
       navigator.pushAndRemoveUntil(
         MaterialPageRoute(
+          settings: RouteSettings(
+            name: StudentRouteRegistry.byId('home')!.route,
+          ),
           builder: (_) => MainStudentPage(username: _idController.text.trim()),
         ),
         (route) => false,
@@ -89,7 +96,13 @@ class _LoginPageState extends State<LoginPage> {
     } catch (error) {
       if (!mounted) return;
       setState(() {
-        _errorText = 'ID혹은 비밀번호가 다릅니다';
+        _errorText = error is ApiException && error.statusCode == 401
+            ? '아이디 혹은 비밀번호를 확인해 주세요.'
+            : studentFacingApiError(
+                error,
+                fallback: '로그인을 완료하지 못했어요.',
+                unavailable: '로그인 서버에 연결할 수 없어요. 잠시 후 다시 시도해 주세요.',
+              );
       });
     } finally {
       if (mounted) {
@@ -101,6 +114,7 @@ class _LoginPageState extends State<LoginPage> {
   }
 
   Future<void> _loginWithKakao() async {
+    if (_loading) return;
     setState(() {
       _loading = true;
       _errorText = null;
@@ -115,6 +129,9 @@ class _LoginPageState extends State<LoginPage> {
       final navigator = Navigator.of(context, rootNavigator: true);
       navigator.pushAndRemoveUntil(
         MaterialPageRoute(
+          settings: RouteSettings(
+            name: StudentRouteRegistry.byId('home')!.route,
+          ),
           builder: (_) => MainStudentPage(username: result.displayName),
         ),
         (route) => false,
@@ -264,7 +281,7 @@ class _LoginPageState extends State<LoginPage> {
       hintText: hint,
       filled: true,
       fillColor: AuthDesignTokens.surface,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 19),
       border: const OutlineInputBorder(borderRadius: BorderRadius.zero),
       enabledBorder: const OutlineInputBorder(
         borderRadius: BorderRadius.zero,
@@ -304,7 +321,7 @@ class _LoginPageState extends State<LoginPage> {
           const SizedBox(height: 8),
         ],
         label('아이디'),
-        const SizedBox(height: 7),
+        SizedBox(height: isAuthMobile(context) ? 6 : 7),
         SizedBox(
           height: 52,
           child: TextFormField(
@@ -315,9 +332,9 @@ class _LoginPageState extends State<LoginPage> {
                 (value == null || value.trim().isEmpty) ? '아이디를 입력하세요' : null,
           ),
         ),
-        const SizedBox(height: 14),
+        SizedBox(height: isAuthMobile(context) ? 13 : 14),
         label('비밀번호'),
-        const SizedBox(height: 7),
+        SizedBox(height: isAuthMobile(context) ? 4 : 7),
         SizedBox(
           height: 52,
           child: TextFormField(
@@ -332,6 +349,12 @@ class _LoginPageState extends State<LoginPage> {
                 style: TextButton.styleFrom(
                   foregroundColor: AuthDesignTokens.muted,
                   minimumSize: const Size(56, 44),
+                  visualDensity: VisualDensity.standard,
+                  textStyle: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0,
+                  ),
                   padding: EdgeInsets.zero,
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                 ),
@@ -342,7 +365,7 @@ class _LoginPageState extends State<LoginPage> {
                 (value == null || value.isEmpty) ? '비밀번호를 입력하세요' : null,
           ),
         ),
-        const SizedBox(height: 18),
+        SizedBox(height: isAuthMobile(context) ? 19 : 18),
         SizedBox(
           height: 52,
           child: FilledButton(
@@ -371,14 +394,18 @@ class _LoginPageState extends State<LoginPage> {
                     children: [
                       Text(
                         '로그인',
-                        style: TextStyle(fontWeight: FontWeight.w900),
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w900,
+                          letterSpacing: 0,
+                        ),
                       ),
                       Icon(Icons.arrow_forward, size: 18),
                     ],
                   ),
           ),
         ),
-        const SizedBox(height: 22),
+        SizedBox(height: isAuthMobile(context) ? 20 : 22),
         const Row(
           children: [
             Expanded(child: Divider(color: AuthDesignTokens.line)),
@@ -401,6 +428,11 @@ class _LoginPageState extends State<LoginPage> {
               backgroundColor: const Color(0xFFFEE500),
               foregroundColor: Colors.black,
               elevation: 0,
+              textStyle: const TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
+              ),
               shape: const RoundedRectangleBorder(
                 borderRadius: BorderRadius.zero,
               ),
@@ -426,7 +458,7 @@ class _LoginPageState extends State<LoginPage> {
                       ),
                 style: TextButton.styleFrom(
                   foregroundColor: AuthDesignTokens.ink,
-                  minimumSize: const Size(0, 32),
+                  minimumSize: Size(0, isAuthMobile(context) ? 22 : 24),
                   padding: const EdgeInsets.symmetric(horizontal: 4),
                   tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                   textStyle: const TextStyle(
@@ -544,8 +576,11 @@ class _LoginPageState extends State<LoginPage> {
     // 작동 원리: 기준 HTML처럼 모바일은 화면 폭 전체, PC는 좌측 그리드에
     // 460px 패널을 두고,
     // 입력·간편 로그인·가입 진입 순서를 동일하게 유지한다.
+    // CSS와 Flutter의 한국어 글꼴 줄상자 차이는 모바일 캡처 기준으로만 보정한다.
     return Scaffold(
-      backgroundColor: AuthDesignTokens.canvas,
+      backgroundColor: MediaQuery.sizeOf(context).width <= 720
+          ? AuthDesignTokens.surface
+          : AuthDesignTokens.canvas,
       body: SafeArea(
         child: LayoutBuilder(
           builder: (context, constraints) {
@@ -558,7 +593,7 @@ class _LoginPageState extends State<LoginPage> {
                 : 20.0;
             return SingleChildScrollView(
               padding: desktop
-                  ? const EdgeInsets.fromLTRB(28, 72, 20, 72)
+                  ? const EdgeInsets.fromLTRB(32, 72, 20, 72)
                   : EdgeInsets.zero,
               child: ConstrainedBox(
                 constraints: BoxConstraints(
@@ -567,44 +602,58 @@ class _LoginPageState extends State<LoginPage> {
                       : constraints.maxHeight,
                 ),
                 child: Align(
-                  alignment: desktop ? Alignment.topLeft : Alignment.topCenter,
+                  alignment: desktop
+                      ? Alignment.centerLeft
+                      : Alignment.topCenter,
                   child: Container(
                     key: const ValueKey('html-login-panel'),
                     width: panelWidth,
                     padding: desktop
                         ? EdgeInsets.all(panelPadding)
                         : const EdgeInsets.fromLTRB(20, 28, 20, 38),
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       color: AuthDesignTokens.surface,
-                      border: Border(
-                        top: BorderSide(color: AuthDesignTokens.ink, width: 3),
-                        left: BorderSide(color: AuthDesignTokens.line),
-                        right: BorderSide(color: AuthDesignTokens.line),
-                        bottom: BorderSide(color: AuthDesignTokens.line),
-                      ),
+                      border: !desktop
+                          ? const Border(
+                              top: BorderSide(
+                                color: AuthDesignTokens.ink,
+                                width: 3,
+                              ),
+                            )
+                          : const Border(
+                              top: BorderSide(
+                                color: AuthDesignTokens.ink,
+                                width: 3,
+                              ),
+                              left: BorderSide(color: AuthDesignTokens.line),
+                              right: BorderSide(color: AuthDesignTokens.line),
+                              bottom: BorderSide(color: AuthDesignTokens.line),
+                            ),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
                         const _HtmlLoginBrand(),
-                        const SizedBox(height: 38),
-                        const Text(
+                        SizedBox(height: desktop ? 38 : 42),
+                        Text(
                           '로그인',
                           style: TextStyle(
                             fontSize: 32,
-                            letterSpacing: -1.9,
-                            fontWeight: FontWeight.w900,
+                            height: desktop ? null : 1,
+                            letterSpacing: -1.92,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        const SizedBox(height: 9),
-                        const Text(
+                        SizedBox(height: desktop ? 9 : 10),
+                        Text(
                           '학습 기록을 이어서 확인하세요.',
                           style: TextStyle(
                             color: AuthDesignTokens.muted,
                             fontSize: 13,
+                            height: desktop ? null : 1,
                           ),
                         ),
-                        const SizedBox(height: 30),
+                        SizedBox(height: desktop ? 30 : 28),
                         form,
                       ],
                     ),
@@ -632,6 +681,7 @@ class _HtmlLoginBrand extends StatelessWidget {
         alignment: Alignment.center,
         decoration: const BoxDecoration(
           color: AuthDesignTokens.ink,
+          border: Border.fromBorderSide(BorderSide(color: Colors.white)),
           borderRadius: BorderRadius.only(
             topLeft: Radius.circular(10),
             topRight: Radius.circular(3),
@@ -641,13 +691,21 @@ class _HtmlLoginBrand extends StatelessWidget {
         ),
         child: const Text(
           'A',
-          style: TextStyle(color: Colors.white, fontWeight: FontWeight.w900),
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 13,
+            fontWeight: FontWeight.w900,
+          ),
         ),
       ),
       const SizedBox(width: 9),
       const Text(
         'AIFlow',
-        style: TextStyle(fontSize: 18, fontWeight: FontWeight.w900),
+        style: TextStyle(
+          fontSize: 18,
+          fontWeight: FontWeight.w900,
+          letterSpacing: -0.72,
+        ),
       ),
     ],
   );

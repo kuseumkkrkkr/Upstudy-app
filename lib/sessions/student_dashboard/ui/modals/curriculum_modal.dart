@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/course_service.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 
@@ -19,16 +20,11 @@ Future<Course?> showCurriculumModal({required BuildContext context}) {
       context: context,
       useSafeArea: true,
       isScrollControlled: true,
-      showDragHandle: true,
-      backgroundColor: const Color(0xFFF4F4F6),
+      showDragHandle: false,
+      backgroundColor: StudentDensityTokens.surface,
       barrierColor: Colors.black.withValues(alpha: 0.38),
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(32)),
-      ),
-      builder: (_) => const FractionallySizedBox(
-        heightFactor: 0.80,
-        child: CourseSelectModal(mobileSheet: true),
-      ),
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      builder: (_) => const CourseSelectModal(mobileSheet: true),
     );
   }
   return showDialog<Course>(
@@ -64,6 +60,7 @@ class CourseSelectModal extends StatefulWidget {
 class _CourseSelectModalState extends State<CourseSelectModal> {
   bool _loading = true;
   bool _editMode = false;
+  String? _error;
   List<Course> _courses = const [];
 
   @override
@@ -73,9 +70,14 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
   }
 
   Future<void> _load() async {
-    setState(() => _loading = true);
+    if (!mounted) return;
+    setState(() {
+      _loading = true;
+      _error = null;
+    });
     try {
       final courses = await CourseService.fetchMyCourses();
+      if (!mounted) return;
       setState(() {
         // 완료 코스는 검색 필터의 미리보기에서만 확인하며 학습 선택 목록에서는 제외한다.
         _courses = courses
@@ -83,12 +85,12 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
             .toList(growable: false);
         _loading = false;
       });
-    } catch (_) {
-      setState(() => _loading = false);
+    } catch (error) {
       if (!mounted) return;
-      ScaffoldMessenger.of(
-        context,
-      ).showSnackBar(const SnackBar(content: Text('코스를 불러오지 못했습니다.')));
+      setState(() {
+        _loading = false;
+        _error = studentFacingApiError(error, fallback: '코스를 불러오지 못했어요.');
+      });
     }
   }
 
@@ -166,9 +168,7 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
         final width = widget.mobileSheet
             ? maxW
             : math.min(980.0, maxW * (mobile ? 0.94 : 0.90));
-        final height = widget.mobileSheet
-            ? maxH
-            : math.min(600.0, maxH * (mobile ? 0.92 : 0.86));
+        final height = math.min(600.0, maxH * (mobile ? 0.92 : 0.86));
         final scale = widget.mobileSheet
             ? 1.0
             : (width / 980.0).clamp(0.7, 1.0);
@@ -178,17 +178,20 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
               ? const ValueKey('course-select-mobile-sheet')
               : null,
           width: width,
-          height: height,
+          height: widget.mobileSheet ? null : height,
+          constraints: widget.mobileSheet
+              ? BoxConstraints(maxHeight: maxH * .84)
+              : null,
           decoration: BoxDecoration(
             color: widget.mobileSheet
-                ? const Color(0xFFF4F4F6)
+                ? StudentDensityTokens.surface
                 : StudentDensityTokens.surface,
             borderRadius: BorderRadius.circular(
               widget.mobileSheet
                   ? 0
                   : mobile
-                  ? 24
-                  : 30,
+                  ? 0
+                  : 0,
             ),
             border: widget.mobileSheet
                 ? null
@@ -204,6 +207,7 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                   ],
           ),
           child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
               Padding(
                 padding: EdgeInsets.symmetric(
@@ -267,15 +271,47 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                   height: 1,
                   color: StudentDensityTokens.lineStrong,
                 ),
-              Expanded(
+              Flexible(
+                fit: FlexFit.loose,
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator())
+                    ? const Padding(
+                        padding: EdgeInsets.all(24),
+                        child: Center(
+                          heightFactor: 1,
+                          child: CircularProgressIndicator(),
+                        ),
+                      )
+                    : _error != null
+                    ? Center(
+                        heightFactor: 1,
+                        child: Padding(
+                          padding: const EdgeInsets.all(18),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Semantics(
+                                liveRegion: true,
+                                child: Text(
+                                  _error!,
+                                  textAlign: TextAlign.center,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              TextButton(
+                                onPressed: _load,
+                                child: const Text('다시 시도'),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
                     : _courses.isEmpty
                     ? _EmptyCourses(scale: scale)
                     : _editMode
                     ? Padding(
                         padding: EdgeInsets.all(12 * scale),
                         child: ReorderableListView.builder(
+                          shrinkWrap: true,
                           itemCount: _courses.length,
                           onReorderItem: _handleReorder,
                           buildDefaultDragHandles: false,
@@ -292,6 +328,7 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                         ),
                       )
                     : ListView.separated(
+                        shrinkWrap: true,
                         padding: EdgeInsets.fromLTRB(
                           mobile ? 16 : 26,
                           mobile ? 16 : 20,
@@ -327,12 +364,14 @@ class _CourseSelectModalState extends State<CourseSelectModal> {
                         color: StudentDensityTokens.muted,
                       ),
                       const SizedBox(width: 7),
-                      Text(
-                        '최대 4개의 코스를 수강할 수 있습니다.',
-                        style: TextStyle(
-                          fontSize: 12 * scale,
-                          color: StudentDensityTokens.muted,
-                          fontWeight: FontWeight.w600,
+                      Expanded(
+                        child: Text(
+                          '최대 4개의 코스를 수강할 수 있습니다.',
+                          style: TextStyle(
+                            fontSize: 12 * scale,
+                            color: StudentDensityTokens.muted,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                       ),
                     ],
@@ -353,6 +392,7 @@ class _EmptyCourses extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Center(
+      heightFactor: 1,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -397,9 +437,9 @@ class _CourseSelectCard extends StatelessWidget {
 
     return Material(
       color: Colors.white,
-      elevation: 2,
+      elevation: 0,
       shadowColor: Colors.black.withValues(alpha: 0.12),
-      borderRadius: BorderRadius.circular(20 * scale),
+      borderRadius: BorderRadius.zero,
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: onTap,

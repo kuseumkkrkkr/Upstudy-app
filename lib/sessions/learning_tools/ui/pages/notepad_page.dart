@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:ui' show ImageFilter;
 
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
@@ -8,7 +9,7 @@ import 'package:s11/shared/services/storage/local_db.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
 //=============================================================================
-// 노트패드 (삼성노트 스타일) - 우측 사이드바 툴바
+// 노트패드 편집기
 //=============================================================================
 
 class NotepadPage extends StatefulWidget {
@@ -25,7 +26,8 @@ class _NotepadPageState extends State<NotepadPage>
     with TickerProviderStateMixin {
   static const _storageKey = 'notepad_strokes_v2';
   static const _textStorageKey = 'notepad_text_v1';
-  static const _baseHeight = 1400.0;
+  static const _titleStorageKey = 'notepad_title_v1';
+  static const _baseHeight = 540.0;
   static const _extendHeight = 1200.0;
   static const _maxHeight = 50000.0;
   static const _minPointDistance = 0.6;
@@ -42,10 +44,26 @@ class _NotepadPageState extends State<NotepadPage>
   static const List<double> _penWidths = [1, 3, 5, 8];
 
   final ScrollController _scrollController = ScrollController();
+  final TextEditingController _titleController = TextEditingController();
   final TextEditingController _textController = TextEditingController();
+  final TextEditingController _recallController = TextEditingController();
+  final TextEditingController _reviewTitleController = TextEditingController();
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
-  final List<_Stroke> _strokes = <_Stroke>[];
-  final List<_UndoAction> _undoStack = <_UndoAction>[];
+  final List<_Stroke> _noteStrokes = <_Stroke>[];
+  final List<_UndoAction> _noteUndoStack = <_UndoAction>[];
+  final List<_UndoAction> _noteRedoStack = <_UndoAction>[];
+  final List<_Stroke> _reviewStrokes = <_Stroke>[];
+  final List<_UndoAction> _reviewUndoStack = <_UndoAction>[];
+  final List<_UndoAction> _reviewRedoStack = <_UndoAction>[];
+
+  List<_Stroke> get _strokes => _isReviewing ? _reviewStrokes : _noteStrokes;
+  List<_UndoAction> get _undoStack =>
+      _isReviewing ? _reviewUndoStack : _noteUndoStack;
+  List<_UndoAction> get _redoStack =>
+      _isReviewing ? _reviewRedoStack : _noteRedoStack;
+  TextEditingController get _activeTextController =>
+      _isReviewing ? _recallController : _textController;
+  Size _composeSize = const Size(390, 540);
   final List<_Stroke> _pendingEraseRemoved = <_Stroke>[];
 
   double _canvasHeight = _baseHeight;
@@ -58,15 +76,13 @@ class _NotepadPageState extends State<NotepadPage>
   Offset? _eraserPosition;
   Timer? _saveTimer;
 
-  bool _showLines = true;
+  bool _showLines = false;
+  bool _isAttached = false;
+  bool _isReviewing = false;
+  bool _reviewCompleted = false;
   Color _penColor = Colors.black;
   double _penWidth = 3;
   bool _isHighlighter = false; // 형광펜 모드
-
-  // 팝업 패널 상태
-  bool _showColorPanel = false;
-  bool _showWidthPanel = false;
-  bool _showEraserPanel = false;
 
   bool get _canPersist => widget.persistenceEnabled && !kIsWeb;
 
@@ -80,51 +96,13 @@ class _NotepadPageState extends State<NotepadPage>
   @override
   void dispose() {
     _scrollController.dispose();
+    _titleController.dispose();
     _textController.dispose();
+    _recallController.dispose();
+    _reviewTitleController.dispose();
     _paintVersion.dispose();
     _saveTimer?.cancel();
     super.dispose();
-  }
-
-  void _closeAllPanels() {
-    setState(() {
-      _showColorPanel = false;
-      _showWidthPanel = false;
-      _showEraserPanel = false;
-    });
-  }
-
-  void _toggleColorPanel() {
-    setState(() {
-      _showColorPanel = !_showColorPanel;
-      _showWidthPanel = false;
-      _showEraserPanel = false;
-    });
-  }
-
-  void _toggleWidthPanel() {
-    setState(() {
-      _showWidthPanel = !_showWidthPanel;
-      _showColorPanel = false;
-      _showEraserPanel = false;
-    });
-  }
-
-  void _toggleEraserPanel() {
-    setState(() {
-      _showEraserPanel = !_showEraserPanel;
-      _showColorPanel = false;
-      _showWidthPanel = false;
-    });
-  }
-
-  void _toggleHighlighter() {
-    setState(() {
-      _isHighlighter = !_isHighlighter;
-      if (_isHighlighter && _toolMode == _ToolMode.eraser) {
-        _toolMode = _ToolMode.pen;
-      }
-    });
   }
 
   void _handleScroll() {
@@ -145,6 +123,8 @@ class _NotepadPageState extends State<NotepadPage>
     if (!_canPersist) return;
     final raw = await LocalDb.instance.getString(_storageKey);
     final savedText = await LocalDb.instance.getString(_textStorageKey);
+    final savedTitle = await LocalDb.instance.getString(_titleStorageKey);
+    if (savedTitle != null) _titleController.text = savedTitle;
     if (savedText != null) {
       _textController.text = savedText;
     }
@@ -160,7 +140,7 @@ class _NotepadPageState extends State<NotepadPage>
       }
       if (!mounted) return;
       setState(() {
-        _strokes
+        _noteStrokes
           ..clear()
           ..addAll(loaded..sort((a, b) => a.order.compareTo(b.order)));
         _canvasHeight = _estimateHeight(loaded);
@@ -191,9 +171,393 @@ class _NotepadPageState extends State<NotepadPage>
 
   Future<void> _persistStrokes() async {
     if (!_canPersist) return;
-    final payload = jsonEncode(_strokes.map((e) => e.toJson()).toList());
+    final payload = jsonEncode(_noteStrokes.map((e) => e.toJson()).toList());
     await LocalDb.instance.setString(_storageKey, payload);
     await LocalDb.instance.setString(_textStorageKey, _textController.text);
+    await LocalDb.instance.setString(_titleStorageKey, _titleController.text);
+  }
+
+  void _createNewNote() {
+    setState(() {
+      _isReviewing = false;
+      _titleController.clear();
+      _textController.clear();
+      _strokes.clear();
+      _undoStack.clear();
+      _redoStack.clear();
+      _isAttached = false;
+      _isReviewing = false;
+      _recallController.clear();
+      _reviewStrokes.clear();
+      _reviewUndoStack.clear();
+      _reviewRedoStack.clear();
+      _reviewCompleted = false;
+      _currentStroke = null;
+      _canvasHeight = _baseHeight;
+    });
+    _paintVersion.value += 1;
+    _scheduleSave();
+  }
+
+  void _clearInk() {
+    _strokes.clear();
+    _undoStack.clear();
+    _redoStack.clear();
+    _currentStroke = null;
+    _paintVersion.value += 1;
+    _scheduleSave();
+    if (mounted) setState(() {});
+  }
+
+  void _startBlankReview() {
+    _recallController.clear();
+    _reviewTitleController.text =
+        '백지 복습 · ${_titleController.text.trim().isEmpty ? '제목 없는 노트' : _titleController.text}';
+    setState(() {
+      _reviewStrokes.clear();
+      _reviewUndoStack.clear();
+      _reviewRedoStack.clear();
+      _currentStroke = null;
+      _isReviewing = true;
+    });
+    _paintVersion.value++;
+  }
+
+  void _finishReview({bool completed = false}) {
+    setState(() {
+      _isReviewing = false;
+      _currentStroke = null;
+      _reviewCompleted = _reviewCompleted || completed;
+    });
+    _paintVersion.value++;
+  }
+
+  Future<void> _showReviewComparison() async {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    await showGeneralDialog<void>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: '비교 닫기',
+      barrierColor: Colors.transparent,
+      transitionDuration: const Duration(milliseconds: 180),
+      pageBuilder: (sheetContext, animation, secondaryAnimation) => Stack(
+        children: [
+          Positioned.fill(
+            top: 64,
+            child: GestureDetector(
+              onTap: () => Navigator.of(sheetContext).pop(),
+              child: ClipRect(
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 2, sigmaY: 2),
+                  child: const ColoredBox(color: Color(0x5C111114)),
+                ),
+              ),
+            ),
+          ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: Material(
+              color: Colors.transparent,
+              child: StatefulBuilder(
+                builder: (context, setSheetState) => SafeArea(
+                  top: false,
+                  child: Container(
+                    key: const ValueKey('notepad-review-sheet'),
+                    constraints: BoxConstraints(
+                      maxHeight:
+                          (MediaQuery.sizeOf(context).height - 64) *
+                          (mobile ? .91 : .88),
+                    ),
+                    width: 920,
+                    padding: mobile
+                        ? const EdgeInsets.fromLTRB(14, 8, 14, 16)
+                        : const EdgeInsets.fromLTRB(20, 8, 20, 22),
+                    decoration: const BoxDecoration(color: Colors.white),
+                    child: Column(
+                      children: [
+                        _NotepadSheetHandle(),
+                        Row(
+                          children: [
+                            const Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    '백지 복습',
+                                    style: TextStyle(
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w800,
+                                      color: Color(0xFF7B7B83),
+                                    ),
+                                  ),
+                                  SizedBox(height: 3),
+                                  Text(
+                                    '원문과 비교',
+                                    style: TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            IconButton(
+                              tooltip: '닫기',
+                              style: IconButton.styleFrom(
+                                backgroundColor: const Color(0xFFF1F1F3),
+                                fixedSize: const Size(48, 48),
+                                shape: const RoundedRectangleBorder(),
+                              ),
+                              onPressed: () {
+                                Navigator.of(sheetContext).pop();
+                              },
+                              icon: const Icon(Icons.close, size: 20),
+                            ),
+                          ],
+                        ),
+                        const Divider(height: 1, color: Color(0xFFE7E7EA)),
+                        Expanded(
+                          child: LayoutBuilder(
+                            builder: (context, constraints) {
+                              final cards = [
+                                _ReviewCard(
+                                  label: '기준 노트',
+                                  title: _titleController.text.trim().isEmpty
+                                      ? '제목 없는 노트'
+                                      : _titleController.text,
+                                  body: _textController.text.trim().isEmpty
+                                      ? '타이핑한 내용 없음'
+                                      : _textController.text,
+                                  child: _buildInkPreview(_noteStrokes),
+                                ),
+                                _ReviewCard(
+                                  label: '내가 기억한 내용',
+                                  title: _recallController.text.trim().isEmpty
+                                      ? '타이핑한 내용 없음'
+                                      : _recallController.text,
+                                  body: '',
+                                  child: _buildInkPreview(_reviewStrokes),
+                                ),
+                              ];
+                              return SingleChildScrollView(
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 14,
+                                ),
+                                child: constraints.maxWidth <= 720
+                                    ? Column(
+                                        children: [
+                                          for (final card in cards)
+                                            Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 12,
+                                              ),
+                                              child: card,
+                                            ),
+                                        ],
+                                      )
+                                    : Row(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          for (final card in cards)
+                                            Expanded(
+                                              child: Padding(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                    ),
+                                                child: card,
+                                              ),
+                                            ),
+                                        ],
+                                      ),
+                              );
+                            },
+                          ),
+                        ),
+                        const Divider(height: 1, color: Color(0xFFE7E7EA)),
+                        Padding(
+                          padding: const EdgeInsets.only(top: 12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: OutlinedButton(
+                                  style: OutlinedButton.styleFrom(
+                                    minimumSize: const Size(0, 50),
+                                    foregroundColor: const Color(0xFF17171A),
+                                    side: const BorderSide(
+                                      color: Color(0xFF17171A),
+                                    ),
+                                    shape: const RoundedRectangleBorder(),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                  ),
+                                  onPressed: () {
+                                    _recallController.clear();
+                                    setState(() {
+                                      _reviewStrokes.clear();
+                                      _reviewUndoStack.clear();
+                                      _reviewRedoStack.clear();
+                                    });
+                                    _paintVersion.value++;
+                                    Navigator.of(sheetContext).pop();
+                                  },
+                                  child: const Text('다시 써보기'),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: FilledButton(
+                                  onPressed: () {
+                                    Navigator.of(sheetContext).pop();
+                                    _finishReview(completed: true);
+                                  },
+                                  style: FilledButton.styleFrom(
+                                    minimumSize: const Size(0, 50),
+                                    shape: const RoundedRectangleBorder(),
+                                    textStyle: const TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w800,
+                                    ),
+                                    backgroundColor: const Color(0xFF17171A),
+                                  ),
+                                  child: const Text('복습 완료'),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInkPreview(List<_Stroke> strokes) => Container(
+    width: double.infinity,
+    color: Colors.white,
+    child: FittedBox(
+      fit: BoxFit.fill,
+      child: SizedBox(
+        width: _composeSize.width,
+        height: _composeSize.height,
+        child: CustomPaint(
+          painter: _NotepadPainter(
+            strokes: strokes,
+            current: null,
+            toolMode: _ToolMode.pen,
+            eraserRadius: _eraserRadius,
+            eraserPosition: null,
+            showLines: false,
+            isDark: false,
+            repaint: _paintVersion,
+          ),
+        ),
+      ),
+    ),
+  );
+
+  Future<void> _showNotepadMoreSheet() async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x52111114),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SafeArea(
+          top: false,
+          child: Align(
+            alignment: Alignment.bottomCenter,
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 520),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.fromLTRB(18, 8, 18, 24),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    const _NotepadSheetHandle(),
+                    Row(
+                      children: [
+                        const Expanded(
+                          child: Text(
+                            '노트 메뉴',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          tooltip: '닫기',
+                          onPressed: () => Navigator.of(sheetContext).pop(),
+                          icon: const Icon(Icons.close, size: 20),
+                        ),
+                      ],
+                    ),
+                    const Divider(height: 1, color: Color(0xFFEDEDF0)),
+                    _NotepadMenuAction(
+                      icon: Icons.menu_book_outlined,
+                      title: '백지 복습 시작',
+                      subtitle:
+                          _textController.text.trim().isEmpty &&
+                              _strokes.isEmpty
+                          ? '먼저 복습할 내용을 적어주세요.'
+                          : '원문을 가리고 기억에서 꺼내 씁니다.',
+                      enabled:
+                          !_isReviewing &&
+                          (_textController.text.trim().isNotEmpty ||
+                              _strokes.isNotEmpty),
+                      onTap: () {
+                        Navigator.of(sheetContext).pop();
+                        Future<void>.delayed(
+                          const Duration(milliseconds: 220),
+                          () {
+                            if (mounted) _startBlankReview();
+                          },
+                        );
+                      },
+                    ),
+                    _NotepadMenuAction(
+                      icon: _isAttached
+                          ? Icons.check_circle_outline
+                          : Icons.add,
+                      title: _isAttached ? '현재 학습에 첨부됨' : '현재 학습에 첨부',
+                      subtitle: '학습 화면에서 이 노트를 함께 봅니다.',
+                      onTap: () {
+                        setState(() => _isAttached = !_isAttached);
+                        setSheetState(() {});
+                      },
+                    ),
+                    _NotepadMenuAction(
+                      icon: Icons.auto_fix_high_outlined,
+                      title: '필기 전체 지우기',
+                      subtitle: '입력한 글자는 그대로 둡니다.',
+                      last: true,
+                      onTap: () {
+                        _clearInk();
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
   }
 
   void _startStroke(Offset position, double pressure) {
@@ -228,7 +592,7 @@ class _NotepadPageState extends State<NotepadPage>
     final hasCompletedStroke = stroke != null && stroke.points.isNotEmpty;
     if (stroke != null && stroke.points.isNotEmpty) {
       _strokes.add(stroke);
-      _undoStack.add(_AddAction(stroke));
+      _recordAction(_AddAction(stroke));
       _scheduleSave();
     }
     _currentStroke = null;
@@ -259,7 +623,7 @@ class _NotepadPageState extends State<NotepadPage>
   void _finishEraser() {
     final hasRemovedStroke = _pendingEraseRemoved.isNotEmpty;
     if (hasRemovedStroke) {
-      _undoStack.add(_RemoveAction(List<_Stroke>.from(_pendingEraseRemoved)));
+      _recordAction(_RemoveAction(List<_Stroke>.from(_pendingEraseRemoved)));
       _pendingEraseRemoved.clear();
       _scheduleSave();
     }
@@ -289,6 +653,7 @@ class _NotepadPageState extends State<NotepadPage>
     if (_undoStack.isEmpty) return;
     setState(() {
       final action = _undoStack.removeLast();
+      _redoStack.add(action);
       if (action is _AddAction) {
         _strokes.remove(action.stroke);
       } else if (action is _RemoveAction) {
@@ -298,6 +663,27 @@ class _NotepadPageState extends State<NotepadPage>
     });
     _paintVersion.value += 1;
     _scheduleSave();
+  }
+
+  void _redo() {
+    if (_redoStack.isEmpty) return;
+    setState(() {
+      final action = _redoStack.removeLast();
+      if (action is _AddAction) {
+        _strokes.add(action.stroke);
+      } else if (action is _RemoveAction) {
+        _strokes.removeWhere(action.strokes.contains);
+      }
+      _strokes.sort((a, b) => a.order.compareTo(b.order));
+      _undoStack.add(action);
+    });
+    _paintVersion.value += 1;
+    _scheduleSave();
+  }
+
+  void _recordAction(_UndoAction action) {
+    _undoStack.add(action);
+    _redoStack.clear();
   }
 
   /// 필요한 변수는 현재 펜 색상·굵기·줄 표시·형광펜 상태다.
@@ -500,7 +886,7 @@ class _NotepadPageState extends State<NotepadPage>
               Navigator.pop(ctx);
               setState(() {
                 if (_strokes.isNotEmpty) {
-                  _undoStack.add(_RemoveAction(List<_Stroke>.from(_strokes)));
+                  _recordAction(_RemoveAction(List<_Stroke>.from(_strokes)));
                   _strokes.clear();
                 }
                 _currentStroke = null;
@@ -539,245 +925,362 @@ class _NotepadPageState extends State<NotepadPage>
     return pressure.clamp(0.0, 1.0);
   }
 
+  Widget _buildCompose({
+    required bool isDark,
+    required bool mobile,
+    required double height,
+  }) {
+    final isTyping = _mobileInputMode == _MobileInputMode.typing;
+    final contentPadding = mobile ? 22.0 : 44.0;
+    return SizedBox(
+      key: const ValueKey('notepad-compose'),
+      height: height,
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          IgnorePointer(
+            ignoring: !isTyping,
+            child: TextField(
+              key: const ValueKey('notepad-text-editor'),
+              controller: _activeTextController,
+              readOnly: !isTyping,
+              expands: true,
+              maxLines: null,
+              minLines: null,
+              keyboardType: TextInputType.multiline,
+              textAlignVertical: TextAlignVertical.top,
+              style: TextStyle(
+                color: const Color(0xFF202024),
+                fontSize: mobile ? 16 : 17,
+                fontWeight: FontWeight.w500,
+                height: 1.75,
+              ),
+              onChanged: (_) {
+                setState(() {});
+                _scheduleSave();
+              },
+              decoration: InputDecoration(
+                filled: false,
+                hintText: isTyping
+                    ? (_isReviewing ? '기억나는 내용을 입력하세요' : '내용을 입력하세요')
+                    : null,
+                hintStyle: const TextStyle(color: Color(0xFFB0B0B6)),
+                border: InputBorder.none,
+                enabledBorder: InputBorder.none,
+                focusedBorder: InputBorder.none,
+                disabledBorder: InputBorder.none,
+                errorBorder: InputBorder.none,
+                focusedErrorBorder: InputBorder.none,
+                contentPadding: EdgeInsets.fromLTRB(
+                  contentPadding,
+                  0,
+                  contentPadding,
+                  mobile ? 84 : 80,
+                ),
+              ),
+            ),
+          ),
+          IgnorePointer(
+            ignoring:
+                isTyping ||
+                (mobile && _mobileInputMode == _MobileInputMode.move),
+            child: Listener(
+              key: const ValueKey('notepad-canvas'),
+              behavior: HitTestBehavior.opaque,
+              onPointerDown: (event) {
+                final pos = event.localPosition;
+                if (_toolMode == _ToolMode.pen) {
+                  _startStroke(pos, event.pressure);
+                } else {
+                  _startEraser(pos);
+                }
+              },
+              onPointerMove: (event) {
+                final pos = event.localPosition;
+                if (_toolMode == _ToolMode.pen) {
+                  _updateStroke(pos, event.pressure);
+                } else {
+                  _updateEraser(pos);
+                }
+              },
+              onPointerUp: (_) {
+                if (_toolMode == _ToolMode.pen) {
+                  _endStroke();
+                } else {
+                  _finishEraser();
+                }
+              },
+              onPointerCancel: (_) {
+                if (_toolMode == _ToolMode.pen) {
+                  _endStroke();
+                } else {
+                  _finishEraser();
+                }
+              },
+              child: CustomPaint(
+                painter: _NotepadPainter(
+                  strokes: _strokes,
+                  current: _currentStroke,
+                  toolMode: _toolMode,
+                  eraserRadius: _eraserRadius,
+                  eraserPosition: _eraserPosition,
+                  showLines: _showLines,
+                  isDark: isDark,
+                  repaint: _paintVersion,
+                ),
+              ),
+            ),
+          ),
+          if (_activeTextController.text.isEmpty &&
+              _strokes.isEmpty &&
+              !isTyping)
+            Positioned(
+              top: 4,
+              left: contentPadding,
+              child: IgnorePointer(
+                child: Text(
+                  _isReviewing ? '기억나는 내용을 써보세요' : '화면에 바로 써보세요',
+                  style: const TextStyle(
+                    color: Color(0xFFB0B0B6),
+                    fontSize: 15,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildMetadata(String dateLabel) => DefaultTextStyle(
+    style: const TextStyle(
+      color: Color(0xFF9A9AA1),
+      fontSize: 12,
+      fontWeight: FontWeight.w600,
+    ),
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 4,
+      crossAxisAlignment: WrapCrossAlignment.center,
+      children: [
+        Text(_isReviewing ? '백지 복습' : dateLabel),
+        if (_isReviewing || _reviewCompleted) ...[
+          Container(width: 1, height: 10, color: const Color(0xFFD8D8DC)),
+          Text(_isReviewing ? '기준 노트 가림' : '백지 복습 완료'),
+        ],
+        Container(width: 1, height: 10, color: const Color(0xFFD8D8DC)),
+        Text('${_activeTextController.text.length}자'),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
     final isDark = theme.brightness == Brightness.dark;
     final isMobile = isStudentDensityMobile(context);
-    // 학습 도구 세션 레퍼런스에 맞춰 캔버스와 툴바를 중립 흑백으로 고정한다.
-    const bgColor = Color(0xFFF7F7F7);
-    const paperColor = Colors.white;
-    const sidebarBg = Colors.white;
-    const sidebarBorder = Color(0xFFE4E4E7);
+    final now = DateTime.now();
+    final hour = now.hour % 12 == 0 ? 12 : now.hour % 12;
+    final dateLabel =
+        '${now.month}월 ${now.day}일 ${now.hour < 12 ? '오전' : '오후'} '
+        '$hour:${now.minute.toString().padLeft(2, '0')}';
 
     return Scaffold(
-      backgroundColor: bgColor,
+      backgroundColor: const Color(0xFFF3F3F5),
       body: SafeArea(
-        child: Column(
+        child: Stack(
           children: [
-            _NotepadHeader(
-              mobile: isMobile,
-              onClose: () => Navigator.maybePop(context),
-            ),
-            Expanded(
-              child: Stack(
-                children: [
-                  // 메인 캔버스 영역 (전체 화면, 사이드바 공간 제외)
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Scrollbar(
-                          controller: _scrollController,
-                          thumbVisibility: true,
-                          child: SingleChildScrollView(
-                            controller: _scrollController,
-                            physics:
-                                isMobile &&
-                                    _mobileInputMode != _MobileInputMode.move
-                                ? const NeverScrollableScrollPhysics()
-                                : const BouncingScrollPhysics(),
-                            child: Container(
-                              margin: EdgeInsets.all(isMobile ? 10 : 16),
-                              decoration: BoxDecoration(
-                                color: paperColor,
-                                borderRadius: BorderRadius.circular(
-                                  isMobile ? 20 : 12,
+            Column(
+              children: [
+                _NotepadHeader(
+                  saveLabel: _canPersist ? '저장됨' : '저장되지 않음',
+                  showStatus: MediaQuery.sizeOf(context).width > 410,
+                  onBack: () => Navigator.maybePop(context),
+                  onNew: _createNewNote,
+                  onMore: _showNotepadMoreSheet,
+                ),
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final sheetMinHeight = isMobile
+                          ? constraints.maxHeight
+                          : constraints.maxHeight - 62;
+                      final headerHeight =
+                          (isMobile ? 26.0 : 34.0) +
+                          (isMobile ? 33.0 : 35.0) +
+                          10 +
+                          14;
+                      final composeMinimum = isMobile ? 500.0 : 540.0;
+                      final availableComposeHeight =
+                          sheetMinHeight - headerHeight - (isMobile ? 16 : 18);
+                      final composeHeight =
+                          _canvasHeight > availableComposeHeight
+                          ? _canvasHeight
+                          : availableComposeHeight > composeMinimum
+                          ? availableComposeHeight
+                          : composeMinimum;
+                      _composeSize = Size(
+                        (constraints.maxWidth - (isMobile ? 0 : 40)).clamp(
+                          0,
+                          860,
+                        ),
+                        composeHeight,
+                      );
+                      return SingleChildScrollView(
+                        controller: _scrollController,
+                        physics: _mobileInputMode == _MobileInputMode.move
+                            ? const BouncingScrollPhysics()
+                            : const ClampingScrollPhysics(),
+                        child: ConstrainedBox(
+                          constraints: BoxConstraints(
+                            minHeight: constraints.maxHeight,
+                          ),
+                          child: Container(
+                            color: isMobile
+                                ? Colors.white
+                                : const Color(0xFFF3F3F5),
+                            padding: EdgeInsets.fromLTRB(
+                              isMobile ? 0 : 20,
+                              isMobile ? 0 : 20,
+                              isMobile ? 0 : 20,
+                              isMobile ? 16 : 42,
+                            ),
+                            child: Center(
+                              child: ConstrainedBox(
+                                constraints: const BoxConstraints(
+                                  maxWidth: 860,
                                 ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: isDark
-                                        ? Colors.black.withValues(alpha: 0.3)
-                                        : Colors.black.withValues(alpha: 0.06),
-                                    blurRadius: 20,
-                                    offset: const Offset(0, 4),
+                                child: Container(
+                                  width: double.infinity,
+                                  constraints: BoxConstraints(
+                                    minHeight: sheetMinHeight,
                                   ),
-                                ],
-                              ),
-                              child: ClipRRect(
-                                borderRadius: BorderRadius.circular(
-                                  isMobile ? 20 : 12,
-                                ),
-                                child:
-                                    isMobile &&
-                                        _mobileInputMode ==
-                                            _MobileInputMode.typing
-                                    ? SizedBox(
-                                        key: const ValueKey(
-                                          'notepad-text-editor',
+                                  color: _isReviewing
+                                      ? const Color(0xFFFBFBFC)
+                                      : Colors.white,
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: [
+                                      Padding(
+                                        padding: EdgeInsets.fromLTRB(
+                                          isMobile ? 22 : 44,
+                                          isMobile ? 26 : 34,
+                                          isMobile ? 22 : 44,
+                                          0,
                                         ),
-                                        height: _canvasHeight,
-                                        child: TextField(
-                                          controller: _textController,
-                                          autofocus: true,
-                                          expands: true,
-                                          maxLines: null,
-                                          minLines: null,
-                                          keyboardType: TextInputType.multiline,
-                                          textAlignVertical:
-                                              TextAlignVertical.top,
-                                          onChanged: (_) => _scheduleSave(),
-                                          decoration: const InputDecoration(
-                                            hintText: '내용을 입력하세요',
-                                            border: InputBorder.none,
-                                            contentPadding: EdgeInsets.all(24),
-                                          ),
-                                        ),
-                                      )
-                                    : IgnorePointer(
-                                        ignoring:
-                                            isMobile &&
-                                            _mobileInputMode ==
-                                                _MobileInputMode.move,
-                                        child: Listener(
-                                          key: const ValueKey('notepad-canvas'),
-                                          behavior: HitTestBehavior.opaque,
-                                          onPointerDown: (event) {
-                                            _closeAllPanels();
-                                            final pos = event.localPosition;
-                                            if (_toolMode == _ToolMode.pen) {
-                                              _startStroke(pos, event.pressure);
-                                            } else {
-                                              _startEraser(pos);
-                                            }
-                                          },
-                                          onPointerMove: (event) {
-                                            final pos = event.localPosition;
-                                            if (_toolMode == _ToolMode.pen) {
-                                              _updateStroke(
-                                                pos,
-                                                event.pressure,
-                                              );
-                                            } else {
-                                              _updateEraser(pos);
-                                            }
-                                          },
-                                          onPointerUp: (_) {
-                                            if (_toolMode == _ToolMode.pen) {
-                                              _endStroke();
-                                            } else {
-                                              _finishEraser();
-                                            }
-                                          },
-                                          onPointerCancel: (_) {
-                                            if (_toolMode == _ToolMode.pen) {
-                                              _endStroke();
-                                            } else {
-                                              _finishEraser();
-                                            }
-                                          },
-                                          child: SizedBox(
-                                            height: _canvasHeight,
-                                            width: double.infinity,
-                                            child: CustomPaint(
-                                              painter: _NotepadPainter(
-                                                strokes: _strokes,
-                                                current: _currentStroke,
-                                                toolMode: _toolMode,
-                                                eraserRadius: _eraserRadius,
-                                                eraserPosition: _eraserPosition,
-                                                showLines: _showLines,
-                                                isDark: isDark,
-                                                repaint: _paintVersion,
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            TextField(
+                                              key: const ValueKey(
+                                                'notepad-title',
+                                              ),
+                                              controller: _isReviewing
+                                                  ? _reviewTitleController
+                                                  : _titleController,
+                                              readOnly: _isReviewing,
+                                              maxLength: 60,
+                                              onChanged: (_) => _scheduleSave(),
+                                              style: TextStyle(
+                                                color: const Color(0xFF17171A),
+                                                fontSize: _isReviewing
+                                                    ? 22
+                                                    : isMobile
+                                                    ? 25
+                                                    : 27,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: -.8,
+                                                height: 1.3,
+                                              ),
+                                              decoration: const InputDecoration(
+                                                filled: false,
+                                                hintText: '제목',
+                                                counterText: '',
+                                                hintStyle: TextStyle(
+                                                  color: Color(0xFF8D8D94),
+                                                  fontWeight: FontWeight.w700,
+                                                ),
+                                                border: InputBorder.none,
+                                                enabledBorder: InputBorder.none,
+                                                focusedBorder: InputBorder.none,
+                                                disabledBorder:
+                                                    InputBorder.none,
+                                                errorBorder: InputBorder.none,
+                                                focusedErrorBorder:
+                                                    InputBorder.none,
+                                                isDense: true,
+                                                contentPadding: EdgeInsets.zero,
                                               ),
                                             ),
-                                          ),
+                                            const SizedBox(height: 10),
+                                            _buildMetadata(dateLabel),
+                                          ],
                                         ),
                                       ),
+                                      SizedBox(height: isMobile ? 16 : 18),
+                                      _buildCompose(
+                                        isDark: isDark,
+                                        mobile: isMobile,
+                                        height: composeHeight,
+                                      ),
+                                    ],
+                                  ),
+                                ),
                               ),
                             ),
                           ),
                         ),
-                      ),
-                      if (!isMobile)
-                        // PC 레이아웃은 기존 우측 사이드바를 그대로 유지한다.
-                        _RightSidebar(
-                          sidebarBg: sidebarBg,
-                          sidebarBorder: sidebarBorder,
-                          isDark: isDark,
-                          toolMode: _toolMode,
-                          penColor: _penColor,
-                          penWidth: _penWidth,
-                          showLines: _showLines,
-                          isHighlighter: _isHighlighter,
-                          showColorPanel: _showColorPanel,
-                          showWidthPanel: _showWidthPanel,
-                          showEraserPanel: _showEraserPanel,
-                          canUndo: _undoStack.isNotEmpty,
-                          canClear: _strokes.isNotEmpty,
-                          onToolChanged: (mode) {
-                            setState(() => _toolMode = mode);
-                            _closeAllPanels();
-                          },
-                          onColorTap: _toggleColorPanel,
-                          onWidthTap: _toggleWidthPanel,
-                          onEraserTap: _toggleEraserPanel,
-                          onHighlighterTap: _toggleHighlighter,
-                          onColorChanged: (color) =>
-                              setState(() => _penColor = color),
-                          onWidthChanged: (width) =>
-                              setState(() => _penWidth = width),
-                          onLinesChanged: (value) =>
-                              setState(() => _showLines = value),
-                          onUndo: _undo,
-                          onClear: _clearAll,
-                          onBack: () => Navigator.maybePop(context),
-                        ),
-                    ],
+                      );
+                    },
                   ),
-                  // 웹에서는 저장 불가 알림
-                  if (!_canPersist)
-                    Positioned(
-                      bottom: isMobile ? 10 : 16,
-                      left: 0,
-                      right: 0,
-                      child: Center(
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 16,
-                            vertical: 8,
-                          ),
-                          decoration: BoxDecoration(
-                            color: Colors.black87,
-                            borderRadius: BorderRadius.circular(20),
-                          ),
-                          child: const Text(
-                            '웹에서는 저장되지 않습니다',
-                            style: TextStyle(
-                              color: Colors.white70,
-                              fontSize: 13,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
+                ),
+                _NotepadToolDock(
+                  mobile: isMobile,
+                  inputMode: _mobileInputMode,
+                  toolMode: _toolMode,
+                  isHighlighter: _isHighlighter,
+                  canUndo: _undoStack.isNotEmpty,
+                  canRedo: _redoStack.isNotEmpty,
+                  onTyping: () => setState(
+                    () => _mobileInputMode = _MobileInputMode.typing,
+                  ),
+                  onPen: () => setState(() {
+                    _mobileInputMode = _MobileInputMode.pen;
+                    _toolMode = _ToolMode.pen;
+                    _isHighlighter = false;
+                  }),
+                  onHighlighter: () => setState(() {
+                    _mobileInputMode = _MobileInputMode.pen;
+                    _toolMode = _ToolMode.pen;
+                    _isHighlighter = true;
+                  }),
+                  onEraser: () => setState(() {
+                    _mobileInputMode = _MobileInputMode.pen;
+                    _toolMode = _ToolMode.eraser;
+                  }),
+                  onUndo: _undo,
+                  onRedo: _redo,
+                ),
+              ],
             ),
-            if (isMobile)
-              _MobileNotepadToolbar(
-                key: const ValueKey('notepad-mobile-toolbar'),
-                inputMode: _mobileInputMode,
-                toolMode: _toolMode,
-                penColor: _penColor,
-                isHighlighter: _isHighlighter,
-                canUndo: _undoStack.isNotEmpty,
-                onTyping: () =>
-                    setState(() => _mobileInputMode = _MobileInputMode.typing),
-                onMove: () {
-                  FocusScope.of(context).unfocus();
-                  setState(() => _mobileInputMode = _MobileInputMode.move);
-                },
-                onPen: () => setState(() {
-                  _mobileInputMode = _MobileInputMode.pen;
-                  _toolMode = _ToolMode.pen;
-                  _isHighlighter = false;
-                }),
-                onEraser: () => setState(() {
-                  _mobileInputMode = _MobileInputMode.pen;
-                  _toolMode = _ToolMode.eraser;
-                }),
-                onUndo: _undo,
-                onTools: _showMobileToolsSheet,
+            if (_isReviewing)
+              Positioned(
+                left: isMobile ? 8 : 16,
+                right: isMobile ? 8 : 16,
+                bottom: isMobile ? 68 : 88,
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 620),
+                    child: _NotepadReviewBar(
+                      mobile: isMobile,
+                      onCompare: _showReviewComparison,
+                      onExit: _finishReview,
+                    ),
+                  ),
+                ),
               ),
           ],
         ),
@@ -786,107 +1289,144 @@ class _NotepadPageState extends State<NotepadPage>
   }
 }
 
-/// 필요한 변수는 현재 도구·펜 색상·실행 취소 가능 여부와 각 동작 콜백이다.
-/// 작동 원리는 모바일 하단에서 입력·이동·필기 상태와 편집 도구를 명시적으로 분리한다.
-class _MobileNotepadToolbar extends StatelessWidget {
-  const _MobileNotepadToolbar({
-    super.key,
+class _NotepadToolDock extends StatelessWidget {
+  const _NotepadToolDock({
+    required this.mobile,
     required this.inputMode,
     required this.toolMode,
-    required this.penColor,
     required this.isHighlighter,
     required this.canUndo,
+    required this.canRedo,
     required this.onTyping,
-    required this.onMove,
     required this.onPen,
+    required this.onHighlighter,
     required this.onEraser,
     required this.onUndo,
-    required this.onTools,
+    required this.onRedo,
   });
 
+  final bool mobile;
   final _MobileInputMode inputMode;
   final _ToolMode toolMode;
-  final Color penColor;
   final bool isHighlighter;
   final bool canUndo;
+  final bool canRedo;
   final VoidCallback onTyping;
-  final VoidCallback onMove;
   final VoidCallback onPen;
+  final VoidCallback onHighlighter;
   final VoidCallback onEraser;
   final VoidCallback onUndo;
-  final VoidCallback onTools;
+  final VoidCallback onRedo;
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      elevation: 16,
-      shadowColor: const Color(0x26000000),
-      child: SafeArea(
-        top: false,
-        child: Padding(
-          padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+    final controls = <Widget>[
+      _NotepadDockButton(
+        label: '타이핑',
+        icon: Icons.keyboard_outlined,
+        selected: inputMode == _MobileInputMode.typing,
+        onPressed: onTyping,
+      ),
+      const _NotepadDockDivider(),
+      _NotepadDockButton(
+        label: '펜',
+        icon: Icons.edit_outlined,
+        selected:
+            inputMode == _MobileInputMode.pen &&
+            toolMode == _ToolMode.pen &&
+            !isHighlighter,
+        onPressed: onPen,
+      ),
+      _NotepadDockButton(
+        label: '형광펜',
+        icon: Icons.border_color_outlined,
+        selected: isHighlighter,
+        onPressed: onHighlighter,
+      ),
+      _NotepadDockButton(
+        label: '지우개',
+        icon: Icons.auto_fix_high_outlined,
+        selected:
+            inputMode == _MobileInputMode.pen && toolMode == _ToolMode.eraser,
+        onPressed: onEraser,
+      ),
+      const _NotepadDockDivider(),
+      _NotepadDockButton(
+        label: '되돌리기',
+        icon: Icons.undo_rounded,
+        selected: false,
+        enabled: canUndo,
+        onPressed: canUndo ? onUndo : null,
+      ),
+      _NotepadDockButton(
+        label: '다시 실행',
+        icon: Icons.redo_rounded,
+        selected: false,
+        enabled: canRedo,
+        onPressed: canRedo ? onRedo : null,
+      ),
+    ];
+
+    if (mobile) {
+      return Material(
+        color: Colors.white,
+        child: SafeArea(
+          top: false,
+          child: Container(
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFE2E2E5))),
+              boxShadow: [
+                BoxShadow(
+                  color: Color(0x0F0F0F0F),
+                  blurRadius: 18,
+                  offset: Offset(0, -4),
+                ),
+              ],
+            ),
+            padding: const EdgeInsets.fromLTRB(8, 6, 8, 6),
+            child: Center(
+              child: ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 340),
+                child: Row(
+                  children: controls
+                      .map(
+                        (control) => control is _NotepadDockDivider
+                            ? control
+                            : Expanded(child: control),
+                      )
+                      .toList(growable: false),
+                ),
+              ),
+            ),
+          ),
+        ),
+      );
+    }
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: Center(
+        child: Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            border: Border.all(color: const Color(0xFFDEDEE2)),
+            borderRadius: BorderRadius.circular(18),
+            boxShadow: const [
+              BoxShadow(
+                color: Color(0x1F0F0F12),
+                blurRadius: 24,
+                offset: Offset(0, 8),
+              ),
+            ],
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '타이핑 모드',
-                  label: '타이핑',
-                  icon: Icons.keyboard_rounded,
-                  selected: inputMode == _MobileInputMode.typing,
-                  onTap: onTyping,
-                ),
-              ),
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '페이지 이동 모드',
-                  label: '이동',
-                  icon: Icons.pan_tool_alt_outlined,
-                  selected: inputMode == _MobileInputMode.move,
-                  onTap: onMove,
-                ),
-              ),
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '펜',
-                  label: '펜',
-                  icon: Icons.edit_rounded,
-                  selected:
-                      inputMode == _MobileInputMode.pen &&
-                      toolMode == _ToolMode.pen &&
-                      !isHighlighter,
-                  indicatorColor: penColor,
-                  onTap: onPen,
-                ),
-              ),
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '지우개',
-                  label: '지우개',
-                  icon: Icons.auto_fix_high_rounded,
-                  selected:
-                      inputMode == _MobileInputMode.pen &&
-                      toolMode == _ToolMode.eraser,
-                  onTap: onEraser,
-                ),
-              ),
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '실행 취소',
-                  label: '되돌리기',
-                  icon: Icons.undo_rounded,
-                  enabled: canUndo,
-                  onTap: canUndo ? onUndo : null,
-                ),
-              ),
-              Expanded(
-                child: _MobileNotepadAction(
-                  tooltip: '필기 도구',
-                  label: '도구',
-                  icon: Icons.tune_rounded,
-                  onTap: onTools,
-                ),
-              ),
+              for (var i = 0; i < controls.length; i++) ...[
+                if (i > 0) const SizedBox(width: 4),
+                controls[i],
+              ],
             ],
           ),
         ),
@@ -895,94 +1435,74 @@ class _MobileNotepadToolbar extends StatelessWidget {
   }
 }
 
-/// 필요한 변수는 도구 아이콘·레이블·선택 및 활성 상태다.
-/// 작동 원리는 48px 이상 터치 영역과 텍스트 레이블을 함께 제공해 아이콘 의미를 분명히 한다.
-class _MobileNotepadAction extends StatelessWidget {
-  const _MobileNotepadAction({
-    required this.tooltip,
-    required this.label,
-    required this.icon,
-    required this.onTap,
-    this.selected = false,
-    this.enabled = true,
-    this.indicatorColor,
-  });
-
-  final String tooltip;
-  final String label;
-  final IconData icon;
-  final VoidCallback? onTap;
-  final bool selected;
-  final bool enabled;
-  final Color? indicatorColor;
+class _NotepadDockDivider extends StatelessWidget {
+  const _NotepadDockDivider();
 
   @override
-  Widget build(BuildContext context) {
-    final effectiveEnabled = enabled && onTap != null;
-    final foreground = !effectiveEnabled
-        ? const Color(0xFFB8B8BA)
-        : selected
-        ? Colors.white
-        : const Color(0xFF3F3F43);
-    return Tooltip(
-      message: tooltip,
-      child: Semantics(
-        button: true,
-        enabled: effectiveEnabled,
-        selected: selected,
-        label: tooltip,
-        child: InkWell(
-          onTap: effectiveEnabled ? onTap : null,
-          borderRadius: BorderRadius.circular(16),
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 160),
-            constraints: const BoxConstraints(minHeight: 54),
-            margin: const EdgeInsets.symmetric(horizontal: 3),
-            decoration: BoxDecoration(
-              color: selected ? const Color(0xFF202022) : Colors.transparent,
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  children: [
-                    Icon(icon, color: foreground, size: 22),
-                    if (indicatorColor != null)
-                      Positioned(
-                        right: -4,
-                        bottom: -3,
-                        child: Container(
-                          width: 9,
-                          height: 9,
-                          decoration: BoxDecoration(
-                            color: indicatorColor,
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: selected ? Colors.black : Colors.white,
-                            ),
-                          ),
-                        ),
-                      ),
-                  ],
+  Widget build(BuildContext context) => Container(
+    width: 1,
+    height: 24,
+    margin: const EdgeInsets.symmetric(horizontal: 3),
+    color: const Color(0xFFDEDEE2),
+  );
+}
+
+class _NotepadDockButton extends StatelessWidget {
+  const _NotepadDockButton({
+    required this.label,
+    required this.icon,
+    required this.selected,
+    required this.onPressed,
+    this.enabled = true,
+  });
+
+  final String label;
+  final IconData icon;
+  final bool selected;
+  final bool enabled;
+  final VoidCallback? onPressed;
+
+  @override
+  Widget build(BuildContext context) => Tooltip(
+    message: label,
+    child: Semantics(
+      button: true,
+      enabled: enabled && onPressed != null,
+      selected: selected,
+      label: label,
+      child: InkWell(
+        onTap: enabled ? onPressed : null,
+        borderRadius: BorderRadius.circular(14),
+        child: Container(
+          width: 48,
+          height: 48,
+          decoration: BoxDecoration(
+            color: selected ? const Color(0xFFECECEF) : Colors.transparent,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Stack(
+            alignment: Alignment.center,
+            children: [
+              Icon(
+                icon,
+                size: 21,
+                color: enabled
+                    ? const Color(0xFF323238)
+                    : const Color(0xFFB8B8BA),
+              ),
+              if (selected)
+                Positioned(
+                  bottom: 5,
+                  left: 13,
+                  right: 13,
+                  child: Container(height: 2, color: const Color(0xFF111113)),
                 ),
-                const SizedBox(height: 3),
-                Text(
-                  label,
-                  style: TextStyle(
-                    color: foreground,
-                    fontSize: 12,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
-            ),
+            ],
           ),
         ),
       ),
-    );
-  }
+    ),
+  );
 }
 
 /// 필요한 변수는 선택할 색상과 현재 선택 여부다.
@@ -1132,66 +1652,319 @@ class _MobileToolSettingRow extends StatelessWidget {
   }
 }
 
-/// 노트패드 캔버스 위에 도구 이름과 세션 종료 동작을 고정한다.
-/// 필요한 변수: 모바일 여부와 종료 콜백. 작동 원리: PC는 세션 헤더를 유지하고
-/// 모바일은 제목과 닫기만 남긴 60px 헤더로 캔버스 공간을 확보한다.
+/// HTML 기준 노트 상단바의 뒤로가기·저장 상태·새 노트·더보기 동작을 배치한다.
 class _NotepadHeader extends StatelessWidget {
-  const _NotepadHeader({required this.mobile, required this.onClose});
+  const _NotepadHeader({
+    required this.saveLabel,
+    required this.showStatus,
+    required this.onBack,
+    required this.onNew,
+    required this.onMore,
+  });
 
-  final bool mobile;
-  final VoidCallback onClose;
+  final String saveLabel;
+  final bool showStatus;
+  final VoidCallback onBack;
+  final VoidCallback onNew;
+  final VoidCallback onMore;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: mobile ? 60 : 82,
-      padding: EdgeInsets.symmetric(horizontal: mobile ? 14 : 24),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 8),
       decoration: const BoxDecoration(
         color: Colors.white,
-        border: Border(bottom: BorderSide(color: Color(0xFFE4E4E7))),
+        border: Border(bottom: BorderSide(color: Color(0xFFECECEF))),
+      ),
+      child: Row(
+        children: [
+          IconButton(
+            tooltip: '뒤로',
+            onPressed: onBack,
+            icon: const Icon(Icons.arrow_back, size: 22),
+          ),
+          Expanded(
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: showStatus
+                  ? Semantics(
+                      liveRegion: true,
+                      label: saveLabel,
+                      child: Text(
+                        saveLabel,
+                        style: const TextStyle(
+                          color: Color(0xFF72727A),
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    )
+                  : const SizedBox.shrink(),
+            ),
+          ),
+          IconButton(
+            tooltip: '새 노트',
+            onPressed: onNew,
+            icon: const Icon(Icons.add, size: 21),
+          ),
+          IconButton(
+            tooltip: '노트 더보기',
+            onPressed: onMore,
+            icon: const Icon(Icons.more_horiz, size: 21),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _NotepadSheetHandle extends StatelessWidget {
+  const _NotepadSheetHandle();
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: Container(
+      width: 38,
+      height: 4,
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(color: const Color(0xFFD5D5DA)),
+    ),
+  );
+}
+
+class _NotepadMenuAction extends StatelessWidget {
+  const _NotepadMenuAction({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+    this.enabled = true,
+    this.last = false,
+  });
+
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+  final bool enabled;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) => Semantics(
+    button: true,
+    enabled: enabled,
+    label: '$title. $subtitle',
+    child: InkWell(
+      onTap: enabled ? onTap : null,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 68),
+        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+        decoration: BoxDecoration(
+          color: enabled ? Colors.white : const Color(0xFFF8F8F9),
+          border: last
+              ? null
+              : const Border(bottom: BorderSide(color: Color(0xFFEDEDF0))),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 48,
+              child: Icon(
+                icon,
+                size: 20,
+                color: enabled
+                    ? const Color(0xFF17171A)
+                    : const Color(0xFF929299),
+              ),
+            ),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: enabled
+                          ? const Color(0xFF17171A)
+                          : const Color(0xFF929299),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: Color(0xFF83838B),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+class _NotepadReviewBar extends StatelessWidget {
+  const _NotepadReviewBar({
+    required this.mobile,
+    required this.onCompare,
+    required this.onExit,
+  });
+  final bool mobile;
+  final VoidCallback onCompare;
+  final VoidCallback onExit;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: Colors.white,
+    child: Container(
+      constraints: const BoxConstraints(minHeight: 64),
+      padding: EdgeInsets.fromLTRB(mobile ? 14 : 18, 8, 8, 8),
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFD9D9DD)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x240F0F12),
+            blurRadius: 30,
+            offset: Offset(0, 10),
+          ),
+        ],
       ),
       child: Row(
         children: [
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
+                const Text(
+                  '원문을 가렸어요',
+                  style: TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                ),
                 if (!mobile)
                   const Text(
-                    'NOTE · AUTO SAVED',
-                    style: TextStyle(
-                      fontSize: 10,
-                      fontWeight: FontWeight.w800,
-                      letterSpacing: 1.1,
-                      color: Color(0xFF71717A),
-                    ),
+                    '기억나는 만큼 작성한 뒤 비교하세요.',
+                    style: TextStyle(fontSize: 11, color: Color(0xFF777780)),
                   ),
-                if (!mobile) const SizedBox(height: 3),
-                Text(
-                  mobile ? '필기 노트' : '노트패드',
-                  style: TextStyle(
-                    fontSize: mobile ? 21 : 24,
-                    fontWeight: FontWeight.w800,
-                    letterSpacing: -.8,
-                  ),
-                ),
               ],
             ),
           ),
-          IconButton(
-            onPressed: onClose,
-            icon: const Icon(Icons.close_rounded),
-            style: IconButton.styleFrom(
-              shape: const CircleBorder(
-                side: BorderSide(color: Color(0xFFE4E4E7)),
+          const SizedBox(width: 10),
+          SizedBox(
+            height: 48,
+            child: FilledButton(
+              onPressed: onCompare,
+              style: FilledButton.styleFrom(
+                backgroundColor: const Color(0xFF17171A),
+                shape: const RoundedRectangleBorder(),
+                padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 16),
               ),
+              child: const Text(
+                '원문과 비교',
+                style: TextStyle(fontSize: 13, fontWeight: FontWeight.w800),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton(
+              tooltip: '백지 복습 끝내기',
+              onPressed: onExit,
+              style: IconButton.styleFrom(
+                backgroundColor: const Color(0xFFF0F0F2),
+                shape: const RoundedRectangleBorder(),
+              ),
+              icon: const Icon(Icons.close, size: 19),
             ),
           ),
         ],
       ),
-    );
-  }
+    ),
+  );
+}
+
+class _ReviewCard extends StatelessWidget {
+  const _ReviewCard({
+    required this.label,
+    required this.title,
+    required this.body,
+    this.child,
+  });
+
+  final String label;
+  final String title;
+  final String body;
+  final Widget? child;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    width: double.infinity,
+    constraints: BoxConstraints(
+      minHeight: MediaQuery.sizeOf(context).width <= 720 ? 250 : 300,
+    ),
+    padding: const EdgeInsets.all(18),
+    decoration: BoxDecoration(
+      border: Border.all(color: const Color(0xFFDEDEE2)),
+      color: const Color(0xFFFAFAFA),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: Color(0xFF777780),
+          ),
+        ),
+        if (title.isNotEmpty) ...[
+          const SizedBox(height: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 17,
+              height: 1.55,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ],
+        if (body.isNotEmpty) ...[
+          const SizedBox(height: 10),
+          Text(
+            body,
+            style: const TextStyle(
+              fontSize: 14,
+              height: 1.7,
+              color: Color(0xFF44444A),
+            ),
+          ),
+        ],
+        if (child != null) ...[
+          const SizedBox(height: 14),
+          Container(
+            key: ValueKey('notepad-review-canvas-$label'),
+            width: double.infinity,
+            height: 180,
+            decoration: const BoxDecoration(
+              border: Border(top: BorderSide(color: Color(0xFFE2E2E5))),
+            ),
+            child: child!,
+          ),
+        ],
+        if (title.isEmpty && body.isEmpty && child == null)
+          const Text('타이핑한 내용 없음'),
+      ],
+    ),
+  );
 }
 
 //=============================================================================
@@ -1212,6 +1985,7 @@ class _RightSidebar extends StatelessWidget {
     required this.showWidthPanel,
     required this.showEraserPanel,
     required this.canUndo,
+    required this.canRedo,
     required this.canClear,
     required this.onToolChanged,
     required this.onColorTap,
@@ -1222,6 +1996,7 @@ class _RightSidebar extends StatelessWidget {
     required this.onWidthChanged,
     required this.onLinesChanged,
     required this.onUndo,
+    required this.onRedo,
     required this.onClear,
     required this.onBack,
   });
@@ -1238,6 +2013,7 @@ class _RightSidebar extends StatelessWidget {
   final bool showWidthPanel;
   final bool showEraserPanel;
   final bool canUndo;
+  final bool canRedo;
   final bool canClear;
   final ValueChanged<_ToolMode> onToolChanged;
   final VoidCallback onColorTap;
@@ -1248,6 +2024,7 @@ class _RightSidebar extends StatelessWidget {
   final ValueChanged<double> onWidthChanged;
   final ValueChanged<bool> onLinesChanged;
   final VoidCallback onUndo;
+  final VoidCallback onRedo;
   final VoidCallback onClear;
   final VoidCallback onBack;
 
@@ -1378,6 +2155,16 @@ class _RightSidebar extends StatelessWidget {
             selectedBg: selectedBg,
             iconColor: canUndo ? iconColor : Colors.grey,
             onTap: canUndo ? onUndo : null,
+          ),
+          const SizedBox(height: 2),
+          _SidebarButton(
+            icon: Icons.redo,
+            tooltip: '다시 실행',
+            selected: false,
+            selectedColor: selectedIconColor,
+            selectedBg: selectedBg,
+            iconColor: canRedo ? iconColor : Colors.grey,
+            onTap: canRedo ? onRedo : null,
           ),
           const SizedBox(height: 2),
           // 모두 지우기

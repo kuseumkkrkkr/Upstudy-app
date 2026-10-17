@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 import 'package:s11/app/router.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 
@@ -14,18 +14,25 @@ class StudentHtmlShell extends StatelessWidget {
     required this.child,
     this.activeRoute = AppRoutes.studentDashboard,
     this.showContextAside = false,
+    this.contextAside,
     this.onSearch,
     this.onNotifications,
     this.onMenu,
     this.mobileBackButton = false,
     this.includeHeader = true,
     this.railWidth,
+    this.reserveContextTrack = false,
+    this.showHeaderActions = true,
+    this.showHeaderNotifications = true,
+    this.showBottomNavigation = true,
+    this.headerTrailing,
   });
 
   final String title;
   final Widget child;
   final String activeRoute;
   final bool showContextAside;
+  final Widget? contextAside;
   final VoidCallback? onSearch;
   final VoidCallback? onNotifications;
   final VoidCallback? onMenu;
@@ -34,6 +41,18 @@ class StudentHtmlShell extends StatelessWidget {
 
   /// Optional screen-specific desktop rail width from the reference CSS.
   final double? railWidth;
+  final bool reserveContextTrack;
+
+  /// Some reference screens deliberately omit search and notifications.
+  final bool showHeaderActions;
+  final bool showHeaderNotifications;
+
+  /// Mobile task pages may omit tabs in the final reference cascade.
+  /// Desktop/tablet rail behavior is unchanged.
+  final bool showBottomNavigation;
+
+  /// Screen-specific controls replace the default search/notification actions.
+  final Widget? headerTrailing;
 
   @override
   Widget build(BuildContext context) {
@@ -41,25 +60,14 @@ class StudentHtmlShell extends StatelessWidget {
     final width = MediaQuery.sizeOf(context).width;
     final wide = width > StudentDensityTokens.desktopBreakpoint;
     final desktopRailWidth = railWidth ?? (wide ? 76.0 : 72.0);
-    // The build context above Scaffold cannot resolve Scaffold.maybeOf.
-    // Keep the fallback action bound to the actual Scaffold state instead.
-    final scaffoldKey = GlobalKey<ScaffoldState>();
-    final menu =
-        onMenu ??
-        () {
-          final state = scaffoldKey.currentState;
-          if (state == null) return;
-          state.isDrawerOpen ? state.closeDrawer() : state.openDrawer();
-        };
+    final menu = onMenu ?? () => MobileStudentBottomAppBar.openMore(context);
     final search = onSearch ?? () => showStudentQuickSearch(context);
     final notifications =
         onNotifications ?? () => showStudentNotifications(context);
 
     return Scaffold(
-      key: scaffoldKey,
       backgroundColor: StudentDensityTokens.background,
-      drawer: const AppDrawer(),
-      bottomNavigationBar: mobile
+      bottomNavigationBar: mobile && showBottomNavigation
           ? MobileStudentBottomAppBar(activeRoute: activeRoute)
           : null,
       body: SafeArea(
@@ -73,6 +81,9 @@ class StudentHtmlShell extends StatelessWidget {
                       onSearch: search,
                       onNotifications: notifications,
                       mobileBackButton: mobileBackButton,
+                      showActions: showHeaderActions,
+                      showNotifications: showHeaderNotifications,
+                      trailing: headerTrailing,
                     ),
                   Expanded(child: child),
                 ],
@@ -93,12 +104,19 @@ class StudentHtmlShell extends StatelessWidget {
                             onMenu: menu,
                             onSearch: search,
                             onNotifications: notifications,
+                            mobileBackButton: mobileBackButton,
+                            showActions: showHeaderActions,
+                            showNotifications: showHeaderNotifications,
+                            trailing: headerTrailing,
                           ),
                         Expanded(child: child),
                       ],
                     ),
                   ),
-                  if (wide && showContextAside) const StudentHtmlContextAside(),
+                  if (wide && showContextAside)
+                    contextAside ?? const StudentHtmlContextAside(),
+                  if (!mobile && reserveContextTrack)
+                    SizedBox(width: wide ? 244 : 200),
                 ],
               ),
       ),
@@ -114,6 +132,9 @@ class StudentHtmlTopBar extends StatelessWidget {
     required this.onSearch,
     required this.onNotifications,
     this.mobileBackButton = false,
+    this.showActions = true,
+    this.showNotifications = true,
+    this.trailing,
   });
 
   final String title;
@@ -121,17 +142,26 @@ class StudentHtmlTopBar extends StatelessWidget {
   final VoidCallback onSearch;
   final VoidCallback onNotifications;
   final bool mobileBackButton;
+  final bool showActions;
+  final bool showNotifications;
+  final Widget? trailing;
 
   @override
   Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+
     Widget action({
       required String label,
-      required IconData icon,
+      required StudentHtmlIcon icon,
+      required double iconSize,
       required VoidCallback onTap,
     }) {
+      final size = label == '검색' || label == '알림' ? 48.0 : 44.0;
       return Semantics(
         button: true,
         label: label,
+        onTap: onTap,
+        excludeSemantics: true,
         child: SizedBox(
           key: ValueKey(switch (label) {
             '학생 메뉴' => 'student-mobile-menu',
@@ -140,54 +170,79 @@ class StudentHtmlTopBar extends StatelessWidget {
             '알림' => 'student-notifications-action',
             _ => 'student-action-$label',
           }),
-          width: 38,
-          height: 38,
+          width: size,
+          height: size,
           child: OutlinedButton(
             onPressed: onTap,
             style: OutlinedButton.styleFrom(
               padding: EdgeInsets.zero,
               foregroundColor: StudentDensityTokens.ink,
               side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const CircleBorder(),
+              shape: const RoundedRectangleBorder(),
             ),
-            child: Icon(icon, size: 19),
+            child: StudentHtmlGlyph(
+              icon: icon,
+              size: iconSize,
+              color: StudentDensityTokens.ink,
+              scaleForMobile: false,
+            ),
           ),
         ),
       );
     }
 
-    final topBarHeight = 64.0;
-    final mobile = isStudentDensityMobile(context);
-    final menuLabel = mobile && mobileBackButton ? '뒤로가기' : '학생 메뉴';
+    final topBarHeight = mobile ? 64.0 : 62.0;
+    final menuLabel = mobileBackButton ? '뒤로가기' : '학생 메뉴';
     return Container(
       height: topBarHeight,
-      color: StudentDensityTokens.surface,
-      padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 22),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 22),
       child: Row(
         children: [
           action(
             label: menuLabel,
-            icon: mobile && !mobileBackButton
-                ? Icons.menu_rounded
-                : Icons.arrow_back,
+            icon: mobileBackButton
+                ? StudentHtmlIcon.back
+                : StudentHtmlIcon.menu,
+            iconSize: 20,
             onTap: onMenu,
           ),
-          const SizedBox(width: 10),
-          KeyedSubtree(
-            key: const ValueKey('student-brand-home'),
-            child: Text(
-              title,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          const SizedBox(width: 12),
+          Expanded(
+            child: KeyedSubtree(
+              key: const ValueKey('student-brand-home'),
+              child: Text(
+                title,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
             ),
           ),
-          const Spacer(),
-          action(label: '검색', icon: Icons.search, onTap: onSearch),
-          const SizedBox(width: 8),
-          action(
-            label: '알림',
-            icon: Icons.notifications_none,
-            onTap: onNotifications,
-          ),
+          if (trailing != null)
+            trailing!
+          else if (showActions) ...[
+            action(
+              label: '검색',
+              icon: StudentHtmlIcon.search,
+              iconSize: 19,
+              onTap: onSearch,
+            ),
+            if (showNotifications) const SizedBox(width: 7),
+            if (showNotifications)
+              action(
+                label: '알림',
+                icon: StudentHtmlIcon.bell,
+                iconSize: 19,
+                onTap: onNotifications,
+              ),
+          ],
         ],
       ),
     );
@@ -202,6 +257,7 @@ class StudentHtmlRail extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final activePath = Uri.tryParse(activeRoute)?.path ?? activeRoute;
     final railWidth =
         width ??
         (MediaQuery.sizeOf(context).width >
@@ -211,17 +267,20 @@ class StudentHtmlRail extends StatelessWidget {
 
     Widget item({
       required String label,
-      required IconData icon,
       required String route,
+      required StudentHtmlIcon navIcon,
     }) {
-      // 자료실은 HTML에서 교재 보관함과 마켓을 하나의 정보 구조로 묶지만,
-      // 실제 데이터 화면은 두 개의 명명 라우트를 유지한다. 두 목적지 모두
-      // 같은 레일 항목을 강조해 현재 위치를 잃지 않게 한다.
+      // 기본 자료 탭은 책가방, 마켓 자료실은 더보기 아래에 둔다.
       final active =
           activeRoute == route ||
-          (route == AppRoutes.bookbag && activeRoute == AppRoutes.marketplace) ||
           (route == AppRoutes.learningTools &&
-              (activeRoute == AppRoutes.store ||
+              (activeRoute == AppRoutes.marketplace ||
+                  activeRoute == AppRoutes.store ||
+                  activePath == AppRoutes.social ||
+                  activePath.startsWith('${AppRoutes.social}/') ||
+                  activePath == AppRoutes.groups ||
+                  activePath.startsWith('${AppRoutes.groups}/') ||
+                  activePath == AppRoutes.groupDetail ||
                   activeRoute == AppRoutes.tools ||
                   activeRoute.startsWith('/student-services/') ||
                   activeRoute == AppRoutes.schoolExamPrep));
@@ -231,35 +290,49 @@ class StudentHtmlRail extends StatelessWidget {
         selected: active,
         child: SizedBox(
           width: railWidth - 20,
-          height: 58,
-          child: InkWell(
-            onTap: () {
-              if (active) return;
-              Navigator.of(context).pushNamed(route);
-            },
-            child: Container(
-            decoration: BoxDecoration(
-                color: active ? StudentDensityTokens.surface : Colors.transparent,
-                borderRadius: BorderRadius.zero,
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    icon,
-                    size: 19,
-                    color: active ? StudentDensityTokens.ink : StudentDensityTokens.muted,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      color: active ? StudentDensityTokens.ink : StudentDensityTokens.muted,
-                      fontSize: 9,
-                      fontWeight: FontWeight.w900,
+          child: ConstrainedBox(
+            constraints: const BoxConstraints(minHeight: 44),
+            child: InkWell(
+              onTap: () {
+                if (label == '더보기') {
+                  MobileStudentBottomAppBar.openMore(context);
+                  return;
+                }
+                if (active) return;
+                Navigator.of(context).pushNamed(route);
+              },
+              child: Container(
+                key: active ? ValueKey('student-rail-active-$route') : null,
+                decoration: BoxDecoration(
+                  color: active
+                      ? StudentDensityTokens.dark
+                      : Colors.transparent,
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    StudentHtmlGlyph(
+                      key: ValueKey('student-nav-glyph-${navIcon.name}'),
+                      icon: navIcon,
+                      size: 17,
+                      color: active
+                          ? StudentDensityTokens.surface
+                          : StudentDensityTokens.muted,
                     ),
-                  ),
-                ],
+                    const SizedBox(height: 4),
+                    Text(
+                      label,
+                      style: TextStyle(
+                        color: active
+                            ? StudentDensityTokens.surface
+                            : StudentDensityTokens.muted,
+                        fontSize: 10,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ],
+                ),
               ),
             ),
           ),
@@ -268,22 +341,26 @@ class StudentHtmlRail extends StatelessWidget {
     }
 
     return Container(
+      key: const ValueKey('student-html-rail'),
       width: railWidth,
       padding: const EdgeInsets.fromLTRB(10, 18, 10, 14),
       decoration: const BoxDecoration(
-        color: StudentDensityTokens.dark,
+        color: StudentDensityTokens.surface,
+        border: Border(right: BorderSide(color: StudentDensityTokens.line)),
       ),
       child: Column(
         children: [
           Container(
+            key: const ValueKey('student-rail-brand'),
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.surface,
+            decoration: const BoxDecoration(color: StudentDensityTokens.dark),
             child: const Text(
               'A',
               style: TextStyle(
-                color: StudentDensityTokens.ink,
+                color: StudentDensityTokens.surface,
+                fontSize: 13,
                 fontWeight: FontWeight.w900,
               ),
             ),
@@ -295,25 +372,25 @@ class StudentHtmlRail extends StatelessWidget {
                 children: [
                   item(
                     label: '홈',
-                    icon: Icons.home_outlined,
+                    navIcon: StudentHtmlIcon.home,
                     route: AppRoutes.studentDashboard,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '코스',
-                    icon: Icons.view_list_outlined,
+                    navIcon: StudentHtmlIcon.courses,
                     route: AppRoutes.courses,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '자료실',
-                    icon: Icons.archive_outlined,
+                    navIcon: StudentHtmlIcon.market,
                     route: AppRoutes.bookbag,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '더보기',
-                    icon: Icons.more_horiz,
+                    navIcon: StudentHtmlIcon.more,
                     route: AppRoutes.learningTools,
                   ),
                 ],
@@ -321,14 +398,15 @@ class StudentHtmlRail extends StatelessWidget {
             ),
           ),
           Container(
+            key: const ValueKey('student-rail-avatar'),
             width: 34,
             height: 34,
             alignment: Alignment.center,
-            color: StudentDensityTokens.surface,
+            decoration: const BoxDecoration(color: StudentDensityTokens.dark),
             child: const Text(
               '학',
               style: TextStyle(
-                color: StudentDensityTokens.ink,
+                color: StudentDensityTokens.surface,
                 fontSize: 11,
                 fontWeight: FontWeight.w900,
               ),
@@ -343,65 +421,92 @@ class StudentHtmlRail extends StatelessWidget {
 class StudentHtmlContextAside extends StatelessWidget {
   const StudentHtmlContextAside({super.key});
 
+  Widget _metric(String label) => ConstrainedBox(
+    constraints: const BoxConstraints(minHeight: 32),
+    child: Row(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Expanded(
+          child: Text(
+            label,
+            style: const TextStyle(
+              fontSize: 11,
+              color: StudentDensityTokens.muted,
+            ),
+          ),
+        ),
+        const Text(
+          '—',
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+        ),
+      ],
+    ),
+  );
+
   @override
   Widget build(BuildContext context) => Container(
-    width: 236,
-    padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
+    key: const ValueKey('student-context-aside'),
+    width: 244,
+    padding: const EdgeInsets.fromLTRB(18, 28, 18, 22),
     decoration: const BoxDecoration(
-      color: StudentDensityTokens.surface,
+      color: StudentDensityTokens.surfaceMuted,
       border: Border(left: BorderSide(color: StudentDensityTokens.line)),
     ),
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Text(
-          'CONTEXT',
-          style: TextStyle(
-            fontSize: 10,
-            letterSpacing: 1.4,
-            fontWeight: FontWeight.w900,
-            color: StudentDensityTokens.muted,
-          ),
-        ),
-        const SizedBox(height: 12),
-        Container(
-          color: StudentDensityTokens.dark,
-          padding: const EdgeInsets.all(14),
-          child: const Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
+        Row(
+          children: [
+            Container(
+              width: 32,
+              height: 32,
+              color: StudentDensityTokens.dark,
+              alignment: Alignment.center,
+              child: const StudentHtmlGlyph(
+                icon: StudentHtmlIcon.spark,
+                color: Colors.white,
+                size: 19,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Expanded(
+              child: Text(
                 '오늘의 학습',
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 11,
-                  fontWeight: FontWeight.w800,
-                ),
+                style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
-              SizedBox(height: 8),
-              Text(
-                '학습 흐름을\n이어가세요.',
-                style: TextStyle(
-                  color: Colors.white,
-                  fontSize: 18,
-                  height: 1.25,
-                  fontWeight: FontWeight.w900,
-                ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 19),
+        const Divider(height: 1, color: StudentDensityTokens.line),
+        const SizedBox(height: 14),
+        // Daily totals have no verified data contract here; do not substitute
+        // the prototype's sample totals or a page-local counter for them.
+        _metric('오늘 집중'),
+        const SizedBox(height: 14),
+        _metric('연속 학습'),
+        const Spacer(),
+        SizedBox(
+          height: 44,
+          child: FilledButton.icon(
+            onPressed: () => Navigator.of(context).pushNamed('/tools'),
+            icon: const StudentHtmlGlyph(
+              icon: StudentHtmlIcon.spark,
+              color: Colors.white,
+              size: 17,
+            ),
+            label: const Text('튜터에게 묻기'),
+            style: FilledButton.styleFrom(
+              backgroundColor: StudentDensityTokens.dark,
+              foregroundColor: Colors.white,
+              shape: const RoundedRectangleBorder(),
+              textStyle: Theme.of(context).textTheme.labelLarge?.copyWith(
+                fontSize: 11,
+                fontWeight: FontWeight.w900,
+                letterSpacing: 0,
               ),
-            ],
+            ),
           ),
-        ),
-        const SizedBox(height: 12),
-        const Divider(height: 1),
-        const SizedBox(height: 12),
-        const Text(
-          '빠른 이동',
-          style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          '검색과 알림은 상단 버튼에서\n언제든지 열 수 있어요.',
-          style: TextStyle(color: StudentDensityTokens.muted, height: 1.45),
         ),
       ],
     ),

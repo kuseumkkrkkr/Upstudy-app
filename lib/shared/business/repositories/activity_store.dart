@@ -814,14 +814,15 @@ class ActivityStore {
 
   static List<ActivityDayRecord> recentDays(
     ActivitySnapshot snapshot,
-    int count,
-  ) {
+    int count, {
+    DateTime? now,
+  }) {
     if (count <= 0) return const <ActivityDayRecord>[];
-    final now = DateTime.now();
+    final anchor = now ?? DateTime.now();
     final start = DateTime(
-      now.year,
-      now.month,
-      now.day,
+      anchor.year,
+      anchor.month,
+      anchor.day,
     ).subtract(Duration(days: count - 1));
     final results = <ActivityDayRecord>[];
     for (var i = 0; i < count; i++) {

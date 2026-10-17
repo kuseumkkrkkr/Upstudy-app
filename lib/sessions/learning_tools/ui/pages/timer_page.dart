@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
@@ -14,11 +15,13 @@ class TimerPage extends StatefulWidget {
 }
 
 class _TimerPageState extends State<TimerPage> {
-  bool _isTimerMode = false;
+  bool _isTimerMode = true;
+  int _selectedTab = 0;
+  int _completedSessions = 0;
   bool _running = false;
   int _elapsedSeconds = 0;
-  int _remainingSeconds = 0;
-  int _timerTotalSeconds = 0;
+  int _remainingSeconds = 25 * 60;
+  int _timerTotalSeconds = 25 * 60;
   final List<int> _laps = <int>[];
 
   Timer? _tickTimer;
@@ -26,6 +29,12 @@ class _TimerPageState extends State<TimerPage> {
   final _hCtrl = TextEditingController();
   final _mCtrl = TextEditingController();
   final _sCtrl = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    _syncInputsFromSeconds(_remainingSeconds);
+  }
 
   @override
   void dispose() {
@@ -73,6 +82,7 @@ class _TimerPageState extends State<TimerPage> {
         setState(() {
           _running = false;
           _remainingSeconds = 0;
+          _completedSessions++;
         });
         _showTimerComplete();
         return;
@@ -137,6 +147,15 @@ class _TimerPageState extends State<TimerPage> {
     return h * 3600 + m * 60 + s;
   }
 
+  void _durationChanged(String _) {
+    if (_running) return;
+    final seconds = _parseInputSeconds();
+    setState(() {
+      _remainingSeconds = seconds;
+      _timerTotalSeconds = seconds;
+    });
+  }
+
   void _setTimerSeconds(int seconds) {
     if (seconds < 0) return;
     setState(() {
@@ -195,63 +214,142 @@ class _TimerPageState extends State<TimerPage> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final cs = theme.colorScheme;
     final mobile = isStudentDensityMobile(context);
-    final progress = _isTimerMode && _timerTotalSeconds > 0
-        ? (_remainingSeconds / _timerTotalSeconds).clamp(0.0, 1.0)
-        : null;
 
     return StudentHtmlShell(
       key: const ValueKey('timer-tool-page'),
       title: '집중 타이머',
       activeRoute: '/tools',
+      railWidth: MediaQuery.sizeOf(context).width > 1040 ? 84 : 72,
+      mobileBackButton: true,
       showContextAside: MediaQuery.sizeOf(context).width > 1040,
-      onMenu: () => Navigator.maybePop(context),
+      contextAside: const StudentHtmlContextAside(),
+      onMenu: _closeSession,
       onSearch: () => showStudentQuickSearch(context),
       onNotifications: () => showStudentNotifications(context),
-      child: SingleChildScrollView(
-        physics: const BouncingScrollPhysics(),
-        child: StudentDensityPage(
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 900),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final padding = mobile
+              ? 10.0
+              : MediaQuery.sizeOf(context).width <= 1040
+              ? 28.0
+              : 38.0;
+          return SingleChildScrollView(
+            child: Padding(
+              padding: EdgeInsets.all(padding),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  StudentDensityPageHeader(
-                    eyebrow: 'LEARNING TOOL',
-                    title: '집중 타이머',
-                    description: '스톱워치와 타이머를 한 화면에서 기록합니다.',
-                    showMobileDescription: true,
-                    action: StudentDensityButton(
-                      label: '도구 닫기',
-                      icon: Icons.close_rounded,
-                      onPressed: () => Navigator.maybePop(context),
-                    ),
+                  _TimerSectionTabs(
+                    selected: _selectedTab,
+                    mobile: mobile,
+                    onSelect: (index) => setState(() => _selectedTab = index),
                   ),
-                  SizedBox(height: mobile ? 16 : 22),
-                  _buildModeToggle(cs),
-                  const SizedBox(height: 14),
-                  _buildDisplayCard(cs, progress),
-                  const SizedBox(height: 14),
-                  if (_isTimerMode) ...[
-                    _buildTimerSetup(cs),
-                    const SizedBox(height: 14),
-                  ],
-                  if (!_isTimerMode && _laps.isNotEmpty) ...[
-                    _buildLapsCard(cs),
-                    const SizedBox(height: 14),
-                  ],
-                  _buildControls(cs),
+                  const SizedBox(height: 20),
+                  // The reference tabs only change selection, not the body.
+                  if (mobile) ...[
+                    _buildMetrics(mobile),
+                    const SizedBox(height: 30),
+                    _buildReferenceClock(mobile),
+                  ] else
+                    Row(
+                      children: [
+                        const Expanded(child: SizedBox()),
+                        const SizedBox(width: 18),
+                        SizedBox(
+                          width:
+                              ((constraints.maxWidth - padding * 2 - 18) *
+                                      .42 /
+                                      1.42)
+                                  .clamp(240, double.infinity),
+                          child: Column(
+                            children: [
+                              _buildMetrics(mobile),
+                              const SizedBox(height: 18),
+                              _buildReferenceClock(mobile),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  SizedBox(height: mobile ? 30 : 18),
+                  _buildReferenceActions(mobile),
                 ],
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }
+
+  void _closeSession() {
+    _tickTimer?.cancel();
+    if (Navigator.of(context).canPop()) {
+      Navigator.of(context).pop();
+    } else {
+      Navigator.of(context).pushReplacementNamed('/learning-tools');
+    }
+  }
+
+  void _endSession() {
+    _tickTimer?.cancel();
+    setState(() => _running = false);
+    MobileStudentBottomAppBar.openMore(context);
+  }
+
+  Widget _buildMetrics(bool mobile) => _TimerMetrics(
+    mobile: mobile,
+    values: [_formatTime(_timerTotalSeconds), '$_completedSessions / 4', '—'],
+  );
+
+  Widget _buildReferenceClock(bool mobile) => _TimerSurface(
+    key: const ValueKey('timer-reference-clock'),
+    child: SizedBox(
+      width: double.infinity,
+      height: mobile ? 124 : 148,
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Text(
+            _running ? '집중 중' : '대기 중',
+            style: const TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w900,
+              color: StudentDensityTokens.muted,
+            ),
+          ),
+          const SizedBox(height: 8),
+          FittedBox(
+            fit: BoxFit.scaleDown,
+            child: Text(
+              _formatTime(_isTimerMode ? _remainingSeconds : _elapsedSeconds),
+              maxLines: 1,
+              style: TextStyle(
+                fontSize: mobile
+                    ? 38
+                    : (MediaQuery.sizeOf(context).width * .05).clamp(38, 62),
+                fontWeight: FontWeight.w700,
+                letterSpacing: -1.9,
+                height: 1.13,
+              ),
+            ),
+          ),
+        ],
+      ),
+    ),
+  );
+
+  Widget _buildReferenceActions(bool mobile) => _TimerReferenceActions(
+    mobile: mobile,
+    label: _running
+        ? '잠시 멈춤'
+        : _remainingSeconds == _timerTotalSeconds
+        ? '집중 시작'
+        : '다시 시작',
+    onToggle: _running ? _pause : _start,
+    onEnd: _endSession,
+  );
 
   Widget _buildModeToggle(ColorScheme cs) {
     return StudentDensitySurface(
@@ -428,6 +526,7 @@ class _TimerPageState extends State<TimerPage> {
               Expanded(
                 child: _TimeInputField(
                   controller: _hCtrl,
+                  onChanged: _durationChanged,
                   label: '시',
                   enabled: !_running,
                 ),
@@ -436,6 +535,7 @@ class _TimerPageState extends State<TimerPage> {
               Expanded(
                 child: _TimeInputField(
                   controller: _mCtrl,
+                  onChanged: _durationChanged,
                   label: '분',
                   enabled: !_running,
                 ),
@@ -444,6 +544,7 @@ class _TimerPageState extends State<TimerPage> {
               Expanded(
                 child: _TimeInputField(
                   controller: _sCtrl,
+                  onChanged: _durationChanged,
                   label: '초',
                   enabled: !_running,
                 ),
@@ -591,6 +692,239 @@ class _TimerPageState extends State<TimerPage> {
   }
 }
 
+class _TimerSurface extends StatelessWidget {
+  const _TimerSurface({
+    super.key,
+    required this.child,
+    this.padding = EdgeInsets.zero,
+  });
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    padding: padding,
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: Border.all(color: StudentDensityTokens.line),
+    ),
+    child: child,
+  );
+}
+
+class _TimerSectionTabs extends StatelessWidget {
+  const _TimerSectionTabs({
+    required this.selected,
+    required this.mobile,
+    required this.onSelect,
+  });
+  final int selected;
+  final bool mobile;
+  final ValueChanged<int> onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final tabs = <Widget>[
+      for (final (index, label) in ['타이머', '프리셋', '기록'].indexed)
+        Semantics(
+          selected: index == selected,
+          button: true,
+          child: Material(
+            color: index == selected
+                ? StudentDensityTokens.ink
+                : StudentDensityTokens.surface,
+            child: InkWell(
+              onTap: () => onSelect(index),
+              child: Container(
+                height: mobile ? 38 : 40,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  border: index < 2
+                      ? const Border(
+                          right: BorderSide(color: StudentDensityTokens.line),
+                        )
+                      : null,
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 10,
+                    fontWeight: FontWeight.w900,
+                    color: index == selected
+                        ? Colors.white
+                        : StudentDensityTokens.muted,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ),
+    ];
+    return _TimerSurface(
+      key: const ValueKey('timer-section-tabs'),
+      padding: EdgeInsets.all(mobile ? 5 : 6),
+      child: Align(
+        alignment: Alignment.centerLeft,
+        child: SizedBox(
+          width: mobile ? double.infinity : 194,
+          child: Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: StudentDensityTokens.line),
+            ),
+            child: Row(
+              children: tabs.map((tab) => Expanded(child: tab)).toList(),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _TimerMetrics extends StatelessWidget {
+  const _TimerMetrics({required this.mobile, required this.values});
+  final bool mobile;
+  final List<String> values;
+
+  @override
+  Widget build(BuildContext context) {
+    final cells = [
+      for (final (index, label) in ['목표', '완료', '오늘 집중'].indexed)
+        Container(
+          constraints: BoxConstraints(minHeight: mobile ? 74 : 88),
+          padding: EdgeInsets.symmetric(
+            horizontal: mobile ? 10 : 14,
+            vertical: mobile ? 12 : 14,
+          ),
+          decoration: BoxDecoration(
+            border: index < 2
+                ? (mobile
+                      ? const Border(
+                          right: BorderSide(color: StudentDensityTokens.line),
+                        )
+                      : const Border(
+                          bottom: BorderSide(color: StudentDensityTokens.line),
+                        ))
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                values[index],
+                style: TextStyle(
+                  fontSize: mobile ? 20 : 25.6,
+                  fontWeight: FontWeight.w900,
+                  height: 1.4,
+                  letterSpacing: -.5,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontSize: 10,
+                  color: StudentDensityTokens.muted,
+                  height: 1.2,
+                ),
+              ),
+            ],
+          ),
+        ),
+    ];
+    return _TimerSurface(
+      key: const ValueKey('timer-reference-metrics'),
+      child: mobile
+          ? Row(children: cells.map((cell) => Expanded(child: cell)).toList())
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: cells,
+            ),
+    );
+  }
+}
+
+class _TimerReferenceActions extends StatelessWidget {
+  const _TimerReferenceActions({
+    required this.mobile,
+    required this.label,
+    required this.onToggle,
+    required this.onEnd,
+  });
+  final bool mobile;
+  final String label;
+  final VoidCallback onToggle;
+  final VoidCallback onEnd;
+
+  @override
+  Widget build(BuildContext context) => _TimerSurface(
+    padding: EdgeInsets.all(mobile ? 7 : 10),
+    child: Align(
+      alignment: Alignment.centerRight,
+      child: SizedBox(
+        width: mobile ? double.infinity : 277,
+        child: Row(
+          children: [
+            Expanded(
+              flex: mobile ? 115 : 180,
+              child: SizedBox(
+                height: 44,
+                child: FilledButton(
+                  onPressed: onToggle,
+                  style: FilledButton.styleFrom(
+                    backgroundColor: StudentDensityTokens.ink,
+                    foregroundColor: Colors.white,
+                    shape: const RoundedRectangleBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      Text(label),
+                      const Spacer(),
+                      const StudentHtmlGlyph(
+                        icon: StudentHtmlIcon.arrow,
+                        color: Colors.white,
+                        size: 18,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 9),
+            Expanded(
+              flex: mobile ? 85 : 88,
+              child: SizedBox(
+                height: 44,
+                child: OutlinedButton(
+                  onPressed: onEnd,
+                  style: OutlinedButton.styleFrom(
+                    foregroundColor: StudentDensityTokens.ink,
+                    backgroundColor: StudentDensityTokens.surface,
+                    side: const BorderSide(color: StudentDensityTokens.ink),
+                    shape: const RoundedRectangleBorder(),
+                    padding: const EdgeInsets.symmetric(horizontal: 8),
+                    textStyle: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  child: const Text('세션 끝내기'),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
 class _ModeToggleButton extends StatelessWidget {
   const _ModeToggleButton({
     required this.label,
@@ -648,11 +982,13 @@ class _TimeInputField extends StatelessWidget {
     required this.controller,
     required this.label,
     required this.enabled,
+    this.onChanged,
   });
 
   final TextEditingController controller;
   final String label;
   final bool enabled;
+  final ValueChanged<String>? onChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -677,7 +1013,9 @@ class _TimeInputField extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           TextField(
+            key: ValueKey('timer-duration-$label'),
             controller: controller,
+            onChanged: onChanged,
             enabled: enabled,
             keyboardType: TextInputType.number,
             textAlign: TextAlign.center,

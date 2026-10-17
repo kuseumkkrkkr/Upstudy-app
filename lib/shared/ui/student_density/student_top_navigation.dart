@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
 
 enum StudentTopDestination {
@@ -34,7 +34,7 @@ List<Ios26NavItem> studentTopNavItems(
         (
           destination: StudentTopDestination.bookbag,
           label: '자료실',
-          route: '/marketplace',
+          route: '/bookbag',
         ),
         (destination: StudentTopDestination.more, label: '더보기', route: ''),
       ];
@@ -45,20 +45,20 @@ List<Ios26NavItem> studentTopNavItems(
             active == StudentTopDestination.home ||
                 active == StudentTopDestination.learning,
           StudentTopDestination.bookbag =>
-            active == StudentTopDestination.bookbag ||
-                active == StudentTopDestination.marketplace,
+            active == StudentTopDestination.bookbag,
           StudentTopDestination.more =>
             active == StudentTopDestination.more ||
+                active == StudentTopDestination.marketplace ||
                 active == StudentTopDestination.social,
           _ => item.destination == active,
         };
         return Ios26NavItem(
           label: item.label,
           active: itemActive,
-          onTap: itemActive
+          onTap: item.destination == StudentTopDestination.more
+              ? () => MobileStudentBottomAppBar.openMore(context)
+              : itemActive
               ? null
-              : item.destination == StudentTopDestination.more
-              ? () => toggleAppDrawer(context)
               : () => Navigator.of(context).pushNamed(item.route),
         );
       })

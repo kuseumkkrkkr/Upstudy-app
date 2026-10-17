@@ -35,6 +35,7 @@ class ExamGradeResult {
   final List<String> warnings;
   final bool empty;
   final bool? isCorrect;
+  final String? gradeProof;
   final List<Map<String, dynamic>> stepCorrectness;
   final Map<String, dynamic>? quest;
 
@@ -45,6 +46,7 @@ class ExamGradeResult {
     this.warnings = const [],
     this.empty = false,
     this.isCorrect,
+    this.gradeProof,
     this.stepCorrectness = const [],
     this.quest,
   });
@@ -58,6 +60,7 @@ class ExamGradeResult {
     required String analysis,
     required List<String> warnings,
     bool? isCorrect,
+    String? gradeProof,
     List<Map<String, dynamic>> stepCorrectness = const [],
     Map<String, dynamic>? quest,
   }) {
@@ -66,6 +69,7 @@ class ExamGradeResult {
       analysis: analysis,
       warnings: warnings,
       isCorrect: isCorrect,
+      gradeProof: gradeProof,
       stepCorrectness: stepCorrectness,
       quest: quest,
     );

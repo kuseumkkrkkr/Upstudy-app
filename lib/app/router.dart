@@ -7,12 +7,21 @@ import 'package:s11/sessions/landing/ui/pages/student_tutorial_page.dart';
 import 'package:s11/sessions/landing/ui/pages/landing_page.dart';
 import 'package:s11/sessions/settings/ui/pages/settings_page.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/pages/activity_history_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/pages/student_achievements_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/pages/restriction_mode_page.dart';
+import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/flow_view_page.dart';
+import 'package:s11/sessions/tryout_solve/ui/pages/shared_flow_view_page.dart';
+import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
+import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 
 import 'package:s11/features/student_runtime/student_runtime.dart';
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/features/student_schedule/student_schedule.dart';
 import 'package:s11/features/wrong_answer/wrong_answer.dart';
+import 'package:s11/sessions/review_course/review_course.dart';
 import 'package:s11/features/group_study/group_study.dart';
 import 'package:s11/features/arena/arena_page.dart';
 import 'package:s11/sessions/graph_tools/session/jsx_graph_page.dart';
@@ -23,7 +32,8 @@ import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/friend/friend.dart';
 import 'package:s11/sessions/marketplace/ui/pages/marketplace_page.dart';
 import 'package:s11/sessions/textbook/ui/pages/docx_box.dart' as docx;
-import 'package:s11/features/textbook/session/textbook_editor_page.dart' as textbook_editor;
+import 'package:s11/features/textbook/session/textbook_editor_page.dart'
+    as textbook_editor;
 import 'package:s11/features/student_services/student_services_demo_page.dart';
 import 'package:s11/features/course_runtime/course_runtime_page.dart';
 import 'package:s11/app/student_feature_flags.dart';
@@ -44,11 +54,18 @@ class AppRoutes {
   static const String landingAbout = StudentTutorialPage.routeName;
   static const String app = '/app';
   static const String studentDashboard = '/student/dashboard';
+  static const String activityHistory = '/activity-history';
+  static const String achievements = '/achievements';
+  static const String restrictionMode = '/study-mode';
+  static const String ratingDetail = '/rating-detail';
   static const String courses = '/courses';
   static const String bookbag = '/bookbag';
   static const String social = '/social';
   static const String marketplace = '/marketplace';
   static const String arena = '/arena';
+  static const String arenaResult = '/arena/result';
+  static const String arenaReady = '/arena/ready';
+  static const String arenaMatch = '/arena/match';
   static const String learningTools = '/learning-tools';
   static const String focus = '/focus';
   static const String graph = '/graph';
@@ -57,6 +74,11 @@ class AppRoutes {
   // ─── Learning ───
   static const String studentRuntime = StudentRuntimePage.routeName;
   static const String courseRuntime = '/course_runtime';
+  static const String flowView = '/flow-view';
+  static const String solveWorkspace = '/solve-workspace';
+  static const String solutionView = '/solution-view';
+  static const String sharedFlow = '/shared-flow';
+  static const String examReport = '/exam-report';
 
   // ─── Level Test ───
   static const String levelTest = LevelTestHomePage.routeName;
@@ -69,6 +91,7 @@ class AppRoutes {
   // ─── Wrong Answers ───
   static const String wrongAnswers = WrongAnswerListPage.routeName;
   static const String wrongAnswerSolve = '/wrong_answer_solve';
+  static const String reviewCourse = '/review-course';
 
   // ─── Group Study ───
   static const String groups = '/groups';
@@ -101,6 +124,22 @@ Map<String, WidgetBuilder> appRoutes() {
     };
   }
 
+  WidgetBuilder authedActivityHistory() {
+    return (_) {
+      final hasSession = ApiClient.instance.hasAuthenticatedSession;
+      return hasSession
+          ? const StudentActivityHistoryPage()
+          : const LandingPage();
+    };
+  }
+
+  WidgetBuilder authedStudentAchievements() {
+    return (_) {
+      final hasSession = ApiClient.instance.hasAuthenticatedSession;
+      return hasSession ? const StudentAchievementsPage() : const LandingPage();
+    };
+  }
+
   return {
     // Auth
     AppRoutes.login: (_) => const LoginPage(),
@@ -118,6 +157,8 @@ Map<String, WidgetBuilder> appRoutes() {
     AppRoutes.landingAbout: (_) => const StudentTutorialPage(),
     AppRoutes.app: authedStudentDashboard(),
     AppRoutes.studentDashboard: authedStudentDashboard(),
+    AppRoutes.activityHistory: authedActivityHistory(),
+    AppRoutes.achievements: authedStudentAchievements(),
     AppRoutes.courses: (_) => const CourseCatalogPage(),
     AppRoutes.bookbag: (_) => const docx.BookWidget(),
     AppRoutes.social: (_) => const SoWidget(),
@@ -146,6 +187,8 @@ Map<String, WidgetBuilder> appRoutes() {
     AppRoutes.levelTest: (_) => const LevelTestHomePage(),
 
     // Schedule
+    AppRoutes.restrictionMode: (_) => const RestrictionModePage(),
+    AppRoutes.ratingDetail: (_) => const RatingDetailPage(),
     AppRoutes.schedule: (_) => const SchedulePage(),
     AppRoutes.scheduleHistory: (_) => const CurriculumHistoryPage(),
 
@@ -179,8 +222,93 @@ Map<String, WidgetBuilder> appRoutes() {
 /// Falls back to `null` for unknown routes so that [MaterialApp] can show
 /// the default [_unknownRoute] builder or the user can handle it upstream.
 Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
+  if (Uri.tryParse(settings.name ?? '')?.path == AppRoutes.solveWorkspace) {
+    final config = settings.arguments;
+    if (config is! ProblemSolveConfig ||
+        config.quests.isEmpty ||
+        config.questionCount <= 0 ||
+        config.questionCount > config.quests.length ||
+        config.placementExam ||
+        config.quests.any((quest) {
+          final header = quest['header'];
+          return header is! Map<String, dynamic> ||
+              header['quest_id'] is! String ||
+              (header['quest_id'] as String).trim().isEmpty;
+        })) {
+      return _badArgumentsRoute(
+        settings,
+        expected: 'ProblemSolveConfig with actual questions',
+      );
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) =>
+          BuildpageWidget(config: config.copyWith(mobileQuickSolve: true)),
+    );
+  }
   final name = settings.name;
   final uri = name == null ? null : Uri.tryParse(name);
+
+  if (uri?.path == AppRoutes.examReport ||
+      (uri?.path == AppRoutes.bookbag &&
+          uri?.queryParameters['scene'] == 'exam-report')) {
+    final args = settings.arguments;
+    if (args is! ExamReportRouteArguments) {
+      return _badArgumentsRoute(
+        settings,
+        expected: '시험 종료 후 생성된 실제 채점 결과(ExamReportRouteArguments)',
+      );
+    }
+    return MaterialPageRoute<bool>(
+      settings: settings,
+      builder: (_) => ExamGradingReportPage(
+        results: args.results,
+        totalQuestions: args.totalQuestions,
+        passRate: args.passRate,
+        passed: args.passed,
+        moduleSubmissionRequired: args.moduleSubmissionRequired,
+        moduleSubmissionSucceeded: args.moduleSubmissionSucceeded,
+        onRetryModuleSubmission: args.onRetryModuleSubmission,
+        examId: args.examId,
+      ),
+    );
+  }
+
+  if (uri?.path == AppRoutes.flowView || uri?.path == AppRoutes.solutionView) {
+    final args = settings.arguments;
+    if (args is! FlowRouteArguments) {
+      return _badArgumentsRoute(
+        settings,
+        expected: 'FlowRouteArguments(실제 문제·채점 데이터)',
+      );
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => FlowViewPage(
+        quest: args.quest,
+        stepCorrectness: args.stepCorrectness,
+        problemIndex: args.problemIndex,
+        problemCount: args.problemCount,
+        scene: uri!.path == AppRoutes.flowView
+            ? FlowViewScene.overview
+            : FlowViewScene.solution,
+      ),
+    );
+  }
+  if (uri?.path == AppRoutes.sharedFlow) {
+    final shareId =
+        (settings.arguments is String
+                ? settings.arguments as String
+                : uri!.queryParameters['share_id'])
+            ?.trim();
+    if (shareId == null || shareId.isEmpty) {
+      return _badArgumentsRoute(settings, expected: '실제 share_id');
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => SharedFlowViewPage(shareId: shareId),
+    );
+  }
 
   if (name == AppRoutes.academyProfile ||
       name == AppRoutes.privateTutorProfile) {
@@ -202,9 +330,43 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     return _badArgumentsRoute(settings, expected: 'StudentServiceProvider');
   }
 
+  if ([
+    AppRoutes.arenaReady,
+    AppRoutes.arenaMatch,
+    AppRoutes.arenaResult,
+  ].contains(uri?.path)) {
+    final argument = settings.arguments;
+    final matchId = argument is String
+        ? argument
+        : uri!.queryParameters['match_id'];
+    if (matchId == null ||
+        !RegExp(r'^[A-Za-z0-9_-]{1,128}$').hasMatch(matchId)) {
+      return _badArgumentsRoute(settings, expected: '실제 경기 match_id');
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) {
+        if (uri!.path == AppRoutes.arenaReady) {
+          return ArenaReadyPage(matchId: matchId);
+        }
+        if (uri.path == AppRoutes.arenaMatch) {
+          return ArenaMatchPage(matchId: matchId);
+        }
+        return ArenaResultPage(matchId: matchId);
+      },
+    );
+  }
+
   if (uri != null && uri.path == AppRoutes.groupJoin) {
+    final group = settings.arguments;
+    if (group is StudyGroup) {
+      return MaterialPageRoute<bool>(
+        settings: settings,
+        builder: (_) => GroupJoinPage.public(group: group),
+      );
+    }
     final code = uri.queryParameters['code'] ?? '';
-    return MaterialPageRoute(
+    return MaterialPageRoute<bool>(
       settings: settings,
       builder: (_) => GroupJoinPage(inviteCode: code),
     );
@@ -216,6 +378,32 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
   if (uri != null && uri.path == AppRoutes.studentDashboard) {
     final scene = uri.queryParameters['scene']?.trim();
     if (scene != null && scene.isNotEmpty) {
+      if (scene == 'study-mode' || scene == 'rating-detail') {
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => scene == 'study-mode'
+              ? const RestrictionModePage()
+              : const RatingDetailPage(),
+        );
+      }
+      if (scene == 'activity-history') {
+        final hasSession = ApiClient.instance.hasAuthenticatedSession;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => hasSession
+              ? const StudentActivityHistoryPage()
+              : const LandingPage(),
+        );
+      }
+      if (scene == 'achievements') {
+        final hasSession = ApiClient.instance.hasAuthenticatedSession;
+        return MaterialPageRoute<void>(
+          settings: settings,
+          builder: (_) => hasSession
+              ? const StudentAchievementsPage()
+              : const LandingPage(),
+        );
+      }
       return MaterialPageRoute<void>(
         settings: settings,
         builder: (_) => MainStudentPage(initialScene: scene),
@@ -223,13 +411,25 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     }
   }
 
-  // 그룹 목록의 HTML 내부 장면은 같은 실제 목록 위에 시트를 연다.
+  // 그룹 찾기는 독립 페이지, 생성은 기존 목록의 내부 장면이다.
   if (uri != null && uri.path == AppRoutes.groups) {
     final scene = uri.queryParameters['scene'];
-    if (scene == 'group-find' || scene == 'group-create') {
-      return MaterialPageRoute<void>(
+    if (scene == 'group-find') {
+      final groups = settings.arguments;
+      return MaterialPageRoute<bool>(
         settings: settings,
-        builder: (_) => GroupListPage(initialScene: scene),
+        builder: (_) => GroupFindPage(
+          initialGroups: groups is List<StudyGroup> ? groups : null,
+        ),
+      );
+    }
+    if (scene == 'group-create') {
+      final groups = settings.arguments;
+      return MaterialPageRoute<bool>(
+        settings: settings,
+        builder: (_) => GroupCreatePage(
+          initialGroups: groups is List<StudyGroup> ? groups : null,
+        ),
       );
     }
   }
@@ -267,7 +467,7 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
       uri.queryParameters['scene'] == 'arena-ranking') {
     return MaterialPageRoute<void>(
       settings: settings,
-      builder: (_) => const ArenaRankingPage(queueType: '1v1'),
+      builder: (_) => const ArenaRankingPage(queueType: 'duel_exam'),
     );
   }
 
@@ -356,12 +556,61 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
     );
   }
 
+  if (uri != null && uri.path == AppRoutes.reviewCourse) {
+    final courseId = uri.queryParameters['course_id']?.trim();
+    final taskId = uri.queryParameters['task_id']?.trim();
+    final manualQuery = uri.queryParameters['start_manual'];
+    final startManual = manualQuery == '1';
+    if ((courseId != null && courseId.isEmpty) ||
+        (taskId != null && (taskId.isEmpty || courseId == null)) ||
+        (manualQuery != null && manualQuery != '1') ||
+        (startManual && (courseId != null || taskId != null))) {
+      return _badArgumentsRoute(
+        settings,
+        expected:
+            'non-empty course_id; task_id requires course_id; '
+            'start_manual=1 cannot be combined with stored IDs',
+      );
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => ReviewCoursePage(
+        initialCourseId: courseId,
+        initialTaskId: taskId,
+        startManualSelection: startManual,
+      ),
+    );
+  }
+
   if (uri != null &&
       uri.path == AppRoutes.wrongAnswers &&
       uri.queryParameters['scene'] == 'weakness-review') {
     return MaterialPageRoute<void>(
       settings: settings,
-      builder: (_) => const WrongAnswerListPage(initialScene: 'weakness-review'),
+      builder: (_) =>
+          const WrongAnswerListPage(initialScene: 'weakness-review'),
+    );
+  }
+
+  // Curriculum scenes require the same real course identifier as learning.
+  if (uri != null &&
+      uri.path == AppRoutes.courses &&
+      uri.queryParameters['scene'] == 'course-curriculum') {
+    final courseId =
+        (uri.queryParameters['course_id'] ?? uri.queryParameters['courseId'])
+            ?.trim();
+    if (courseId == null ||
+        courseId.isEmpty ||
+        courseId.length > 128 ||
+        RegExp(r'[/\\\x00-\x1f]').hasMatch(courseId)) {
+      return _badArgumentsRoute(settings, expected: '실제 코스 course_id');
+    }
+    return MaterialPageRoute<void>(
+      settings: settings,
+      builder: (_) => CourseRuntimePage(
+        courseId: courseId,
+        initialScene: 'course-curriculum',
+      ),
     );
   }
 
@@ -370,7 +619,14 @@ Route<dynamic>? onGenerateAppRoute(RouteSettings settings) {
   // the static route above intentionally shows the catalog.
   if (uri != null && uri.path == AppRoutes.courseRuntime) {
     final courseId =
-        uri.queryParameters['courseId'] ?? uri.queryParameters['course_id'];
+        (uri.queryParameters['courseId'] ?? uri.queryParameters['course_id'])
+            ?.trim();
+    if (courseId != null &&
+        (courseId.isEmpty ||
+            courseId.length > 128 ||
+            RegExp(r'[/\\\x00-\x1f]').hasMatch(courseId))) {
+      return _badArgumentsRoute(settings, expected: '실제 코스 course_id');
+    }
     return MaterialPageRoute<void>(
       settings: settings,
       builder: (_) => CourseRuntimePage(courseId: courseId),
@@ -453,6 +709,38 @@ class _DemoDisabledPage extends StatelessWidget {
       ),
     ),
   );
+}
+
+/// Existing quest/grade objects for an explicit Flow scene. No sample lookup.
+class FlowRouteArguments {
+  const FlowRouteArguments({
+    required this.quest,
+    this.stepCorrectness,
+    this.problemIndex,
+    this.problemCount,
+  });
+  final Map<String, dynamic> quest;
+  final List<Map<String, dynamic>>? stepCorrectness;
+  final int? problemIndex, problemCount;
+}
+
+/// In-memory grading snapshot; an exam ID alone cannot recreate this result.
+class ExamReportRouteArguments {
+  ExamReportRouteArguments({
+    required List<ExamGradeResult> results,
+    required this.totalQuestions,
+    required this.passRate,
+    required this.passed,
+    required this.moduleSubmissionRequired,
+    required this.moduleSubmissionSucceeded,
+    this.onRetryModuleSubmission,
+    this.examId,
+  }) : results = List.unmodifiable(results);
+  final List<ExamGradeResult> results;
+  final int totalQuestions, passRate;
+  final bool passed, moduleSubmissionRequired, moduleSubmissionSucceeded;
+  final Future<bool> Function()? onRetryModuleSubmission;
+  final String? examId;
 }
 
 /// Builds a fallback route when arguments are missing or of the wrong type.

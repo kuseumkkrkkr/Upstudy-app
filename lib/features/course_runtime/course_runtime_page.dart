@@ -12,10 +12,11 @@ import 'package:s11/sessions/course/session/course_learning_page.dart';
 /// `courseId`가 있으면 실제 코스 상세를 조회해 학습 화면으로 연결하고,
 /// 인자가 없는 과거 주소만 코스 탐색으로 안전하게 위임한다.
 class CourseRuntimePage extends StatefulWidget {
-  const CourseRuntimePage({super.key, this.courseId});
+  const CourseRuntimePage({super.key, this.courseId, this.initialScene});
 
   static const String routeName = '/course_runtime';
   final String? courseId;
+  final String? initialScene;
 
   @override
   State<CourseRuntimePage> createState() => _CourseRuntimePageState();
@@ -48,6 +49,7 @@ class _CourseRuntimePageState extends State<CourseRuntimePage> {
     required String title,
     required String detail,
     bool error = false,
+    bool retry = false,
   }) {
     return StudentDensitySurface(
       key: ValueKey('course-runtime-${error ? 'error' : 'loading'}'),
@@ -81,6 +83,16 @@ class _CourseRuntimePageState extends State<CourseRuntimePage> {
             ),
             if (error) ...[
               const SizedBox(height: 20),
+              if (retry) ...[
+                FilledButton(
+                  onPressed: () => setState(() {
+                    _future = CourseService.fetchCourse(
+                      widget.courseId!.trim(), forceRefresh: true);
+                  }),
+                  child: const Text('다시 시도'),
+                ),
+                const SizedBox(height: 8),
+              ],
               FilledButton(
                 onPressed: () =>
                     Navigator.of(context).pushReplacementNamed('/courses'),
@@ -125,10 +137,14 @@ class _CourseRuntimePageState extends State<CourseRuntimePage> {
               title: '코스를 열지 못했어요.',
               detail: '인증 또는 코스 상태를 확인한 뒤 다시 코스 목록에서 시도해 주세요.',
               error: true,
+              retry: true,
             ),
           );
         }
-        return CourseLearningPage(course: snapshot.data!);
+        return CourseLearningPage(
+          course: snapshot.data!,
+          initialScene: widget.initialScene ?? 'course-runtime',
+        );
       },
     );
   }

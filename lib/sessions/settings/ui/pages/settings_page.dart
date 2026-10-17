@@ -26,11 +26,13 @@ class SettingsPage extends StatefulWidget {
 class _SettingsPageState extends State<SettingsPage> {
   static const _notificationsKey = 'settings.notifications_enabled';
   static const _mobileQuickSolveKey = 'settings.mobile_quick_solve';
+  static const _gradeImmediatelyKey = 'settings.grade_immediately';
 
   bool _loading = true;
   bool _notificationsEnabled = true;
   bool _textbookPageMode = false;
   bool _mobileQuickSolve = false;
+  bool _gradeImmediately = true;
 
   @override
   void initState() {
@@ -50,11 +52,13 @@ class _SettingsPageState extends State<SettingsPage> {
     final enabled = prefs.getBool(_notificationsKey);
     final textbookPageMode = await TextbookReaderPreferences.loadPageMode();
     final mobileQuickSolve = prefs.getBool(_mobileQuickSolveKey) ?? false;
+    final gradeImmediately = prefs.getBool(_gradeImmediatelyKey) ?? true;
     if (!mounted) return;
     setState(() {
       _notificationsEnabled = enabled ?? true;
       _textbookPageMode = textbookPageMode;
       _mobileQuickSolve = mobileQuickSolve;
+      _gradeImmediately = gradeImmediately;
       _loading = false;
     });
   }
@@ -76,6 +80,13 @@ class _SettingsPageState extends State<SettingsPage> {
     setState(() => _mobileQuickSolve = value);
     final prefs = await SharedPreferences.getInstance();
     await prefs.setBool(_mobileQuickSolveKey, value);
+  }
+
+  /// 문제별 즉시 채점 여부를 기기에 저장해 다음 풀이 세션에도 적용한다.
+  Future<void> _setGradeImmediately(bool value) async {
+    setState(() => _gradeImmediately = value);
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool(_gradeImmediatelyKey, value);
   }
 
   void _showLicenses() {
@@ -245,6 +256,16 @@ class _SettingsPageState extends State<SettingsPage> {
             subtitle: '세로 화면에서 풀이 단계를 간단히 표시합니다.',
             value: _mobileQuickSolve,
             onChanged: _setMobileQuickSolve,
+          ),
+          _HtmlSettingsRow(
+            key: const ValueKey('html-settings-grade-immediately'),
+            icon: Icons.fact_check_outlined,
+            title: '문제별 즉시 채점',
+            subtitle: _gradeImmediately
+                ? '각 문제를 제출하면 채점과 풀이 흐름을 바로 확인합니다.'
+                : '모든 문제를 푼 뒤 한 번에 채점합니다.',
+            value: _gradeImmediately,
+            onChanged: _setGradeImmediately,
           ),
           _HtmlSettingsRow(
             key: const ValueKey('html-settings-notifications'),

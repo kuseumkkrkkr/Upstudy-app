@@ -9,6 +9,7 @@ class RatingSnapshot {
   final int loseStreak;
   final bool isLoaded;
   final bool placementCompleted;
+  final UserLevelity? levelity;
 
   const RatingSnapshot({
     required this.ovr,
@@ -17,6 +18,7 @@ class RatingSnapshot {
     required this.loseStreak,
     required this.isLoaded,
     required this.placementCompleted,
+    this.levelity,
   });
 
   const RatingSnapshot.empty()
@@ -25,7 +27,8 @@ class RatingSnapshot {
       recentAccuracy = 0.0,
       loseStreak = 0,
       isLoaded = false,
-      placementCompleted = false;
+      placementCompleted = false,
+      levelity = null;
 
   RatingSnapshot copyWith({
     double? ovr,
@@ -34,6 +37,7 @@ class RatingSnapshot {
     int? loseStreak,
     bool? isLoaded,
     bool? placementCompleted,
+    UserLevelity? levelity,
   }) {
     return RatingSnapshot(
       ovr: ovr ?? this.ovr,
@@ -42,6 +46,7 @@ class RatingSnapshot {
       loseStreak: loseStreak ?? this.loseStreak,
       isLoaded: isLoaded ?? this.isLoaded,
       placementCompleted: placementCompleted ?? this.placementCompleted,
+      levelity: levelity ?? this.levelity,
     );
   }
 }
@@ -63,6 +68,7 @@ class RatingStore {
         loseStreak: rating.loseStreak,
         isLoaded: true,
         placementCompleted: rating.placementCompleted,
+        levelity: rating.levelity,
       );
     } catch (_) {
       // keep previous value on failure
@@ -77,6 +83,7 @@ class RatingStore {
       loseStreak: rating.loseStreak,
       isLoaded: true,
       placementCompleted: rating.placementCompleted,
+      levelity: rating.levelity,
     );
   }
 }

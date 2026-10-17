@@ -7,11 +7,14 @@ import 'package:s11/shared/data/models/course_module_config.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/course_service.dart';
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/course/ui/widgets/level_test_widget.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
 import 'package:s11/sessions/exam_paper/session/exam_paper_page.dart';
 import 'package:s11/sessions/course/ui/course_catalog_page.dart';
 import 'package:s11/sessions/course/ui/course_html_dialogs.dart';
+import 'package:s11/sessions/course/ui/course_curriculum_scene_page.dart';
+import 'package:s11/sessions/course/ui/course_detail_page.dart';
 import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 import 'teacher_course_textbook_reader_page.dart';
@@ -169,10 +172,40 @@ class CourseLearningPage extends StatefulWidget {
     super.key,
     required this.course,
     this.courseLoader,
+    this.initialScene,
+    this.initialModuleId,
+    this.initialRuntimeStatus,
   });
 
   final Course course;
   final Future<Course> Function(String courseId)? courseLoader;
+  /// 직접 진입 시 실제 상세 조회 후 한 번만 여는 장면 ID다.
+  final String? initialScene;
+  /// 서버 runtimeNext가 명시한 ID와 상태만 사용한다. lastAction은 대체하지 않는다.
+  final String? initialModuleId;
+  final String? initialRuntimeStatus;
+
+  /// 서버 ready 증거가 실제 단일 활성 미션과 일치할 때만 자동 진입한다.
+  static (CourseUnit, CourseUnitMission)? resolveRuntimeMission(
+    Course course, {required String? moduleId, required String? status}) {
+    final id = moduleId?.trim() ?? '';
+    if (status != 'ready' || id.isEmpty || course.isCompleted || course.status == 'paused' || course.progressDetail['paused'] == true) return null;
+    final matches = <(CourseUnit, CourseUnitMission)>[];
+    for (final unit in course.units) {
+      for (final mission in unit.missions) {
+        final detail = mission.detail;
+        if (detail is! Map) continue;
+        final ids = ['id', 'module_id', 'moduleId'].map((key) => detail[key]?.toString().trim()).whereType<String>().where((value) => value.isNotEmpty).toSet();
+        if (ids.contains(id)) matches.add((unit, mission));
+      }
+    }
+    if (matches.length != 1) return null;
+    final match = matches.single;
+    final detail = match.$2.detail as Map;
+    final matchedIds = ['id', 'module_id', 'moduleId'].map((key) => detail[key]?.toString().trim()).whereType<String>().where((value) => value.isNotEmpty).toSet();
+    if (matchedIds.length != 1 || match.$1.status != CourseUnitStatus.active || !const ['textbook_view', 'problem_solve', 'exam_solve', 'level_test'].contains(detail['type'])) return null;
+    return match;
+  }
 
   @override
   State<CourseLearningPage> createState() => _CourseLearningPageState();
@@ -182,6 +215,8 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   final Set<int> _expandedUnits = {};
   late Course _course;
   bool _loadingCourse = false;
+  String? _courseLoadError;
+  bool _initialSceneOpened = false;
 
   @override
   void initState() {
@@ -200,6 +235,7 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   }
 
   Future<void> _loadCourseDetail({bool showLoading = true}) async {
+    if (!mounted) return;
     if (showLoading) setState(() => _loadingCourse = true);
     try {
       final loader = widget.courseLoader ?? CourseService.fetchCourse;
@@ -207,11 +243,63 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
       if (!mounted) return;
       setState(() {
         _course = full;
+        _courseLoadError = null;
         _expandCurrentUnit(full);
       });
+      if (!_initialSceneOpened && const ['course-curriculum', 'course-runtime'].contains(widget.initialScene)) {
+        _initialSceneOpened = true;
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          if (mounted) unawaited(_openInitialScene());
+        });
+      }
+    } catch (error) {
+      if (!mounted) return;
+      setState(
+        () => _courseLoadError = studentFacingApiError(
+          error,
+          fallback: '코스 학습 정보를 불러오지 못했어요. 다시 시도해 주세요.',
+        ),
+      );
     } finally {
       if (mounted && showLoading) setState(() => _loadingCourse = false);
     }
+  }
+
+  bool get _runtimeBlocked =>
+      const ['paused', 'locked', 'completed'].contains(widget.initialRuntimeStatus) ||
+      _course.status == 'paused' || _course.progressDetail['paused'] == true || _course.isCompleted;
+
+  void _showBlockedRuntimeNotice() {
+    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(
+      _course.isCompleted || widget.initialRuntimeStatus == 'completed'
+          ? '완료된 코스입니다. 새로운 학습은 코스 목록에서 선택해 주세요.'
+          : '현재 코스 학습이 잠겨 있거나 일시 중지되어 시작할 수 없습니다. 코스 상태를 확인해 주세요.',
+    )));
+  }
+
+  Future<void> _openInitialScene() async {
+    if (_runtimeBlocked) { _showBlockedRuntimeNotice(); return; }
+    if (widget.initialScene == 'course-runtime') {
+      final selected = CourseLearningPage.resolveRuntimeMission(_course, moduleId: widget.initialModuleId, status: widget.initialRuntimeStatus);
+      if (selected != null) {
+        await _handleMissionTap(selected.$1, selected.$2);
+        return;
+      }
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('이어갈 단계가 확인되지 않았습니다. 실제 코스의 학습 단계를 선택해 주세요.')));
+    }
+    await _showCurriculumScene();
+  }
+
+  /// 단원 장면에서 선택한 실제 미션만 부모의 기존 실행 경로로 전달한다.
+  Future<void> _showCurriculumScene() async {
+    final selected = await Navigator.of(context).push<(CourseUnit, CourseUnitMission)>(
+      MaterialPageRoute(
+        settings: RouteSettings(name: '/courses?scene=course-curriculum&course_id=${Uri.encodeQueryComponent(_course.id)}'),
+        builder: (_) => CourseCurriculumScenePage(course: _course),
+      ),
+    );
+    if (!mounted || selected == null) return;
+    await _handleMissionTap(selected.$1, selected.$2);
   }
 
   void _toggleUnit(int index) {
@@ -243,6 +331,10 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
     CourseUnit unit,
     CourseUnitMission mission,
   ) async {
+    if (_runtimeBlocked || unit.status == CourseUnitStatus.locked) {
+      _showBlockedRuntimeNotice();
+      return;
+    }
     final detail = mission.detail;
     if (detail is Map && detail['type'] == 'textbook_view') {
       final bookId = detail['textbook_id']?.toString() ?? '';
@@ -289,7 +381,11 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
       return;
     }
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text('${unit.title} · ${mission.title} 학습을 시작합니다.')),
+      SnackBar(
+        content: Text(
+          '${unit.title} · ${mission.title}: 지원되는 학습 정보가 없어 열 수 없습니다. 코스 목록에서 다시 확인해 주세요.',
+        ),
+      ),
     );
   }
 
@@ -508,71 +604,163 @@ class _CourseLearningPageState extends State<CourseLearningPage> {
   @override
   Widget build(BuildContext context) {
     final course = _course;
-    final mobile = isStudentDensityMobile(context);
     return StudentHtmlShell(
       title: '코스 학습',
       activeRoute: '/courses',
-      showContextAside: !mobile,
+      railWidth: MediaQuery.sizeOf(context).width > 1040 ? 84 : 72,
+      showContextAside: MediaQuery.sizeOf(context).width > 1040,
+      mobileBackButton: true,
       onMenu: _goBack,
       child: _loadingCourse
           ? const Center(child: CircularProgressIndicator())
-          : mobile
-          ? _MobileCourseLearningBody(
-              course: course,
-              expandedUnits: _expandedUnits,
-              onToggleUnit: _toggleUnit,
-              onMissionTap: _handleMissionTap,
-            )
-          : SingleChildScrollView(
-              key: const ValueKey('course-learning-screen'),
-              child: StudentDensityPage(
+          : _courseLoadError != null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(24),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    _LearningHeading(course: course, onBack: _goBack),
+                    Text(_courseLoadError!, textAlign: TextAlign.center),
                     const SizedBox(height: 16),
-                    _LearningHero(course: course),
-                    const SizedBox(height: 10),
-                    _CurrentLearning(
-                      course: course,
-                      onMissionTap: _handleMissionTap,
+                    FilledButton(
+                      onPressed: () => _loadCourseDetail(),
+                      child: const Text('다시 시도'),
                     ),
-                    const SizedBox(height: 42),
-                    const StudentDensityEyebrow('COURSE ROUTE'),
-                    const SizedBox(height: 10),
-                    const Text(
-                      '코스 진행 경로',
-                      style: TextStyle(
-                        fontSize: 30,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: -1.2,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    const Text(
-                      '현재 단원은 자동으로 펼쳐집니다. 단원을 눌러 미션을 확인하세요.',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: StudentDensityTokens.muted,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    _RouteLegend(),
-                    const SizedBox(height: 12),
-                    for (var index = 0; index < course.units.length; index++)
-                      _LearningUnitCard(
-                        unit: course.units[index],
-                        scale: 1,
-                        isExpanded: _expandedUnits.contains(index),
-                        onToggle: () => _toggleUnit(index),
-                        onMissionTap: (mission) =>
-                            _handleMissionTap(course.units[index], mission),
-                      ),
-                    const SizedBox(height: 40),
                   ],
                 ),
               ),
+            )
+          : _HtmlCourseLearningBody(
+              course: course,
+              onMissionTap: _handleMissionTap,
+              onCurriculum: _showCurriculumScene,
+              onProgress: () => Navigator.of(context).push(MaterialPageRoute(
+                builder: (_) => CourseDetailPage(course: _course),
+              )),
+            )
+          ,
+    );
+  }
+}
+
+/// 최종 HTML overview의 toolbar → 목록/지표 순서만 담당한다.
+/// 미션 실행·저장은 기존 화면 상태가 소유하고 이 위젯은 서버 모델을 표시한다.
+class _HtmlCourseLearningBody extends StatelessWidget {
+  const _HtmlCourseLearningBody({required this.course, required this.onMissionTap, required this.onCurriculum, required this.onProgress});
+  final Course course;
+  final Future<void> Function(CourseUnit, CourseUnitMission) onMissionTap;
+  final VoidCallback onCurriculum;
+  final VoidCallback onProgress;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    final entries = <(CourseUnit, CourseUnitMission)>[
+      for (final unit in course.units)
+        for (final mission in unit.missions) (unit, mission),
+    ];
+    final available = entries.where((entry) => entry.$1.status == CourseUnitStatus.active).firstOrNull;
+    final current = _currentCourseUnitIndex(course);
+    final completed = course.units.where((unit) => unit.status == CourseUnitStatus.completed).length;
+    final correctness = course.progressDetail['accuracy'];
+    final metrics = [('현재', current < 0 ? '—' : '${current + 1}'), ('완료', '$completed / ${course.units.length}'), ('정확도', correctness is num ? '$correctness%' : '—')];
+    Widget surface(Widget child, {EdgeInsets padding = EdgeInsets.zero}) => Container(
+      decoration: BoxDecoration(color: StudentDensityTokens.surface, border: Border.all(color: StudentDensityTokens.line)),
+      padding: padding, child: child,
+    );
+    Widget tab(String label, {VoidCallback? onTap, bool active = false}) => TextButton(
+      style: TextButton.styleFrom(
+        minimumSize: Size(mobile ? 54 : 64, mobile ? 38 : 40), padding: EdgeInsets.symmetric(horizontal: mobile ? 9 : 14),
+        foregroundColor: active ? Colors.white : StudentDensityTokens.muted,
+        disabledForegroundColor: active ? Colors.white : StudentDensityTokens.muted,
+        backgroundColor: active ? StudentDensityTokens.dark : StudentDensityTokens.surface,
+        shape: const RoundedRectangleBorder(side: BorderSide(color: StudentDensityTokens.line)),
+        tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+        textStyle: const TextStyle(fontFamily: 'Noto Sans KR', fontSize: 10, fontWeight: FontWeight.w900),
+      ), onPressed: onTap, child: Semantics(selected: active, child: Text(label)),
+    );
+    final tabs = Row(children: [
+      if (mobile) ...[
+        Expanded(child: tab('학습', active: true)),
+        Expanded(child: tab('단원', onTap: onCurriculum)),
+        Expanded(child: tab('진도', onTap: onProgress)),
+      ] else ...[
+        tab('학습', active: true), tab('단원', onTap: onCurriculum), tab('진도', onTap: onProgress),
+      ],
+    ]);
+    final resumeStyle = TextStyle(fontFamily: 'Noto Sans KR', fontSize: mobile ? 11 : 10, fontWeight: FontWeight.w900, height: mobile ? 1.2 : null);
+    final resume = FilledButton(
+          style: FilledButton.styleFrom(
+            minimumSize: Size(mobile ? 118 : 0, mobile ? 38 : 42), padding: EdgeInsets.symmetric(horizontal: mobile ? 11 : 14),
+            shape: const RoundedRectangleBorder(), backgroundColor: StudentDensityTokens.dark,
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            textStyle: resumeStyle,
+          ),
+          onPressed: available == null ? null : () => onMissionTap(available.$1, available.$2),
+          child: Row(mainAxisSize: MainAxisSize.min, children: [const Text('현재 학습 이어가기'), SizedBox(width: mobile ? 12 : 8), const Icon(Icons.arrow_forward, size: 18)]),
+        );
+    final toolbar = surface(Padding(
+      padding: EdgeInsets.all(mobile ? 5 : 6),
+      child: LayoutBuilder(builder: (context, constraints) {
+        final labelSize = TextPainter(text: TextSpan(text: '현재 학습 이어가기', style: resumeStyle), textDirection: Directionality.of(context), textScaler: MediaQuery.textScalerOf(context))..layout();
+        // 원문 flex-wrap처럼 전체 동작을 다음 줄로 보낸다. 글자를 축소하지 않는다.
+        final wrap = mobile && constraints.maxWidth < 3 * 54 + 6 + labelSize.width + 22 + 12 + 18;
+        return wrap
+            ? Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [tabs, const SizedBox(height: 6), resume])
+            : Row(children: [
+                if (mobile) Expanded(child: tabs) else tabs,
+                SizedBox(width: mobile ? 6 : 8), resume,
+                if (!mobile) ...[const SizedBox(width: 8), tab('전체 단원', onTap: onCurriculum)],
+              ]);
+      }),
+    ));
+    final list = surface(Column(children: [
+      if (entries.isEmpty) const Padding(padding: EdgeInsets.all(24), child: Text('등록된 학습 단계가 없습니다.')),
+      for (final entry in entries.indexed)
+        Semantics(
+          button: true, enabled: entry.$2.$1.status != CourseUnitStatus.locked,
+          label: '${entry.$2.$2.title}, ${entry.$2.$1.status == CourseUnitStatus.locked ? '잠금' : entry.$2.$1.status == CourseUnitStatus.completed ? '완료' : '진행'}',
+          child: InkWell(
+            onTap: entry.$2.$1.status == CourseUnitStatus.locked ? null : () => onMissionTap(entry.$2.$1, entry.$2.$2),
+            child: Container(
+              constraints: BoxConstraints(minHeight: mobile ? 66 : 70), padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+              decoration: BoxDecoration(border: entry.$1 == entries.length - 1 ? null : const Border(bottom: BorderSide(color: StudentDensityTokens.line))),
+              child: Row(children: [
+                SizedBox(width: mobile ? 50 : 62, child: Text(_moduleTypeLabel(entry.$2.$1.type), style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900))),
+                SizedBox(width: mobile ? 9 : 14),
+                Expanded(child: Text(entry.$2.$2.title, style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w700))),
+                SizedBox(width: mobile ? 9 : 14),
+                Container(
+                  constraints: const BoxConstraints(minHeight: 40), alignment: Alignment.center,
+                  padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 12), decoration: BoxDecoration(border: Border.all(color: StudentDensityTokens.line)),
+                  child: Text(entry.$2.$1.status == CourseUnitStatus.locked ? '잠금' : entry.$2.$1.status == CourseUnitStatus.completed ? '완료' : '진행', style: const TextStyle(fontSize: 10, fontWeight: FontWeight.w900)),
+                ),
+              ]),
             ),
+          ),
+        ),
+    ]), padding: EdgeInsets.symmetric(vertical: mobile ? 6 : 10, horizontal: mobile ? 10 : 16));
+    Widget metricCell((String, String) metric, {bool last = false}) => Container(
+      padding: EdgeInsets.symmetric(vertical: mobile ? 12 : 14, horizontal: mobile ? 10 : 14),
+      decoration: BoxDecoration(border: last ? null : mobile ? const Border(right: BorderSide(color: StudentDensityTokens.line)) : const Border(bottom: BorderSide(color: StudentDensityTokens.line))),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.start, mainAxisSize: MainAxisSize.min, children: [
+        const SizedBox(height: 5),
+        Text(metric.$2, style: TextStyle(fontSize: mobile ? 18 : 25.6, height: mobile ? 25.6 / 18 : null, fontWeight: FontWeight.w900, letterSpacing: -.06 * (mobile ? 18 : 25.6)), maxLines: 1, overflow: TextOverflow.ellipsis),
+        const SizedBox(height: 3), Text(metric.$1, style: TextStyle(fontSize: 10, height: mobile ? 1.52 : null, fontWeight: FontWeight.w400, color: StudentDensityTokens.muted)),
+      ]),
+    );
+    final metricPanel = surface(mobile
+        ? Row(crossAxisAlignment: CrossAxisAlignment.start, children: [for (final entry in metrics.indexed) Expanded(child: metricCell(entry.$2, last: entry.$1 == 2))])
+        : Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [for (final entry in metrics.indexed) metricCell(entry.$2, last: entry.$1 == 2)]));
+    return SingleChildScrollView(
+      key: const ValueKey('course-learning-html-overview'),
+      padding: EdgeInsets.all(mobile ? 10 : 38),
+      child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
+        toolbar,
+        SizedBox(height: mobile ? 2 : 20),
+        if (mobile) ...[metricPanel, const SizedBox(height: 12), list]
+        else IntrinsicHeight(child: Row(crossAxisAlignment: CrossAxisAlignment.stretch, children: [Expanded(flex: 100, child: list), const SizedBox(width: 18), Expanded(flex: 42, child: metricPanel)])),
+      ]),
     );
   }
 }

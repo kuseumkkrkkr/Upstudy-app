@@ -161,33 +161,29 @@ abstract final class StudentRouteRegistry {
     StudentRouteSpec(
       id: 'today-tasks',
       category: '홈',
-      route: '/student/dashboard',
+      route: '/student/dashboard?scene=today-tasks',
     ),
     StudentRouteSpec(
       id: 'course-select',
       category: '홈',
-      route: '/student/dashboard',
+      route: '/student/dashboard?scene=course-select',
     ),
     StudentRouteSpec(
       id: 'rating-detail',
       category: '홈',
-      route: '/student/dashboard',
+      route: '/rating-detail',
     ),
     StudentRouteSpec(id: 'daily-test', category: '홈', route: '/level_test'),
-    StudentRouteSpec(
-      id: 'study-mode',
-      category: '홈',
-      route: '/student/dashboard',
-    ),
+    StudentRouteSpec(id: 'study-mode', category: '홈', route: '/study-mode'),
     StudentRouteSpec(
       id: 'activity-history',
       category: '홈',
-      route: '/student/dashboard',
+      route: '/activity-history',
     ),
     StudentRouteSpec(
       id: 'achievements',
       category: '홈',
-      route: '/student/dashboard',
+      route: '/student/dashboard?scene=achievements',
     ),
     StudentRouteSpec(id: 'schedule', category: '홈', route: '/schedule'),
     StudentRouteSpec(
@@ -209,12 +205,12 @@ abstract final class StudentRouteRegistry {
     StudentRouteSpec(
       id: 'review-course',
       category: '코스',
-      route: '/wrong_answers',
+      route: '/review-course',
     ),
     StudentRouteSpec(
       id: 'course-curriculum',
       category: '코스',
-      route: '/courses',
+      route: '/courses?scene=course-curriculum',
     ),
     StudentRouteSpec(id: 'course-challenge', category: '코스', route: '/courses'),
     StudentRouteSpec(id: 'course-exam', category: '코스', route: '/courses'),
@@ -247,22 +243,14 @@ abstract final class StudentRouteRegistry {
     StudentRouteSpec(
       id: 'solve-workspace',
       category: '풀이',
-      route: '/student/runtime',
+      route: '/solve-workspace',
     ),
-    StudentRouteSpec(
-      id: 'flow-view',
-      category: '풀이',
-      route: '/student/runtime',
-    ),
-    StudentRouteSpec(
-      id: 'shared-flow',
-      category: '풀이',
-      route: '/student/runtime',
-    ),
+    StudentRouteSpec(id: 'flow-view', category: '풀이', route: '/flow-view'),
+    StudentRouteSpec(id: 'shared-flow', category: '풀이', route: '/shared-flow'),
     StudentRouteSpec(
       id: 'solution-view',
       category: '풀이',
-      route: '/student/runtime',
+      route: '/solution-view',
     ),
     StudentRouteSpec(
       id: 'solve-analysis',
@@ -273,7 +261,7 @@ abstract final class StudentRouteRegistry {
     StudentRouteSpec(
       id: 'weakness-review',
       category: '풀이',
-      route: '/wrong_answers',
+      route: '/wrong_answers?scene=weakness-review',
     ),
   ];
 
@@ -288,7 +276,7 @@ abstract final class StudentRouteRegistry {
     StudentRouteSpec(id: 'concept-tags', category: '교재', route: '/bookbag'),
     StudentRouteSpec(id: 'exam-preview', category: '교재', route: '/bookbag'),
     StudentRouteSpec(id: 'exam-paper', category: '교재', route: '/bookbag'),
-    StudentRouteSpec(id: 'exam-report', category: '교재', route: '/bookbag'),
+    StudentRouteSpec(id: 'exam-report', category: '교재', route: '/exam-report'),
   ];
 
   static const _market = <StudentRouteSpec>[
@@ -313,13 +301,33 @@ abstract final class StudentRouteRegistry {
 
   static const _social = <StudentRouteSpec>[
     StudentRouteSpec(id: 'social', category: '소셜', route: '/social'),
-    StudentRouteSpec(id: 'social-friends', category: '소셜', route: '/social'),
-    StudentRouteSpec(id: 'friend-requests', category: '소셜', route: '/social'),
-    StudentRouteSpec(id: 'friend-add', category: '소셜', route: '/social'),
+    StudentRouteSpec(
+      id: 'social-friends',
+      category: '소셜',
+      route: '/social?tab=friends',
+    ),
+    StudentRouteSpec(
+      id: 'friend-requests',
+      category: '소셜',
+      route: '/social?scene=friend-requests',
+    ),
+    StudentRouteSpec(
+      id: 'friend-add',
+      category: '소셜',
+      route: '/social?scene=friend-add',
+    ),
     StudentRouteSpec(id: 'direct-chat', category: '소셜', route: '/social'),
     StudentRouteSpec(id: 'groups', category: '소셜', route: '/groups'),
-    StudentRouteSpec(id: 'group-find', category: '소셜', route: '/groups'),
-    StudentRouteSpec(id: 'group-create', category: '소셜', route: '/groups'),
+    StudentRouteSpec(
+      id: 'group-find',
+      category: '소셜',
+      route: '/groups?scene=group-find',
+    ),
+    StudentRouteSpec(
+      id: 'group-create',
+      category: '소셜',
+      route: '/groups?scene=group-create',
+    ),
     StudentRouteSpec(id: 'group-join', category: '소셜', route: '/groups/join'),
     StudentRouteSpec(
       id: 'group-detail',
@@ -380,10 +388,18 @@ abstract final class StudentRouteRegistry {
 
   static const _arena = <StudentRouteSpec>[
     StudentRouteSpec(id: 'arena-home', category: '대결', route: '/arena'),
-    StudentRouteSpec(id: 'arena-ready', category: '대결', route: '/arena'),
-    StudentRouteSpec(id: 'arena-match', category: '대결', route: '/arena'),
-    StudentRouteSpec(id: 'arena-result', category: '대결', route: '/arena'),
-    StudentRouteSpec(id: 'arena-ranking', category: '대결', route: '/arena'),
+    StudentRouteSpec(id: 'arena-ready', category: '대결', route: '/arena/ready'),
+    StudentRouteSpec(id: 'arena-match', category: '대결', route: '/arena/match'),
+    StudentRouteSpec(
+      id: 'arena-result',
+      category: '대결',
+      route: '/arena/result',
+    ),
+    StudentRouteSpec(
+      id: 'arena-ranking',
+      category: '대결',
+      route: '/arena?scene=arena-ranking',
+    ),
   ];
 
   static const _tools = <StudentRouteSpec>[
@@ -394,9 +410,21 @@ abstract final class StudentRouteRegistry {
       category: '도구',
       route: '/learning-tools',
     ),
-    StudentRouteSpec(id: 'notepad', category: '도구', route: '/learning-tools'),
-    StudentRouteSpec(id: 'timer', category: '도구', route: '/learning-tools'),
-    StudentRouteSpec(id: 'focus', category: '도구', route: '/learning-tools'),
+    StudentRouteSpec(
+      id: 'notepad',
+      category: '도구',
+      route: '/learning-tools?scene=notepad',
+    ),
+    StudentRouteSpec(
+      id: 'timer',
+      category: '도구',
+      route: '/learning-tools?scene=timer',
+    ),
+    StudentRouteSpec(
+      id: 'focus',
+      category: '도구',
+      route: '/learning-tools?scene=focus',
+    ),
     StudentRouteSpec(id: 'graph', category: '도구', route: '/graph'),
   ];
 

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:s11/app/student_route_registry.dart';
 
 import 'package:s11/sessions/learning_tools/ui/pages/focus_mode_page.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
@@ -105,7 +106,7 @@ class StudentLearningToolsPage extends StatelessWidget {
               StudentDensityPageHeader(
                 eyebrow: 'LEARNING TOOLS',
                 title: '학습 도구',
-                description: '그래프 그리기를 제외한 도구는 학습 맥락을 유지하는 모달로 실행됩니다.',
+                description: '필요한 학습 도구를 선택하세요.',
                 showMobileDescription: true,
                 showMobileEyebrow: true,
                 action: StudentDensityButton(
@@ -164,21 +165,35 @@ class StudentLearningToolsPage extends StatelessWidget {
                         icon: Icons.edit_outlined,
                         title: '빠른 노트',
                         subtitle: '자동 저장 · UTF-8',
-                        onTap: () => _openTool(context, const NotepadPage()),
+                        modal: false,
+                        onTap: () => Navigator.of(context).pushNamed(
+                          StudentRouteRegistry.byId('notepad')!.route,
+                        ),
                       ),
                       _ToolLaunchCard(
                         key: const ValueKey('learning-tools-timer'),
                         icon: Icons.schedule_outlined,
                         title: '집중 타이머',
                         subtitle: '25분 · 학습 시간 기록',
-                        onTap: () => _openTool(context, const TimerPage()),
+                        modal: false,
+                        onTap: () => Navigator.of(context).pushNamed(
+                          StudentRouteRegistry.byId('timer')!.route,
+                          arguments: StudentRouteRegistry.byId(
+                            'tools-hub',
+                          )!.destination,
+                        ),
                       ),
                       _ToolLaunchCard(
                         key: const ValueKey('learning-tools-focus'),
                         icon: Icons.radio_button_checked,
                         title: '집중 모드',
                         subtitle: '알림 보류 · 주변 UI 절제',
-                        onTap: () => _openTool(context, const FocusModePage()),
+                        modal: false,
+                        onTap: () => Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const FocusModePage(),
+                          ),
+                        ),
                       ),
                     ],
                   );
@@ -235,28 +250,13 @@ class StudentLearningToolsScenePage extends StatefulWidget {
 
 class _StudentLearningToolsScenePageState
     extends State<StudentLearningToolsScenePage> {
-  bool _opened = false;
-
   @override
-  void didChangeDependencies() {
-    super.didChangeDependencies();
-    if (_opened || !{'notepad', 'timer', 'focus'}.contains(widget.scene)) {
-      return;
-    }
-    _opened = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!mounted) return;
-      final page = switch (widget.scene) {
-        'notepad' => const NotepadPage(),
-        'timer' => const TimerPage(),
-        _ => const FocusModePage(),
-      };
-      showStudentToolModal(context, page);
-    });
-  }
-
-  @override
-  Widget build(BuildContext context) => const StudentLearningToolsPage();
+  Widget build(BuildContext context) => switch (widget.scene) {
+    'notepad' => const NotepadPage(),
+    'timer' => const TimerPage(),
+    'focus' => const FocusModePage(),
+    _ => const StudentLearningToolsPage(),
+  };
 }
 
 class _ToolLaunchCard extends StatelessWidget {

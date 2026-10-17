@@ -64,6 +64,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   bool _placementExam = false;
   bool _placementWritingMode = false;
   final List<String> _placementAnswers = <String>[];
+  final List<TextEditingController> _placementAnswerControllers =
+      <TextEditingController>[];
   bool _mobileNoteExpanded = false;
   int _mobileFlowNextIndex = 0;
 
@@ -110,6 +112,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   final List<Map<String, dynamic>?> _quests = <Map<String, dynamic>?>[];
   final List<int?> _selectedChoices = <int?>[];
   final List<bool> _problemGraded = <bool>[];
+  final List<BatchSolveGradeItem?> _batchGradeResults =
+      <BatchSolveGradeItem?>[];
+  int _batchGradeProgress = 0;
 
   @override
   void initState() {
@@ -129,6 +134,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   @override
   void dispose() {
     if (!_placementExam) unawaited(_saveContinueForCurrentQuest());
+    for (final controller in _placementAnswerControllers) {
+      controller.dispose();
+    }
     _scrollController.dispose();
     _paintVersion.dispose();
     _solveTimer?.cancel();
@@ -142,7 +150,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   /// 필요한 변수는 기기별 모바일 간편풀이 저장값이다.
   /// 작동 원리는 설정 화면과 풀이 화면이 같은 로컬 키를 공유해 네트워크 요청 없이 모드를 결정하는 것이다.
   Future<void> _loadMobileQuickSolvePreference() async {
-    if (_placementExam) return;
+    if (_placementExam || widget.config?.mobileQuickSolve == true) return;
     final prefs = await SharedPreferences.getInstance();
     if (!mounted) return;
     setState(
@@ -241,9 +249,25 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _problemGraded
       ..clear()
       ..addAll(List<bool>.filled(_problemCount, false));
+    _batchGradeResults
+      ..clear()
+      ..addAll(List<BatchSolveGradeItem?>.filled(_problemCount, null));
+    _batchGradeProgress = 0;
     _placementAnswers
       ..clear()
       ..addAll(List<String>.filled(_problemCount, ''));
+    for (final controller in _placementAnswerControllers) {
+      controller.dispose();
+    }
+    _placementAnswerControllers
+      ..clear()
+      ..addAll(
+        List<TextEditingController>.generate(
+          _problemCount,
+          (_) => TextEditingController(),
+          growable: false,
+        ),
+      );
     _questError = null;
     _questLoading = false;
     if (config.quests.isNotEmpty) {
@@ -547,6 +571,13 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       }
     }
     if (limit != null && elapsed >= limit) {
+      if (_analysisBusy) {
+        _solveTimer = Timer(
+          const Duration(milliseconds: 200),
+          _scheduleSolveTimerTick,
+        );
+        return;
+      }
       if (!_timeLimitReached) {
         _timeLimitReached = true;
         unawaited(_completeAtTimeLimit());
@@ -555,9 +586,10 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     }
     if (limit == null && elapsed >= 40 * 60) return;
 
-    final useSecondTicks = limit == null
-        ? elapsed < 5 * 60
-        : displaySeconds <= 5 * 60;
+    // Placement renders mm:ss even above five minutes; keep it live.
+    final useSecondTicks =
+        _placementExam ||
+        (limit == null ? elapsed < 5 * 60 : displaySeconds <= 5 * 60);
     final delay = useSecondTicks
         ? const Duration(seconds: 1)
         : Duration(seconds: 60 - (elapsed % 60));
@@ -641,12 +673,11 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     setState(() => _placementWritingMode = writing);
   }
 
-  void _updatePlacementAnswer(String value) {
-    if (_currentProblemIndex < 0 ||
-        _currentProblemIndex >= _placementAnswers.length) {
+  void _updatePlacementAnswer(int index, String value) {
+    if (index < 0 || index >= _placementAnswers.length) {
       return;
     }
-    _placementAnswers[_currentProblemIndex] = value;
+    _placementAnswers[index] = value;
     setState(() {});
   }
 
@@ -720,7 +751,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     if (!_placementExam) unawaited(_saveContinueForCurrentQuest());
   }
 
-  void _loadProblem(int index) {
+  void _loadProblem(int index, {bool loadContinue = true}) {
     _mobileFlowNextIndex = 0;
     final snapshot = _problemSnapshots[index];
     _strokes
@@ -753,7 +784,9 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     _eraserPosition = null;
     _currentEraserStroke = null;
     _bumpPaint();
-    if (!_placementExam) unawaited(_loadContinueForCurrentQuest());
+    if (!_placementExam && loadContinue) {
+      unawaited(_loadContinueForCurrentQuest());
+    }
   }
 
   void _goToProblem(int index) {
@@ -1224,6 +1257,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   @override
   Widget build(BuildContext context) {
     if (_placementExam) return _buildPlacementExamScaffold();
+    if (_mobileQuickSolve) return _renderHtmlQuickSolveScaffold(this);
     if (isStudentDensityMobile(context)) return _buildMobileSolveScaffold();
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
@@ -1277,13 +1311,23 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         kind: 'problem',
         targetId: questId,
       );
-      if (state == null) return;
+      if (!mounted || _currentQuestId().trim() != questId || state == null)
+        return;
       // 빈 스트로크라도 바로 적용해 이어하기 진입이 끊기지 않도록 허용
       _applyStrokes(state.strokes);
       _continueLoaded = true;
       _bumpPaint();
     } catch (_) {
-      // ignore load failure
+      if (!mounted || _currentQuestId().trim() != questId) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: const Text('이어하기 필기를 불러오지 못했어요. 현재 필기는 유지됩니다.'),
+          action: SnackBarAction(
+            label: '다시 시도',
+            onPressed: () => unawaited(_loadContinueForCurrentQuest()),
+          ),
+        ),
+      );
     }
   }
 
@@ -2232,6 +2276,22 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
                               ? null
                               : _goToNextProblem,
                         ),
+                        FilledButton.icon(
+                          key: const ValueKey('batch-grade-submit'),
+                          onPressed: _analysisBusy ? null : _handleBatchGrade,
+                          icon: const Icon(Icons.fact_check_outlined, size: 19),
+                          label: Text(
+                            _analysisBusy
+                                ? '채점 $_batchGradeProgress/$_problemCount'
+                                : '전체 채점',
+                          ),
+                          style: FilledButton.styleFrom(
+                            backgroundColor: Colors.black,
+                            foregroundColor: Colors.white,
+                            minimumSize: const Size(116, 44),
+                            shape: const RoundedRectangleBorder(),
+                          ),
+                        ),
                       ],
                     ],
                   ),
@@ -2391,13 +2451,25 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       ).showSnackBar(const SnackBar(content: Text('문제 ID가 없습니다.')));
       return;
     }
+    final ratingSubmissionId = _ratingSubmissionIdFor(
+      _currentProblemIndex,
+      questId,
+    );
     setState(() => _analysisBusy = true);
     try {
       final result = await ApiClient.instance.gradeVariantSolve(
         questId: questId,
         selectedIndex: selectedIndex,
+        submissionId: ratingSubmissionId,
       );
       final isCorrect = result['raw_correct'] == true || result['pass'] == true;
+      final flowEvaluated = result['flow_evaluated'] == true;
+      final rawSteps = result['step_correctness'];
+      final stepCorrectness = rawSteps is List
+          ? rawSteps
+                .map((step) => Map<String, dynamic>.from(step as Map))
+                .toList()
+          : const <Map<String, dynamic>>[];
       final quest = _currentQuest;
       final fingerprint = _problemFingerprint(quest, _currentProblemIndex);
       final problemMeta = _problemMeta(quest);
@@ -2410,10 +2482,19 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         itemIndex: _currentProblemIndex + 1,
         quest: quest,
         isCorrect: isCorrect,
-        stepCorrectness: const <Map<String, dynamic>>[],
+        stepCorrectness: stepCorrectness,
         selectedIndex: selectedIndex,
         elapsedSeconds: _sessionClock.elapsed.inSeconds,
       );
+      if (_ratingEnabled) {
+        await _submitRatingUpdate(
+          quest: quest,
+          isCorrect: isCorrect,
+          stepCorrectness: stepCorrectness,
+          gradeProof: (result['grade_proof'] ?? '').toString(),
+          submissionId: ratingSubmissionId,
+        );
+      }
       try {
         if (isCorrect) {
           await ActivityStore.recordProblemSolve(
@@ -2431,24 +2512,27 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         }
       } catch (_) {}
       if (!mounted) return;
-      final elapsed = _sessionClock.elapsed.inSeconds;
-      final hasNext = _currentProblemIndex < _problemCount - 1;
-      await showDialog<void>(
-        context: context,
-        builder: (_) => AlertDialog(
-          title: Text(isCorrect ? '정답' : '오답'),
-          content: Text('풀이 시간 $elapsed초'),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-                if (hasNext) _goToNextProblem();
-              },
-              child: Text(hasNext ? '다음 문제' : '확인'),
-            ),
-          ],
+      final action = await Navigator.of(context).push<SolveAnalysisAction>(
+        MaterialPageRoute<SolveAnalysisAction>(
+          builder: (_) => SolveAnalysisPage(
+            problemIndex: _currentProblemIndex + 1,
+            problemCount: _problemCount,
+            userAnswer: '선택한 답: ${_optionLabel(selectedIndex)}',
+            quest: quest,
+            stepCorrectness: stepCorrectness,
+            flowEvaluated: flowEvaluated,
+            isCorrect: isCorrect,
+            hasNextProblem: _currentProblemIndex < _problemCount - 1,
+            allowRetry: false,
+          ),
         ),
       );
+      if (!mounted) return;
+      if (action == SolveAnalysisAction.exit) {
+        Navigator.of(context).maybePop();
+      } else if (action == SolveAnalysisAction.next) {
+        _goToNextProblem();
+      }
       _completeCourseModuleIfNeeded();
     } catch (error) {
       if (!mounted) return;
@@ -2465,7 +2549,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
   }
 
   // 필요 변수: 채점 수, 정답 수, passRate. 작동 원리: 모든 문제 채점이 끝난 한 번만 코스 모듈 결과를 전달한다.
-  void _completeCourseModuleIfNeeded() {
+  void _completeCourseModuleIfNeeded({bool showResultDialog = true}) {
     if (_completionReported || _passRate <= 0 || _gradedCount < _problemCount) {
       return;
     }
@@ -2479,7 +2563,7 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       passed: passed,
       elapsedSeconds: elapsed,
     );
-    if (!mounted) return;
+    if (!mounted || !showResultDialog) return;
     showDialog(
       context: context,
       builder: (_) => AlertDialog(
@@ -2493,6 +2577,356 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         ],
       ),
     );
+  }
+
+  /// Confirm, grade each saved response once, then open the dedicated batch report.
+  Future<void> _handleBatchGrade() async {
+    if (_analysisBusy || _placementExam) return;
+    if (_toolMode == _ToolMode.pen && _currentStroke != null) {
+      _finishStroke();
+    } else if (_toolMode == _ToolMode.eraser && _eraserActive) {
+      _finishEraser();
+    }
+    _saveCurrentProblem();
+
+    final unanswered = List<int>.generate(_problemCount, (index) => index)
+        .where((index) {
+          if (_mobileQuickSolve) {
+            final session = _mobileQuickSessionFor(this, problemIndex: index);
+            return !_mobileQuickFlowReady(session) ||
+                !_mobileQuickAnswerReady(this, session, problemIndex: index);
+          }
+          final quest = index < _quests.length ? _quests[index] : null;
+          final data = quest?['data'];
+          final options = data is Map ? data['quest_options'] : null;
+          if (options is List && options.isNotEmpty) {
+            return _selectedChoices[index] == null;
+          }
+          final snapshot = _problemSnapshots[index];
+          return snapshot == null || snapshot.strokes.isEmpty;
+        })
+        .length;
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (dialogContext) => AlertDialog(
+        title: const Text('전체 채점'),
+        content: Text(
+          unanswered == 0
+              ? '저장된 답안을 모두 채점하고 학습 기록에 반영할까요?'
+              : '미응답 문항 $unanswered개가 있습니다. 미응답으로 제출하고 나머지 답안을 채점할까요?',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogContext).pop(false),
+            child: const Text('계속 풀기'),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogContext).pop(true),
+            child: const Text('전체 채점'),
+          ),
+        ],
+      ),
+    );
+    if (confirmed != true || !mounted) return;
+
+    final originalIndex = _currentProblemIndex;
+    final results = <BatchSolveGradeItem>[];
+    _solveTimer?.cancel();
+    _timeLimitReached = true;
+    setState(() {
+      _analysisBusy = true;
+      _batchGradeProgress = 0;
+    });
+    try {
+      for (var index = 0; index < _problemCount; index++) {
+        if (!mounted) return;
+        var result = _batchGradeResults[index];
+        if (result == null) {
+          setState(() {
+            _currentProblemIndex = index;
+            _loadProblem(index, loadContinue: false);
+          });
+          result = await _gradeBatchQuestion(index);
+          if (result.error == null) _batchGradeResults[index] = result;
+        }
+        results.add(result);
+        if (mounted) {
+          setState(() => _batchGradeProgress = index + 1);
+        }
+      }
+      if (!mounted) return;
+      setState(() {
+        _currentProblemIndex = originalIndex;
+        _loadProblem(originalIndex, loadContinue: false);
+      });
+      _completeCourseModuleIfNeeded(showResultDialog: false);
+      setState(() => _analysisBusy = false);
+      await Navigator.of(context).push<void>(
+        MaterialPageRoute<void>(
+          builder: (_) => BatchGradingReportPage(
+            results: List<BatchSolveGradeItem>.unmodifiable(results),
+            totalCount: _problemCount,
+          ),
+        ),
+      );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(error, fallback: '일괄 채점을 완료하지 못했어요.'),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) setState(() => _analysisBusy = false);
+    }
+  }
+
+  Future<BatchSolveGradeItem> _gradeBatchQuestion(int index) async {
+    final quest = _currentQuest;
+    if (quest == null) {
+      return BatchSolveGradeItem(
+        problemIndex: index + 1,
+        quest: null,
+        stepCorrectness: const [],
+        empty: false,
+        isCorrect: null,
+        userAnswer: '',
+        error: '문항 데이터를 불러오지 못했어요.',
+      );
+    }
+    if (_problemGraded[index]) {
+      return BatchSolveGradeItem(
+        problemIndex: index + 1,
+        quest: quest,
+        stepCorrectness: const [],
+        empty: false,
+        isCorrect: null,
+        userAnswer: '',
+        error: '이미 채점된 문항입니다.',
+      );
+    }
+
+    final options = _currentQuestOptionBlocks();
+    final selectedIndex = _currentSelectedChoice();
+    final quickSession = _mobileQuickSolve
+        ? _mobileQuickSessionFor(this, problemIndex: index)
+        : null;
+    final hasAnswer = _mobileQuickSolve
+        ? quickSession != null &&
+              _mobileQuickFlowReady(quickSession) &&
+              _mobileQuickAnswerReady(this, quickSession, problemIndex: index)
+        : options.isNotEmpty
+        ? selectedIndex != null
+        : _strokes.isNotEmpty;
+    if (!hasAnswer) {
+      _problemGraded[index] = true;
+      _gradedCount += 1;
+      try {
+        await widget.config?.onProblemGraded?.call(
+          itemIndex: index + 1,
+          quest: quest,
+          isCorrect: false,
+          stepCorrectness: const [],
+          selectedIndex: null,
+          elapsedSeconds: _sessionClock.elapsed.inSeconds,
+        );
+      } catch (error) {
+        debugPrint('Batch blank-answer callback failed: $error');
+      }
+      return BatchSolveGradeItem(
+        problemIndex: index + 1,
+        quest: quest,
+        stepCorrectness: const [],
+        empty: true,
+        isCorrect: null,
+        userAnswer: '답안을 제출하지 않았어요.',
+      );
+    }
+
+    if (options.isNotEmpty || _mobileQuickSolve) {
+      final questId = _currentQuestId();
+      final quickAnswer = quickSession?.numericAnswer.trim() ?? '';
+      if (questId.isEmpty ||
+          (options.isNotEmpty && selectedIndex == null) ||
+          (_mobileQuickSolve && options.isEmpty && quickAnswer.isEmpty)) {
+        return BatchSolveGradeItem(
+          problemIndex: index + 1,
+          quest: quest,
+          stepCorrectness: const [],
+          empty: false,
+          isCorrect: null,
+          userAnswer: '',
+          error: '객관식 문항 정보를 확인하지 못했어요.',
+        );
+      }
+      try {
+        final flowOrder = quickSession == null
+            ? null
+            : List<int>.unmodifiable(quickSession.slots.whereType<int>());
+        final ratingSubmissionId = _ratingSubmissionIdFor(index, questId);
+        final response = await ApiClient.instance.gradeVariantSolve(
+          questId: questId,
+          selectedIndex: options.isNotEmpty ? selectedIndex : null,
+          userAnswer: options.isEmpty && _mobileQuickSolve ? quickAnswer : null,
+          flowOrder: flowOrder,
+          submissionId: _ratingEnabled ? ratingSubmissionId : null,
+        );
+        final isCorrect =
+            response['raw_correct'] == true || response['pass'] == true;
+        final flowEvaluated = response['flow_evaluated'] == true;
+        final rawSteps = response['step_correctness'];
+        final stepCorrectness = rawSteps is List
+            ? rawSteps
+                  .map((step) => Map<String, dynamic>.from(step as Map))
+                  .toList()
+            : const <Map<String, dynamic>>[];
+        if (_ratingEnabled) {
+          await _submitRatingUpdate(
+            quest: quest,
+            isCorrect: isCorrect,
+            stepCorrectness: stepCorrectness,
+            gradeProof: (response['grade_proof'] ?? '').toString(),
+            submissionId: ratingSubmissionId,
+          );
+        }
+        _problemGraded[index] = true;
+        _gradedCount += 1;
+        if (isCorrect) _correctCount += 1;
+        try {
+          await widget.config?.onProblemGraded?.call(
+            itemIndex: index + 1,
+            quest: quest,
+            isCorrect: isCorrect,
+            stepCorrectness: stepCorrectness,
+            selectedIndex: selectedIndex,
+            elapsedSeconds: _sessionClock.elapsed.inSeconds,
+          );
+        } catch (error) {
+          debugPrint('Batch objective grading callback failed: $error');
+        }
+        final fingerprint = _problemFingerprint(quest, index);
+        final meta = _problemMeta(quest);
+        try {
+          if (isCorrect) {
+            await ActivityStore.recordProblemSolve(
+              problemId: fingerprint,
+              problemNumber: fingerprint,
+              difficultyTier: _tierForProblemIndex(index),
+              meta: meta.isEmpty ? null : meta,
+            );
+          } else {
+            await ActivityStore.recordProblemIncorrect(
+              problemId: fingerprint,
+              problemNumber: fingerprint,
+              meta: meta.isEmpty ? null : meta,
+            );
+          }
+        } catch (_) {}
+        return BatchSolveGradeItem(
+          problemIndex: index + 1,
+          quest: quest,
+          stepCorrectness: stepCorrectness,
+          empty: false,
+          isCorrect: isCorrect,
+          userAnswer: options.isNotEmpty
+              ? '선택한 답: ${_optionLabel(selectedIndex!)}'
+              : '숫자 답: $quickAnswer',
+          flowEvaluated: flowEvaluated,
+        );
+      } catch (error) {
+        return BatchSolveGradeItem(
+          problemIndex: index + 1,
+          quest: quest,
+          stepCorrectness: const [],
+          empty: false,
+          isCorrect: null,
+          userAnswer: options.isNotEmpty && selectedIndex != null
+              ? '선택한 답: ${_optionLabel(selectedIndex)}'
+              : '숫자 답: $quickAnswer',
+          error: studentFacingApiError(error, fallback: '이 문항을 채점하지 못했어요.'),
+        );
+      }
+    }
+
+    try {
+      final studentWorkImage = await _renderStrokesToPng();
+      final heatmapImage = await _buildHeatmapResult().renderImage();
+      final payload = await _buildLlmPayload();
+      final questId = _currentQuestId();
+      final ratingSubmissionId = _ratingSubmissionIdFor(index, questId);
+      final response = await ApiClient.instance.submitSolveAnalysis(
+        payload: payload,
+        studentWorkImage: studentWorkImage,
+        problemImage: Uint8List(0),
+        heatmapImage: heatmapImage,
+        submissionId: ratingSubmissionId,
+      );
+      final stepCorrectness = response.stepCorrectness;
+      final isCorrect = response.isCorrect ?? false;
+      if (_ratingEnabled) {
+        await _submitRatingUpdate(
+          quest: quest,
+          isCorrect: isCorrect,
+          stepCorrectness: stepCorrectness,
+          gradeProof: response.gradeProof ?? '',
+          submissionId: ratingSubmissionId,
+        );
+      }
+      _problemGraded[index] = true;
+      _gradedCount += 1;
+      if (isCorrect) _correctCount += 1;
+      try {
+        await widget.config?.onProblemGraded?.call(
+          itemIndex: index + 1,
+          quest: quest,
+          isCorrect: isCorrect,
+          stepCorrectness: stepCorrectness,
+          selectedIndex: null,
+          elapsedSeconds: _sessionClock.elapsed.inSeconds,
+        );
+      } catch (error) {
+        debugPrint('Batch written grading callback failed: $error');
+      }
+      final fingerprint = _problemFingerprint(quest, index);
+      final meta = _problemMeta(quest);
+      try {
+        if (isCorrect) {
+          await ActivityStore.recordProblemSolve(
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            difficultyTier: _tierForProblemIndex(index),
+            meta: meta.isEmpty ? null : meta,
+          );
+        } else {
+          await ActivityStore.recordProblemIncorrect(
+            problemId: fingerprint,
+            problemNumber: fingerprint,
+            meta: meta.isEmpty ? null : meta,
+          );
+        }
+      } catch (_) {}
+      return BatchSolveGradeItem(
+        problemIndex: index + 1,
+        quest: quest,
+        stepCorrectness: stepCorrectness,
+        empty: false,
+        isCorrect: isCorrect,
+        userAnswer: '필기 풀이 제출',
+        flowEvaluated: true,
+      );
+    } catch (error) {
+      return BatchSolveGradeItem(
+        problemIndex: index + 1,
+        quest: quest,
+        stepCorrectness: const [],
+        empty: false,
+        isCorrect: null,
+        userAnswer: '필기 풀이 제출',
+        error: studentFacingApiError(error, fallback: '이 문항을 채점하지 못했어요.'),
+      );
+    }
   }
 
   // 필요 변수: 현재 문제와 필기 획. 작동 원리: 채점 화면을 표시한 뒤 분석 응답으로 결과 화면을 교체한다.
@@ -2534,11 +2968,17 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         'heatmap=${heatmapImage.lengthInBytes}B',
       );
       final payload = await _buildLlmPayload();
+      final questId = _currentQuestId();
+      final ratingSubmissionId = _ratingSubmissionIdFor(
+        _currentProblemIndex,
+        questId,
+      );
       final response = await ApiClient.instance.submitSolveAnalysis(
         payload: payload,
         studentWorkImage: studentWorkImage,
         problemImage: problemImage,
         heatmapImage: heatmapImage,
+        submissionId: _ratingEnabled ? ratingSubmissionId : null,
       );
       if (!mounted) return;
       if (response.warnings.isNotEmpty) {
@@ -2611,6 +3051,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
             quest: quest,
             isCorrect: isCorrect,
             stepCorrectness: stepCorrectness,
+            gradeProof: response.gradeProof ?? '',
+            submissionId: ratingSubmissionId,
           ),
         );
       }
@@ -2647,6 +3089,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
       if (!mounted) return;
       final route = MaterialPageRoute<SolveAnalysisAction>(
         builder: (_) => SolveAnalysisPage(
+          problemIndex: _currentProblemIndex + 1,
+          problemCount: _problemCount,
           userAnswer: userAnswer,
           quest: quest,
           stepCorrectness: stepCorrectness,
@@ -2786,6 +3230,8 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
     required Map<String, dynamic>? quest,
     required bool isCorrect,
     required List<Map<String, dynamic>> stepCorrectness,
+    required String gradeProof,
+    required String submissionId,
   }) async {
     final questId = _currentQuestId();
     if (questId.isEmpty) return;
@@ -2796,13 +3242,17 @@ class _BuildpageWidgetState extends State<BuildpageWidget> {
         isCorrect: isCorrect,
         stepCorrectness: stepCorrectness,
         answerTime: answerTime,
-        submissionId: 'solve:$_ratingSessionId:$_currentProblemIndex:$questId',
+        submissionId: submissionId,
+        gradeProof: gradeProof,
       );
       RatingStore.updateFromRating(rating);
     } catch (_) {
       // ignore rating failures
     }
   }
+
+  String _ratingSubmissionIdFor(int problemIndex, String questId) =>
+      'solve:$_ratingSessionId:$problemIndex:$questId';
 
   Future<Uint8List> _renderStrokesToPng() async {
     final recorder = ui.PictureRecorder();

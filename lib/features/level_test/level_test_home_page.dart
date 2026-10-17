@@ -3,7 +3,6 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:s11/features/level_test/level_test_result_page.dart';
 import 'package:s11/sessions/tryout_solve/legacy_entry/tryout.dart';
-import 'package:s11/shared/business/repositories/rating_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/ui/ios26/ios26_chrome.dart';
@@ -11,9 +10,14 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 class LevelTestHomePage extends StatefulWidget {
-  const LevelTestHomePage({super.key, this.initialStats});
+  const LevelTestHomePage({
+    super.key,
+    this.initialStats,
+    this.startNewTest = false,
+  });
 
   final LevelTestPlacementStats? initialStats;
+  final bool startNewTest;
 
   static const routeName = '/level_test';
 
@@ -26,23 +30,19 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   String? _error;
   LevelTestPlacementStats? _stats;
   LevelTestPlacementResult? _completedResult;
-  Timer? _statsTimer;
+  String? _selectedTrackId;
+  String? _selectedForm;
 
   @override
   void initState() {
     super.initState();
     _stats = widget.initialStats;
     if (_stats == null) unawaited(_loadStats());
-    unawaited(_loadStatus());
-    _statsTimer = Timer.periodic(
-      const Duration(seconds: 30),
-      (_) => unawaited(_loadStats()),
-    );
+    if (!widget.startNewTest) unawaited(_loadStatus());
   }
 
   @override
   void dispose() {
-    _statsTimer?.cancel();
     super.dispose();
   }
 
@@ -67,15 +67,39 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
     }
   }
 
+  void _selectTrack(String? trackId) {
+    setState(() {
+      _selectedTrackId = trackId;
+      _selectedForm = null;
+    });
+  }
+
   Future<void> _startPlacement() async {
-    if (_loading || _completedResult != null) return;
+    final trackId = _selectedTrackId;
+    final form = _selectedForm;
+    if (_loading ||
+        _completedResult != null ||
+        trackId == null ||
+        form == null) {
+      return;
+    }
     setState(() {
       _loading = true;
       _error = null;
     });
     try {
-      final session = await ApiClient.instance.startLevelTestPlacement();
+      final session = await ApiClient.instance.startLevelTestPlacement(
+        trackId: trackId,
+        form: form,
+      );
       if (!mounted) return;
+      if (session.sessionId.trim().isEmpty) {
+        setState(() {
+          _loading = false;
+          _error = '레벨 테스트 세션을 확인하지 못했어요. 다시 시도해 주세요.';
+        });
+        return;
+      }
       final questions = session.questions;
       if (questions.isEmpty) {
         throw Exception('레벨테스트 문제를 불러오지 못했어요');
@@ -138,11 +162,22 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
           .toList(growable: false),
       elapsedSeconds: elapsedSeconds,
     );
-    RatingStore.updateFromRating(result.toUserRating());
     if (!mounted) return;
     Navigator.of(context).pushReplacement(
       MaterialPageRoute(
-        builder: (_) => LevelTestResultPage(placementResult: result),
+        builder: (_) => LevelTestResultPage(
+          placementResult: result,
+          onStartAnotherTest: _startAnotherTest,
+        ),
+      ),
+    );
+  }
+
+  void _startAnotherTest() {
+    Navigator.of(context).pushReplacement(
+      MaterialPageRoute(
+        builder: (_) =>
+            LevelTestHomePage(initialStats: _stats, startNewTest: true),
       ),
     );
   }
@@ -152,7 +187,10 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
   @override
   Widget build(BuildContext context) {
     if (_completedResult != null) {
-      return LevelTestResultPage(placementResult: _completedResult);
+      return LevelTestResultPage(
+        placementResult: _completedResult,
+        onStartAnotherTest: _startAnotherTest,
+      );
     }
     final mobile = isStudentDensityMobile(context);
     return StudentHtmlShell(
@@ -173,7 +211,11 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
             constraints: const BoxConstraints(maxWidth: 820),
             child: _LevelTestEntryPanel(
               mobile: mobile,
-              questionCount: _stats?.questionCount ?? 25,
+              tracks: _stats?.tracks ?? const <LevelTestAssessmentTrack>[],
+              selectedTrackId: _selectedTrackId,
+              selectedForm: _selectedForm,
+              onTrackChanged: _selectTrack,
+              onFormChanged: (form) => setState(() => _selectedForm = form),
               loading: _loading,
               error: _error,
               onStart: _startPlacement,
@@ -190,14 +232,22 @@ class _LevelTestHomePageState extends State<LevelTestHomePage> {
 class _LevelTestEntryPanel extends StatelessWidget {
   const _LevelTestEntryPanel({
     required this.mobile,
-    required this.questionCount,
+    required this.tracks,
+    required this.selectedTrackId,
+    required this.selectedForm,
+    required this.onTrackChanged,
+    required this.onFormChanged,
     required this.loading,
     required this.error,
     required this.onStart,
   });
 
   final bool mobile;
-  final int questionCount;
+  final List<LevelTestAssessmentTrack> tracks;
+  final String? selectedTrackId;
+  final String? selectedForm;
+  final ValueChanged<String?> onTrackChanged;
+  final ValueChanged<String?> onFormChanged;
   final bool loading;
   final String? error;
   final VoidCallback onStart;
@@ -206,6 +256,17 @@ class _LevelTestEntryPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final side = mobile ? 18.0 : 38.0;
     final top = mobile ? 26.0 : 34.0;
+    final trackIndex = tracks.indexWhere(
+      (track) => track.id == selectedTrackId,
+    );
+    final selectedTrack = trackIndex < 0 ? null : tracks[trackIndex];
+    final formIndex =
+        selectedTrack?.forms.indexWhere((form) => form.id == selectedForm) ??
+        -1;
+    final selectedAssessmentForm = formIndex < 0
+        ? null
+        : selectedTrack!.forms[formIndex];
+    final selectedQuestionCount = selectedAssessmentForm?.questionCount ?? 0;
     return Container(
       key: const ValueKey('level-test-entry'),
       decoration: BoxDecoration(
@@ -221,15 +282,18 @@ class _LevelTestEntryPanel extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Padding(
-                padding: const EdgeInsets.only(top: 5),
-                child: Text(
-                  '01',
-                  style: TextStyle(
-                    color: StudentDensityTokens.ink,
-                    fontSize: 10,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: mobile ? 1.0 : 1.2,
+              SizedBox(
+                width: mobile ? 24 : 28,
+                child: Padding(
+                  padding: const EdgeInsets.only(top: 5),
+                  child: Text(
+                    '01',
+                    style: TextStyle(
+                      color: StudentDensityTokens.ink,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: mobile ? 1.0 : 1.2,
+                    ),
                   ),
                 ),
               ),
@@ -243,7 +307,7 @@ class _LevelTestEntryPanel extends StatelessWidget {
                       style: TextStyle(
                         color: StudentDensityTokens.ink,
                         fontSize: mobile ? 25 : 28,
-                        height: 1.05,
+                        height: 1.4,
                         fontWeight: FontWeight.w900,
                         letterSpacing: -1.35,
                       ),
@@ -262,8 +326,68 @@ class _LevelTestEntryPanel extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 26),
-          _LevelTestMetaRow(questionCount: questionCount, mobile: mobile),
+          SizedBox(height: mobile ? 22 : 26),
+          DropdownButtonFormField<String>(
+            key: const ValueKey('level-test-track-picker'),
+            initialValue: selectedTrackId,
+            isExpanded: true,
+            decoration: const InputDecoration(
+              labelText: '학년·과목 선택',
+              border: OutlineInputBorder(borderRadius: BorderRadius.zero),
+            ),
+            items: tracks
+                .map(
+                  (track) => DropdownMenuItem(
+                    value: track.id,
+                    child: Text(track.label, overflow: TextOverflow.ellipsis),
+                  ),
+                )
+                .toList(growable: false),
+            onChanged: loading ? null : onTrackChanged,
+          ),
+          const SizedBox(height: 16),
+          Text(
+            '문항 유형',
+            style: TextStyle(
+              fontSize: mobile ? 14 : 15,
+              fontWeight: FontWeight.w900,
+              color: StudentDensityTokens.ink,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Wrap(
+            spacing: 8,
+            runSpacing: 8,
+            children:
+                (selectedTrack?.forms ?? const <LevelTestAssessmentForm>[])
+                    .map(
+                      (form) => ChoiceChip(
+                        key: ValueKey('level-test-form-${form.id}'),
+                        label: Text('${form.id}형 · ${form.questionCount}문항'),
+                        selected: selectedForm == form.id,
+                        onSelected: loading
+                            ? null
+                            : (selected) =>
+                                  onFormChanged(selected ? form.id : null),
+                      ),
+                    )
+                    .toList(growable: false),
+          ),
+          if (selectedAssessmentForm != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              selectedAssessmentForm.label,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 12,
+              ),
+            ),
+          ],
+          const SizedBox(height: 18),
+          _LevelTestMetaRow(
+            questionCount: selectedQuestionCount,
+            mobile: mobile,
+          ),
           Padding(
             padding: const EdgeInsets.only(top: 22),
             child: Align(
@@ -273,7 +397,12 @@ class _LevelTestEntryPanel extends StatelessWidget {
                 height: 50,
                 child: FilledButton(
                   key: const ValueKey('level-test-entry-start'),
-                  onPressed: loading ? null : onStart,
+                  onPressed:
+                      loading ||
+                          selectedTrack == null ||
+                          selectedAssessmentForm == null
+                      ? null
+                      : onStart,
                   style: FilledButton.styleFrom(
                     backgroundColor: StudentDensityTokens.ink,
                     foregroundColor: Colors.white,
@@ -336,9 +465,9 @@ class _LevelTestMetaRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final cells = <({String label, String value})>[
-      (label: '문항', value: '$questionCount'),
+      (label: '문항', value: questionCount == 0 ? '선택' : '$questionCount'),
       (label: '제한 시간', value: '60분'),
-      (label: '저장', value: '자동'),
+      (label: '채점', value: '제출 후'),
     ];
     return Container(
       decoration: const BoxDecoration(
@@ -450,7 +579,7 @@ class _MobilePlacementBody extends StatelessWidget {
                 const SizedBox(width: 14),
                 const Expanded(
                   child: Text(
-                    '25문제로\n첫 OVR을 배정해요',
+                    '25문제로\n현재 실력을 확인해요',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
@@ -463,7 +592,7 @@ class _MobilePlacementBody extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             const Text(
-              '30분 · 자유 이동 · 마지막에 한 번 채점',
+              '60분 · 자유 이동 · 마지막에 한 번 채점',
               style: TextStyle(
                 color: Colors.white60,
                 fontSize: 14,
@@ -547,7 +676,7 @@ class _PlacementHero extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'FIRST STEP · OVR PLACEMENT',
+                    'FIRST STEP · LEVEL DIAGNOSTIC',
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
                       fontSize: 10,
@@ -568,7 +697,7 @@ class _PlacementHero extends StatelessWidget {
                   ),
                   const SizedBox(height: 18),
                   Text(
-                    '25개의 문제를 마지막에 한 번 채점해\n현재 실력을 나타내는 첫 OVR을 배정합니다.',
+                    '문제은행에서 25문항을 뽑아 마지막에 한 번 채점하고\n정답률과 단원별 결과를 보여드립니다.',
                     style: TextStyle(
                       color: StudentDensityTokens.muted,
                       fontSize: mobile ? 11 : 13,
@@ -636,7 +765,7 @@ class _OvrOrbit extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
           Text(
-            'MY OVR',
+            '진단 상태',
             style: TextStyle(
               color: mobile ? Colors.black54 : Colors.white54,
               fontSize: 8,
@@ -653,7 +782,7 @@ class _OvrOrbit extends StatelessWidget {
             ),
           ),
           Text(
-            'READY TO MEASURE',
+            '제출 후 결과 제공',
             style: TextStyle(
               color: mobile ? Colors.black38 : Colors.white54,
               fontSize: 6,
@@ -678,7 +807,7 @@ class _PlacementMeta extends StatelessWidget {
       SizedBox(width: 8),
       Expanded(child: _MetaCell('DIFFICULTY', '기초–심화')),
       SizedBox(width: 8),
-      Expanded(child: _MetaCell('RESULT', 'OVR')),
+      Expanded(child: _MetaCell('RESULT', '진단 결과')),
     ],
   );
 }
@@ -739,7 +868,7 @@ class _PlacementIntro extends StatelessWidget {
         const StudentDensityEyebrow('HOW IT WORKS'),
         const SizedBox(height: 10),
         Text(
-          '30분 뒤,\n첫 OVR을 배정합니다.',
+          '60분 동안 풀고,\n결과를 확인합니다.',
           style: TextStyle(
             fontSize: mobile ? 34 : 54,
             height: 1,
@@ -750,7 +879,7 @@ class _PlacementIntro extends StatelessWidget {
       ],
     );
     const copy = Text(
-      '제한 시간 30분 동안 문항을 자유롭게 오간 뒤 전체 답안을 한 번에 채점해 첫 OVR을 배정합니다.',
+      '문항을 자유롭게 오가며 풀 수 있고, 제출하면 정답 수와 난이도·태그별 결과를 확인할 수 있습니다.',
       style: TextStyle(
         fontSize: 13,
         height: 1.6,
@@ -773,81 +902,16 @@ class _PlacementStatistics extends StatelessWidget {
 
   final LevelTestPlacementStats? stats;
 
-  static const _fallbackDifficulty = [
-    LevelTestDifficultyBand(tier: 2, label: '기초', questionCount: 5),
-    LevelTestDifficultyBand(tier: 3, label: '기본', questionCount: 10),
-    LevelTestDifficultyBand(tier: 4, label: '응용', questionCount: 7),
-    LevelTestDifficultyBand(tier: 5, label: '심화', questionCount: 3),
-  ];
-  static const _fallbackEstimates = [
-    LevelTestEstimatedBand(
-      grade: '9등급',
-      ovrMin: 800,
-      ovrMax: 827,
-      expectedCorrect: 2.0,
-    ),
-    LevelTestEstimatedBand(
-      grade: '8등급',
-      ovrMin: 828,
-      ovrMax: 923,
-      expectedCorrect: 3.7,
-    ),
-    LevelTestEstimatedBand(
-      grade: '7등급',
-      ovrMin: 924,
-      ovrMax: 1060,
-      expectedCorrect: 5.8,
-    ),
-    LevelTestEstimatedBand(
-      grade: '6등급',
-      ovrMin: 1061,
-      ovrMax: 1170,
-      expectedCorrect: 8.2,
-    ),
-    LevelTestEstimatedBand(
-      grade: '5등급',
-      ovrMin: 1171,
-      ovrMax: 1279,
-      expectedCorrect: 10.7,
-    ),
-    LevelTestEstimatedBand(
-      grade: '4등급',
-      ovrMin: 1280,
-      ovrMax: 1378,
-      expectedCorrect: 13.2,
-    ),
-    LevelTestEstimatedBand(
-      grade: '3등급',
-      ovrMin: 1379,
-      ovrMax: 1478,
-      expectedCorrect: 15.6,
-    ),
-    LevelTestEstimatedBand(
-      grade: '2등급',
-      ovrMin: 1479,
-      ovrMax: 1606,
-      expectedCorrect: 18.1,
-    ),
-    LevelTestEstimatedBand(
-      grade: '1등급',
-      ovrMin: 1607,
-      ovrMax: 2200,
-      expectedCorrect: 22.6,
-    ),
-  ];
-
   @override
   Widget build(BuildContext context) {
-    final difficulty = stats?.difficultyBands.isNotEmpty == true
-        ? stats!.difficultyBands
-        : _fallbackDifficulty;
-    final estimates = stats?.estimatedBands ?? _fallbackEstimates;
+    final difficulty =
+        stats?.difficultyBands ?? const <LevelTestDifficultyBand>[];
     return Column(
       key: const ValueKey('level-test-statistics'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         const Text(
-          '시험 난이도',
+          '문항 구성',
           style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
         ),
         const SizedBox(height: 10),
@@ -861,33 +925,38 @@ class _PlacementStatistics extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              const Text(
-                '25문항 난이도 배치',
+              Text(
+                '문제은행 ${stats?.poolCount ?? 0}문항 · 평가 ${stats?.questionCount ?? 25}문항',
                 style: TextStyle(fontSize: 14, fontWeight: FontWeight.w900),
               ),
               const SizedBox(height: 14),
-              ClipRRect(
-                borderRadius: BorderRadius.circular(99),
-                child: SizedBox(
-                  height: 12,
-                  child: Row(
-                    children: [
-                      for (var index = 0; index < difficulty.length; index++)
-                        Expanded(
-                          flex: difficulty[index].questionCount,
-                          child: ColoredBox(
-                            color: [
-                              const Color(0xFFD6D6D3),
-                              const Color(0xFF9E9E9A),
-                              const Color(0xFF5F5F5C),
-                              const Color(0xFF191919),
-                            ][index.clamp(0, 3).toInt()],
+              if (difficulty.isNotEmpty)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(99),
+                  child: SizedBox(
+                    height: 12,
+                    child: Row(
+                      children: [
+                        for (var index = 0; index < difficulty.length; index++)
+                          Expanded(
+                            flex: difficulty[index].questionCount,
+                            child: ColoredBox(
+                              color:
+                                  [
+                                    const Color(0xFFD6D6D3),
+                                    const Color(0xFF9E9E9A),
+                                    const Color(0xFF5F5F5C),
+                                    const Color(0xFF191919),
+                                    const Color(0xFF000000),
+                                  ][(difficulty[index].tier - 1)
+                                      .clamp(0, 4)
+                                      .toInt()],
+                            ),
                           ),
-                        ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
               const SizedBox(height: 14),
               Wrap(
                 spacing: 14,
@@ -895,7 +964,7 @@ class _PlacementStatistics extends StatelessWidget {
                 children: difficulty
                     .map(
                       (band) => Text(
-                        '${band.label} ${band.questionCount}',
+                        '${band.label} ${band.questionCount}문항',
                         style: const TextStyle(
                           color: StudentDensityTokens.muted,
                           fontSize: 12,
@@ -908,131 +977,9 @@ class _PlacementStatistics extends StatelessWidget {
             ],
           ),
         ),
-        const SizedBox(height: 24),
-        const Text(
-          '등급대별 추정 결과',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-        ),
-        const SizedBox(height: 6),
-        const Text(
-          '기존 OVR 분포와 25문항 난이도 기준 · 30초마다 자동 갱신',
-          style: TextStyle(color: StudentDensityTokens.muted, fontSize: 12),
-        ),
-        const SizedBox(height: 10),
-        Container(
-          key: const ValueKey('level-test-grade-chart'),
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(22),
-            border: Border.all(color: StudentDensityTokens.line),
-          ),
-          child: _EstimatedOvrChart(bands: estimates),
-        ),
       ],
     );
   }
-}
-
-class _EstimatedOvrChart extends StatelessWidget {
-  const _EstimatedOvrChart({required this.bands});
-
-  final List<LevelTestEstimatedBand> bands;
-
-  @override
-  Widget build(BuildContext context) => Column(
-    crossAxisAlignment: CrossAxisAlignment.stretch,
-    children: [
-      const Row(
-        children: [
-          Text(
-            '예상 정답 수',
-            style: TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-          ),
-          Spacer(),
-          Text(
-            '0–25문항',
-            style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
-          ),
-        ],
-      ),
-      const SizedBox(height: 10),
-      SizedBox(
-        key: const ValueKey('level-test-estimated-ovr-line-chart'),
-        height: 190,
-        child: CustomPaint(painter: _EstimatedOvrChartPainter(bands)),
-      ),
-      const SizedBox(height: 8),
-      Text(
-        '예: ${bands.last.grade} · ${bands.last.expectedCorrect.toStringAsFixed(1)}개 · OVR ${bands.last.ovrMin}+',
-        textAlign: TextAlign.right,
-        style: const TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
-      ),
-    ],
-  );
-}
-
-class _EstimatedOvrChartPainter extends CustomPainter {
-  const _EstimatedOvrChartPainter(this.bands);
-
-  final List<LevelTestEstimatedBand> bands;
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    if (bands.isEmpty) return;
-    const left = 24.0;
-    const top = 12.0;
-    const bottom = 30.0;
-    final chartWidth = size.width - left - 8;
-    final chartHeight = size.height - top - bottom;
-    final grid = Paint()
-      ..color = const Color(0xFFE5E5E2)
-      ..strokeWidth = 1;
-    final line = Paint()
-      ..color = StudentDensityTokens.dark
-      ..strokeWidth = 3
-      ..style = PaintingStyle.stroke
-      ..strokeCap = StrokeCap.round
-      ..strokeJoin = StrokeJoin.round;
-    for (final value in const [0, 5, 10, 15, 20, 25]) {
-      final y = top + chartHeight * (1 - value / 25);
-      canvas.drawLine(Offset(left, y), Offset(size.width - 8, y), grid);
-    }
-    final path = Path();
-    final divisor = bands.length > 1 ? bands.length - 1 : 1;
-    for (var index = 0; index < bands.length; index++) {
-      final x = left + chartWidth * index / divisor;
-      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
-      if (index == 0) {
-        path.moveTo(x, y);
-      } else {
-        path.lineTo(x, y);
-      }
-    }
-    canvas.drawPath(path, line);
-    final dot = Paint()..color = StudentDensityTokens.dark;
-    for (var index = 0; index < bands.length; index++) {
-      final x = left + chartWidth * index / divisor;
-      final y = top + chartHeight * (1 - bands[index].expectedCorrect / 25);
-      canvas.drawCircle(Offset(x, y), 4, dot);
-      final label = TextPainter(
-        text: TextSpan(
-          text: bands[index].grade.replaceAll('등급', ''),
-          style: const TextStyle(
-            color: StudentDensityTokens.muted,
-            fontSize: 9,
-            fontWeight: FontWeight.w700,
-          ),
-        ),
-        textDirection: TextDirection.ltr,
-      )..layout();
-      label.paint(canvas, Offset(x - label.width / 2, size.height - 17));
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _EstimatedOvrChartPainter oldDelegate) =>
-      oldDelegate.bands != bands;
 }
 
 class _PlacementReady extends StatelessWidget {
@@ -1063,9 +1010,9 @@ class _PlacementReady extends StatelessWidget {
             style: TextStyle(fontSize: 32, fontWeight: FontWeight.w900),
           ),
           SizedBox(height: 16),
-          _ReadyCheck('25문항 · 제한 시간 30분'),
+          _ReadyCheck('25문항 · 제한 시간 60분'),
           _ReadyCheck('빈 답 허용 · 이전/다음 자유 이동'),
-          _ReadyCheck('마지막 제출에서 한 번만 채점'),
+          _ReadyCheck('마지막 제출에서 서버가 한 번 채점'),
         ],
       ),
     );
@@ -1076,10 +1023,10 @@ class _PlacementReady extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const StudentDensityEyebrow('YOUR BASELINE', color: Colors.white54),
+          const StudentDensityEyebrow('YOUR DIAGNOSTIC', color: Colors.white54),
           const SizedBox(height: 12),
           const Text(
-            '첫 번째\n기준점을 만들 시간',
+            '현재 실력을\n확인할 시간',
             style: TextStyle(
               color: Colors.white,
               fontSize: 28,

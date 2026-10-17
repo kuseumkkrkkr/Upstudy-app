@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 
 import 'package:s11/shared/services/api/api_client.dart';
+import 'package:s11/app/student_route_registry.dart';
 import 'package:s11/shared/services/api/auth_service.dart';
 import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/sessions/student_dashboard/session/main_student_page.dart';
@@ -36,6 +37,7 @@ class _SignupPageState extends State<SignupPage> {
   int _stage = 0;
   bool _agreed = false;
   bool _loading = false;
+  String? _submitError;
   bool _passwordVisible = false;
   bool _passwordConfirmVisible = false;
 
@@ -70,13 +72,17 @@ class _SignupPageState extends State<SignupPage> {
   }
 
   Future<void> _submit() async {
+    if (_loading) return;
     final validationError = _registrationValidationError();
     if (validationError != null) {
       _showValidationError(validationError);
       return;
     }
 
-    setState(() => _loading = true);
+    setState(() {
+      _loading = true;
+      _submitError = null;
+    });
     try {
       final token = await AuthService().register(
         username: _idController.text.trim(),
@@ -100,18 +106,43 @@ class _SignupPageState extends State<SignupPage> {
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(
+          settings: RouteSettings(
+            name: StudentRouteRegistry.byId('home')!.route,
+          ),
           builder: (_) =>
               MainStudentPage(username: _nameController.text.trim()),
         ),
       );
     } catch (error) {
       if (!mounted) return;
+      if (error is ApiException && error.statusCode == 409) {
+        _showValidationError((
+          1,
+          '이미 사용 중인 아이디입니다. 다른 아이디를 입력하거나 기존 계정으로 로그인해 주세요.',
+        ));
+        return;
+      }
+      if (error is ApiException &&
+          (error.statusCode == 400 || error.statusCode == 422)) {
+        final profileError =
+            error.message == '이름 형식이 다릅니다' || error.message == '학년을 입력해주세요';
+        _showValidationError((
+          profileError ? 0 : 1,
+          '입력 정보를 확인해 주세요. 닉네임·학년·아이디·비밀번호·이메일 형식을 다시 확인해 주세요.',
+        ));
+        return;
+      }
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
             studentFacingApiError(error, fallback: '회원가입을 완료하지 못했어요.'),
           ),
         ),
+      );
+      setState(
+        () => _submitError =
+            studentFacingApiError(error, fallback: '회원가입을 완료하지 못했어요.') +
+            (error is ApiException ? ' (오류 ${error.statusCode})' : ''),
       );
     } finally {
       if (mounted) {
@@ -224,9 +255,25 @@ class _SignupPageState extends State<SignupPage> {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const _SignupHtmlBrand(),
-                      const SizedBox(height: 38),
+                      SizedBox(height: compact ? 34 : 38),
                       _buildHtmlStepHead(),
-                      const SizedBox(height: 32),
+                      if (_submitError != null)
+                        Padding(
+                          padding: const EdgeInsets.only(top: 16),
+                          child: Semantics(
+                            liveRegion: true,
+                            child: Text(
+                              _submitError!,
+                              key: const ValueKey('signup-submit-error'),
+                              style: const TextStyle(
+                                fontSize: 12,
+                                height: 1.5,
+                                color: Color(0xFFB42318),
+                              ),
+                            ),
+                          ),
+                        ),
+                      SizedBox(height: compact ? 28 : 32),
                       AnimatedSwitcher(
                         duration: const Duration(milliseconds: 180),
                         child: switch (_stage) {
@@ -264,7 +311,7 @@ class _SignupPageState extends State<SignupPage> {
             ),
             Text(
               labels[_stage],
-              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+              style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
             ),
           ],
         ),
@@ -299,7 +346,7 @@ class _SignupPageState extends State<SignupPage> {
             fontSize: compact ? 26 : 32,
             height: 1.15,
             letterSpacing: -.055,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w700,
           ),
         ),
         const SizedBox(height: 8),
@@ -311,7 +358,7 @@ class _SignupPageState extends State<SignupPage> {
             color: Color(0xFF71717A),
           ),
         ),
-        const SizedBox(height: 28),
+        SizedBox(height: compact ? 24 : 28),
       ],
     );
   }
@@ -344,6 +391,7 @@ class _SignupPageState extends State<SignupPage> {
           value: _subject,
           items: const ['확률과통계', '미적분', '기하'],
           enabled: _track == '고등학교',
+          disabledFill: const Color(0xFFF3F3F5),
           helper: _track == '중학교' ? '중학교 과정은 과목을 따로 선택하지 않아요.' : null,
           onChanged: (value) => setState(() => _subject = value),
         ),
@@ -353,6 +401,7 @@ class _SignupPageState extends State<SignupPage> {
           '학교명',
           hint: '학교명을 입력하세요',
           helper: '입력하지 않아도 가입할 수 있고, 나중에 추가할 수 있어요.',
+          optional: true,
         ),
         const SizedBox(height: 18),
         _htmlPrimaryButton('계정 정보 입력하기', () => _requestStage(1)),
@@ -380,24 +429,29 @@ class _SignupPageState extends State<SignupPage> {
     ],
   );
 
-  Widget _htmlSegment(String value) => OutlinedButton(
-    onPressed: () => setState(() {
-      _track = value;
-      if (value == '중학교') _subject = '확률과통계';
-    }),
-    style: OutlinedButton.styleFrom(
-      minimumSize: const Size.fromHeight(50),
-      padding: EdgeInsets.zero,
-      side: const BorderSide(color: Color(0x1A09090B)),
-      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-      foregroundColor: _track == value ? Colors.white : const Color(0xFF09090B),
-      backgroundColor: _track == value
-          ? const Color(0xFF09090B)
-          : const Color(0xFFFDFDFE),
-    ),
-    child: Text(
-      value,
-      style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+  Widget _htmlSegment(String value) => SizedBox(
+    height: 50,
+    child: OutlinedButton(
+      onPressed: () => setState(() {
+        _track = value;
+        if (value == '중학교') _subject = '확률과통계';
+      }),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(50),
+        padding: EdgeInsets.zero,
+        side: const BorderSide(color: Color(0x1A09090B)),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        foregroundColor: _track == value
+            ? Colors.white
+            : const Color(0xFF09090B),
+        backgroundColor: _track == value
+            ? const Color(0xFF09090B)
+            : const Color(0xFFFDFDFE),
+      ),
+      child: Text(
+        value,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w800),
+      ),
     ),
   );
 
@@ -511,24 +565,27 @@ class _SignupPageState extends State<SignupPage> {
     children: [
       _htmlFieldLabel(label, optional: optional),
       const SizedBox(height: 7),
-      TextFormField(
-        controller: controller,
-        minLines: 1,
-        decoration: _htmlInputDecoration().copyWith(hintText: hint),
-        validator: required
-            ? (value) => value == null || value.trim().isEmpty
-                  ? '$label을(를) 입력하세요'
-                  : null
-            : null,
+      SizedBox(
+        height: 52,
+        child: TextFormField(
+          controller: controller,
+          minLines: 1,
+          decoration: _htmlInputDecoration().copyWith(hintText: hint),
+          validator: required
+              ? (value) => value == null || value.trim().isEmpty
+                    ? '$label을(를) 입력하세요'
+                    : null
+              : null,
+        ),
       ),
       if (helper != null) ...[
         const SizedBox(height: 7),
         Text(
           helper,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             color: Color(0xFF71717A),
-            fontWeight: FontWeight.w700,
+            height: 1.45,
           ),
         ),
       ],
@@ -546,17 +603,20 @@ class _SignupPageState extends State<SignupPage> {
     children: [
       _htmlFieldLabel(label),
       const SizedBox(height: 7),
-      TextFormField(
-        controller: controller,
-        obscureText: !visible,
-        decoration: _htmlInputDecoration().copyWith(
-          suffixIcon: TextButton(
-            onPressed: onToggle,
-            child: Text(visible ? '숨기기' : '보기'),
-          ),
-          suffixIconConstraints: const BoxConstraints(
-            minWidth: 56,
-            minHeight: 48,
+      SizedBox(
+        height: 52,
+        child: TextFormField(
+          controller: controller,
+          obscureText: !visible,
+          decoration: _htmlInputDecoration().copyWith(
+            suffixIcon: TextButton(
+              onPressed: onToggle,
+              child: Text(visible ? '숨기기' : '보기'),
+            ),
+            suffixIconConstraints: const BoxConstraints(
+              minWidth: 56,
+              minHeight: 48,
+            ),
           ),
         ),
       ),
@@ -565,9 +625,9 @@ class _SignupPageState extends State<SignupPage> {
         Text(
           helper,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             color: Color(0xFF71717A),
-            fontWeight: FontWeight.w700,
+            height: 1.45,
           ),
         ),
       ],
@@ -581,33 +641,40 @@ class _SignupPageState extends State<SignupPage> {
     required ValueChanged<String> onChanged,
     String? helper,
     bool enabled = true,
+    Color? disabledFill,
   }) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
       _htmlFieldLabel(label),
       const SizedBox(height: 7),
-      DropdownButtonFormField<String>(
-        initialValue: items.contains(value) ? value : items.first,
-        decoration: _htmlInputDecoration(),
-        icon: const Icon(Icons.keyboard_arrow_down, size: 18),
-        items: [
-          for (final item in items)
-            DropdownMenuItem(value: item, child: Text(item)),
-        ],
-        onChanged: enabled
-            ? (next) {
-                if (next != null) onChanged(next);
-              }
-            : null,
+      SizedBox(
+        height: 52,
+        child: DropdownButtonFormField<String>(
+          initialValue: items.contains(value) ? value : items.first,
+          decoration: _htmlInputDecoration().copyWith(
+            filled: !enabled && disabledFill != null,
+            fillColor: disabledFill,
+          ),
+          icon: const Icon(Icons.keyboard_arrow_down, size: 18),
+          items: [
+            for (final item in items)
+              DropdownMenuItem(value: item, child: Text(item)),
+          ],
+          onChanged: enabled
+              ? (next) {
+                  if (next != null) onChanged(next);
+                }
+              : null,
+        ),
       ),
       if (helper != null) ...[
         const SizedBox(height: 7),
         Text(
           helper,
           style: const TextStyle(
-            fontSize: 10,
+            fontSize: 11,
             color: Color(0xFF71717A),
-            fontWeight: FontWeight.w700,
+            height: 1.45,
           ),
         ),
       ],
@@ -673,58 +740,62 @@ class _SignupPageState extends State<SignupPage> {
     ),
   );
 
-  Widget _htmlPrimaryButton(String label, VoidCallback? onPressed) =>
-      FilledButton(
-        onPressed: onPressed,
-        style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          alignment: Alignment.center,
-          backgroundColor: const Color(0xFF09090B),
-          disabledBackgroundColor: const Color(0x6B09090B),
-          disabledForegroundColor: const Color(0x6BFFFFFF),
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        ),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-            ),
-            if (_loading && onPressed != null)
-              const SizedBox(
-                width: 16,
-                height: 16,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  color: Colors.white,
-                ),
-              )
-            else
-              const Text(
-                '→',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+  Widget _htmlPrimaryButton(String label, VoidCallback? onPressed) => SizedBox(
+    height: 52,
+    child: FilledButton(
+      onPressed: onPressed,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        backgroundColor: const Color(0xFF09090B),
+        disabledBackgroundColor: const Color(0x6B09090B),
+        disabledForegroundColor: const Color(0x6BFFFFFF),
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+          ),
+          if (_loading && onPressed != null)
+            const SizedBox(
+              width: 16,
+              height: 16,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: Colors.white,
               ),
-          ],
-        ),
-      );
+            )
+          else
+            const Text(
+              '→',
+              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+            ),
+        ],
+      ),
+    ),
+  );
 
-  Widget _htmlSecondaryButton(String label, VoidCallback onPressed) =>
-      OutlinedButton(
-        onPressed: onPressed,
-        style: OutlinedButton.styleFrom(
-          minimumSize: const Size.fromHeight(52),
-          padding: EdgeInsets.zero,
-          shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-          side: const BorderSide(color: Color(0x1A09090B)),
-          foregroundColor: const Color(0xFF09090B),
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
-        ),
-      );
+  Widget _htmlSecondaryButton(String label, VoidCallback onPressed) => SizedBox(
+    height: 52,
+    child: OutlinedButton(
+      onPressed: onPressed,
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size.fromHeight(52),
+        padding: EdgeInsets.zero,
+        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
+        side: const BorderSide(color: Color(0x1A09090B)),
+        foregroundColor: const Color(0xFF09090B),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(fontSize: 12, fontWeight: FontWeight.w900),
+      ),
+    ),
+  );
 
   Widget _htmlLoginEntry() => Center(
     child: Wrap(
@@ -852,6 +923,7 @@ class _SignupPageState extends State<SignupPage> {
   /// 필요한 변수는 오류가 발생한 단계와 사용자 안내 문구다.
   /// 작동 원리는 해당 단계로 이동해 인라인 필드 오류를 갱신하고 같은 내용을 하단 안내로 한 번 더 알린다.
   void _showValidationError((int, String) validationError) {
+    setState(() => _submitError = validationError.$2);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(SnackBar(content: Text(validationError.$2)));

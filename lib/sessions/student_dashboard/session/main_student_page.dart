@@ -6,11 +6,13 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/features/level_test/level_test.dart';
 import 'package:s11/app/router.dart';
-import 'package:s11/shared/ui/drawer/app_drawer.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
+import 'package:s11/shared/ui/drawer/student_navigation.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/curriculum_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/daily_test_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/rating_detail_modal.dart';
 import 'package:s11/features/arena/arena_page.dart';
+import 'package:s11/features/arena/arena_api.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/study_mode_modal.dart';
 import 'package:s11/sessions/student_dashboard/ui/modals/today_tasks_modal.dart';
 import 'package:s11/sessions/learning_tools/ui/pages/notepad_page.dart';
@@ -32,7 +34,6 @@ import 'package:s11/shared/business/repositories/social_notification_store.dart'
 import 'package:s11/shared/data/models/course.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/services/api/course_service.dart';
-import 'package:s11/sessions/course/session/course_learning_page.dart';
 
 const _green = Color(0xFF1B402B);
 const _lightGreen = Color(0xFF45BF63);
@@ -56,11 +57,7 @@ const _shadow = BoxShadow(
   offset: Offset(0, 2),
 );
 
-const double _ratingFloor = 1200;
-const double _ratingDisplayMax = 32767;
-const double _ratingOvrDivider = 128;
 const int _ratingEstimateMinSolved = 50;
-const double _ratingDeltaPercentMax = 0.5;
 const double _homeFooterDesktopHeight = 384;
 const double _homeFooterSixWeekHeight = 438;
 
@@ -68,30 +65,6 @@ const double _homeFooterSixWeekHeight = 438;
 /// 작동 원리: 홈의 인사·학습·현황 섹션에 14px 안쪽 여백을 더해 같은 수직축을 만든다.
 double _mobileHomeContentInset(BuildContext context) {
   return studentDensityHorizontalPadding(context) + 14;
-}
-
-double _ratingDisplay(double rating) {
-  return (math.max(rating, _ratingFloor) - _ratingFloor)
-      .clamp(0, _ratingDisplayMax)
-      .toDouble();
-}
-
-double _ratingOvr(double rating) => _ratingDisplay(rating) / _ratingOvrDivider;
-
-String _formatRatingOvr(double rating) {
-  if (rating.isNaN || rating <= 0) return '--';
-  return _ratingOvr(rating).toStringAsFixed(1);
-}
-
-String _formatRatingDelta(double deltaOvr) {
-  if (deltaOvr > 0) return '+${deltaOvr.toStringAsFixed(1)}';
-  if (deltaOvr < 0) return deltaOvr.toStringAsFixed(1);
-  return '0.0';
-}
-
-int _ratingRisePercent(double deltaOvr) {
-  if (deltaOvr <= 0) return 0;
-  return ((deltaOvr / _ratingDeltaPercentMax) * 100).round().clamp(0, 100);
 }
 
 TextStyle _ts({
@@ -139,6 +112,17 @@ Widget _bottomResponsiveChild({
 DateTime _dateOnly(DateTime value) =>
     DateTime(value.year, value.month, value.day);
 
+String? _formatHomeTaskTime(String? value) {
+  final raw = value?.trim();
+  if (raw == null || raw.isEmpty) return null;
+  final time = RegExp(r'^(\d{1,2}):(\d{2})').firstMatch(raw);
+  if (time != null) return '${time[1]!.padLeft(2, '0')}:${time[2]}';
+  if (!raw.contains('T')) return null;
+  final parsed = DateTime.tryParse(raw);
+  if (parsed == null) return null;
+  return '${parsed.hour.toString().padLeft(2, '0')}:${parsed.minute.toString().padLeft(2, '0')}';
+}
+
 String _assignmentKindLabel(String kind) {
   switch (kind) {
     case 'problem':
@@ -175,6 +159,7 @@ class _TodayTaskItem extends TodayTaskEntry {
     required super.title,
     required super.caption,
     required super.icon,
+    super.timeLabel,
     required this.target,
     this.targetId,
   });
@@ -254,8 +239,14 @@ class _MainStudentPageState extends State<MainStudentPage> {
   final ScrollController _scrollController = ScrollController();
   List<_TodayTaskItem> _todayTeacherTasks = const [];
   List<_TodayTaskItem> _todayPersonalTasks = const [];
+  late Future<void> _todayTasksLoadFuture;
+  bool _teacherTasksLoading = true;
+  bool _personalTasksLoading = true;
+  String? _teacherTasksError;
+  String? _personalTasksError;
   String? _displayName;
   Key _courseLoaderKey = UniqueKey();
+  bool _courseSelectionPending = false;
   bool _initialSceneOpened = false;
 
   @override
@@ -278,8 +269,10 @@ class _MainStudentPageState extends State<MainStudentPage> {
           })
           .catchError((_) {}),
     );
-    unawaited(_refreshTeacherTasks());
-    unawaited(_refreshPersonalTasks());
+    _todayTasksLoadFuture = Future.wait([
+      _refreshTeacherTasks(),
+      _refreshPersonalTasks(),
+    ]).then((_) {});
     if (widget.initialScene?.trim().isNotEmpty == true) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (!mounted || _initialSceneOpened) return;
@@ -295,11 +288,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
     switch (scene) {
       case 'today-tasks':
         unawaited(
-          showTodayTasksModal(
-            context: context,
-            tasks: [..._todayTeacherTasks, ..._todayPersonalTasks],
-            onTaskTap: (task) => _openTodayTask(task as _TodayTaskItem),
-          ),
+          _showHomeTodayTasks([..._todayTeacherTasks, ..._todayPersonalTasks]),
         );
         return;
       case 'rating-detail':
@@ -313,13 +302,13 @@ class _MainStudentPageState extends State<MainStudentPage> {
         );
         return;
       case 'activity-history':
-        showActivityHistoryDetail(context);
+        unawaited(Navigator.of(context).pushNamed(AppRoutes.activityHistory));
         return;
       case 'study-mode':
-        showStudyModeModal(context: context);
+        unawaited(Navigator.of(context).pushNamed(AppRoutes.restrictionMode));
         return;
       case 'course-select':
-        unawaited(showCurriculumModal(context: context));
+        unawaited(_handleCourseTap());
         return;
     }
   }
@@ -367,6 +356,8 @@ class _MainStudentPageState extends State<MainStudentPage> {
   /// 작동 원리: 오늘 마감인 모든 지정 과제를 카드 모델로 변환하고, 카드별 목적지로
   /// 코스·그룹 학습 화면을 분기한다.
   Future<void> _refreshTeacherTasks() async {
+    _teacherTasksLoading = true;
+    _teacherTasksError = null;
     try {
       final res = await ApiClient.instance.listMyAssignments();
       final today = _dateOnly(DateTime.now());
@@ -385,6 +376,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
                 ? '교사 지정 코스 · 학습하러 가기'
                 : '교사 지정 ${_assignmentKindLabel(item.assignment.kind)} · 확인하러 가기',
             icon: isCourse ? Icons.menu_book_rounded : Icons.assignment_rounded,
+            timeLabel: _formatHomeTaskTime(item.assignment.dueDate),
             target: isCourse ? _TodayTaskTarget.course : _TodayTaskTarget.group,
             targetId: isCourse
                 ? item.assignment.refId
@@ -394,37 +386,55 @@ class _MainStudentPageState extends State<MainStudentPage> {
       }
       if (!mounted) return;
       setState(() => _todayTeacherTasks = tasks);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _todayTeacherTasks = const []);
+      setState(
+        () => _teacherTasksError = studentFacingApiError(
+          error,
+          fallback: '교사 지정 과제를 불러오지 못했습니다.',
+        ),
+      );
+    } finally {
+      _teacherTasksLoading = false;
     }
   }
 
   /// 필요한 변수는 서버에 저장된 개인 일정의 날짜와 제목이다.
   /// 작동 원리: 오늘 날짜와 같은 일정만 홈의 알림 카드로 만들고, 선택 시 일정 화면으로 이동시킨다.
   Future<void> _refreshPersonalTasks() async {
+    _personalTasksLoading = true;
+    _personalTasksError = null;
     try {
       final res = await ApiClient.instance.listMyStudentSchedule();
       final today = _dateOnly(DateTime.now());
       final tasks = (res.data ?? const <StudentScheduleTask>[])
-          .where(
-            (item) => _dateOnly(DateTime.tryParse(item.date) ?? today) == today,
-          )
+          .where((item) {
+            final date = DateTime.tryParse(item.date);
+            return date != null && _dateOnly(date) == today;
+          })
           .where((item) => item.title.trim().isNotEmpty)
           .map(
             (item) => _TodayTaskItem(
               title: item.title.trim(),
               caption: '내 일정 · 일정에서 보기',
               icon: Icons.event_note_rounded,
+              timeLabel: _formatHomeTaskTime(item.startTime),
               target: _TodayTaskTarget.schedule,
             ),
           )
           .toList(growable: false);
       if (!mounted) return;
       setState(() => _todayPersonalTasks = tasks);
-    } catch (_) {
+    } catch (error) {
       if (!mounted) return;
-      setState(() => _todayPersonalTasks = const []);
+      setState(
+        () => _personalTasksError = studentFacingApiError(
+          error,
+          fallback: '개인 일정을 불러오지 못했습니다.',
+        ),
+      );
+    } finally {
+      _personalTasksLoading = false;
     }
   }
 
@@ -450,24 +460,50 @@ class _MainStudentPageState extends State<MainStudentPage> {
   }
 
   Future<void> _handleCourseTap() async {
-    final selected = await showCurriculumModal(context: context);
-    if (!mounted) return;
-    setState(() => _courseLoaderKey = UniqueKey());
-    if (selected != null) {
-      // 선택한 코스 ID만 사용자별 저장소에 남긴다. 코스 상세·진도 데이터는
-      // 기존 서버 조회를 계속 사용하고, 저장 실패가 학습 진입을 막지는 않는다.
-      unawaited(
-        ApiClient.instance.setUserStorage(_activeCourseStorageKey, selected.id),
+    if (_courseSelectionPending) return;
+    _courseSelectionPending = true;
+    try {
+      final selected = await showCurriculumModal(context: context);
+      if (!mounted) return;
+      if (selected == null) {
+        setState(() => _courseLoaderKey = UniqueKey());
+        return;
+      }
+      if (selected.id.trim().isEmpty) {
+        throw StateError('선택한 코스의 식별자가 없습니다.');
+      }
+      await ApiClient.instance.setUserStorage(
+        _activeCourseStorageKey,
+        selected.id,
       );
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => CourseLearningPage(course: selected)),
+      if (!mounted) return;
+      setState(() => _courseLoaderKey = UniqueKey());
+      await Navigator.of(context).pushNamed(
+        Uri(
+          path: AppRoutes.courseRuntime,
+          queryParameters: {'course_id': selected.id},
+        ).toString(),
       );
+    } catch (error) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            studentFacingApiError(
+              error,
+              fallback: '현재 코스를 저장하지 못했어요. 다시 선택해 주세요.',
+            ),
+          ),
+        ),
+      );
+    } finally {
+      _courseSelectionPending = false;
     }
   }
 
   /// HTML 홈의 6개 학습 타일을 먼저 요약 시트로 열고, 시트의 단일 CTA에서
   /// 기존 실제 화면으로 이동한다. 큰 영웅 CTA의 이어하기 직행은 유지한다.
-  void _handleStudyAction(String id, Course? course) {
+  void _handleStudyAction(String id, Course? course, List<Course> courseList) {
     final action = _HomeStudyAction.fromId(id);
     if (action == null) return;
     final title = switch (action) {
@@ -501,36 +537,92 @@ class _MainStudentPageState extends State<MainStudentPage> {
       showModalBottomSheet<void>(
         context: context,
         isScrollControlled: true,
-        backgroundColor: StudentDensityTokens.surface,
-        barrierColor: Colors.black.withValues(alpha: .28),
-        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.zero),
-        builder: (sheetContext) => ConstrainedBox(
-          constraints: const BoxConstraints(maxHeight: 650),
-          child: SafeArea(
-            top: false,
-            child: _HomeStudyActionSheet(
-              key: ValueKey('home-study-sheet-${action.name}'),
-              title: title,
-              description: description,
-              cta: cta,
-              onOpen: () {
-                Navigator.of(sheetContext).pop();
-                switch (action) {
-                  case _HomeStudyAction.resume:
-                    _resumeCourse(course);
-                  case _HomeStudyAction.courses:
-                    Navigator.of(context).pushNamed(AppRoutes.courses);
-                  case _HomeStudyAction.review:
-                    Navigator.of(context).pushNamed(AppRoutes.wrongAnswers);
-                  case _HomeStudyAction.problemsets ||
-                      _HomeStudyAction.exams ||
-                      _HomeStudyAction.textbooks:
-                    Navigator.of(context).pushNamed(AppRoutes.bookbag);
-                }
-              },
-            ),
-          ),
-        ),
+        showDragHandle: false,
+        backgroundColor: Colors.transparent,
+        barrierColor: Colors.transparent,
+        constraints: const BoxConstraints(maxWidth: 2048),
+        builder: (sheetContext) {
+          final viewport = MediaQuery.sizeOf(sheetContext);
+          final mobile = isStudentDensityMobile(sheetContext);
+          final maxHeight = math.min(
+            mobile ? 650.0 : 720.0,
+            viewport.height - (mobile ? 18.0 : 32.0),
+          );
+          return Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                bottom: mobile ? 66 : 0,
+                child: GestureDetector(
+                  onTap: () => Navigator.of(sheetContext).pop(),
+                  child: ColoredBox(color: Colors.black.withValues(alpha: .52)),
+                ),
+              ),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: EdgeInsets.only(bottom: mobile ? 66 : 0),
+                  child: SizedBox(
+                    width: math.min(viewport.width, 620),
+                    child: ConstrainedBox(
+                      constraints: BoxConstraints(maxHeight: maxHeight),
+                      child: Material(
+                        color: StudentDensityTokens.surface,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(
+                            color: StudentDensityTokens.lineStrong,
+                          ),
+                        ),
+                        clipBehavior: Clip.antiAlias,
+                        child: _HomeStudyActionSheet(
+                          key: ValueKey('home-study-sheet-${action.name}'),
+                          title: title,
+                          description: description,
+                          cta: cta,
+                          courseList: action == _HomeStudyAction.courses
+                              ? courseList
+                                    .where((item) => !item.isCompleted)
+                                    .take(3)
+                                    .toList(growable: false)
+                              : null,
+                          resumeCourses: action == _HomeStudyAction.resume
+                              ? courseList
+                                    .where((item) => !item.isCompleted)
+                                    .take(3)
+                                    .toList(growable: false)
+                              : null,
+                          onResumeCourse: _resumeCourse,
+                          onOpen: () {
+                            Navigator.of(sheetContext).pop();
+                            switch (action) {
+                              case _HomeStudyAction.resume:
+                                _resumeCourse(course);
+                              case _HomeStudyAction.courses:
+                                Navigator.of(
+                                  context,
+                                ).pushNamed(AppRoutes.courses);
+                              case _HomeStudyAction.review:
+                                Navigator.of(
+                                  context,
+                                ).pushNamed(AppRoutes.wrongAnswers);
+                              case _HomeStudyAction.problemsets ||
+                                  _HomeStudyAction.exams ||
+                                  _HomeStudyAction.textbooks:
+                                Navigator.of(
+                                  context,
+                                ).pushNamed(AppRoutes.bookbag);
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -540,9 +632,18 @@ class _MainStudentPageState extends State<MainStudentPage> {
       unawaited(_handleCourseTap());
       return;
     }
+    if (course.id.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('학습할 코스 정보를 확인하지 못했어요. 다시 선택해 주세요.')),
+      );
+      return;
+    }
     unawaited(
-      Navigator.of(context).push(
-        MaterialPageRoute(builder: (_) => CourseLearningPage(course: course)),
+      Navigator.of(context).pushNamed(
+        Uri(
+          path: AppRoutes.courseRuntime,
+          queryParameters: {'course_id': course.id},
+        ).toString(),
       ),
     );
   }
@@ -551,74 +652,274 @@ class _MainStudentPageState extends State<MainStudentPage> {
   void _handleDashboardAction(String id, List<_TodayTaskItem> todayTasks) {
     switch (id) {
       case 'today':
-        unawaited(
-          showTodayTasksModal(
-            context: context,
-            tasks: todayTasks,
-            onTaskTap: (task) => _openTodayTask(task as _TodayTaskItem),
-          ),
-        );
+        unawaited(_showHomeTodayTasks(todayTasks));
         return;
       case 'ovr':
-        unawaited(showRatingDetailModal(context: context));
+        unawaited(_showHomeOvrSummary());
         return;
       case 'week':
-        _showDashboardNotice(
-          '이번 주 학습',
-          '이번 주 학습 기록을 확인할 수 있어요. 기록이 없으면 빈 상태로 표시합니다.',
-        );
+        unawaited(_showHomeWeekSummary());
+        return;
+      case 'streak':
+        unawaited(_showHomeStreakSummary());
         return;
       case 'level':
         final account = ActivityStore.accountSummaryNotifier.value;
         if (account != null) {
-          unawaited(LevelDetailModal.show(context, account));
+          unawaited(_showHomeLevelSummary(account));
         } else {
           _showDashboardNotice('레벨과 포인트', '계정 정보를 불러오는 중입니다.');
         }
         return;
       case 'tutor':
-        _showDashboardNotice(
-          'AI 튜터',
-          '지금 배우는 내용에 대해 질문을 남겨 보세요.',
-          openLabel: 'AI 튜터와 대화하기',
-          onOpen: () => Navigator.of(context).push(
-            MaterialPageRoute(
-              builder: (_) => const ServerChatPage(standalone: true),
-            ),
-          ),
-        );
+        unawaited(_showHomeTutorSummary());
         return;
       case 'arena':
-        _showDashboardNotice(
-          '대결 기록',
-          '대결 기록을 불러오면 결과와 랭킹을 확인할 수 있어요.',
-          openLabel: '대결장 입장',
-          onOpen: () => Navigator.of(context).pushNamed(AppRoutes.arena),
-        );
+        unawaited(_showHomeArenaSummary());
         return;
       case 'weakness':
-        _showDashboardNotice(
-          '약점 태그',
-          '저장된 오답이 있으면 우선 복습할 태그를 보여 줍니다.',
-          openLabel: '오답 상세보기',
-          onOpen: () => Navigator.of(context).pushNamed(AppRoutes.wrongAnswers),
-        );
+        unawaited(_showHomeWeaknessSummary());
         return;
       case 'achievements':
-        _showDashboardNotice(
-          '업적',
-          '달성한 업적과 진행 중인 업적을 확인합니다.',
-          openLabel: '업적 보관함 열기',
-          onOpen: () => showActivityBadgeDialog(
-            context: context,
-            snapshot: ActivityStore.notifier.value,
-            accountLevel:
-                ActivityStore.accountSummaryNotifier.value?.level ?? 0,
-          ),
-        );
+        unawaited(_showHomeAchievementsSummary());
         return;
       default:
         _showDashboardNotice('마이 대시보드', '연결된 학습 데이터가 없습니다.');
+    }
+  }
+
+  /// HTML 홈 레벨리티 카드를 요약 시트로 열고 상세 정보를 연결한다.
+  Future<T?> _showHomeDashboardOverlay<T>(
+    Widget Function(BuildContext context, bool mobile) buildSheet, {
+    required String barrierLabel,
+  }) {
+    return showGeneralDialog<T>(
+      context: context,
+      barrierDismissible: true,
+      barrierLabel: barrierLabel,
+      barrierColor: Colors.transparent,
+      pageBuilder: (dialogContext, _, _) {
+        final mobile = MediaQuery.sizeOf(dialogContext).width <= 720;
+        return Material(
+          type: MaterialType.transparency,
+          child: Stack(
+            children: [
+              Positioned.fill(
+                bottom: mobile ? 66 : 0,
+                child: Stack(
+                  children: [
+                    Positioned.fill(
+                      child: GestureDetector(
+                        onTap: () => Navigator.of(dialogContext).pop(false),
+                        child: ColoredBox(
+                          color: Colors.black.withValues(alpha: 0.52),
+                        ),
+                      ),
+                    ),
+                    Align(
+                      alignment: Alignment.bottomCenter,
+                      child: Material(
+                        color: const Color(0xFFFDFDFE),
+                        child: SizedBox(
+                          width: mobile
+                              ? MediaQuery.sizeOf(dialogContext).width
+                              : MediaQuery.sizeOf(
+                                  dialogContext,
+                                ).width.clamp(0, 620),
+                          child: buildSheet(dialogContext, mobile),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  /// 레벨리티 요약은 보정되지 않은 내부 수치 대신 준비 상태를 보여준다.
+  Future<void> _showHomeOvrSummary() async {
+    final openAnalysis = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => ValueListenableBuilder(
+        valueListenable: RatingStore.notifier,
+        builder: (context, rating, _) => HomeOvrSummarySheet(
+          onClose: () => Navigator.of(dialogContext).pop(false),
+          onOpenAnalysis: () => Navigator.of(dialogContext).pop(true),
+        ),
+      ),
+      barrierLabel: '홈 오버롤 요약 닫기',
+    );
+    if (openAnalysis == true && mounted) {
+      await showRatingDetailModal(context: context);
+    }
+  }
+
+  /// 주간 학습 카드를 실제 활동 기록 그래프 시트로 열고 전체 기록 이동을 연결한다.
+  Future<void> _showHomeWeekSummary() async {
+    final openHistory = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => ValueListenableBuilder<ActivitySnapshot>(
+        valueListenable: ActivityStore.notifier,
+        builder: (context, activity, _) => HomeWeekSummarySheet(
+          activity: activity,
+          onClose: () => Navigator.of(dialogContext).pop(false),
+          onOpenHistory: () => Navigator.of(dialogContext).pop(true),
+        ),
+      ),
+      barrierLabel: '홈 주간 학습 닫기',
+    );
+    if (openHistory == true && mounted) {
+      await Navigator.of(context).pushNamed(AppRoutes.activityHistory);
+    }
+  }
+
+  /// 연속 학습 기록을 요약 시트로 표시하고 HTML의 지표 CTA를 재사용한다.
+  Future<void> _showHomeStreakSummary() async {
+    final openRating = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => ValueListenableBuilder<ActivitySnapshot>(
+        valueListenable: ActivityStore.notifier,
+        builder: (context, activity, _) => HomeStreakSummarySheet(
+          activity: activity,
+          onClose: () => Navigator.of(context, rootNavigator: true).pop(false),
+          onOpenRating: () =>
+              Navigator.of(context, rootNavigator: true).pop(true),
+        ),
+      ),
+      barrierLabel: '홈 연속 학습 닫기',
+    );
+    if (openRating == true && mounted) {
+      await showRatingDetailModal(context: context);
+    }
+  }
+
+  /// HTML 업적 장면을 실제 활동 기록 요약으로 열고 보관함 CTA를 연결한다.
+  Future<void> _showHomeAchievementsSummary() async {
+    final openCollection = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => ValueListenableBuilder<ActivitySnapshot>(
+        valueListenable: ActivityStore.notifier,
+        builder: (context, activity, _) => HomeAchievementsSummarySheet(
+          activity: activity,
+          accountLevel: ActivityStore.accountSummaryNotifier.value?.level ?? 0,
+          onClose: () => Navigator.of(dialogContext).pop(false),
+          onOpenCollection: () => Navigator.of(dialogContext).pop(true),
+        ),
+      ),
+      barrierLabel: '홈 업적 요약 닫기',
+    );
+    if (openCollection == true && mounted) {
+      showActivityBadgeDialog(
+        context: context,
+        snapshot: ActivityStore.notifier.value,
+        accountLevel: ActivityStore.accountSummaryNotifier.value?.level ?? 0,
+      );
+    }
+  }
+
+  /// HTML의 튜터 제안 시트를 열고, 선택한 질문을 전송 전 입력값으로 전달한다.
+  Future<void> _showHomeTutorSummary() async {
+    final prompt = await _showHomeDashboardOverlay<String>(
+      (dialogContext, _) => HomeTutorSummarySheet(
+        onClose: () => Navigator.of(dialogContext).pop(),
+        onPrompt: (value) => Navigator.of(dialogContext).pop(value),
+        onOpenTutor: () => Navigator.of(dialogContext).pop(''),
+      ),
+      barrierLabel: '홈 AI 튜터 닫기',
+    );
+    if (prompt != null && mounted) {
+      await Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (_) => ServerChatPage(
+            standalone: true,
+            initialPrompt: prompt.isEmpty ? null : prompt,
+          ),
+        ),
+      );
+    }
+  }
+
+  /// HTML 약점 요약 시트를 열고, 실제 오답 태그는 시트에서 조회한다.
+  Future<void> _showHomeWeaknessSummary() async {
+    final openReview = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => HomeWeaknessSummarySheet(
+        onClose: () => Navigator.of(dialogContext).pop(false),
+        onOpenReview: () => Navigator.of(dialogContext).pop(true),
+      ),
+      barrierLabel: '홈 약점 태그 닫기',
+    );
+    if (openReview == true && mounted) {
+      await Navigator.of(context).pushNamed(AppRoutes.wrongAnswers);
+    }
+  }
+
+  /// HTML 대결 요약 시트를 열고 실제 전적을 표시한 뒤 대결장으로 이동한다.
+  Future<void> _showHomeArenaSummary() async {
+    final enterArena = await _showHomeDashboardOverlay<bool>(
+      (dialogContext, _) => HomeArenaSummarySheet(
+        onClose: () => Navigator.of(dialogContext).pop(false),
+        onEnterArena: () => Navigator.of(dialogContext).pop(true),
+      ),
+      barrierLabel: '홈 대결 기록 닫기',
+    );
+    if (enterArena == true && mounted) {
+      await Navigator.of(context).pushNamed(AppRoutes.arena);
+    }
+  }
+
+  /// 레벨 카드는 HTML 레벨/포인트 요약 상태를 표시하고 별도 상세 모달을 우회한다.
+  Future<void> _showHomeLevelSummary(AccountSummary account) {
+    return _showHomeDashboardOverlay<void>(
+      (dialogContext, _) => HomeLevelSummarySheet(
+        account: account,
+        onClose: () => Navigator.of(dialogContext).pop(),
+      ),
+      barrierLabel: '홈 레벨과 포인트 닫기',
+    );
+  }
+
+  /// 오늘 카드와 오늘 일정 딥링크를 같은 HTML 요약 시트로 연다.
+  Future<void> _showHomeTodayTasks(List<_TodayTaskItem> _) async {
+    _TodayTaskItem? selectedTask;
+    final selectedAction = await _showHomeDashboardOverlay<int>(
+      (dialogContext, _) => StatefulBuilder(
+        builder: (context, setSheetState) => FutureBuilder<void>(
+          future: _todayTasksLoadFuture,
+          builder: (context, snapshot) => HomeTodayTasksSummarySheet(
+            tasks: [..._todayTeacherTasks, ..._todayPersonalTasks],
+            loading: snapshot.connectionState != ConnectionState.done,
+            error: [
+              _teacherTasksError,
+              _personalTasksError,
+            ].whereType<String>().toSet().join('\n'),
+            onRetry: () {
+              if (_teacherTasksLoading || _personalTasksLoading) return;
+              final requests = <Future<void>>[
+                if (_teacherTasksError != null) _refreshTeacherTasks(),
+                if (_personalTasksError != null) _refreshPersonalTasks(),
+              ];
+              if (requests.isEmpty) return;
+              final nextLoad = Future.wait(requests).then((_) {});
+              setSheetState(() {
+                _todayTasksLoadFuture = nextLoad;
+              });
+            },
+            onClose: () => Navigator.of(dialogContext).pop(),
+            onTaskTap: (task) {
+              selectedTask = task as _TodayTaskItem;
+              Navigator.of(dialogContext).pop<int>(0);
+            },
+            onOpenSchedule: () => Navigator.of(dialogContext).pop<int>(-1),
+          ),
+        ),
+      ),
+      barrierLabel: '홈 오늘 할 일 닫기',
+    );
+    if (!mounted) return;
+    if (selectedAction == -1) {
+      await Navigator.of(context).pushNamed(AppRoutes.schedule);
+    } else if (selectedAction == 0 && selectedTask != null) {
+      _openTodayTask(selectedTask!);
     }
   }
 
@@ -670,10 +971,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
                     ),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(openLabel),
-                        const Icon(Icons.arrow_forward),
-                      ],
+                      children: [Text(openLabel)],
                     ),
                   ),
                 ),
@@ -699,7 +997,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
         StudentDensityTokens.desktopBreakpoint;
     final todayTasks = [..._todayTeacherTasks, ..._todayPersonalTasks];
 
-    Widget homeScrollFor(Course? course) {
+    Widget homeScrollFor(Course? course, List<Course> courseList) {
       return SingleChildScrollView(
         controller: _scrollController,
         physics: const BouncingScrollPhysics(),
@@ -717,47 +1015,47 @@ class _MainStudentPageState extends State<MainStudentPage> {
           onExams: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
           onTextbooks: () => Navigator.of(context).pushNamed(AppRoutes.bookbag),
           onDashboardAction: (id) => _handleDashboardAction(id, todayTasks),
-          onStudyAction: (id) => _handleStudyAction(id, course),
+          onStudyAction: (id) => _handleStudyAction(id, course, courseList),
         ),
       );
     }
 
-    final desktopShell = Row(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        _HtmlStudentRail(width: wideDesktop ? 84 : 72),
-        Expanded(
-          child: Column(
-            children: [
-              const _Header(),
-              Expanded(
-                child: _CourseLoader(
-                  key: _courseLoaderKey,
-                  builder: homeScrollFor,
-                ),
-              ),
-            ],
+    final desktopShell = _CourseLoader(
+      key: _courseLoaderKey,
+      builder: (course, courseList) => Row(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _HtmlStudentRail(width: wideDesktop ? 84 : 72),
+          Expanded(
+            child: Column(
+              children: [Expanded(child: homeScrollFor(course, courseList))],
+            ),
           ),
-        ),
-        if (wideDesktop) const _HtmlContextAside(),
-      ],
+          if (wideDesktop)
+            _HtmlContextAside(
+              nextTaskTitle: todayTasks.isEmpty ? null : todayTasks.first.title,
+            ),
+        ],
+      ),
     );
 
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
         backgroundColor: StudentDensityTokens.background,
-        drawer: const AppDrawer(),
-        bottomNavigationBar: mobile ? const MobileStudentBottomAppBar() : null,
+        bottomNavigationBar: mobile
+            ? const MobileStudentBottomAppBar(
+                activeRoute: AppRoutes.studentDashboard,
+              )
+            : null,
         body: SafeArea(
           child: mobile
               ? Column(
                   children: [
-                    const _Header(),
                     Expanded(
                       child: _CourseLoader(
                         key: _courseLoaderKey,
-                        builder: (course) => SingleChildScrollView(
+                        builder: (course, courseList) => SingleChildScrollView(
                           controller: _scrollController,
                           physics: const BouncingScrollPhysics(),
                           child: HtmlHomeDashboard(
@@ -783,7 +1081,7 @@ class _MainStudentPageState extends State<MainStudentPage> {
                             onDashboardAction: (id) =>
                                 _handleDashboardAction(id, todayTasks),
                             onStudyAction: (id) =>
-                                _handleStudyAction(id, course),
+                                _handleStudyAction(id, course, courseList),
                           ),
                         ),
                       ),
@@ -797,70 +1095,1517 @@ class _MainStudentPageState extends State<MainStudentPage> {
   }
 }
 
-class _HomeStudyActionSheet extends StatelessWidget {
-  const _HomeStudyActionSheet({
+String _formatHomePointCount(int value) => value.toString().replaceAllMapped(
+  RegExp(r'\B(?=(\d{3})+(?!\d))'),
+  (_) => ',',
+);
+
+/// HTML 홈의 오늘 할 일 패널을 읽기 전용 요약 시트로 표시한다.
+class HomeTodayTasksSummarySheet extends StatelessWidget {
+  const HomeTodayTasksSummarySheet({
     super.key,
-    required this.title,
-    required this.description,
-    required this.cta,
-    required this.onOpen,
+    required this.tasks,
+    required this.onClose,
+    required this.onTaskTap,
+    required this.onOpenSchedule,
+    this.loading = false,
+    this.error,
+    this.onRetry,
   });
 
-  final String title;
-  final String description;
-  final String cta;
-  final VoidCallback onOpen;
+  final List<TodayTaskEntry> tasks;
+  final VoidCallback onClose;
+  final ValueChanged<TodayTaskEntry> onTaskTap;
+  final VoidCallback onOpenSchedule;
+  final bool loading;
+  final String? error;
+  final VoidCallback? onRetry;
 
-  /// HTML 홈 학습 시트의 제목·설명·단일 이동 CTA를 표시한다.
   @override
   Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 10, 20, 18),
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 620, maxHeight: mobile ? 650 : 720),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          mobile ? 12 : 18,
+          0,
+          mobile ? 12 : 18,
+          mobile ? 14 : 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 52,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '오늘 할 일',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      tooltip: '닫기',
+                      onPressed: onClose,
+                      style: IconButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(color: StudentDensityTokens.line),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 19),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            const SizedBox(height: 18),
+            if (loading)
+              const Padding(
+                padding: EdgeInsets.symmetric(vertical: 12),
+                child: Text(
+                  '오늘 할 일을 확인하고 있습니다.',
+                  key: ValueKey('home-today-loading'),
+                ),
+              ),
+            if (error?.isNotEmpty == true) ...[
+              Text(
+                error!,
+                key: const ValueKey('home-today-error'),
+                style: const TextStyle(color: Colors.red),
+              ),
+              if (onRetry != null)
+                TextButton(
+                  onPressed: loading ? null : onRetry,
+                  child: const Text('다시 시도'),
+                ),
+            ],
+            if (tasks.isEmpty && !loading && error?.isNotEmpty != true)
+              _HomeTodayTaskRow(
+                title: '오늘은 예정된 할 일이 없어요',
+                onTap: null,
+                isLast: true,
+              )
+            else if (tasks.isNotEmpty)
+              for (var index = 0; index < tasks.length; index++)
+                _HomeTodayTaskRow(
+                  task: tasks[index],
+                  onTap: () => onTaskTap(tasks[index]),
+                  isLast: index == tasks.length - 1,
+                ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                onPressed: onOpenSchedule,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '일정 전체 보기',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeTodayTaskRow extends StatelessWidget {
+  const _HomeTodayTaskRow({
+    this.task,
+    this.title,
+    required this.onTap,
+    required this.isLast,
+  });
+  final TodayTaskEntry? task;
+  final String? title;
+  final VoidCallback? onTap;
+  final bool isLast;
+
+  @override
+  Widget build(BuildContext context) => Material(
+    color: StudentDensityTokens.surface,
+    child: InkWell(
+      onTap: onTap,
+      child: Container(
+        constraints: const BoxConstraints(minHeight: 58),
+        padding: const EdgeInsets.symmetric(horizontal: 12),
+        decoration: BoxDecoration(
+          border: isLast
+              ? null
+              : Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+        ),
+        child: Row(
+          children: [
+            SizedBox(
+              width: 54,
+              child: Text(
+                task?.timeLabel ?? '',
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 9,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                task?.title ?? title ?? '',
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w800,
+                ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+              ),
+            ),
+            if (onTap != null) ...[const SizedBox(width: 10)],
+          ],
+        ),
+      ),
+    ),
+  );
+}
+
+/// HTML 홈의 레벨 카드에서 여는 요약 시트.
+class HomeLevelSummarySheet extends StatelessWidget {
+  const HomeLevelSummarySheet({
+    super.key,
+    required this.account,
+    required this.onClose,
+  });
+
+  final AccountSummary account;
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    final level = account.level.clamp(1, LevelDetailModal.maxLevel);
+    final isMaxLevel = level >= LevelDetailModal.maxLevel;
+    final earned = (account.activityScore - account.currentLevelScore).clamp(
+      0,
+      1 << 31,
+    );
+    final remaining = isMaxLevel
+        ? 0
+        : (account.nextLevelScore - account.activityScore).clamp(0, 1 << 31);
+    final range = (account.nextLevelScore - account.currentLevelScore).clamp(
+      1,
+      1 << 31,
+    );
+    final progress = isMaxLevel ? 1.0 : account.levelProgress.clamp(0.0, 1.0);
+    final nextMilestone = ((level ~/ 5) + 1) * 5;
+    final reward = nextMilestone <= LevelDetailModal.maxLevel
+        ? 'Lv. $nextMilestone 달성 시 ${LevelDetailModal.coinsForMilestone(nextMilestone)} 코인을 받아요.'
+        : '모든 레벨 보상을 달성했어요.';
+
+    return ConstrainedBox(
+      constraints: BoxConstraints(maxWidth: 620, maxHeight: mobile ? 650 : 720),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          mobile ? 12 : 18,
+          0,
+          mobile ? 12 : 18,
+          mobile ? 14 : 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 52,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '레벨과 포인트',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      tooltip: '닫기',
+                      onPressed: onClose,
+                      style: IconButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(color: StudentDensityTokens.line),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 19),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            const SizedBox(height: 18),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(color: StudentDensityTokens.line),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: _HomeLevelValue(label: '현재 레벨', value: 'Lv. $level'),
+                  ),
+                  Container(
+                    width: 1,
+                    height: 86,
+                    color: StudentDensityTokens.line,
+                  ),
+                  Expanded(
+                    child: _HomeLevelValue(
+                      label: '보유 포인트',
+                      value: '${_formatHomePointCount(account.totalPoints)} P',
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 18),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Expanded(
+                  child: Text(
+                    isMaxLevel ? '최대 레벨에 도달했어요.' : '다음 레벨까지 $remaining XP',
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                Text(
+                  isMaxLevel ? 'MAX' : '$earned / $range XP',
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 10,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            ClipRect(
+              child: SizedBox(
+                height: 8,
+                child: Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    const ColoredBox(color: Color(0xFFF3F3F5)),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: FractionallySizedBox(
+                        key: const ValueKey('home-level-progress-fill'),
+                        widthFactor: progress,
+                        child: const SizedBox.expand(
+                          child: ColoredBox(color: StudentDensityTokens.dark),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+              decoration: BoxDecoration(
+                border: Border.all(color: StudentDensityTokens.line),
+              ),
+              child: Text(
+                reward,
+                style: const TextStyle(
+                  color: StudentDensityTokens.muted,
+                  fontSize: 11,
+                ),
+                textScaler: MediaQuery.textScalerOf(context),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeLevelValue extends StatelessWidget {
+  const _HomeLevelValue({required this.label, required this.value});
+  final String label;
+  final String value;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 86,
+    child: Padding(
+      padding: const EdgeInsets.all(14),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 10,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    ),
+  );
+}
+
+class HomeOvrSummarySheet extends StatelessWidget {
+  const HomeOvrSummarySheet({
+    super.key,
+    required this.onClose,
+    required this.onOpenAnalysis,
+  });
+
+  final VoidCallback onClose;
+  final VoidCallback onOpenAnalysis;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = MediaQuery.sizeOf(context).width <= 720;
+    final sheet = ConstrainedBox(
+      key: const ValueKey('home-ovr-sheet-panel'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: mobile ? 650 : 720,
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          mobile ? 12 : 18,
+          0,
+          mobile ? 12 : 18,
+          mobile ? 14 : 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 52,
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '나의 레벨리티',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      tooltip: '닫기',
+                      onPressed: onClose,
+                      style: IconButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(color: StudentDensityTokens.line),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 19),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const Divider(height: 1),
+            SizedBox(height: mobile ? 8 : 18),
+            Text(
+              '등급 기준 보정 중',
+              style: const TextStyle(
+                fontSize: 25,
+                height: 1.15,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+            SizedBox(height: mobile ? 33 : 23),
+            Container(
+              key: const ValueKey('home-ovr-trend-chart'),
+              height: 150,
+              alignment: Alignment.center,
+              decoration: const BoxDecoration(
+                border: Border.symmetric(
+                  horizontal: BorderSide(color: StudentDensityTokens.line),
+                ),
+              ),
+              child: const _HomeRatingSignalChart(),
+            ),
+            const SizedBox(height: 16),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                onPressed: onOpenAnalysis,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: const Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      '전체 분석 보기',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+    if (mobile) return sheet;
+    return DecoratedBox(
+      position: DecorationPosition.foreground,
+      decoration: BoxDecoration(
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      child: sheet,
+    );
+  }
+}
+
+class _HomeRatingSignalChart extends StatelessWidget {
+  const _HomeRatingSignalChart();
+
+  @override
+  Widget build(BuildContext context) => ValueListenableBuilder<RatingSnapshot>(
+    valueListenable: RatingStore.notifier,
+    builder: (context, rating, _) {
+      final raw = rating.recentAccuracy;
+      final accuracy = (raw <= 1 ? raw : raw / 100).clamp(0.0, 1.0);
+      final trend = !rating.isLoaded
+          ? '학습 지표를 불러오는 중입니다'
+          : rating.delta > 0
+          ? '최근 학습 결과가 상승 흐름입니다'
+          : rating.delta < 0
+          ? '최근 학습 결과가 하락 흐름입니다'
+          : '최근 학습 결과에 변화가 없습니다';
+      return Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text(
+                  '최근 정답률',
+                  style: TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                Text(
+                  rating.isLoaded ? '${(accuracy * 100).round()}%' : '—',
+                  style: const TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            LinearProgressIndicator(
+              value: rating.isLoaded ? accuracy : null,
+              minHeight: 8,
+              backgroundColor: StudentDensityTokens.line,
+              valueColor: const AlwaysStoppedAnimation(
+                StudentDensityTokens.dark,
+              ),
+            ),
+            const SizedBox(height: 10),
+            Text(
+              trend,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                fontSize: 12,
+              ),
+            ),
+            const SizedBox(height: 4),
+            const Text(
+              '등급 경계는 실제 유지율·배정률 검증 후 적용합니다.',
+              style: TextStyle(color: StudentDensityTokens.muted, fontSize: 11),
+            ),
+          ],
+        ),
+      );
+    },
+  );
+}
+
+class HomeWeekSummarySheet extends StatelessWidget {
+  const HomeWeekSummarySheet({
+    super.key,
+    required this.activity,
+    required this.onClose,
+    required this.onOpenHistory,
+  });
+
+  final ActivitySnapshot activity;
+  final VoidCallback onClose;
+  final VoidCallback onOpenHistory;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final days = _homeWeekActivityBars(activity, DateTime.now());
+    final activeDays = days.where((day) => day.score > 0).length;
+    final totalScore = days.fold<int>(0, (sum, day) => sum + day.score);
+    return Container(
+      key: const ValueKey('home-week-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: mobile ? 650 : 720,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      child: SingleChildScrollView(
+        padding: EdgeInsets.fromLTRB(
+          mobile ? 12 : 18,
+          0,
+          mobile ? 12 : 18,
+          mobile ? 14 : 20,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 4),
+              child: Center(
+                child: Container(
+                  width: 44,
+                  height: 4,
+                  color: StudentDensityTokens.lineStrong,
+                ),
+              ),
+            ),
+            Container(
+              constraints: const BoxConstraints(minHeight: 52),
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: StudentDensityTokens.line),
+                ),
+              ),
+              child: Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '이번 주 학습',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  SizedBox(
+                    width: 48,
+                    height: 48,
+                    child: IconButton(
+                      key: const ValueKey('home-week-summary-close'),
+                      tooltip: '닫기',
+                      onPressed: onClose,
+                      style: IconButton.styleFrom(
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                          side: BorderSide(color: StudentDensityTokens.line),
+                        ),
+                      ),
+                      icon: const Icon(Icons.close, size: 19),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.only(top: 18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '이번 주 활동점수 ${_formatHomePointCount(totalScore)}',
+                    style: const TextStyle(
+                      fontSize: 24,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '$activeDays일 학습 · 일별 활동점수',
+                    style: const TextStyle(
+                      color: StudentDensityTokens.muted,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+                  _HomeWeekActivityBars(days: days),
+                  // The 170px chart already includes the HTML bar's 22px label overflow.
+                  const SizedBox(height: 6),
+                  SizedBox(
+                    height: 48,
+                    child: FilledButton(
+                      key: const ValueKey('home-week-summary-history'),
+                      onPressed: onOpenHistory,
+                      style: FilledButton.styleFrom(
+                        backgroundColor: StudentDensityTokens.dark,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12),
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.zero,
+                        ),
+                      ),
+                      child: const Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            '전체 활동 기록',
+                            style: TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w900,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class HomeArenaSummarySheet extends StatefulWidget {
+  const HomeArenaSummarySheet({
+    super.key,
+    required this.onClose,
+    required this.onEnterArena,
+  });
+
+  final VoidCallback onClose;
+  final VoidCallback onEnterArena;
+
+  @override
+  State<HomeArenaSummarySheet> createState() => _HomeArenaSummarySheetState();
+}
+
+class _HomeArenaSummarySheetState extends State<HomeArenaSummarySheet> {
+  late Future<Map<String, dynamic>> _summary;
+
+  @override
+  void initState() {
+    super.initState();
+    _summary = ArenaApi.instance.summary();
+  }
+
+  void _retry() =>
+      setState(() => _summary = ArenaApi.instance.summary(forceRefresh: true));
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Container(
+      key: const ValueKey('home-arena-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: 650,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '대결 기록',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('home-arena-summary-close'),
+                    tooltip: '닫기',
+                    onPressed: widget.onClose,
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 18),
+            child: FutureBuilder<Map<String, dynamic>>(
+              future: _summary,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const SizedBox(
+                    height: 92,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return _HomeWeaknessMessage(
+                    message: '대결 기록을 불러오지 못했습니다.',
+                    actionLabel: '다시 시도',
+                    onAction: _retry,
+                  );
+                }
+                final summary = snapshot.data ?? const <String, dynamic>{};
+                final queues = (summary['queues'] as List? ?? const [])
+                    .whereType<Map>()
+                    .map((item) => Map<String, dynamic>.from(item))
+                    .toList(growable: false);
+                final profile = queues.cast<Map<String, dynamic>?>().firstWhere(
+                  (item) => item?['queue_type'] == 'duel_exam',
+                  orElse: () => queues.isEmpty ? null : queues.first,
+                );
+                return _HomeArenaStats(profile: profile);
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
             child: SizedBox(
-              width: 42,
-              child: Divider(
-                thickness: 3,
+              height: 48,
+              child: FilledButton(
+                key: const ValueKey('home-arena-enter'),
+                onPressed: widget.onEnterArena,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '대결장 입장',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeArenaStats extends StatelessWidget {
+  const _HomeArenaStats({required this.profile});
+
+  final Map<String, dynamic>? profile;
+
+  @override
+  Widget build(BuildContext context) {
+    final hasProfile = profile != null;
+    final wins = (profile?['wins'] as num?)?.toInt();
+    final losses = (profile?['losses'] as num?)?.toInt();
+    final tier = profile?['tier']?.toString();
+    final streak = hasProfile
+        ? _currentArenaWinStreak(profile!['recent_results'])
+        : null;
+    final cells = [
+      ('전적', hasProfile ? '${wins ?? 0}승 ${losses ?? 0}패' : '—'),
+      ('현재 티어', hasProfile ? (tier?.isNotEmpty == true ? tier! : '—') : '—'),
+      ('연승', hasProfile ? '$streak' : '—'),
+    ];
+    return ColoredBox(
+      color: StudentDensityTokens.line,
+      child: Row(
+        children: [
+          for (var index = 0; index < cells.length; index++) ...[
+            if (index > 0) const SizedBox(width: 1),
+            Expanded(
+              child: Container(
+                key: ValueKey('home-arena-stat-$index'),
+                constraints: const BoxConstraints(minHeight: 92),
+                padding: const EdgeInsets.all(12),
+                color: StudentDensityTokens.surface,
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      cells[index].$1,
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: StudentDensityTokens.muted,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    const SizedBox(height: 7),
+                    FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        cells[index].$2,
+                        style: const TextStyle(
+                          fontSize: 22,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+int _currentArenaWinStreak(Object? recentResults) {
+  if (recentResults is! List) return 0;
+  var streak = 0;
+  for (final result in recentResults.reversed) {
+    if (result.toString().toLowerCase() != 'win') break;
+    streak++;
+  }
+  return streak;
+}
+
+class HomeWeaknessSummarySheet extends StatefulWidget {
+  const HomeWeaknessSummarySheet({
+    super.key,
+    required this.onClose,
+    required this.onOpenReview,
+  });
+
+  final VoidCallback onClose;
+  final VoidCallback onOpenReview;
+
+  @override
+  State<HomeWeaknessSummarySheet> createState() =>
+      _HomeWeaknessSummarySheetState();
+}
+
+class _HomeWeaknessSummarySheetState extends State<HomeWeaknessSummarySheet> {
+  late Future<List<WeaknessTag>> _tags;
+
+  @override
+  void initState() {
+    super.initState();
+    _tags = ApiClient.instance.fetchWeaknessTags();
+  }
+
+  void _retry() =>
+      setState(() => _tags = ApiClient.instance.fetchWeaknessTags());
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Container(
+      key: const ValueKey('home-weakness-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: 650,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Center(
+              child: Container(
+                width: 44,
+                height: 4,
                 color: StudentDensityTokens.lineStrong,
               ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Text(
-                  title,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.w900,
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '약점 태그',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
                   ),
                 ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('home-weakness-summary-close'),
+                    tooltip: '닫기',
+                    onPressed: widget.onClose,
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 18),
+            child: FutureBuilder<List<WeaknessTag>>(
+              future: _tags,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState != ConnectionState.done) {
+                  return const SizedBox(
+                    height: 72,
+                    child: Center(
+                      child: CircularProgressIndicator(strokeWidth: 2),
+                    ),
+                  );
+                }
+                if (snapshot.hasError) {
+                  return _HomeWeaknessMessage(
+                    message: '약점 태그를 불러오지 못했습니다.',
+                    actionLabel: '다시 시도',
+                    onAction: _retry,
+                  );
+                }
+                final tags = snapshot.data ?? const <WeaknessTag>[];
+                if (tags.isEmpty) {
+                  return const _HomeWeaknessMessage(
+                    message: '현재 복습할 약점 태그가 없습니다.',
+                  );
+                }
+                return Column(
+                  children: [
+                    for (
+                      var index = 0;
+                      index < math.min(tags.length, 3);
+                      index++
+                    )
+                      _HomeWeaknessTagRow(
+                        tag: tags[index],
+                        first: index == 0,
+                        last: index == math.min(tags.length, 3) - 1,
+                      ),
+                  ],
+                );
+              },
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: SizedBox(
+              height: 48,
+              child: FilledButton(
+                key: const ValueKey('home-weakness-open-review'),
+                onPressed: widget.onOpenReview,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        '약점 문제 복습',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              IconButton(
-                tooltip: '닫기',
-                onPressed: () => Navigator.of(context).pop(),
-                icon: const Icon(Icons.close),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeWeaknessTagRow extends StatelessWidget {
+  const _HomeWeaknessTagRow({
+    required this.tag,
+    required this.first,
+    required this.last,
+  });
+
+  final WeaknessTag tag;
+  final bool first;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) => Container(
+    key: ValueKey('home-weakness-row-${tag.tag}'),
+    constraints: const BoxConstraints(minHeight: 58),
+    padding: const EdgeInsets.symmetric(horizontal: 12),
+    decoration: BoxDecoration(
+      color: StudentDensityTokens.surface,
+      border: last
+          ? null
+          : Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+    ),
+    child: Row(
+      children: [
+        Expanded(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                tag.tag,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '최근 오답 ${tag.count}개',
+                style: const TextStyle(
+                  fontSize: 9,
+                  fontWeight: FontWeight.w800,
+                  color: StudentDensityTokens.muted,
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 8),
-          Text(
-            description,
-            style: const TextStyle(
-              color: StudentDensityTokens.muted,
-              height: 1.45,
+        ),
+        Text(
+          first ? '우선' : '복습',
+          style: const TextStyle(fontSize: 9, fontWeight: FontWeight.w700),
+        ),
+      ],
+    ),
+  );
+}
+
+class _HomeWeaknessMessage extends StatelessWidget {
+  const _HomeWeaknessMessage({
+    required this.message,
+    this.actionLabel,
+    this.onAction,
+  });
+
+  final String message;
+  final String? actionLabel;
+  final VoidCallback? onAction;
+
+  @override
+  Widget build(BuildContext context) => SizedBox(
+    height: 72,
+    child: Row(
+      children: [
+        Expanded(
+          child: Text(
+            message,
+            style: const TextStyle(fontSize: 11, fontWeight: FontWeight.w700),
+          ),
+        ),
+        if (actionLabel != null)
+          TextButton(onPressed: onAction, child: Text(actionLabel!)),
+      ],
+    ),
+  );
+}
+
+class HomeTutorSummarySheet extends StatelessWidget {
+  const HomeTutorSummarySheet({
+    super.key,
+    required this.onClose,
+    required this.onPrompt,
+    required this.onOpenTutor,
+  });
+
+  final VoidCallback onClose;
+  final ValueChanged<String> onPrompt;
+  final VoidCallback onOpenTutor;
+
+  static const _prompts = ['이 개념을 쉽게 설명해 줘', '내 오답 원인을 알려 줘', '비슷한 문제를 추천해 줘'];
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Container(
+      key: const ValueKey('home-tutor-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: 650,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                color: StudentDensityTokens.lineStrong,
+              ),
             ),
           ),
-          const SizedBox(height: 18),
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    'AI 튜터',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w700),
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('home-tutor-summary-close'),
+                    tooltip: '닫기',
+                    onPressed: onClose,
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 18),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 44,
+                  height: 44,
+                  child: ColoredBox(
+                    color: StudentDensityTokens.dark,
+                    child: Icon(
+                      Icons.auto_awesome,
+                      color: Colors.white,
+                      size: 22,
+                    ),
+                  ),
+                ),
+                SizedBox(width: 14),
+                Expanded(
+                  child: Text(
+                    '지금 배우는 내용으로 질문해 보세요.',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+          for (var index = 0; index < _prompts.length; index++)
+            Container(
+              decoration: BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(color: StudentDensityTokens.line),
+                ),
+              ),
+              child: SizedBox(
+                height: 44,
+                child: TextButton(
+                  key: ValueKey('home-tutor-prompt-$index'),
+                  onPressed: () => onPrompt(_prompts[index]),
+                  style: TextButton.styleFrom(
+                    alignment: Alignment.centerLeft,
+                    foregroundColor: StudentDensityTokens.ink,
+                    backgroundColor: StudentDensityTokens.surface,
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    shape: const RoundedRectangleBorder(
+                      borderRadius: BorderRadius.zero,
+                    ),
+                  ),
+                  child: Text(
+                    _prompts[index],
+                    style: const TextStyle(
+                      fontSize: 10,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: SizedBox(
+              height: 48,
+              child: FilledButton(
+                key: const ValueKey('home-tutor-open'),
+                onPressed: onOpenTutor,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 12),
+                ),
+                child: const Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        'AI 튜터와 대화하기',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeAchievementsSummarySheet extends StatelessWidget {
+  const HomeAchievementsSummarySheet({
+    super.key,
+    required this.activity,
+    required this.accountLevel,
+    required this.onClose,
+    required this.onOpenCollection,
+  });
+
+  final ActivitySnapshot activity;
+  final int accountLevel;
+  final VoidCallback onClose;
+  final VoidCallback onOpenCollection;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final previews = _homeAchievementPreviews(activity, accountLevel);
+    return Container(
+      key: const ValueKey('home-achievements-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: 650,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(top: 8, bottom: 4),
+            child: Center(
+              child: Container(
+                width: 44,
+                height: 4,
+                color: StudentDensityTokens.lineStrong,
+              ),
+            ),
+          ),
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '업적',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('home-achievements-summary-close'),
+                    tooltip: '닫기',
+                    onPressed: onClose,
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 12),
+          for (var index = 0; index < previews.length; index++)
+            _HomeAchievementPreviewRow(
+              progress: previews[index],
+              shapeIndex: index,
+              last: index == previews.length - 1,
+            ),
+          const SizedBox(height: 14),
           SizedBox(
-            height: 52,
+            height: 48,
             child: FilledButton(
-              onPressed: onOpen,
+              key: const ValueKey('home-achievements-summary-open'),
+              onPressed: onOpenCollection,
               style: FilledButton.styleFrom(
                 backgroundColor: StudentDensityTokens.dark,
                 foregroundColor: Colors.white,
@@ -868,11 +2613,17 @@ class _HomeStudyActionSheet extends StatelessWidget {
                   borderRadius: BorderRadius.zero,
                 ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              child: const Row(
                 children: [
-                  Text(cta),
-                  const Icon(Icons.arrow_forward, size: 18),
+                  Expanded(
+                    child: Text(
+                      '업적 보관함 열기',
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
                 ],
               ),
             ),
@@ -883,9 +2634,821 @@ class _HomeStudyActionSheet extends StatelessWidget {
   }
 }
 
+List<ActivityBadgeProgress> _homeAchievementPreviews(
+  ActivitySnapshot activity,
+  int accountLevel,
+) {
+  final all = ActivityBadgeCatalog.evaluate(
+    activity,
+    accountLevel: accountLevel,
+  );
+  return ['streak', 'solve', 'active_days']
+      .map((family) {
+        final matches = all
+            .where((item) => item.badge.family == family)
+            .toList();
+        return matches.firstWhere(
+          (item) => !item.isEarned,
+          orElse: () => matches.last,
+        );
+      })
+      .toList(growable: false);
+}
+
+class _HomeAchievementPreviewRow extends StatelessWidget {
+  const _HomeAchievementPreviewRow({
+    required this.progress,
+    required this.shapeIndex,
+    required this.last,
+  });
+
+  final ActivityBadgeProgress progress;
+  final int shapeIndex;
+  final bool last;
+
+  @override
+  Widget build(BuildContext context) {
+    final icon = _HomeAchievementMark(
+      shapeIndex: shapeIndex,
+      icon: _homeAchievementIcon(progress.badge.family),
+    );
+    return Container(
+      key: ValueKey('home-achievement-row-${progress.badge.family}'),
+      constraints: const BoxConstraints(minHeight: 58),
+      decoration: BoxDecoration(
+        border: last
+            ? null
+            : Border(bottom: BorderSide(color: StudentDensityTokens.line)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(width: 34, child: Center(child: icon)),
+          const SizedBox(width: 11),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        ActivityBadgeCatalog.familyTitleOf(
+                          progress.badge.family,
+                        ),
+                        style: const TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                    ),
+                    Text(
+                      '${progress.value} / ${progress.badge.threshold}${progress.badge.unit}',
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: StudentDensityTokens.muted,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 6),
+                ClipRect(
+                  child: SizedBox(
+                    height: 4,
+                    child: Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        const ColoredBox(
+                          color: StudentDensityTokens.surfaceMuted,
+                        ),
+                        Align(
+                          alignment: Alignment.centerLeft,
+                          child: FractionallySizedBox(
+                            widthFactor: progress.progress,
+                            child: const ColoredBox(
+                              color: StudentDensityTokens.dark,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+IconData _homeAchievementIcon(String family) => switch (family) {
+  'streak' => Icons.calendar_today_outlined,
+  'solve' => Icons.edit_outlined,
+  _ => Icons.auto_awesome,
+};
+
+class _HomeAchievementMark extends StatelessWidget {
+  const _HomeAchievementMark({required this.shapeIndex, required this.icon});
+
+  final int shapeIndex;
+  final IconData icon;
+
+  @override
+  Widget build(BuildContext context) {
+    final background = switch (shapeIndex) {
+      0 => Container(
+        width: 32,
+        height: 32,
+        decoration: const BoxDecoration(
+          color: StudentDensityTokens.dark,
+          shape: BoxShape.circle,
+        ),
+      ),
+      1 => Transform.rotate(
+        angle: math.pi / 4,
+        child: Container(
+          width: 27,
+          height: 27,
+          color: StudentDensityTokens.dark,
+        ),
+      ),
+      _ => ClipPath(
+        clipper: _HomeAchievementHexClipper(),
+        child: Container(
+          width: 32,
+          height: 32,
+          color: StudentDensityTokens.dark,
+        ),
+      ),
+    };
+    return SizedBox(
+      width: 32,
+      height: 32,
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          background,
+          Icon(icon, color: Colors.white, size: 16),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeAchievementHexClipper extends CustomClipper<Path> {
+  @override
+  Path getClip(Size size) => Path()
+    ..moveTo(size.width * .25, size.height * .07)
+    ..lineTo(size.width * .75, size.height * .07)
+    ..lineTo(size.width, size.height * .5)
+    ..lineTo(size.width * .75, size.height * .93)
+    ..lineTo(size.width * .25, size.height * .93)
+    ..lineTo(0, size.height * .5)
+    ..close();
+
+  @override
+  bool shouldReclip(covariant CustomClipper<Path> oldClipper) => false;
+}
+
+class HomeStreakSummarySheet extends StatelessWidget {
+  const HomeStreakSummarySheet({
+    super.key,
+    required this.activity,
+    required this.onClose,
+    required this.onOpenRating,
+  });
+
+  final ActivitySnapshot activity;
+  final VoidCallback onClose;
+  final VoidCallback onOpenRating;
+
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    final streakDays = _activityStreakDays(activity);
+    final nextBadge = _nextHomeStreakBadge(activity);
+    final progress = nextBadge?.progress ?? 1.0;
+    final daysRemaining =
+        (nextBadge?.badge.threshold ?? streakDays) - streakDays;
+    return Container(
+      key: const ValueKey('home-streak-summary-sheet'),
+      constraints: BoxConstraints(
+        maxWidth: mobile ? double.infinity : 620,
+        maxHeight: mobile ? 650 : 720,
+      ),
+      decoration: BoxDecoration(
+        color: StudentDensityTokens.surface,
+        border: Border.all(color: StudentDensityTokens.lineStrong),
+      ),
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(
+            key: ValueKey('home-streak-sheet-top-space'),
+            height: 16,
+          ),
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Expanded(
+                  child: Text(
+                    '연속 학습',
+                    style: TextStyle(fontSize: 19, fontWeight: FontWeight.w900),
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    key: const ValueKey('home-streak-summary-close'),
+                    tooltip: '닫기',
+                    onPressed: onClose,
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 18),
+            child: Row(
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    color: StudentDensityTokens.surfaceMuted,
+                    shape: BoxShape.circle,
+                  ),
+                  alignment: Alignment.center,
+                  child: const Text(
+                    '🔥',
+                    style: TextStyle(
+                      fontSize: 32,
+                      height: 1,
+                      fontFamilyFallback: ['Segoe UI Emoji'],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '$streakDays일 연속 학습',
+                        style: const TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.w900,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        nextBadge == null
+                            ? '연속 학습 뱃지를 모두 달성했어요.'
+                            : '다음 뱃지까지 $daysRemaining일',
+                        style: const TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      ClipRect(
+                        child: SizedBox(
+                          key: const ValueKey('home-streak-progress-track'),
+                          height: 4,
+                          child: Stack(
+                            fit: StackFit.expand,
+                            children: [
+                              const ColoredBox(
+                                color: StudentDensityTokens.surfaceMuted,
+                              ),
+                              Align(
+                                alignment: Alignment.centerLeft,
+                                child: FractionallySizedBox(
+                                  widthFactor: progress.clamp(0.0, 1.0),
+                                  heightFactor: 1,
+                                  alignment: Alignment.centerLeft,
+                                  child: const SizedBox.expand(
+                                    child: ColoredBox(
+                                      key: ValueKey(
+                                        'home-streak-progress-fill',
+                                      ),
+                                      color: StudentDensityTokens.dark,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 48,
+            child: FilledButton(
+              key: const ValueKey('home-streak-summary-ovr'),
+              onPressed: onOpenRating,
+              style: FilledButton.styleFrom(
+                backgroundColor: StudentDensityTokens.dark,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(horizontal: 12),
+                shape: const RoundedRectangleBorder(
+                  borderRadius: BorderRadius.zero,
+                ),
+              ),
+              child: const Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    '레벨리티 자세히 보기',
+                    style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+ActivityBadgeProgress? _nextHomeStreakBadge(ActivitySnapshot snapshot) {
+  for (final progress in ActivityBadgeCatalog.evaluate(snapshot)) {
+    if (progress.badge.family == 'streak' && !progress.isEarned) {
+      return progress;
+    }
+  }
+  return null;
+}
+
+class _HomeWeekActivityBar {
+  const _HomeWeekActivityBar({required this.label, required this.score});
+
+  final String label;
+  final int score;
+}
+
+List<_HomeWeekActivityBar> _homeWeekActivityBars(
+  ActivitySnapshot activity,
+  DateTime today,
+) {
+  const weekdays = ['월', '화', '수', '목', '금', '토', '일'];
+  final end = DateTime(today.year, today.month, today.day);
+  return List.generate(7, (index) {
+    final date = end.subtract(Duration(days: 6 - index));
+    final key =
+        '${date.year.toString().padLeft(4, '0')}-'
+        '${date.month.toString().padLeft(2, '0')}-'
+        '${date.day.toString().padLeft(2, '0')}';
+    return _HomeWeekActivityBar(
+      label: index == 6 ? '오늘' : weekdays[date.weekday - 1],
+      score: activity.days[key]?.score ?? 0,
+    );
+  });
+}
+
+class _HomeWeekActivityBars extends StatelessWidget {
+  const _HomeWeekActivityBars({required this.days});
+
+  final List<_HomeWeekActivityBar> days;
+
+  @override
+  Widget build(BuildContext context) {
+    final maxScore = days.fold<int>(0, (max, day) => math.max(max, day.score));
+    return SizedBox(
+      height: 170,
+      child: Stack(
+        children: [
+          Positioned(
+            left: 0,
+            right: 0,
+            bottom: 21,
+            child: Container(height: 1, color: StudentDensityTokens.line),
+          ),
+          Row(
+            children: [
+              for (final day in days)
+                Expanded(
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final barHeight = maxScore == 0
+                          ? 4.0
+                          : (day.score / maxScore * 124).clamp(4.0, 124.0);
+                      return Stack(
+                        children: [
+                          Positioned(
+                            left: 4,
+                            right: 4,
+                            bottom: 22,
+                            height: barHeight,
+                            child: ColoredBox(color: StudentDensityTokens.dark),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: barHeight + 26,
+                            height: 10,
+                            child: Text(
+                              '${day.score}',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 7,
+                                fontWeight: FontWeight.w900,
+                              ),
+                            ),
+                          ),
+                          Positioned(
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            height: 12,
+                            child: Text(
+                              day.label,
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                color: StudentDensityTokens.muted,
+                                fontSize: 8,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeStudyActionSheet extends StatelessWidget {
+  const _HomeStudyActionSheet({
+    super.key,
+    required this.title,
+    required this.description,
+    required this.cta,
+    required this.onOpen,
+    this.courseList,
+    this.resumeCourses,
+    required this.onResumeCourse,
+  });
+
+  final String title;
+  final String description;
+  final String cta;
+  final VoidCallback onOpen;
+  final List<Course>? courseList;
+  final List<Course>? resumeCourses;
+  final ValueChanged<Course> onResumeCourse;
+
+  /// HTML 홈 학습 시트의 제목·설명·단일 이동 CTA를 표시한다.
+  @override
+  Widget build(BuildContext context) {
+    final mobile = isStudentDensityMobile(context);
+    return Padding(
+      padding: EdgeInsets.fromLTRB(
+        mobile ? 12 : 18,
+        0,
+        mobile ? 12 : 18,
+        mobile ? 14 : 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          const SizedBox(height: 16),
+          Container(
+            constraints: const BoxConstraints(minHeight: 52),
+            decoration: BoxDecoration(
+              border: Border(
+                bottom: BorderSide(color: StudentDensityTokens.line),
+              ),
+            ),
+            child: Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    title,
+                    style: const TextStyle(
+                      fontSize: 19,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                SizedBox(
+                  width: 48,
+                  height: 48,
+                  child: IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(context).pop(),
+                    style: IconButton.styleFrom(
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.zero,
+                        side: BorderSide(color: StudentDensityTokens.line),
+                      ),
+                    ),
+                    icon: const Icon(Icons.close, size: 19),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          if (courseList != null) ...[
+            const SizedBox(height: 18),
+            _HomeStudyCourseList(courses: courseList!),
+          ] else if (resumeCourses != null) ...[
+            const SizedBox(height: 18),
+            _HomeStudyResumeList(
+              courses: resumeCourses!,
+              onOpen: onResumeCourse,
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              description,
+              style: const TextStyle(
+                color: StudentDensityTokens.muted,
+                height: 1.45,
+              ),
+            ),
+          ],
+          if (resumeCourses == null) ...[
+            const SizedBox(
+              key: ValueKey('home-study-sheet-cta-gap'),
+              height: 16,
+            ),
+            SizedBox(
+              height: 48,
+              child: FilledButton(
+                onPressed: onOpen,
+                style: FilledButton.styleFrom(
+                  backgroundColor: StudentDensityTokens.dark,
+                  foregroundColor: Colors.white,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.zero,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [Text(cta)],
+                ),
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeStudyResumeList extends StatelessWidget {
+  const _HomeStudyResumeList({required this.courses, required this.onOpen});
+
+  final List<Course> courses;
+  final ValueChanged<Course> onOpen;
+
+  @override
+  Widget build(BuildContext context) {
+    if (courses.isEmpty) {
+      return Container(
+        constraints: const BoxConstraints(minHeight: 188),
+        alignment: Alignment.center,
+        color: StudentDensityTokens.surface,
+        child: const Text(
+          '최근 학습 기록이 없습니다.',
+          style: TextStyle(
+            fontSize: 11,
+            fontWeight: FontWeight.w800,
+            color: StudentDensityTokens.muted,
+          ),
+        ),
+      );
+    }
+    return Column(
+      children: [
+        for (var index = 0; index < courses.length; index++) ...[
+          if (index > 0) Container(height: 1, color: StudentDensityTokens.line),
+          _HomeStudyResumeRow(course: courses[index], onTap: onOpen),
+        ],
+      ],
+    );
+  }
+}
+
+class _HomeStudyResumeRow extends StatelessWidget {
+  const _HomeStudyResumeRow({required this.course, required this.onTap});
+
+  final Course course;
+  final ValueChanged<Course> onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (course.progress.clamp(0.0, 1.0) * 100).round();
+    return Material(
+      color: StudentDensityTokens.surface,
+      child: InkWell(
+        onTap: () => onTap(course),
+        child: SizedBox(
+          height: 62,
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: 58,
+                  child: Text(
+                    '$progress%',
+                    style: const TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    course.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HomeStudyCourseList extends StatelessWidget {
+  const _HomeStudyCourseList({required this.courses});
+
+  final List<Course> courses;
+
+  @override
+  Widget build(BuildContext context) {
+    if (courses.isEmpty) {
+      return Container(
+        // HTML fixed slot capacity is three 82px rows with 1px dividers.
+        // Preserve that layout while showing a truthful empty state.
+        constraints: const BoxConstraints(minHeight: 248),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        alignment: Alignment.centerLeft,
+        color: StudentDensityTokens.surface,
+        child: const Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              '수강 중인 코스가 없습니다.',
+              style: TextStyle(fontSize: 11, fontWeight: FontWeight.w900),
+            ),
+            SizedBox(height: 4),
+            Text(
+              '새 코스를 찾아보세요.',
+              style: TextStyle(fontSize: 8, color: StudentDensityTokens.muted),
+            ),
+          ],
+        ),
+      );
+    }
+
+    return Column(
+      children: [
+        for (var index = 0; index < courses.length; index++) ...[
+          if (index > 0) Container(height: 1, color: StudentDensityTokens.line),
+          _HomeStudyCourseRow(course: courses[index]),
+        ],
+      ],
+    );
+  }
+}
+
+class _HomeStudyCourseRow extends StatelessWidget {
+  const _HomeStudyCourseRow({required this.course});
+
+  final Course course;
+
+  @override
+  Widget build(BuildContext context) {
+    final progress = (course.progress * 100).round().clamp(0, 100);
+    final description = course.description.trim();
+    return Container(
+      constraints: const BoxConstraints(minHeight: 82),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+      color: StudentDensityTokens.surface,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 64,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$progress%',
+                  style: const TextStyle(
+                    fontSize: 18,
+                    height: 1.17,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  '진행 중',
+                  style: TextStyle(
+                    fontSize: 8,
+                    height: 1.375,
+                    fontWeight: FontWeight.w800,
+                    color: StudentDensityTokens.muted,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  course.title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    height: 1.7,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                if (description.isNotEmpty) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    description,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 8,
+                      height: 1.35,
+                      fontWeight: FontWeight.w800,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _CourseLoader extends StatefulWidget {
   const _CourseLoader({super.key, required this.builder});
-  final Widget Function(Course? course) builder;
+  final Widget Function(Course? course, List<Course> courseList) builder;
 
   @override
   State<_CourseLoader> createState() => _CourseLoaderState();
@@ -893,6 +3456,7 @@ class _CourseLoader extends StatefulWidget {
 
 class _CourseLoaderState extends State<_CourseLoader> {
   Course? _course;
+  List<Course> _courseList = const [];
   bool _loading = true;
 
   @override
@@ -912,7 +3476,9 @@ class _CourseLoaderState extends State<_CourseLoader> {
       } on ApiException {
         // 저장소가 없는 계정/환경은 서버 코스 순서를 그대로 사용한다.
       }
+      if (!mounted) return;
       setState(() {
+        _courseList = courses;
         // 완료 코스는 다시 활성 코스로 선택하지 않고 검색 화면에서만 미리보기를 제공한다.
         final activeCourses = courses
             .where((course) => !course.isCompleted)
@@ -940,103 +3506,15 @@ class _CourseLoaderState extends State<_CourseLoader> {
         _loading = false;
       });
     } catch (_) {
+      if (!mounted) return;
       setState(() => _loading = false);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_loading) return widget.builder(null);
-    return widget.builder(_course);
-  }
-}
-
-class _Header extends StatelessWidget {
-  const _Header();
-
-  /// 필요한 변수는 현재 학생 화면 문맥과 활성 홈 메뉴다.
-  /// 공용 상단 내비게이션을 사용해 홈을 포함한 학습 목적지의 이동 계약을 유지한다.
-  @override
-  Widget build(BuildContext context) {
-    if (isStudentDensityMobile(context)) {
-      return _HtmlStudentTopBar(
-        onMenu: () => toggleAppDrawer(context),
-        onSearch: () => showStudentQuickSearch(context),
-        onNotifications: () => showStudentNotifications(context),
-      );
-    }
-    return _HtmlStudentTopBar(
-      onMenu: () => toggleAppDrawer(context),
-      onSearch: () => showStudentQuickSearch(context),
-      onNotifications: () => showStudentNotifications(context),
-    );
-  }
-}
-
-class _HtmlStudentTopBar extends StatelessWidget {
-  const _HtmlStudentTopBar({
-    required this.onMenu,
-    required this.onSearch,
-    required this.onNotifications,
-  });
-
-  final VoidCallback onMenu;
-  final VoidCallback onSearch;
-  final VoidCallback onNotifications;
-
-  @override
-  Widget build(BuildContext context) {
-    Widget action({
-      required String label,
-      required IconData icon,
-      required VoidCallback onTap,
-    }) {
-      return Semantics(
-        button: true,
-        label: label,
-        child: SizedBox(
-          width: 44,
-          height: 44,
-          child: OutlinedButton(
-            onPressed: onTap,
-            style: OutlinedButton.styleFrom(
-              padding: EdgeInsets.zero,
-              foregroundColor: StudentDensityTokens.ink,
-              side: const BorderSide(color: StudentDensityTokens.line),
-              shape: const RoundedRectangleBorder(
-                borderRadius: BorderRadius.zero,
-              ),
-            ),
-            child: Icon(icon, size: 19),
-          ),
-        ),
-      );
-    }
-
-    final mobile = isStudentDensityMobile(context);
-    return Container(
-      height: mobile ? 64 : 62,
-      color: StudentDensityTokens.surface,
-      padding: EdgeInsets.symmetric(horizontal: mobile ? 10 : 22),
-      child: Row(
-        children: [
-          action(label: '학생 메뉴', icon: Icons.arrow_back, onTap: onMenu),
-          const SizedBox(width: 10),
-          const Text(
-            '학생 홈',
-            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
-          ),
-          const Spacer(),
-          action(label: '검색', icon: Icons.search, onTap: onSearch),
-          const SizedBox(width: 8),
-          action(
-            label: '알림',
-            icon: Icons.notifications_none,
-            onTap: onNotifications,
-          ),
-        ],
-      ),
-    );
+    if (_loading) return widget.builder(null, _courseList);
+    return widget.builder(_course, _courseList);
   }
 }
 
@@ -1049,8 +3527,8 @@ class _HtmlStudentRail extends StatelessWidget {
   Widget build(BuildContext context) {
     Widget item({
       required String label,
-      required IconData icon,
       required String route,
+      required StudentHtmlIcon navIcon,
       bool active = false,
     }) {
       return Semantics(
@@ -1059,7 +3537,7 @@ class _HtmlStudentRail extends StatelessWidget {
         selected: active,
         child: SizedBox(
           width: width - 20,
-          height: 58,
+          height: 44,
           child: InkWell(
             onTap: () {
               if (route == AppRoutes.learningTools) {
@@ -1069,16 +3547,18 @@ class _HtmlStudentRail extends StatelessWidget {
               Navigator.of(context).pushNamed(route);
             },
             child: Container(
+              key: active ? const ValueKey('home-rail-active') : null,
               decoration: BoxDecoration(
                 color: active ? StudentDensityTokens.dark : Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.zero,
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(
-                    icon,
-                    size: 19,
+                  StudentHtmlGlyph(
+                    key: ValueKey('student-nav-glyph-${navIcon.name}'),
+                    icon: navIcon,
+                    size: 17,
                     color: active ? Colors.white : StudentDensityTokens.ink,
                   ),
                   const SizedBox(height: 4),
@@ -1127,26 +3607,26 @@ class _HtmlStudentRail extends StatelessWidget {
                 children: [
                   item(
                     label: '홈',
-                    icon: Icons.home_outlined,
+                    navIcon: StudentHtmlIcon.home,
                     route: AppRoutes.studentDashboard,
                     active: true,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '코스',
-                    icon: Icons.view_list_outlined,
+                    navIcon: StudentHtmlIcon.courses,
                     route: AppRoutes.courses,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '자료실',
-                    icon: Icons.archive_outlined,
+                    navIcon: StudentHtmlIcon.market,
                     route: AppRoutes.bookbag,
                   ),
                   const SizedBox(height: 6),
                   item(
                     label: '더보기',
-                    icon: Icons.more_horiz,
+                    navIcon: StudentHtmlIcon.more,
                     route: AppRoutes.learningTools,
                   ),
                 ],
@@ -1174,48 +3654,70 @@ class _HtmlStudentRail extends StatelessWidget {
 }
 
 class _HtmlContextAside extends StatelessWidget {
-  const _HtmlContextAside();
+  const _HtmlContextAside({required this.nextTaskTitle});
+
+  final String? nextTaskTitle;
 
   @override
   Widget build(BuildContext context) {
     return Container(
+      key: const ValueKey('home-context-aside'),
       width: 244,
       padding: const EdgeInsets.fromLTRB(18, 22, 18, 22),
       decoration: const BoxDecoration(
-        color: StudentDensityTokens.surface,
+        color: StudentDensityTokens.surfaceMuted,
         border: Border(left: BorderSide(color: StudentDensityTokens.line)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Row(
-            children: [
-              Container(
-                width: 34,
-                height: 34,
-                alignment: Alignment.center,
-                color: StudentDensityTokens.dark,
-                child: const Icon(
-                  Icons.auto_awesome,
-                  color: Colors.white,
-                  size: 17,
+          // HTML aside-focus: 현재 코스가 없을 때만 기본 문구를 보여준다.
+          Padding(
+            padding: const EdgeInsets.only(top: 6, bottom: 5),
+            child: Row(
+              children: [
+                Container(
+                  key: const ValueKey('home-context-focus-icon'),
+                  width: 32,
+                  height: 32,
+                  alignment: Alignment.center,
+                  decoration: const BoxDecoration(
+                    color: StudentDensityTokens.dark,
+                  ),
+                  child: const Icon(
+                    Icons.auto_awesome,
+                    color: Colors.white,
+                    size: 19,
+                  ),
                 ),
-              ),
-              const SizedBox(width: 9),
-              const Expanded(
-                child: Text(
-                  '수학 학습 컨텍스트',
-                  style: TextStyle(fontSize: 13, fontWeight: FontWeight.w900),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    nextTaskTitle ?? '오늘의 학습',
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 14,
+                      height: 1.35,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
-          const SizedBox(height: 20),
-          const Divider(height: 1),
-          const SizedBox(height: 24),
+          const SizedBox(height: 14),
+          const Divider(key: ValueKey('home-context-aside-divider'), height: 1),
+          const SizedBox(height: 14),
           const _ContextMetric(label: '오늘 집중', value: '—'),
-          const SizedBox(height: 18),
-          const _ContextMetric(label: '연속 학습', value: '—'),
+          const SizedBox(height: 14),
+          ValueListenableBuilder<ActivitySnapshot>(
+            valueListenable: ActivityStore.notifier,
+            builder: (context, snapshot, _) => _ContextMetric(
+              label: '연속 학습',
+              value: '${_activityStreakDays(snapshot)}일',
+            ),
+          ),
           const Spacer(),
           SizedBox(
             height: 44,
@@ -1230,9 +3732,7 @@ class _HtmlContextAside extends StatelessWidget {
               style: ElevatedButton.styleFrom(
                 backgroundColor: StudentDensityTokens.dark,
                 foregroundColor: Colors.white,
-                shape: const RoundedRectangleBorder(
-                  borderRadius: BorderRadius.zero,
-                ),
+                shape: const RoundedRectangleBorder(),
               ),
             ),
           ),
@@ -1250,23 +3750,31 @@ class _ContextMetric extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: StudentDensityTokens.muted,
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
+    return SizedBox(
+      key: ValueKey('home-context-metric-$label'),
+      height: 32,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: StudentDensityTokens.muted,
+              fontSize: 11,
+              fontWeight: FontWeight.w800,
+            ),
           ),
-        ),
-        Text(
-          value,
-          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w900),
-        ),
-      ],
+          Text(
+            value,
+            style: const TextStyle(
+              fontSize: 22,
+              letterSpacing: -1.1,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -1815,22 +4323,11 @@ class _StatPage2 extends StatelessWidget {
                             ValueListenableBuilder<RatingSnapshot>(
                               valueListenable: RatingStore.notifier,
                               builder: (context, snapshot, _) {
-                                final delta = snapshot.isLoaded
-                                    ? snapshot.delta
-                                    : 0.0;
-                                final deltaDisplay = delta >= 0
-                                    ? '+${delta.toStringAsFixed(2)}'
-                                    : delta.toStringAsFixed(2);
-                                final progress = delta <= 0
-                                    ? 0.0
-                                    : (delta.clamp(0.0, 0.5) / 0.5);
                                 return _CircleStat(
-                                  percent: progress,
+                                  percent: 0,
                                   color: const Color(0xFFEF394D),
-                                  label: snapshot.isLoaded
-                                      ? deltaDisplay
-                                      : '--',
-                                  subtitle: '전날 대비 OVR',
+                                  label: snapshot.isLoaded ? '보정 중' : '--',
+                                  subtitle: '레벨리티 동향',
                                   contentScale: contentScale,
                                 );
                               },
@@ -2230,10 +4727,6 @@ class _MobileHomeStatusRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: StudentDensityTokens.muted,
-          ),
         ],
       ),
     ),
@@ -2455,7 +4948,6 @@ class _InlineCta extends StatelessWidget {
                 Text(label!, style: textStyle),
                 SizedBox(width: iconSize * 0.5),
               ],
-              Icon(Icons.arrow_forward_ios, size: iconSize, color: _green),
             ],
           ),
         ),
@@ -2589,7 +5081,7 @@ class _LearnBanner extends StatelessWidget {
                   ),
                   child: Icon(
                     portraitMobile
-                        ? Icons.arrow_forward_rounded
+                        ? Icons.play_arrow_rounded
                         : Icons.play_arrow_rounded,
                     color: StudentDensityTokens.dark,
                     size: portraitMobile ? 28 : 31,
@@ -2747,35 +5239,13 @@ class _BottomSection extends StatelessWidget {
                           builder: (context, ratingSnapshot, _) {
                             final isEligible =
                                 ratingSnapshot.placementCompleted;
-                            final ovrText = ratingSnapshot.isLoaded
-                                ? _formatRatingOvr(ratingSnapshot.ovr)
-                                : '--';
-                            final deltaOvr =
-                                ratingSnapshot.delta / _ratingOvrDivider;
-                            final deltaText = ratingSnapshot.isLoaded
-                                ? _formatRatingDelta(deltaOvr)
-                                : '--';
-                            final deltaColor = deltaOvr > 0
-                                ? Colors.red
-                                : deltaOvr < 0
-                                ? Colors.blue
-                                : Colors.black54;
-                            final risePercent = _ratingRisePercent(deltaOvr);
-                            final percentText = ratingSnapshot.isLoaded
-                                ? '$risePercent%'
-                                : '--';
                             final ctaText = isEligible
-                                ? '레이팅 자세히 보기 및 보고서 보기'
+                                ? '레벨리티 자세히 보기'
                                 : '레벨테스트 풀러 가기';
 
                             return _HomeRatingCard(
                               isEligible: isEligible,
                               remainingCount: remainingCount,
-                              ovrText: ovrText,
-                              deltaText: deltaText,
-                              deltaColor: deltaColor,
-                              risePercent: risePercent,
-                              percentText: percentText,
                               ctaText: ctaText,
                               onTap: () =>
                                   _handleRatingTap(context, isEligible),
@@ -2963,9 +5433,9 @@ class _MobileHomeInsights extends StatelessWidget {
                           children: [
                             _MobileInsightRow(
                               icon: Icons.insights_rounded,
-                              label: '레이팅',
+                              label: '레벨리티',
                               value: rating.isLoaded && isEligible
-                                  ? 'OVR ${_formatRatingOvr(rating.ovr)}'
+                                  ? '등급 기준 보정 중'
                                   : '레벨테스트 필요',
                               darkIcon: true,
                               onTap: () => onRatingTap(isEligible),
@@ -3065,10 +5535,6 @@ class _MobileInsightRow extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 4),
-          const Icon(
-            Icons.chevron_right_rounded,
-            color: StudentDensityTokens.muted,
-          ),
         ],
       ),
     ),
@@ -3079,28 +5545,17 @@ class _HomeRatingCard extends StatelessWidget {
   const _HomeRatingCard({
     required this.isEligible,
     required this.remainingCount,
-    required this.ovrText,
-    required this.deltaText,
-    required this.deltaColor,
-    required this.risePercent,
-    required this.percentText,
     required this.ctaText,
     required this.onTap,
   });
 
   final bool isEligible;
   final int remainingCount;
-  final String ovrText;
-  final String deltaText;
-  final Color deltaColor;
-  final int risePercent;
-  final String percentText;
   final String ctaText;
   final VoidCallback onTap;
 
-  /// 필요 변수는 레이팅 값·변화량·산정 가능 여부와 상세 이동 함수다.
-  /// 작동 원리는 HTML 시안의 MY RATING 제목, 등급 배지, 상승 진행률을 유지하고
-  /// 산정 전에는 같은 카드 안에서 남은 문제 수와 레벨 테스트 이동을 보여준다.
+  /// 필요한 변수는 배정 완료 상태와 미완료 문항 수다.
+  /// 숫자 OVR 대신 레벨리티 기준 보정 상태를 표시한다.
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -3113,7 +5568,6 @@ class _HomeRatingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const StudentDensityEyebrow('MY RATING'),
               const SizedBox(height: 8),
               if (isEligible) ...[
                 Row(
@@ -3124,7 +5578,7 @@ class _HomeRatingCard extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'OVR $ovrText',
+                            '레벨리티',
                             style: const TextStyle(
                               fontSize: 21,
                               fontWeight: FontWeight.w900,
@@ -3133,8 +5587,11 @@ class _HomeRatingCard extends StatelessWidget {
                           ),
                           const SizedBox(height: 6),
                           Text(
-                            '전날 대비 $deltaText · B Tier',
-                            style: TextStyle(color: deltaColor, fontSize: 12),
+                            '등급 기준 보정 중',
+                            style: TextStyle(
+                              color: StudentDensityTokens.muted,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
                       ),
@@ -3145,15 +5602,13 @@ class _HomeRatingCard extends StatelessWidget {
                 const Spacer(),
                 Row(
                   children: [
-                    _DashboardPill('상승 $percentText'),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: LinearProgressIndicator(
-                        value: risePercent / 100,
-                        minHeight: 7,
-                        color: StudentDensityTokens.dark,
-                        backgroundColor: const Color(0xFFE4E4E7),
-                        borderRadius: BorderRadius.circular(999),
+                    const Expanded(
+                      child: Text(
+                        '등급·진행률은 보정 데이터 확인 후 표시합니다.',
+                        style: TextStyle(
+                          color: StudentDensityTokens.muted,
+                          fontSize: 12,
+                        ),
                       ),
                     ),
                   ],
@@ -3165,11 +5620,11 @@ class _HomeRatingCard extends StatelessWidget {
                     backgroundColor: StudentDensityTokens.dark,
                     foregroundColor: Colors.white,
                   ),
-                  child: const Text('레이팅 자세히 보기'),
+                  child: const Text('레벨리티 자세히 보기'),
                 ),
               ] else ...[
                 const Text(
-                  '나의 레이팅',
+                  '나의 레벨리티',
                   style: TextStyle(fontSize: 21, fontWeight: FontWeight.w900),
                 ),
                 Expanded(
@@ -3187,7 +5642,7 @@ class _HomeRatingCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          '레이팅 추정까지 $remainingCount문제 남았어요',
+                          '레벨테스트까지 $remainingCount문제 남았어요',
                           style: const TextStyle(
                             color: StudentDensityTokens.muted,
                             fontSize: 14,
@@ -3219,8 +5674,7 @@ class _HomeRatingCard extends StatelessWidget {
 class _HomeRankBadge extends StatelessWidget {
   const _HomeRankBadge();
 
-  /// 필요 변수는 고정된 홈 미리보기 등급이다.
-  /// 작동 원리는 HTML의 검은 62px B 등급 배지를 흰 이중 테두리와 함께 재현한다.
+  /// 레벨리티 등급 경계가 확정되기 전에는 등급을 임의 표시하지 않는다.
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -3234,7 +5688,7 @@ class _HomeRankBadge extends StatelessWidget {
         boxShadow: const [BoxShadow(color: Color(0x33000000), blurRadius: 12)],
       ),
       child: const Text(
-        'B',
+        '…',
         style: TextStyle(
           color: Colors.white,
           fontSize: 26,

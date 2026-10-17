@@ -75,18 +75,8 @@ class Ios26TopBar extends StatelessWidget {
   final bool showMenuWithBack;
   final bool hideOnMobile;
 
-  /// 필요한 변수는 상단 바 자신이 가진 Scaffold 문맥과 선택적 기존 메뉴 콜백이다.
-  /// 작동 원리: 상단 바 아래의 Drawer를 먼저 직접 열어, 부모 화면의 오래된 문맥이 전달돼도 전체 메뉴가 열리게 한다.
+  /// 메뉴 동작은 화면이 현재 HTML 내비게이션에 맞춰 명시적으로 전달한다.
   void _handleMenuTap(BuildContext context) {
-    final scaffoldState = Scaffold.maybeOf(context);
-    if (scaffoldState?.hasDrawer ?? false) {
-      if (scaffoldState!.isDrawerOpen) {
-        Navigator.of(context).pop();
-      } else {
-        scaffoldState.openDrawer();
-      }
-      return;
-    }
     onMenu?.call();
   }
 
@@ -536,8 +526,6 @@ class _StudentQuickSearchSheetState extends State<_StudentQuickSearchSheet> {
       'direct-chat' => '/social?scene=direct-chat',
       'group-find' => '/groups?scene=group-find',
       'group-create' => '/groups?scene=group-create',
-      'notepad' => '/learning-tools?scene=notepad',
-      'timer' => '/learning-tools?scene=timer',
       'focus' => '/learning-tools?scene=focus',
       'arena-ranking' => '/arena?scene=arena-ranking',
       'weakness-review' => '/wrong_answers?scene=weakness-review',

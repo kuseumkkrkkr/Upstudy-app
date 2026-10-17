@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_math_fork/flutter_math.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:s11/app/router.dart';
@@ -313,9 +314,13 @@ class _TutorialTopBar extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 14),
-        const Text(
-          '튜토리얼',
-          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+        const Flexible(
+          child: Text(
+            '튜토리얼',
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+          ),
         ),
         const Spacer(),
         _TutorialTopAction(
@@ -474,6 +479,7 @@ class _TutorialSteps extends StatelessWidget {
                           const SizedBox(height: 2),
                           Text(
                             item.shortTitle,
+                            maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                             style: TextStyle(
                               fontSize: 9,
@@ -554,6 +560,7 @@ class _TutorialStage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final narrowMobile = compact && MediaQuery.sizeOf(context).width <= 390;
     final copy = Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
@@ -566,28 +573,28 @@ class _TutorialStage extends StatelessWidget {
             color: StudentDensityTokens.muted,
           ),
         ),
-        const SizedBox(height: 10),
+        SizedBox(height: narrowMobile ? 7 : 10),
         Text(
           step.title,
           style: TextStyle(
-            fontSize: compact ? 26 : 40,
+            fontSize: narrowMobile ? 23 : (compact ? 26 : 40),
             fontWeight: FontWeight.w900,
             height: 1.04,
           ),
         ),
-        SizedBox(height: compact ? 10 : 14),
+        SizedBox(height: narrowMobile ? 9 : (compact ? 10 : 14)),
         ConstrainedBox(
           constraints: const BoxConstraints(maxWidth: 460),
           child: Text(
             step.description,
             style: TextStyle(
               fontSize: compact ? 11 : 13,
-              height: 1.7,
+              height: compact ? (narrowMobile ? 1.3 : 1.55) : 1.7,
               color: StudentDensityTokens.muted,
             ),
           ),
         ),
-        SizedBox(height: compact ? 16 : 24),
+        SizedBox(height: compact ? 20 : 24),
         if (!compact) ...[
           _InstructionRow(number: '1', text: step.instruction),
           const _InstructionRow(number: '2', text: '오른쪽 예시에서 강조된 버튼을 눌러보세요.'),
@@ -613,20 +620,26 @@ class _TutorialStage extends StatelessWidget {
               Expanded(flex: 22, child: demo),
             ],
           );
-    return SingleChildScrollView(
-      padding: EdgeInsets.all(
-        compact ? (MediaQuery.sizeOf(context).width <= 390 ? 12 : 16) : 38,
-      ),
-      child: ConstrainedBox(
-        constraints: BoxConstraints(minHeight: compact ? 420 : 600),
-        child: Align(
-          alignment: Alignment.center,
-          child: Transform.translate(
-            offset: Offset(0, compact ? 0 : 42),
-            child: content,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final padding = compact
+            ? (MediaQuery.sizeOf(context).width < 390 ? 12.0 : 16.0)
+            : 38.0;
+        return SingleChildScrollView(
+          padding: EdgeInsets.all(padding),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(
+              minHeight: (constraints.maxHeight - padding * 2)
+                  .clamp(0, double.infinity)
+                  .toDouble(),
+            ),
+            child: Align(
+              alignment: compact ? Alignment.topCenter : Alignment.center,
+              child: content,
+            ),
           ),
-        ),
-      ),
+        );
+      },
     );
   }
 }
@@ -689,8 +702,17 @@ class _TutorialDemo extends StatelessWidget {
   Widget build(BuildContext context) => Column(
     children: [
       Container(
-        height: compact ? 312 : 394,
-        padding: EdgeInsets.all(compact ? 10 : 22),
+        key: step.id == 'book' ? const ValueKey('tutorial-demo-app') : null,
+        constraints: step.id == 'book'
+            ? BoxConstraints(
+                minHeight: MediaQuery.sizeOf(context).width <= 390 ? 250 : 370,
+              )
+            : BoxConstraints(minHeight: compact ? 312 : 394),
+        padding: EdgeInsets.all(
+          step.id == 'book'
+              ? (MediaQuery.sizeOf(context).width <= 390 ? 10 : 22)
+              : (compact ? 10 : 22),
+        ),
         decoration: const BoxDecoration(
           color: Color(0xFFE9EAED),
           border: Border.fromBorderSide(
@@ -718,6 +740,156 @@ class _TutorialDemo extends StatelessWidget {
   );
 }
 
+/// 원문의 교재 실습 예시다. 버튼은 실습 확인만 하며 실제 교재 진도를 쓰지 않는다.
+class _TutorialBookDemo extends StatelessWidget {
+  const _TutorialBookDemo({required this.compact, required this.onPractice});
+  final bool compact;
+  final VoidCallback onPractice;
+
+  @override
+  Widget build(BuildContext context) => Center(
+    child: ConstrainedBox(
+      constraints: BoxConstraints(
+        maxWidth: 440,
+        minHeight: _narrowMobile(context) ? 246 : 326,
+      ),
+      child: Container(
+        key: const ValueKey('tutorial-book-reader'),
+        color: Colors.white,
+        padding: EdgeInsets.all(_narrowMobile(context) ? 18 : 24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            const Row(
+              children: [
+                Expanded(
+                  child: Text(
+                    '4.2 · 원리',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      fontSize: 9,
+                      fontWeight: FontWeight.w900,
+                      color: StudentDensityTokens.muted,
+                    ),
+                  ),
+                ),
+                Spacer(),
+                Text(
+                  '02 / 05',
+                  maxLines: 1,
+                  style: TextStyle(
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                    color: StudentDensityTokens.muted,
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: _narrowMobile(context) ? 14 : 24),
+            Text(
+              '접선의 기울기',
+              style: TextStyle(
+                fontSize: _narrowMobile(context) ? 23 : 27,
+                fontWeight: FontWeight.w900,
+                letterSpacing: -(_narrowMobile(context) ? 23 : 27) * .05,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '점 P(a, f(a))에서 접선의 기울기는 f′(a)입니다.',
+              style: TextStyle(
+                fontSize: _narrowMobile(context) ? 11 : 12,
+                height: 1.65,
+                color: StudentDensityTokens.muted,
+              ),
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: EdgeInsets.all(_narrowMobile(context) ? 14 : 20),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(color: StudentDensityTokens.line),
+                  bottom: BorderSide(color: StudentDensityTokens.line),
+                ),
+              ),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Math.tex(
+                  r"f'(a)=\lim \Delta y / \Delta x",
+                  textStyle: TextStyle(
+                    fontSize: _narrowMobile(context) ? 18 : 20,
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(height: _narrowMobile(context) ? 0 : 10),
+            _buildBookFooter(context),
+          ],
+        ),
+      ),
+    ),
+  );
+
+  bool _narrowMobile(BuildContext context) =>
+      compact && MediaQuery.sizeOf(context).width <= 390;
+
+  Widget _buildBookFooter(BuildContext context) {
+    final enlarged = MediaQuery.textScalerOf(context).scale(10) >= 20;
+    final backButton = SizedBox(
+      width: 48,
+      height: 48,
+      child: OutlinedButton(
+        // 원문 이전 예시에는 연결 동작이 없다. 무반응 활성 버튼으로 위장하지 않는다.
+        onPressed: null,
+        style: OutlinedButton.styleFrom(
+          padding: EdgeInsets.zero,
+          shape: const RoundedRectangleBorder(),
+        ),
+        child: const Icon(Icons.chevron_left, size: 17),
+      ),
+    );
+    final nextButton = FilledButton(
+      key: const ValueKey('tutorial-practice-book'),
+      onPressed: onPractice,
+      style: FilledButton.styleFrom(
+        minimumSize: const Size(48, 48),
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        backgroundColor: StudentDensityTokens.dark,
+        foregroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(),
+      ),
+      child: const Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Text(
+            '다음 페이지',
+            style: TextStyle(fontSize: 10, fontWeight: FontWeight.w900),
+          ),
+          SizedBox(width: 10),
+          Icon(Icons.arrow_forward, size: 17),
+        ],
+      ),
+    );
+    if (enlarged) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Align(alignment: Alignment.centerLeft, child: backButton),
+          const SizedBox(height: 8),
+          nextButton,
+        ],
+      );
+    }
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [backButton, nextButton],
+    );
+  }
+}
+
 class _DemoContent extends StatelessWidget {
   const _DemoContent({
     required this.compact,
@@ -731,6 +903,9 @@ class _DemoContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (step.id == 'book') {
+      return _TutorialBookDemo(compact: compact, onPractice: onPractice);
+    }
     final barTitle = switch (step.id) {
       'home' => '오늘 학습',
       'course' => '미적분 핵심 완성',
@@ -766,19 +941,21 @@ class _DemoContent extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         Container(
-          height: 44,
+          constraints: const BoxConstraints(minHeight: 44),
           color: StudentDensityTokens.surface,
           padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Row(
             children: [
-              Text(
-                barTitle,
-                style: const TextStyle(
-                  fontSize: 11,
-                  fontWeight: FontWeight.w900,
+              Expanded(
+                child: Text(
+                  barTitle,
+                  style: const TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.w900,
+                  ),
                 ),
               ),
-              const Spacer(),
+              const SizedBox(width: 8),
               Text(
                 barDetail,
                 style: const TextStyle(
