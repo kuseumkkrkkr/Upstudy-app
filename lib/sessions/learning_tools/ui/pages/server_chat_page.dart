@@ -13,7 +13,6 @@ import 'package:s11/shared/ui/student_density/student_density.dart';
 import 'package:s11/shared/ui/student_density/student_html_shell.dart';
 
 const int _maxInputChars = 250;
-
 const _atlasBubbleTextStyle = TextStyle(
   fontSize: 13,
   height: 1.45,
@@ -26,12 +25,14 @@ class ServerChatPage extends StatefulWidget {
     super.key,
     this.initialContext,
     this.initialMode,
+    this.initialPrompt,
     this.ephemeral = false,
     this.standalone = false,
   });
 
   final Map<String, dynamic>? initialContext;
   final String? initialMode;
+  final String? initialPrompt;
   final bool ephemeral;
 
   /// `/tools`에서는 전체 페이지, 문제 풀이에서는 기존 오버레이 모달로 표시한다.
@@ -44,23 +45,29 @@ class ServerChatPage extends StatefulWidget {
 }
 
 class _ChatMessage {
-  const _ChatMessage({required this.text, required this.isUser});
+  const _ChatMessage({
+    required this.text,
+    required this.isUser,
+    this.isError = false,
+    this.onRetry,
+  });
 
   final String text;
   final bool isUser;
+  final bool isError;
+  final VoidCallback? onRetry;
 }
 
 class _ServerChatPageState extends State<ServerChatPage> {
   final TextEditingController _controller = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   final List<_ChatMessage> _messages = <_ChatMessage>[];
-
   final TutorHistory _history = TutorHistory();
   int _conversationEpoch = 0;
   bool _contextValid = true;
 
-  bool _attachLearningContext = false;
   bool _sending = false;
+  bool _attachLearningContext = false;
   DateTime? _blockedUntil;
   Timer? _blockTimer;
 
@@ -85,6 +92,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   void initState() {
     super.initState();
     ApiClient.instance.sessionChanges.addListener(_discardConversation);
+    _controller.text = widget.initialPrompt ?? '';
     _messages.add(
       _ChatMessage(
         text: widget.initialContext == null
@@ -115,9 +123,9 @@ class _ServerChatPageState extends State<ServerChatPage> {
     _controller.clear();
     setState(() {
       _contextValid = false;
-      _attachLearningContext = false;
       _sending = false;
       _blockedUntil = null;
+      _attachLearningContext = false;
       _messages
         ..clear()
         ..add(const _ChatMessage(text: '로그인 상태가 바뀌었습니다. 새 대화를 시작해 주세요.', isUser: false));
@@ -135,7 +143,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 작동 원리: 프레임 배치가 끝난 뒤 최신 메시지까지 부드럽게 이동한다.
   void _scrollToBottom() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (!_scrollController.hasClients) return;
+      if (!mounted || !_scrollController.hasClients) return;
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
         duration: const Duration(milliseconds: 220),
@@ -149,6 +157,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   Future<void> _send({
     String? overrideText,
     bool includeUserData = false,
+    bool retry = false,
   }) async {
     final text = (overrideText ?? _controller.text).trim();
     if (text.isEmpty || !_canSend) return;
@@ -156,27 +165,42 @@ class _ServerChatPageState extends State<ServerChatPage> {
       _showError('입력은 $_maxInputChars자까지만 가능합니다.');
       return;
     }
-
     final epoch = _conversationEpoch;
+    final api = ApiClient.instance;
+
     setState(() {
       _sending = true;
-      _messages.add(_ChatMessage(text: text, isUser: true));
+      if (retry && _messages.isNotEmpty && _messages.last.isError)
+        _messages.removeLast();
+      if (!retry) _messages.add(_ChatMessage(text: text, isUser: true));
       if (overrideText == null) _controller.clear();
     });
     _scrollToBottom();
 
     try {
-      final response = await ApiClient.instance.sendServerChatMessage(
+      final scope = await api.requireSessionScope();
+      if (!mounted || epoch != _conversationEpoch) return;
+      final response = await api.sendServerChatMessage(
         message: text,
-        mode: widget.initialMode == 'socratic' ? 'socratic' : widget.initialMode == 'problem' ? 'problem' : 'chat',
+        mode: widget.initialMode == 'socratic'
+            ? 'socratic'
+            : widget.initialMode == 'problem'
+            ? 'problem'
+            : 'chat',
         ephemeral: widget.ephemeral,
         includeUserData: includeUserData,
         questTitle: _questTitle,
         flow: _flow,
         history: _history.snapshot,
-        graphContext: _contextValid ? List<Map<String, dynamic>>.from(widget.initialContext?['graph_context'] ?? const []) : const [],
+        graphContext: _contextValid
+            ? List<Map<String, dynamic>>.from(widget.initialContext?['graph_context'] ?? const [])
+            : const [],
+        expectedScope: scope,
       );
-      if (!mounted || epoch != _conversationEpoch) return;
+      if (!mounted || epoch != _conversationEpoch || !api.isCurrentSessionScope(scope)) return;
+      if (response.assistantMessage.trim().isEmpty) {
+        throw ApiException(statusCode: 502, message: 'Empty AI response');
+      }
       _history.rememberExchange(text, response.assistantMessage);
       setState(() {
         _messages.add(
@@ -188,8 +212,24 @@ class _ServerChatPageState extends State<ServerChatPage> {
       if (!mounted || epoch != _conversationEpoch) return;
       _applyRateBlock(error);
       final message = _friendlyError(error);
+      final retryable =
+          error is! ApiException ||
+          error.statusCode == 408 ||
+          error.statusCode == 429 ||
+          error.statusCode >= 500;
       setState(() {
-        _messages.add(_ChatMessage(text: message, isUser: false));
+        _messages.add(
+          _ChatMessage(
+            text: message,
+            isUser: false,
+            isError: true,
+            onRetry: retryable ? () {
+              if (epoch == _conversationEpoch) {
+                unawaited(_send(overrideText: text, includeUserData: includeUserData, retry: true));
+              }
+            } : null,
+          ),
+        );
       });
       _scrollToBottom();
     } finally {
@@ -198,15 +238,12 @@ class _ServerChatPageState extends State<ServerChatPage> {
   }
 
   /// 필요한 변수는 빈 화면 또는 추천 칩이 전달한 질문이다.
-  /// 작동 원리: 추천 질문도 일반 입력과 같은 서버 요청 경로로 보낸다.
-  void _askFaq(String text) => _send(overrideText: text);
-
-  /// 필요한 변수는 인증된 학생의 학습 기록 접근 동의다.
-  /// 작동 원리: 현재 요청에만 `include_user_data`를 켜 맞춤형 학습 상담을 요청한다.
-  void _askWithMyData() {
-    _send(
-      overrideText: '내 학습 현황을 바탕으로 지금 무엇을 먼저 공부하면 좋을지 짧게 상담해줘.',
-      includeUserData: true,
+  /// 작동 원리: 추천은 입력만 채우며 사용자가 보내기를 눌러야 전송한다.
+  void _askFaq(String text) {
+    if (!_canSend) return;
+    _controller.value = TextEditingValue(
+      text: text,
+      selection: TextSelection.collapsed(offset: text.length),
     );
   }
 
@@ -217,12 +254,13 @@ class _ServerChatPageState extends State<ServerChatPage> {
     final retryAfter =
         error.retryAfterSeconds ??
         (error.message.contains('너무 짧습니다') ? 30 : null);
-    if (retryAfter == null || retryAfter <= 0 || retryAfter > 60) return;
+    if (retryAfter == null || retryAfter <= 0) return;
+    final seconds = retryAfter.clamp(1, 3600).toInt();
     _blockTimer?.cancel();
     setState(() {
-      _blockedUntil = DateTime.now().add(Duration(seconds: retryAfter));
+      _blockedUntil = DateTime.now().add(Duration(seconds: seconds));
     });
-    _blockTimer = Timer(Duration(seconds: retryAfter), () {
+    _blockTimer = Timer(Duration(seconds: seconds), () {
       if (!mounted) return;
       setState(() => _blockedUntil = null);
     });
@@ -231,6 +269,9 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 필요한 변수는 API 또는 네트워크 오류다.
   /// 작동 원리: 서버 내부 표현을 숨기고 학생이 바로 대응할 수 있는 짧은 한국어 안내로 바꾼다.
   String _friendlyError(Object error) {
+    if (error is ApiException && error.statusCode == 429) {
+      return '요청이 많아요. 잠시 후 다시 시도해 주세요.';
+    }
     if (error is ApiException && error.statusCode == 400) {
       return '질문 내용을 조금 더 구체적으로 입력해 주세요.';
     }
@@ -267,27 +308,35 @@ class _ServerChatPageState extends State<ServerChatPage> {
   /// 작동 원리: 모바일은 화면 전체를, 데스크톱은 중앙의 넓은 한 열을 사용해 대화에 집중한다.
   Widget _buildStandalone(BuildContext context) {
     final mobile = isStudentDensityMobile(context);
-    final wide = MediaQuery.sizeOf(context).width > StudentDensityTokens.desktopBreakpoint;
-    return ColoredBox(color: StudentDensityTokens.background,
-      child: Padding(padding: EdgeInsets.only(right: wide ? 244 : 0),
-        child: StudentHtmlShell(
-          key: const ValueKey('server-chat-page'), title: 'AI 학습 튜터',
-          activeRoute: '/tools', railWidth: 84, includeHeader: false,
-          child: Column(children: [
-            _TutorStandaloneHeader(mobile: mobile, onBack: _close,
-              onSearch: () => showStudentQuickSearch(context),
-              onNotifications: () => showStudentNotifications(context)),
-            Expanded(child: _AtlasConversation(messages: _messages, sending: _sending,
-              blocked: _inputBlocked, controller: _controller, scrollController: _scrollController,
-              onSend: () => _send(includeUserData: _attachLearningContext),
-              contextAttached: _attachLearningContext,
-              onContext: _canSend ? () => setState(() => _attachLearningContext = !_attachLearningContext) : null)),
-          ]),
-        ),
+    return StudentHtmlShell(
+      key: const ValueKey('server-chat-page'),
+      title: 'AI 학습 튜터',
+      activeRoute: '/tools',
+      railWidth: 84,
+      mobileBackButton: true,
+      onMenu: () => Navigator.of(context).maybePop(),
+      reserveContextTrack: !mobile,
+      onSearch: () => showStudentQuickSearch(context),
+      onNotifications: () => showStudentNotifications(context),
+      child: _AtlasConversation(
+        messages: _messages,
+        sending: _sending,
+        blocked: _inputBlocked,
+        controller: _controller,
+        scrollController: _scrollController,
+        onSend: () => _send(includeUserData: _attachLearningContext),
+        contextAttached: _attachLearningContext,
+        onContext: _canSend
+            ? () => setState(
+                () => _attachLearningContext = !_attachLearningContext,
+              )
+            : null,
       ),
     );
   }
 
+  /// 필요한 변수는 모달이 열린 화면 크기와 닫기 콜백이다.
+  /// 작동 원리: 기존 문제 풀이 화면을 가린 채 최대 920×820 크기의 반응형 챗봇 패널을 중앙에 띄운다.
   Widget _buildOverlay(BuildContext context) {
     final size = MediaQuery.sizeOf(context);
     final compact = size.width <= StudentDensityTokens.mobileBreakpoint;
@@ -347,6 +396,7 @@ class _ServerChatPageState extends State<ServerChatPage> {
   }
 }
 
+/// 전용 튜터 화면만 HTML conversation 구조로 조립한다. 문제 풀이 모달은 기존 패널을 유지한다.
 class _AtlasConversation extends StatelessWidget {
   const _AtlasConversation({
     required this.messages,
@@ -387,13 +437,15 @@ class _AtlasConversation extends StatelessWidget {
                   const Center(
                     child: Text(
                       '오늘',
-                      style: TextStyle(fontSize: 10, height: 1.52, color: Color(0xFF71717A)),
+                      style: TextStyle(fontSize: 10, color: Color(0xFF77777D)),
                     ),
                   ),
                   const SizedBox(height: 12),
                   for (final message in messages)
-                    _AtlasBubble(
+                    _MessageBubble(
                       message: message,
+                      atlas: true,
+                      retryEnabled: enabled,
                     ),
                   if (messages.length == 1)
                     Align(
@@ -408,7 +460,7 @@ class _AtlasConversation extends StatelessWidget {
                                 '제안',
                                 style: TextStyle(
                                   fontSize: 9,
-                                  color: Color(0xFF71717A),
+                                  color: Color(0xFF77777D),
                                 ),
                               ),
                             ),
@@ -457,7 +509,7 @@ class _AtlasConversation extends StatelessWidget {
                                         MaterialTapTargetSize.shrinkWrap,
                                     shape: const RoundedRectangleBorder(),
                                     side: const BorderSide(
-                                      color: Color(0x1A09090B),
+                                      color: Color(0xFFE1E1E4),
                                     ),
                                     foregroundColor: const Color(0xFF09090B),
                                     textStyle: Theme.of(context)
@@ -476,7 +528,7 @@ class _AtlasConversation extends StatelessWidget {
                   if (sending)
                     const Text(
                       '답변을 작성하고 있어요.',
-                      style: TextStyle(fontSize: 12, color: Color(0xFF71717A)),
+                      style: TextStyle(fontSize: 12, color: Color(0xFF77777D)),
                     ),
                 ],
               ),
@@ -486,7 +538,7 @@ class _AtlasConversation extends StatelessWidget {
               key: const ValueKey('tutor-html-composer'),
               padding: const EdgeInsets.all(7),
               decoration: BoxDecoration(
-                border: Border.all(color: const Color(0x1A09090B)),
+                border: Border.all(color: const Color(0xFFE1E1E4)),
               ),
               child: Row(
                 children: [
@@ -554,7 +606,7 @@ class _AtlasConversation extends StatelessWidget {
                       ),
                       child: Text(
                         sending ? '대기' : '보내기',
-                        style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w900),
+                        style: const TextStyle(fontWeight: FontWeight.w900),
                       ),
                     ),
                   ),
@@ -565,49 +617,6 @@ class _AtlasConversation extends StatelessWidget {
         ),
       ),
     );
-  }
-}
-
-
-/// Reference header with keyboard-accessible square controls (mobile >=44px).
-class _TutorStandaloneHeader extends StatelessWidget {
-  const _TutorStandaloneHeader({required this.mobile, required this.onBack, required this.onSearch, required this.onNotifications});
-  final bool mobile;
-  final VoidCallback onBack, onSearch, onNotifications;
-  Widget button(String name, IconData icon, VoidCallback action, {double size = 48}) =>
-    SizedBox.square(dimension: size, child: IconButton(tooltip: name, onPressed: action,
-      style: IconButton.styleFrom(shape: const RoundedRectangleBorder(),
-        side: const BorderSide(color: Color(0x1A09090B)), foregroundColor: const Color(0xFF09090B)),
-      icon: Icon(icon, size: 20)));
-  @override
-  Widget build(BuildContext context) => Container(height: mobile ? 64 : 62,
-    padding: EdgeInsets.symmetric(horizontal: mobile ? 12 : 22),
-    decoration: const BoxDecoration(color: Color(0xFFFDFDFE),border: Border(bottom: BorderSide(color: Color(0x1A09090B)))),
-    child: Row(children: [button('뒤로가기', Icons.chevron_left, onBack, size: 44), const SizedBox(width: 12),
-      const Expanded(child: Text('AI 학습 튜터', style: TextStyle(fontSize: 16,fontWeight: FontWeight.w800))),
-      button('검색',Icons.search,onSearch), const SizedBox(width: 7), button('알림',Icons.notifications_none,onNotifications)]));
-}
-
-class _AtlasBubble extends StatelessWidget {
-  const _AtlasBubble({required this.message});
-  final _ChatMessage message;
-  @override
-  Widget build(BuildContext context) {
-    final mine=message.isUser;
-    final color=mine ? Colors.white : const Color(0xFF09090B);
-    return LayoutBuilder(builder:(context, constraints)=>Align(
-      alignment:mine ? Alignment.centerRight : Alignment.centerLeft,
-      child:ConstrainedBox(constraints:BoxConstraints(maxWidth:constraints.maxWidth*(isStudentDensityMobile(context) ? .88 : .76)),
-        child:Padding(padding:const EdgeInsets.only(bottom:12),child:Column(
-          crossAxisAlignment:mine?CrossAxisAlignment.end:CrossAxisAlignment.start,
-          children:[Text(mine?'나':'튜터',style:const TextStyle(fontSize:9,color:Color(0xFF71717A))),const SizedBox(height:5),
-            Container(padding:const EdgeInsets.symmetric(horizontal:16,vertical:14),
-              decoration:BoxDecoration(color:mine?const Color(0xFF09090B):const Color(0xFFF3F3F5),
-                border:Border.all(color:mine?const Color(0xFF09090B):const Color(0x1A09090B))),
-              child:RichText(textScaler:MediaQuery.textScalerOf(context),text:TextSpan(
-                style:_atlasBubbleTextStyle.copyWith(color:color,fontFamily:Theme.of(context).textTheme.bodyMedium?.fontFamily),
-                children:_MessageBubble(message:message)._spans(context,color)))),
-          ])))));
   }
 }
 
@@ -668,7 +677,10 @@ class _ConversationPanel extends StatelessWidget {
                     if (sending && index == messages.length) {
                       return const _ThinkingBubble();
                     }
-                    return _MessageBubble(message: messages[index]);
+                    return _MessageBubble(
+                      message: messages[index],
+                      retryEnabled: !sending && !blocked,
+                    );
                   },
                 ),
             ],
@@ -1079,9 +1091,17 @@ class _PromptCard extends StatelessWidget {
 }
 
 class _MessageBubble extends StatelessWidget {
-  const _MessageBubble({required this.message});
+  const _MessageBubble({
+    required this.message,
+    this.atlas = false,
+    this.label,
+    this.retryEnabled = true,
+  });
 
   final _ChatMessage message;
+  final bool atlas;
+  final String? label;
+  final bool retryEnabled;
 
   /// 필요한 변수는 메시지 본문과 말풍선 글자색이다.
   /// 작동 원리: `$$...$$` 구간만 LaTeX 위젯으로 치환하고 나머지는 원문 줄바꿈을 보존한다.
@@ -1121,7 +1141,113 @@ class _MessageBubble extends StatelessWidget {
   /// 작동 원리: 레퍼런스처럼 학생은 검은 오른쪽, 튜터는 연회색 왼쪽 말풍선으로만 구분한다.
   @override
   Widget build(BuildContext context) {
+    if (message.isError) {
+      return Semantics(
+        liveRegion: true,
+        label: '메시지 전송 실패',
+        child: Container(
+          key: const ValueKey('tutor-send-error'),
+          margin: const EdgeInsets.only(bottom: 12),
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: const Color(0xFFFDFDFE),
+            border: Border.all(color: const Color(0xFFB42318)),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '전송 실패',
+                style: TextStyle(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFFB42318),
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                message.text,
+                style: const TextStyle(fontSize: 12, height: 1.45),
+              ),
+              if (message.onRetry != null)
+                TextButton(
+                  key: const ValueKey('tutor-retry-send'),
+                  onPressed: retryEnabled ? message.onRetry : null,
+                  child: const Text('다시 전송'),
+                ),
+            ],
+          ),
+        ),
+      );
+    }
     final isUser = message.isUser;
+    if (atlas) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          return Align(
+            alignment: isUser ? Alignment.centerRight : Alignment.centerLeft,
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                maxWidth:
+                    constraints.maxWidth *
+                    (isStudentDensityMobile(context) ? .88 : .76),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: Column(
+                  crossAxisAlignment: isUser
+                      ? CrossAxisAlignment.end
+                      : CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      label ?? (isUser ? '나' : '튜터'),
+                      style: const TextStyle(
+                        fontSize: 9,
+                        color: Color(0xFF77777D),
+                      ),
+                    ),
+                    const SizedBox(height: 5),
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 14,
+                      ),
+                      decoration: BoxDecoration(
+                        color: isUser
+                            ? const Color(0xFF09090B)
+                            : const Color(0xFFF3F3F5),
+                        border: Border.all(
+                          color: isUser
+                              ? const Color(0xFF09090B)
+                              : const Color(0xFFE1E1E4),
+                        ),
+                      ),
+                      child: RichText(
+                        textScaler: MediaQuery.textScalerOf(context),
+                        text: TextSpan(
+                          style: _atlasBubbleTextStyle.copyWith(
+                            fontFamily: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.fontFamily,
+                            color: isUser
+                                ? Colors.white
+                                : const Color(0xFF09090B),
+                          ),
+                          children: _spans(
+                            context,
+                            isUser ? Colors.white : const Color(0xFF09090B),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          );
+        },
+      );
+    }
     final bubbleColor = isUser
         ? StudentDensityTokens.darkSecondary
         : const Color(0xFFF3F3F5);
@@ -1140,8 +1266,10 @@ class _MessageBubble extends StatelessWidget {
         ),
       ),
       child: RichText(
+        textScaler: MediaQuery.textScalerOf(context),
         text: TextSpan(
           style: TextStyle(
+            fontFamily: Theme.of(context).textTheme.bodyMedium?.fontFamily,
             color: textColor,
             fontSize: 14,
             height: 1.5,

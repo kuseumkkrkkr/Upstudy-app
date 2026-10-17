@@ -9,6 +9,8 @@ import 'package:flutter/scheduler.dart';
 import 'package:s11/shared/data/models/content_block.dart';
 import 'package:s11/shared/ui/components/content_blocks_view.dart';
 import 'package:s11/shared/data/models/textbook.dart';
+import 'package:s11/shared/data/models/concept_textbooks.dart';
+import 'package:s11/shared/services/api/student_facing_api_error.dart';
 import 'package:s11/shared/business/repositories/activity_store.dart';
 import 'package:s11/shared/services/api/api_client.dart';
 import 'package:s11/shared/business/repositories/bookmark_store.dart';
@@ -107,11 +109,21 @@ class BookWidget extends StatefulWidget {
     this.book,
     this.initialEntryIndex,
     this.persistenceEnabled = true,
+    this.bookLoader,
   });
 
   final BookData? book;
   final int? initialEntryIndex;
   final bool persistenceEnabled;
+
+  /// 검사에서만 조회를 대체할 수 있다. 기본 경로는 기존 TextbookStore다.
+  final Future<BookData?> Function(String bookId)? bookLoader;
+
+  /// 공개 예외는 실제 배포된 내장 객체만 허용한다. 이름/ID 문자열만 믿지 않는다.
+  static bool isBuiltInPublicBook(BookData? book) =>
+      book != null &&
+      (identical(book, kAllConceptBook) ||
+          kConceptTextbooks.values.any((entry) => identical(entry, book)));
 
   static String routeName = 'book';
   static String routePath = '/book';
@@ -1441,7 +1453,17 @@ class _BookWidgetState extends State<BookWidget> {
 
   final ScrollController _tocController = ScrollController();
   final ScrollController _contentController = ScrollController();
-  final PageController _readerPageController = PageController();
+  late final PageController _readerPageController = PageController(
+    keepPage: false,
+    onAttach: (_) {
+      // Responsive shells remount the viewport. Restore the authoritative
+      // reading index instead of PageStorage's old offset / initial page zero.
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || _readerPageController.positions.length != 1) return;
+        _readerPageController.jumpToPage(_activeReaderPageIndex);
+      });
+    },
+  );
   final GlobalKey _listViewKey = GlobalKey();
   double _averageItemHeight = 400;
   final ValueNotifier<int> _paintVersion = ValueNotifier<int>(0);
@@ -1460,7 +1482,16 @@ class _BookWidgetState extends State<BookWidget> {
     false,
   );
   bool _loadingFullBook = false;
+  String? _bookLoadError;
+  bool _emptyFullBook = false;
+  int _bookLoadEpoch = 0;
+  ApiSessionScope? _readerScope;
+  bool _bindingReaderScope = false;
+  bool _sessionInvalidated = false;
+  String? _readerStorageError;
+  bool get _publicConcept => BookWidget.isBuiltInPublicBook(_currentBook);
   bool _pageMode = true;
+  double _readerFontScale = 1;
   String _currentBookId = '';
   String _currentBookTitle = '';
   BookData? _currentBook;
@@ -1491,10 +1522,10 @@ class _BookWidgetState extends State<BookWidget> {
   @override
   void initState() {
     super.initState();
+    ApiClient.instance.sessionChanges.addListener(_onReaderSessionChanged);
     ApiClient.instance.sessionChanges.addListener(_clearActivityState);
     _initializeIfNeeded(attachListeners: true);
-    if (widget.persistenceEnabled) {
-      _loadBookmarks();
+    if (widget.persistenceEnabled && _currentBook != null) {
       _loadReaderPreference();
     }
   }
@@ -1511,11 +1542,15 @@ class _BookWidgetState extends State<BookWidget> {
     final bookChanged = widget.book != oldWidget.book;
     final entryChanged =
         widget.initialEntryIndex != oldWidget.initialEntryIndex;
+    if (_sessionInvalidated && !bookChanged) return;
     if (bookChanged || entryChanged) {
       if (bookChanged) { _activityKeys.clear(); _activityStates.clear(); }
       _annotationSaveTimer?.cancel();
       unawaited(_persistAnnotations());
       _initialized = false;
+      _sessionInvalidated = false;
+      _readerScope = null;
+      _readerStorageError = null;
       _sectionOffsets = <double>[];
       _activeEntryIndex = 0;
       _activeReaderPageIndex = 0;
@@ -1530,12 +1565,12 @@ class _BookWidgetState extends State<BookWidget> {
         if (_contentController.hasClients) _contentController.jumpTo(0);
         _initializeIfNeeded();
       });
-      if (widget.persistenceEnabled) _loadBookmarks();
     }
   }
 
   @override
   void dispose() {
+    ApiClient.instance.sessionChanges.removeListener(_onReaderSessionChanged);
     ApiClient.instance.sessionChanges.removeListener(_clearActivityState);
     _annotationSaveTimer?.cancel();
     _scrollThrottleTimer?.cancel();
@@ -1553,6 +1588,80 @@ class _BookWidgetState extends State<BookWidget> {
 
   bool get _canPersistAnnotations => widget.persistenceEnabled && !kIsWeb;
 
+  /// 계정 변경은 동기적으로 개인 본문/필기를 제거한다. 로그아웃 때 저장/삭제하지 않는다.
+  void _onReaderSessionChanged() {
+    if (!mounted) return;
+    final keepPublic = _publicConcept;
+    _annotationSaveTimer?.cancel();
+    _scrollThrottleTimer?.cancel();
+    setState(() {
+      ++_bookLoadEpoch;
+      _readerScope = null;
+      _bindingReaderScope = false;
+      _loadingFullBook = false;
+      _strokes.clear();
+      _currentStroke = null;
+      _bookmarks = <BookmarkItem>[];
+      _readerStorageError = null;
+      _activePointer = null;
+      _eraserPosition = null;
+      _highlighterStart = null;
+      _toolMode = _ToolMode.none;
+      if (!keepPublic) {
+        _sessionInvalidated = true;
+        _initialized = true;
+        _currentBook = null;
+        _currentBookId = '';
+        _currentBookTitle = '';
+        _chapters = const [];
+        _contentEntries = const [];
+        _readerPagesCache = const [];
+        _chapterExpanded = const [];
+        _sectionKeys = const [];
+        _sectionOffsets = [];
+        _bookLoadError = '로그인 상태가 바뀌었어요. 화면을 다시 열어 주세요.';
+      }
+    });
+    _paintVersion.value++;
+    if (keepPublic && ApiClient.instance.hasAuthenticatedSession)
+      unawaited(_bindReaderSession());
+  }
+
+  Future<void> _bindReaderSession() async {
+    final book = _currentBook;
+    if (book == null || _sessionInvalidated) return;
+    final epoch = _bookLoadEpoch;
+    if (_publicConcept && !ApiClient.instance.hasAuthenticatedSession) return;
+    if (!_publicConcept) setState(() => _bindingReaderScope = true);
+    try {
+      final scope = await ApiClient.instance.requireSessionScope();
+      if (!mounted || epoch != _bookLoadEpoch || !identical(_currentBook, book))
+        return;
+      ApiClient.instance.assertSessionScope(scope);
+      _readerScope = scope;
+      if (widget.persistenceEnabled) {
+        _recordBookView(book);
+        await _loadBookmarks();
+        await _loadAnnotations();
+      }
+    } catch (error) {
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(() {
+          final notice = studentFacingApiError(
+            error,
+            fallback: '교재 저장 정보를 불러오지 못했습니다.',
+          );
+          if (_readerScope == null && !_publicConcept)
+            _bookLoadError = notice;
+          else
+            _readerStorageError = notice;
+        });
+    } finally {
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(() => _bindingReaderScope = false);
+    }
+  }
+
   bool get _isDrawingTool => _toolMode != _ToolMode.none;
 
   Color get _activeInkColor =>
@@ -1568,8 +1677,9 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Future<void> _loadReaderPreference() async {
+    final epoch = _bookLoadEpoch;
     final enabled = await TextbookReaderPreferences.loadPageMode();
-    if (!mounted) return;
+    if (!mounted || epoch != _bookLoadEpoch || _sessionInvalidated) return;
     setState(() {
       _pageMode = enabled;
       if (enabled) _syncReaderPageToActiveEntry();
@@ -1583,6 +1693,9 @@ class _BookWidgetState extends State<BookWidget> {
 
   Future<void> _setPageMode(bool value) async {
     if (_pageMode == value) return;
+    if (_sessionInvalidated) return;
+    final epoch = _bookLoadEpoch;
+    final previous = _pageMode;
     setState(() {
       _pageMode = value;
       _toolMode = _ToolMode.none;
@@ -1590,7 +1703,16 @@ class _BookWidgetState extends State<BookWidget> {
         _syncReaderPageToActiveEntry(jump: true);
       }
     });
-    await TextbookReaderPreferences.savePageMode(value);
+    if (!widget.persistenceEnabled) return;
+    try {
+      await TextbookReaderPreferences.savePageMode(value);
+    } catch (_) {
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(() {
+          _pageMode = previous;
+          _readerStorageError = '보기 설정을 저장하지 못했습니다. 다시 시도해 주세요.';
+        });
+    }
   }
 
   void _bumpPaint() {
@@ -1616,11 +1738,21 @@ class _BookWidgetState extends State<BookWidget> {
 
   void _initializeIfNeeded({bool attachListeners = false}) {
     if (!_initialized) {
-      final book = widget.book ?? TextbookStore.cachedBooks.first;
+      ++_bookLoadEpoch;
+      _loadingFullBook = false;
+      _bookLoadError = null;
+      _emptyFullBook = false;
+      final book = widget.book;
+      if (book == null) {
+        _currentBook = null;
+        _currentBookId = '';
+        _currentBookTitle = '';
+        _initialized = true;
+        return;
+      }
       _currentBook = book;
       _currentBookId = book.id;
       _currentBookTitle = book.title;
-      if (widget.persistenceEnabled) _recordBookView(book);
       _chapters = book.chapters;
       _contentEntries = _buildContentEntries(_chapters);
       _rebuildReaderPages();
@@ -1633,11 +1765,14 @@ class _BookWidgetState extends State<BookWidget> {
       _chapterExpanded = List<bool>.filled(_chapters.length, false);
       _pendingInitialEntryIndex ??= widget.initialEntryIndex;
       _initialized = true;
-      if (widget.persistenceEnabled) {
-        _loadAnnotations();
-        _ensureFullBookLoaded();
-      }
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted) return;
+        unawaited(_bindReaderSession());
+        if (widget.persistenceEnabled || widget.bookLoader != null) {
+          unawaited(_prepareFullBook());
+        } else if (book.chapters.isEmpty) {
+          setState(() => _emptyFullBook = true);
+        }
         _cacheSectionOffsets();
         _applyInitialScroll();
         if (_pageMode) _syncReaderPageToActiveEntry(jump: true);
@@ -1647,6 +1782,11 @@ class _BookWidgetState extends State<BookWidget> {
       _contentController.addListener(_handleContentScroll);
       _contentListenerAttached = true;
     }
+  }
+
+  /// 초기 프레임 이후 조회를 await한다. 예외 표시는 조회 메서드가 소유한다.
+  Future<void> _prepareFullBook() async {
+    await _ensureFullBookLoaded();
   }
 
   void _recordBookView(BookData book) {
@@ -1708,12 +1848,40 @@ class _BookWidgetState extends State<BookWidget> {
     if (_loadingFullBook) return;
     final book = _currentBook;
     if (book == null || book.chapters.isNotEmpty) return;
-    if (book.id.trim().isEmpty) return;
-    _loadingFullBook = true;
+    if (book.id.trim().isEmpty) {
+      setState(
+        () =>
+            _bookLoadError = '교재 ID가 없어 본문을 불러올 수 없습니다. 책가방에서 교재를 다시 선택해 주세요.',
+      );
+      return;
+    }
+    final epoch = _bookLoadEpoch;
+    setState(() {
+      _loadingFullBook = true;
+      _bookLoadError = null;
+      _emptyFullBook = false;
+    });
     try {
-      final fetched = await TextbookStore.getById(book.id);
-      if (!mounted) return;
-      if (fetched == null || fetched.chapters.isEmpty) return;
+      final publicConcept = BookWidget.isBuiltInPublicBook(book);
+      final scope = publicConcept
+          ? null
+          : await ApiClient.instance.requireSessionScope();
+      if (!mounted || epoch != _bookLoadEpoch) return;
+      if (scope != null) ApiClient.instance.assertSessionScope(scope);
+      final fetched = await (widget.bookLoader ?? TextbookStore.getById)(
+        book.id,
+      );
+      if (!mounted || epoch != _bookLoadEpoch || !identical(_currentBook, book))
+        return;
+      if (scope != null) ApiClient.instance.assertSessionScope(scope);
+      if (fetched == null)
+        throw ApiException(statusCode: 404, message: 'Book not found');
+      if (fetched.id != book.id)
+        throw const FormatException('Book identity mismatch');
+      if (fetched.chapters.isEmpty) {
+        setState(() => _emptyFullBook = true);
+        return;
+      }
       setState(() {
         _currentBook = fetched;
         _currentBookId = fetched.id;
@@ -1729,12 +1897,23 @@ class _BookWidgetState extends State<BookWidget> {
         _chapterExpanded = List<bool>.filled(_chapters.length, false);
       });
       WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (!mounted || epoch != _bookLoadEpoch) return;
         _cacheSectionOffsets();
         _applyInitialScroll();
         if (_pageMode) _syncReaderPageToActiveEntry(jump: true);
       });
+    } catch (error) {
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(
+          () => _bookLoadError = studentFacingApiError(
+            error,
+            fallback: '교재 본문을 불러오지 못했습니다.',
+            notFound: '교재를 찾을 수 없습니다. 책가방에서 다시 선택해 주세요.',
+          ),
+        );
     } finally {
-      _loadingFullBook = false;
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(() => _loadingFullBook = false);
     }
   }
 
@@ -1753,7 +1932,17 @@ class _BookWidgetState extends State<BookWidget> {
   Future<void> _loadAnnotations() async {
     if (!_canPersistAnnotations) return;
     if (_currentBookId.isEmpty) return;
-    final raw = await LocalDb.instance.getString(_annotationKey());
+    final scope = _readerScope;
+    if (scope == null) return;
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    ApiClient.instance.assertSessionScope(scope);
+    final raw = await LocalDb.instance.getString(
+      _annotationKey(),
+      scope: scope,
+    );
+    ApiClient.instance.assertSessionScope(scope);
+    if (!mounted || epoch != _bookLoadEpoch || bookId != _currentBookId) return;
     if (raw == null || raw.isEmpty) return;
     try {
       final decoded = jsonDecode(raw);
@@ -1788,13 +1977,29 @@ class _BookWidgetState extends State<BookWidget> {
   Future<void> _persistAnnotations() async {
     if (!_canPersistAnnotations) return;
     if (_currentBookId.isEmpty) return;
+    final scope = _readerScope;
+    if (scope == null || _sessionInvalidated) return;
     final key = _annotationKey();
-    if (_strokes.isEmpty) {
-      await LocalDb.instance.delete(key);
-      return;
-    }
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    final empty = _strokes.isEmpty;
     final payload = jsonEncode(_strokes.map(_strokeToJson).toList());
-    await LocalDb.instance.setString(key, payload);
+    try {
+      ApiClient.instance.assertSessionScope(scope);
+      if (empty)
+        await LocalDb.instance.delete(key, scope: scope);
+      else
+        await LocalDb.instance.setString(key, payload, scope: scope);
+      ApiClient.instance.assertSessionScope(scope);
+    } catch (error) {
+      if (mounted && epoch == _bookLoadEpoch && bookId == _currentBookId)
+        setState(
+          () => _readerStorageError = studentFacingApiError(
+            error,
+            fallback: '필기를 저장하지 못했습니다. 다시 시도해 주세요.',
+          ),
+        );
+    }
   }
 
   // 필요 변수: 필기 획의 색상·굵기·좌표. 작동 원리: 로컬 DB에 저장할 JSON 호환 맵으로 직렬화한다.
@@ -1922,8 +2127,12 @@ class _BookWidgetState extends State<BookWidget> {
   }
 
   Future<void> _loadBookmarks() async {
+    final scope = _readerScope;
+    if (scope == null) return;
+    final epoch = _bookLoadEpoch;
     final items = await BookmarkStore.load();
-    if (!mounted) return;
+    ApiClient.instance.assertSessionScope(scope);
+    if (!mounted || epoch != _bookLoadEpoch || _sessionInvalidated) return;
     setState(() => _bookmarks = items);
   }
 
@@ -1935,6 +2144,10 @@ class _BookWidgetState extends State<BookWidget> {
 
   Future<void> _handleAddBookmark() async {
     if (_contentEntries.isEmpty) return;
+    final scope = _readerScope;
+    if (scope == null || _sessionInvalidated) return;
+    final epoch = _bookLoadEpoch;
+    ApiClient.instance.assertSessionScope(scope);
     final entry = _contentEntries[_activeEntryIndex];
     final now = DateTime.now().microsecondsSinceEpoch;
     final item = BookmarkItem(
@@ -1945,12 +2158,33 @@ class _BookWidgetState extends State<BookWidget> {
       entryTitle: entry.title,
       createdAt: now,
     );
-    final updated = await BookmarkStore.add(item);
-    if (!mounted) return;
-    setState(() => _bookmarks = updated);
-    Navigator.of(
-      context,
-    ).push(MaterialPageRoute(builder: (_) => const BookmarkListPage()));
+    try {
+      final updated = await BookmarkStore.load();
+      ApiClient.instance.assertSessionScope(scope);
+      if (!mounted || epoch != _bookLoadEpoch || _sessionInvalidated) return;
+      if (!updated.any(
+        (existing) =>
+            existing.bookId == item.bookId &&
+            existing.entryIndex == item.entryIndex,
+      )) {
+        updated.insert(0, item);
+        await BookmarkStore.save(updated, scope: scope);
+      }
+      ApiClient.instance.assertSessionScope(scope);
+      if (!mounted || epoch != _bookLoadEpoch || _sessionInvalidated) return;
+      setState(() => _bookmarks = updated);
+      Navigator.of(
+        context,
+      ).push(MaterialPageRoute(builder: (_) => const BookmarkListPage()));
+    } catch (error) {
+      if (mounted && epoch == _bookLoadEpoch)
+        setState(
+          () => _readerStorageError = studentFacingApiError(
+            error,
+            fallback: '북마크를 저장하지 못했습니다. 다시 시도해 주세요.',
+          ),
+        );
+    }
   }
 
   void _handleContentScroll() {
@@ -2083,115 +2317,203 @@ class _BookWidgetState extends State<BookWidget> {
   void _completeReading() {
     if (_contentEntries.isEmpty) return;
     _scrollToEntry(_contentEntries.length - 1);
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('교재 학습 위치를 마지막까지 기록했습니다.')),
+    ScaffoldMessenger.of(
+      context,
+    ).showSnackBar(const SnackBar(content: Text('교재 학습 위치를 마지막까지 기록했습니다.')));
+  }
+
+  bool _readerOverlayCurrent(
+    int epoch,
+    String bookId,
+    ApiSessionScope? scope,
+  ) =>
+      mounted &&
+      !_sessionInvalidated &&
+      epoch == _bookLoadEpoch &&
+      bookId == _currentBookId &&
+      (scope == null
+          ? _publicConcept
+          : ApiClient.instance.isCurrentSessionScope(scope));
+
+  /// 팝업 자신의 route만 닫는다. 다른 사용자의 새 route를 부모 Navigator로 pop하지 않는다.
+  Future<T?> _showReaderBottomSheet<T>({
+    required BuildContext context,
+    bool isScrollControlled = false,
+    Color? backgroundColor,
+    ShapeBorder? shape,
+    required WidgetBuilder builder,
+  }) async {
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    final scope = _readerScope;
+    final result = await showModalBottomSheet<T>(
+      context: context,
+      isScrollControlled: isScrollControlled,
+      backgroundColor: backgroundColor,
+      shape: shape,
+      builder: (sheetContext) => ValueListenableBuilder<int>(
+        valueListenable: ApiClient.instance.sessionChanges,
+        builder: (_, __, ___) {
+          if (_readerOverlayCurrent(epoch, bookId, scope))
+            return builder(sheetContext);
+          return Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Text('로그인 상태가 바뀌어 이전 교재 창을 닫아야 합니다.'),
+                TextButton(
+                  onPressed: () {
+                    if (ModalRoute.of(sheetContext)?.isCurrent == true)
+                      Navigator.of(sheetContext).pop();
+                  },
+                  child: const Text('닫기'),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
     );
+    return _readerOverlayCurrent(epoch, bookId, scope) ? result : null;
   }
 
   Future<void> _openSearch() async {
     if (_contentEntries.isEmpty) return;
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    final scope = _readerScope;
     final controller = TextEditingController();
     var results = <_SearchResult>[];
+    void clearPrivateQuery() {
+      if (_readerOverlayCurrent(epoch, bookId, scope)) return;
+      controller.clear();
+      results = <_SearchResult>[];
+    }
 
-    await showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.white,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-      ),
-      builder: (context) {
-        return StatefulBuilder(
-          builder: (context, setState) {
-            void runSearch(String value) {
-              final query = value.trim();
-              setState(() {
-                results = query.isEmpty ? [] : _runSearch(query);
-              });
-            }
+    ApiClient.instance.sessionChanges.addListener(clearPrivateQuery);
 
-            return Padding(
-              padding: EdgeInsets.fromLTRB(
-                20,
-                16,
-                20,
-                16 + MediaQuery.of(context).viewInsets.bottom,
-              ),
-              child: SizedBox(
-                height: 420,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Search in Book',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    TextField(
-                      controller: controller,
-                      decoration: InputDecoration(
-                        hintText: 'Type keyword',
-                        prefixIcon: const Icon(Icons.search),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
+    try {
+      await _showReaderBottomSheet(
+        context: context,
+        isScrollControlled: true,
+        backgroundColor: Colors.white,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+        ),
+        builder: (context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              void runSearch(String value) {
+                if (!_readerOverlayCurrent(epoch, bookId, scope)) return;
+                final query = value.trim();
+                setState(() {
+                  results = query.isEmpty ? [] : _runSearch(query);
+                });
+              }
+
+              return Padding(
+                padding: EdgeInsets.fromLTRB(
+                  20,
+                  16,
+                  20,
+                  16 + MediaQuery.of(context).viewInsets.bottom,
+                ),
+                child: SizedBox(
+                  height: 420,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Search in Book',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      onChanged: runSearch,
-                      onSubmitted: runSearch,
-                    ),
-                    const SizedBox(height: 12),
-                    Expanded(
-                      child: results.isEmpty
-                          ? const Center(
-                              child: Text(
-                                'No results.',
-                                style: TextStyle(color: Colors.black54),
-                              ),
-                            )
-                          : ListView.builder(
-                              itemCount: results.length,
-                              itemBuilder: (context, index) {
-                                final result = results[index];
-                                return ListTile(
-                                  title: Text(
-                                    result.title,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.w600,
+                      const SizedBox(height: 12),
+                      TextField(
+                        controller: controller,
+                        decoration: InputDecoration(
+                          hintText: 'Type keyword',
+                          prefixIcon: const Icon(Icons.search),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                        ),
+                        onChanged: runSearch,
+                        onSubmitted: runSearch,
+                      ),
+                      const SizedBox(height: 12),
+                      Expanded(
+                        child: results.isEmpty
+                            ? const Center(
+                                child: Text(
+                                  'No results.',
+                                  style: TextStyle(color: Colors.black54),
+                                ),
+                              )
+                            : ListView.builder(
+                                itemCount: results.length,
+                                itemBuilder: (context, index) {
+                                  final result = results[index];
+                                  return ListTile(
+                                    title: Text(
+                                      result.title,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                     ),
-                                  ),
-                                  subtitle: Text(
-                                    result.snippet,
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                  onTap: () {
-                                    Navigator.of(context).pop();
-                                    WidgetsBinding.instance
-                                        .addPostFrameCallback((_) {
-                                          if (_pageMode) {
-                                            _jumpToReaderPageForEntry(
-                                              result.entryIndex,
-                                            );
-                                            return;
-                                          }
-                                          _scrollToEntry(result.entryIndex);
-                                        });
-                                  },
-                                );
-                              },
-                            ),
-                    ),
-                  ],
+                                    subtitle: Text(
+                                      result.snippet,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    onTap: () {
+                                      if (!_readerOverlayCurrent(
+                                            epoch,
+                                            bookId,
+                                            scope,
+                                          ) ||
+                                          ModalRoute.of(context)?.isCurrent !=
+                                              true)
+                                        return;
+                                      Navigator.of(context).pop();
+                                      WidgetsBinding.instance
+                                          .addPostFrameCallback((_) {
+                                            if (!_readerOverlayCurrent(
+                                              epoch,
+                                              bookId,
+                                              scope,
+                                            ))
+                                              return;
+                                            if (_pageMode) {
+                                              _jumpToReaderPageForEntry(
+                                                result.entryIndex,
+                                              );
+                                              return;
+                                            }
+                                            _scrollToEntry(result.entryIndex);
+                                          });
+                                    },
+                                  );
+                                },
+                              ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      ApiClient.instance.sessionChanges.removeListener(clearPrivateQuery);
+      controller.clear();
+      results = <_SearchResult>[];
+      controller.dispose();
+    }
   }
 
   List<_SearchResult> _runSearch(String query) {
@@ -2234,7 +2556,10 @@ class _BookWidgetState extends State<BookWidget> {
       _showAnnotationBlocked();
       return;
     }
-    final result = await showModalBottomSheet<_ToolSettings>(
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    final scope = _readerScope;
+    final result = await _showReaderBottomSheet<_ToolSettings>(
       context: context,
       backgroundColor: Colors.white,
       shape: const RoundedRectangleBorder(
@@ -2326,12 +2651,18 @@ class _BookWidgetState extends State<BookWidget> {
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
                       TextButton(
-                        onPressed: () => Navigator.of(context).pop(),
+                        onPressed: () {
+                          if (ModalRoute.of(context)?.isCurrent == true)
+                            Navigator.of(context).pop();
+                        },
                         child: const Text('Cancel'),
                       ),
                       const SizedBox(width: 12),
                       ElevatedButton(
                         onPressed: () {
+                          if (!_readerOverlayCurrent(epoch, bookId, scope) ||
+                              ModalRoute.of(context)?.isCurrent != true)
+                            return;
                           Navigator.of(context).pop(
                             _ToolSettings(
                               penColor: tempPenColor,
@@ -2357,7 +2688,7 @@ class _BookWidgetState extends State<BookWidget> {
       },
     );
 
-    if (!mounted || result == null) return;
+    if (!_readerOverlayCurrent(epoch, bookId, scope) || result == null) return;
     setState(() {
       _penColor = result.penColor;
       _penWidth = result.penWidth;
@@ -2496,79 +2827,15 @@ class _BookWidgetState extends State<BookWidget> {
     }));
   }
 
-  /// Attaches only the explicitly selected page.
-
-  bool _graphPageCurrent(BookData? book, int page, int generation) =>
-      mounted && identical(_currentBook, book) &&
-      _activeReaderPageIndex == page &&
-      ApiClient.instance.sessionChanges.value == generation;
-
-  void _askAboutCurrentPage() {
-    if (_readerPages.isEmpty) return;
-    final epoch = ApiClient.instance.sessionChanges.value;
-    final book = _currentBook;
-    final pageIndex = _activeReaderPageIndex;
-    if (!_graphPageCurrent(book, pageIndex, epoch)) return;
-    final page =
-        _readerPages[_activeReaderPageIndex.clamp(0, _readerPages.length - 1)];
-    final graphs = [
-      if (page.graph != null) page.graph!,
-      if (page.editorialPage != null)
-        for (final block in page.editorialPage!.blocks)
-          if (block.graph != null) block.graph!,
-    ];
-    final graphContext = <Map<String, dynamic>>[
-      if (_graphObservationEpoch == epoch && _graphObservationPage == _activeReaderPageIndex && _graphObservationBook == _currentBook)
-        for (var i = 0; i < graphs.length && i < 4; i++)
-          if (_observedGraphs[graphs[i]] case final values?)
-            graphTutorObservation(graphs[i], values, 'page-${_activeReaderPageIndex + 1}-graph-$i'),
-    ];
-    final text = [
-      '교재: $_currentBookTitle',
-      '페이지: ${page.title}',
-      ...page.paragraphs,
-      if (page.editorialPage != null)
-        ..._editorialPageSearchText(page.editorialPage!),
-      if (page.graph != null)
-        '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(page.graph!.toJson())}',
-      if (page.editorialPage != null)
-        for (final block in page.editorialPage!.blocks)
-          if (block.graph != null)
-            '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(block.graph!.toJson())}',
-    ].join('\n');
-    final excerpt = text.length <= 3700
-        ? text
-        : '${text.substring(0, 3700)}\n[현재 페이지 문맥 길이 제한으로 일부 생략]';
-    final title = '$_currentBookTitle · ${page.title}';
-    Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => ValueListenableBuilder<int>(
-          valueListenable: ApiClient.instance.sessionChanges,
-          builder: (_, __, ___) => !_graphPageCurrent(book, pageIndex, epoch)
-              ? const Scaffold(
-                  body: Center(child: Text('로그인 상태가 바뀌었습니다. 교재에서 다시 열어 주세요.')),
-                )
-              : ServerChatPage(
-                  standalone: true,
-                  ephemeral: true,
-                  initialMode: 'socratic',
-                  initialContext: {
-                    'graph_context': graphContext,
-                    'quest_title': title.length <= 500
-                        ? title
-                        : title.substring(0, 500),
-                    'answer_riddle': excerpt,
-                    'all_formulas':
-                        '교재 ID: $_currentBookId · 페이지 ${_activeReaderPageIndex + 1}',
-                  },
-                ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildReader(BuildContext context) {
     _initializeIfNeeded();
+    if (_currentBook == null ||
+        _bindingReaderScope ||
+        _loadingFullBook ||
+        _bookLoadError != null ||
+        _emptyFullBook) {
+      return _buildReaderStatus(context);
+    }
     return GestureDetector(
       onTap: () => FocusScope.of(context).unfocus(),
       child: Scaffold(
@@ -2577,6 +2844,15 @@ class _BookWidgetState extends State<BookWidget> {
           child: Column(
             children: [
               _buildHeader(context),
+              if (_readerStorageError != null)
+                Padding(
+                  padding: const EdgeInsets.all(8),
+                  child: Text(
+                    _readerStorageError!,
+                    style: const TextStyle(color: Colors.red),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
               Expanded(
                 child: LayoutBuilder(
                   builder: (context, constraints) {
@@ -2607,6 +2883,50 @@ class _BookWidgetState extends State<BookWidget> {
     );
   }
 
+  Widget _buildReaderStatus(BuildContext context) => Scaffold(
+    backgroundColor: kBg,
+    appBar: AppBar(title: const Text('교재 읽기')),
+    body: Center(
+      child: Padding(
+        padding: const EdgeInsets.all(24),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (_loadingFullBook || _bindingReaderScope)
+              const CircularProgressIndicator()
+            else
+              Text(
+                _sessionInvalidated
+                    ? '로그인 상태가 바뀌었어요. 화면을 다시 열어 주세요.'
+                    : _currentBook == null
+                    ? '읽을 교재가 선택되지 않았습니다. 책가방에서 교재를 선택해 주세요.'
+                    : _bookLoadError ?? '이 교재에는 등록된 본문이 없습니다.',
+                textAlign: TextAlign.center,
+              ),
+            if (!_loadingFullBook && !_bindingReaderScope) ...[
+              const SizedBox(height: 16),
+              if (_bookLoadError != null && !_sessionInvalidated)
+                FilledButton(
+                  onPressed: _prepareFullBook,
+                  child: const Text('다시 시도'),
+                ),
+              TextButton(
+                onPressed: () =>
+                    Navigator.of(context).pushReplacementNamed('/bookbag'),
+                child: const Text('책가방에서 선택'),
+              ),
+              if (_bookLoadError != null)
+                TextButton(
+                  onPressed: () => Navigator.of(context).pushNamed('/login'),
+                  child: const Text('로그인 확인'),
+                ),
+            ],
+          ],
+        ),
+      ),
+    ),
+  );
+
   /// 필요한 변수는 현재 페이지·전체 페이지 수와 목차 항목이다.
   /// 작동 원리: 모바일에서는 사이드바를 숨기되 하단에 진행률과 목차 진입점을 고정해
   /// 읽는 중에도 페이지 이동과 장 선택을 잃지 않게 한다.
@@ -2617,60 +2937,110 @@ class _BookWidgetState extends State<BookWidget> {
         : (_pageMode ? _activeReaderPageIndex + 1 : _activeEntryIndex + 1)
               .clamp(1, total);
     final progress = total == 0 ? 0.0 : current / total;
-
+    final entry = _contentEntries.isEmpty
+        ? null
+        : _contentEntries[_activeEntryIndex.clamp(
+            0,
+            _contentEntries.length - 1,
+          )];
+    final section = entry?.editorialPage?.kicker.trim().isNotEmpty == true
+        ? entry!.editorialPage!.kicker
+        : entry?.title ?? '교재';
+    final meta =
+        '$section · ${current.toString().padLeft(2, '0')} / ${total.toString().padLeft(2, '0')}';
     return Container(
-      padding: const EdgeInsets.fromLTRB(10, 7, 10, 8),
+      key: const ValueKey('reader-mobile-rail'),
+      constraints: const BoxConstraints(minHeight: 64),
       decoration: const BoxDecoration(
         color: Colors.white,
         border: Border(top: BorderSide(color: kBorder)),
       ),
-      child: Row(
-        children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '학습 진행  $current/${total == 0 ? 0 : total}',
-                  style: const TextStyle(
-                    color: StudentDensityTokens.muted,
-                    fontSize: 9,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 5),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(99),
-                  child: LinearProgressIndicator(
-                    minHeight: 5,
-                    value: progress,
-                    backgroundColor: StudentDensityTokens.surfaceMuted,
-                    valueColor: const AlwaysStoppedAnimation(Colors.black),
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          OutlinedButton.icon(
-            onPressed: _openMobileToc,
-            icon: const Icon(Icons.menu_book_outlined, size: 15),
-            label: const Text('목차'),
-            style: OutlinedButton.styleFrom(
-              foregroundColor: Colors.black,
-              minimumSize: const Size(80, 36),
-              padding: const EdgeInsets.symmetric(horizontal: 11),
-              side: const BorderSide(color: Colors.black),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(18),
-              ),
-              textStyle: const TextStyle(
-                fontSize: 11,
-                fontWeight: FontWeight.w800,
+      child: IntrinsicHeight(
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            SizedBox(
+              width: 64,
+              child: IconButton(
+                key: const ValueKey('reader-mobile-previous'),
+                tooltip: '이전 페이지',
+                onPressed: current > 1 ? _goToPreviousEntry : null,
+                icon: const Icon(Icons.arrow_back, size: 19),
+                disabledColor: kPrimary.withValues(alpha: .28),
               ),
             ),
-          ),
-        ],
+            Expanded(
+              child: Semantics(
+                button: true,
+                label: '목차, $meta',
+                excludeSemantics: true,
+                onTap: _openMobileToc,
+                child: InkWell(
+                  key: const ValueKey('reader-mobile-toc'),
+                  onTap: _openMobileToc,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 9,
+                      horizontal: 16,
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                meta,
+                                key: const ValueKey('reader-mobile-meta'),
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  fontSize: 9,
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: .18,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              LinearProgressIndicator(
+                                minHeight: 4,
+                                borderRadius: BorderRadius.zero,
+                                value: progress,
+                                backgroundColor: const Color(0xFFE4E5E8),
+                                valueColor: const AlwaysStoppedAnimation(
+                                  Colors.black,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        const Text(
+                          '목차',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(
+              width: 64,
+              child: IconButton(
+                key: const ValueKey('reader-mobile-next'),
+                tooltip: '다음 페이지',
+                onPressed: total > 0 && current < total ? _goToNextEntry : null,
+                icon: const Icon(Icons.arrow_forward, size: 19),
+                disabledColor: kPrimary.withValues(alpha: .28),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -2679,87 +3049,103 @@ class _BookWidgetState extends State<BookWidget> {
   /// 작동 원리: 모바일 하단 목차 버튼을 누르면 장·절만 담은 바텀시트를 열고,
   /// 항목 선택 뒤에는 기존 페이지 이동 로직을 재사용한다.
   Future<void> _openMobileToc() async {
-    final entries = _visibleTocEntries();
-    await showModalBottomSheet<void>(
-      context: context,
-      backgroundColor: Colors.white,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
-      ),
-      builder: (sheetContext) => SafeArea(
-        child: SizedBox(
-          height: MediaQuery.sizeOf(sheetContext).height * .72,
-          child: Column(
-            children: [
-              Padding(
-                padding: const EdgeInsets.fromLTRB(20, 16, 16, 10),
-                child: Row(
-                  children: [
-                    const Expanded(
-                      child: Text(
-                        '목차',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
+    final epoch = _bookLoadEpoch;
+    final bookId = _currentBookId;
+    final scope = _readerScope;
+    var entries = _visibleTocEntries();
+    void clearPrivateToc() {
+      if (!_readerOverlayCurrent(epoch, bookId, scope)) entries = <_TocEntry>[];
+    }
+
+    ApiClient.instance.sessionChanges.addListener(clearPrivateToc);
+    try {
+      await _showReaderBottomSheet<void>(
+        context: context,
+        backgroundColor: Colors.white,
+        isScrollControlled: true,
+        shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(top: Radius.circular(22)),
+        ),
+        builder: (sheetContext) => SafeArea(
+          child: SizedBox(
+            height: MediaQuery.sizeOf(sheetContext).height * .72,
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 16, 16, 10),
+                  child: Row(
+                    children: [
+                      const Expanded(
+                        child: Text(
+                          '목차',
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                          ),
                         ),
                       ),
-                    ),
-                    IconButton(
-                      tooltip: '목차 닫기',
-                      onPressed: () => Navigator.pop(sheetContext),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
+                      IconButton(
+                        tooltip: '목차 닫기',
+                        onPressed: () => Navigator.pop(sheetContext),
+                        icon: const Icon(Icons.close),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const Divider(height: 1),
-              Expanded(
-                child: ListView.builder(
-                  itemCount: entries.length,
-                  itemBuilder: (context, index) {
-                    final entry = entries[index];
-                    final isChapter = entry.level == 0;
-                    final active = entry.entryIndex == _activeEntryIndex;
-                    return ListTile(
-                      contentPadding: EdgeInsets.fromLTRB(
-                        isChapter ? 20 : 42,
-                        2,
-                        16,
-                        2,
-                      ),
-                      leading: Icon(
-                        isChapter
-                            ? Icons.menu_book_outlined
-                            : Icons.article_outlined,
-                        color: active ? kPrimary : Colors.black45,
-                        size: 18,
-                      ),
-                      title: Text(
-                        entry.title,
-                        maxLines: 2,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          color: active ? kPrimary : Colors.black87,
-                          fontSize: isChapter ? 14 : 13,
-                          fontWeight: isChapter || active
-                              ? FontWeight.w700
-                              : FontWeight.w500,
+                const Divider(height: 1),
+                Expanded(
+                  child: ListView.builder(
+                    itemCount: entries.length,
+                    itemBuilder: (context, index) {
+                      final entry = entries[index];
+                      final isChapter = entry.level == 0;
+                      final active = entry.entryIndex == _activeEntryIndex;
+                      return ListTile(
+                        contentPadding: EdgeInsets.fromLTRB(
+                          isChapter ? 20 : 42,
+                          2,
+                          16,
+                          2,
                         ),
-                      ),
-                      onTap: () {
-                        Navigator.pop(sheetContext);
-                        _handleTocTap(entry);
-                      },
-                    );
-                  },
+                        leading: Icon(
+                          isChapter
+                              ? Icons.menu_book_outlined
+                              : Icons.article_outlined,
+                          color: active ? kPrimary : Colors.black45,
+                          size: 18,
+                        ),
+                        title: Text(
+                          entry.title,
+                          maxLines: 2,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: active ? kPrimary : Colors.black87,
+                            fontSize: isChapter ? 14 : 13,
+                            fontWeight: isChapter || active
+                                ? FontWeight.w700
+                                : FontWeight.w500,
+                          ),
+                        ),
+                        onTap: () {
+                          if (!_readerOverlayCurrent(epoch, bookId, scope) ||
+                              ModalRoute.of(sheetContext)?.isCurrent != true)
+                            return;
+                          Navigator.pop(sheetContext);
+                          _handleTocTap(entry);
+                        },
+                      );
+                    },
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
+    } finally {
+      ApiClient.instance.sessionChanges.removeListener(clearPrivateToc);
+      entries = <_TocEntry>[];
+    }
   }
 
   /// 필요한 변수는 현재 교재 제목·페이지 진행률·보기 모드와 화면 너비다.
@@ -2770,13 +3156,15 @@ class _BookWidgetState extends State<BookWidget> {
       builder: (context, constraints) {
         final compact =
             constraints.maxWidth <= StudentDensityTokens.mobileBreakpoint;
+        if (compact) return _buildMobileReaderHeader(context);
         final totalPages = _readerPages.length;
         final currentPage = totalPages == 0
             ? 0
             : (_activeReaderPageIndex + 1).clamp(1, totalPages);
         final progress = totalPages == 0 ? 0.0 : currentPage / totalPages;
         return Container(
-          height: compact ? 62 : 68,
+          constraints: BoxConstraints(minHeight: compact ? 62 : 68),
+          key: const ValueKey('reader-top-header'),
           padding: EdgeInsets.symmetric(horizontal: compact ? 6 : 22),
           decoration: const BoxDecoration(
             color: Colors.white,
@@ -2873,6 +3261,11 @@ class _BookWidgetState extends State<BookWidget> {
                     ],
                   ),
                 ),
+                IconButton(
+                  tooltip: '이 페이지 질문하기',
+                  icon: const Icon(Icons.chat_bubble_outline),
+                  onPressed: _readerPages.isEmpty ? null : _askAboutCurrentPage,
+                ),
                 _headerAction(
                   icon: _isBookmarked(_activeEntryIndex)
                       ? Icons.bookmark
@@ -2884,7 +3277,9 @@ class _BookWidgetState extends State<BookWidget> {
                 const SizedBox(width: 8),
                 if (!compact)
                   FilledButton(
-                    onPressed: _contentEntries.isEmpty ? null : _completeReading,
+                    onPressed: _contentEntries.isEmpty
+                        ? null
+                        : _completeReading,
                     style: FilledButton.styleFrom(
                       backgroundColor: Colors.black,
                       foregroundColor: Colors.white,
@@ -2907,6 +3302,264 @@ class _BookWidgetState extends State<BookWidget> {
           ),
         );
       },
+    );
+  }
+
+  /// Attaches only the page the reader explicitly asks about, not the whole book.
+  bool _graphPageCurrent(BookData? book, int page, int generation) =>
+      mounted && identical(_currentBook, book) &&
+      _activeReaderPageIndex == page &&
+      ApiClient.instance.sessionChanges.value == generation;
+
+  void _askAboutCurrentPage() {
+    if (_readerPages.isEmpty) return;
+    final epoch = ApiClient.instance.sessionChanges.value;
+    final book = _currentBook;
+    final pageIndex = _activeReaderPageIndex;
+    if (!_graphPageCurrent(book, pageIndex, epoch)) return;
+    final page =
+        _readerPages[_activeReaderPageIndex.clamp(0, _readerPages.length - 1)];
+    final graphs = [
+      if (page.graph != null) page.graph!,
+      if (page.editorialPage != null)
+        for (final block in page.editorialPage!.blocks)
+          if (block.graph != null) block.graph!,
+    ];
+    final graphContext = <Map<String, dynamic>>[
+      if (_graphObservationEpoch == epoch && _graphObservationPage == _activeReaderPageIndex && _graphObservationBook == _currentBook)
+        for (var i = 0; i < graphs.length && i < 4; i++)
+          if (_observedGraphs[graphs[i]] case final values?)
+            graphTutorObservation(graphs[i], values, 'page-${_activeReaderPageIndex + 1}-graph-$i'),
+    ];
+    final text = [
+      '교재: $_currentBookTitle',
+      '페이지: ${page.title}',
+      ...page.paragraphs,
+      if (page.editorialPage != null)
+        ..._editorialPageSearchText(page.editorialPage!),
+      if (page.graph != null)
+        '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(page.graph!.toJson())}',
+      if (page.editorialPage != null)
+        for (final block in page.editorialPage!.blocks)
+          if (block.graph != null)
+            '그래프 초기 설정 — 현재 조작값 아님: ${jsonEncode(block.graph!.toJson())}',
+    ].join('\n');
+    final excerpt = text.length <= 3700
+        ? text
+        : '${text.substring(0, 3700)}\n[현재 페이지 문맥 길이 제한으로 일부 생략]';
+    final title = '$_currentBookTitle · ${page.title}';
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => ValueListenableBuilder<int>(
+          valueListenable: ApiClient.instance.sessionChanges,
+          builder: (_, __, ___) => !_graphPageCurrent(book, pageIndex, epoch)
+              ? const Scaffold(
+                  body: Center(child: Text('로그인 상태가 바뀌었습니다. 교재에서 다시 열어 주세요.')),
+                )
+              : ServerChatPage(
+                  standalone: true,
+                  ephemeral: true,
+                  initialMode: 'socratic',
+                  initialContext: {
+                    'graph_context': graphContext,
+                    'quest_title': title.length <= 500
+                        ? title
+                        : title.substring(0, 500),
+                    'answer_riddle': excerpt,
+                    'all_formulas':
+                        '교재 ID: $_currentBookId · 페이지 ${_activeReaderPageIndex + 1}',
+                  },
+                ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildMobileReaderHeader(BuildContext context) {
+    return Container(
+      constraints: const BoxConstraints(minHeight: 58),
+      key: const ValueKey('reader-top-header'),
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        border: Border(bottom: BorderSide(color: kBorder)),
+      ),
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: IconButton(
+              tooltip: '책가방으로 돌아가기',
+              onPressed: () => Navigator.maybePop(context),
+              icon: const Icon(Icons.arrow_back, size: 20),
+            ),
+          ),
+          const SizedBox(width: 4),
+          Expanded(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  '교재 읽기',
+                  style: TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 8,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                Text(
+                  _currentBookTitle.isEmpty ? '교재' : _currentBookTitle,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 13,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _mobileReaderAction(
+            label: '이 페이지 질문하기',
+            icon: Icons.chat_bubble_outline,
+            onTap: _readerPages.isEmpty ? null : _askAboutCurrentPage,
+          ),
+          _mobileReaderAction(
+            label: '현재 페이지 북마크',
+            icon: _isBookmarked(_activeEntryIndex)
+                ? Icons.bookmark
+                : Icons.bookmark_border,
+            onTap: _contentEntries.isEmpty ? null : _handleAddBookmark,
+          ),
+          _mobileReaderAction(
+            label: '글자와 보기 설정',
+            icon: Icons.settings_outlined,
+            onTap: _openMobileReaderSettings,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _mobileReaderAction({
+    required String label,
+    required IconData icon,
+    required VoidCallback? onTap,
+  }) => Semantics(
+    button: true,
+    label: label,
+    child: SizedBox(
+      width: 48,
+      height: 48,
+      child: IconButton(
+        tooltip: label,
+        onPressed: onTap,
+        icon: Icon(icon, size: 19, color: Colors.black),
+      ),
+    ),
+  );
+
+  Future<void> _openMobileReaderSettings() async {
+    var selectedScale = _readerFontScale;
+    await showModalBottomSheet<void>(
+      context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (sheetContext, setSheetState) => Padding(
+          padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                children: [
+                  const Expanded(
+                    child: Text(
+                      '글자와 보기',
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: '닫기',
+                    onPressed: () => Navigator.of(sheetContext).pop(),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '글자 크기',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  for (final option in [(0.9, '작게'), (1.0, '보통'), (1.15, '크게')])
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: OutlinedButton(
+                          onPressed: () {
+                            selectedScale = option.$1;
+                            setSheetState(() {});
+                            setState(() => _readerFontScale = option.$1);
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: selectedScale == option.$1
+                                ? const Color(0xFFF3F3F5)
+                                : Colors.white,
+                            shape: const RoundedRectangleBorder(),
+                          ),
+                          child: Text(option.$2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '보기 방식',
+                style: TextStyle(fontWeight: FontWeight.w800),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  for (final option in [(true, '페이지'), (false, '스크롤')])
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(right: 6),
+                        child: OutlinedButton(
+                          onPressed: () async {
+                            await _setPageMode(option.$1);
+                            if (sheetContext.mounted) {
+                              Navigator.of(sheetContext).pop();
+                            }
+                          },
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: _pageMode == option.$1
+                                ? const Color(0xFFF3F3F5)
+                                : Colors.white,
+                            shape: const RoundedRectangleBorder(),
+                          ),
+                          child: Text(option.$2),
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 
@@ -3028,13 +3681,15 @@ class _BookWidgetState extends State<BookWidget> {
 
   Widget _buildTocHeader() {
     return Container(
-      height: 68,
+      constraints: const BoxConstraints(minHeight: 68),
+      key: const ValueKey('reader-toc-header'),
       padding: const EdgeInsets.symmetric(horizontal: 18),
       alignment: Alignment.centerLeft,
       decoration: const BoxDecoration(
         border: Border(bottom: BorderSide(color: kBorder)),
       ),
       child: const Column(
+        mainAxisSize: MainAxisSize.min,
         mainAxisAlignment: MainAxisAlignment.center,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -3445,12 +4100,38 @@ class _BookWidgetState extends State<BookWidget> {
       _activeReaderPageIndex = pageIndex;
     }
 
+    if (MediaQuery.sizeOf(context).width <=
+        StudentDensityTokens.mobileBreakpoint) {
+      return Container(
+        key: const ValueKey('reader-mobile-canvas'),
+        color: Colors.white,
+        child: PageView.builder(
+          key: const ValueKey('reader-mobile-page-view'),
+          controller: _readerPageController,
+          itemCount: pages.length,
+          onPageChanged: _setActiveReaderPage,
+          itemBuilder: (context, index) => _BookPaperPage(
+            page: pages[index],
+            pageNumber: index + 1,
+            totalPages: pages.length,
+            resolveImage: _resolveImageProvider,
+            buildParagraph: (text) => _buildLatexAware(
+              text,
+              compact: pages[index].editorialPage != null,
+            ),
+            fontScale: _readerFontScale,
+          ),
+        ),
+      );
+    }
+
     return Container(
       color: kCanvas,
       child: Column(
         children: [
           Container(
-            height: 52,
+            constraints: const BoxConstraints(minHeight: 52),
+            key: const ValueKey('reader-page-header'),
             padding: const EdgeInsets.symmetric(horizontal: 20),
             decoration: const BoxDecoration(
               color: Colors.white,
@@ -3545,6 +4226,7 @@ class _BookWidgetState extends State<BookWidget> {
                                 text,
                                 compact: pages[index].editorialPage != null,
                               ),
+                              fontScale: _readerFontScale,
                             ),
                           ),
                         );
@@ -4167,7 +4849,15 @@ class _BookContentBlockView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (block.type == BookContentBlockType.graph && block.graph != null) {
-      return _TextbookGraphCard(document: block.graph!);
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (block.title.isNotEmpty) buildParagraph(block.title),
+          if (block.text.isNotEmpty) buildParagraph(block.text),
+          const SizedBox(height: 8),
+          _TextbookGraphCard(document: block.graph!),
+        ],
+      );
     }
     if (block.type == BookContentBlockType.visual && block.visual != null) {
       return _BookVisualCard(visual: block.visual!);
@@ -4402,6 +5092,7 @@ class _BookPaperPage extends StatelessWidget {
     required this.totalPages,
     required this.resolveImage,
     required this.buildParagraph,
+    required this.fontScale,
   });
 
   final _ParsedBookPage page;
@@ -4409,6 +5100,7 @@ class _BookPaperPage extends StatelessWidget {
   final int totalPages;
   final ImageProvider Function(String source) resolveImage;
   final Widget Function(String text) buildParagraph;
+  final double fontScale;
 
   @override
   Widget build(BuildContext context) {
@@ -4418,6 +5110,14 @@ class _BookPaperPage extends StatelessWidget {
 
         final maxWidth = constraints.maxWidth;
         final maxHeight = constraints.maxHeight;
+        if (maxWidth <= StudentDensityTokens.mobileBreakpoint) {
+          return _buildMobileHtmlPage(
+            context,
+            maxWidth: maxWidth,
+            maxHeight: maxHeight,
+            editorialPage: editorialPage,
+          );
+        }
         final hasDenseEditorialBlock =
             editorialPage?.blocks.any(
               (block) =>
@@ -4477,221 +5177,314 @@ class _BookPaperPage extends StatelessWidget {
         final isCompact = maxWidth < 560.0 || isDensePage;
         final width = isCompact ? maxWidth : 820.0.clamp(420.0, maxWidth);
         final height = isCompact ? maxHeight : maxHeight.clamp(420.0, 900.0);
-        final textScale = isCompact ? (maxWidth < 560.0 ? 0.9 : 0.94) : 1.0;
-
-        return MediaQuery(
-          data: MediaQuery.of(
-            context,
-          ).copyWith(textScaler: TextScaler.linear(textScale)),
-          child: SizedBox(
-            width: width,
-            height: height,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(10),
-                border: Border.all(color: StudentDensityTokens.line),
-                boxShadow: const [
-                  BoxShadow(
-                    blurRadius: 34,
-                    color: Color(0x1F000000),
-                    offset: Offset(0, 16),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: EdgeInsets.fromLTRB(
-                  width < 420 ? 16 : 42,
-                  width < 420 ? 16 : 32,
-                  width < 420 ? 16 : 42,
-                  isCompact ? 14 : 20,
+        return SizedBox(
+          width: width,
+          height: height,
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: StudentDensityTokens.line),
+              boxShadow: const [
+                BoxShadow(
+                  blurRadius: 34,
+                  color: Color(0x1F000000),
+                  offset: Offset(0, 16),
                 ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Expanded(
-                          child: Text(
-                            'CH ${page.chapterNumber.toString().padLeft(2, '0')}  ·  ${page.chapterTitle}',
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              fontSize: 11,
-                              color: Colors.black54,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                        ),
-                        Text(
-                          'P  ${pageNumber.toString().padLeft(2, '0')}',
+              ],
+            ),
+            child: Padding(
+              padding: EdgeInsets.fromLTRB(
+                width < 420 ? 16 : 42,
+                width < 420 ? 16 : 32,
+                width < 420 ? 16 : 42,
+                isCompact ? 14 : 20,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          'CH ${page.chapterNumber.toString().padLeft(2, '0')}  ·  ${page.chapterTitle}',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                           style: const TextStyle(
-                            fontSize: 9,
-                            color: Colors.black38,
-                            letterSpacing: .8,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                      ],
-                    ),
-                    SizedBox(height: isCompact ? 4 : 6),
-                    const Divider(height: 1, color: Color(0x22000000)),
-                    if (editorialPage != null) ...[
-                      SizedBox(height: isCompact ? 8 : 10),
-                      Row(
-                        children: [
-                          Icon(
-                            _bookPageTemplateIcon(editorialPage.template),
-                            size: 14,
-                            color: StudentDensityTokens.ink,
-                          ),
-                          const SizedBox(width: 7),
-                          Text(
-                            _bookPageTemplateLabel(editorialPage.template),
-                            style: const TextStyle(
-                              color: StudentDensityTokens.ink,
-                              fontSize: 10,
-                              letterSpacing: .4,
-                              fontWeight: FontWeight.w800,
-                            ),
-                          ),
-                          const SizedBox(width: 10),
-                          Text(
-                            '$pageNumber / $totalPages',
-                            style: const TextStyle(
-                              color: StudentDensityTokens.muted,
-                              fontWeight: FontWeight.w700,
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ] else ...[
-                      SizedBox(height: isCompact ? 8 : 12),
-                      Text(
-                        'CH ${page.chapterNumber.toString().padLeft(2, '0')} | ${page.partNumber}/${page.partTotal}',
-                        style: const TextStyle(
-                          color: StudentDensityTokens.muted,
-                          fontWeight: FontWeight.w700,
-                          fontSize: 10,
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: isCompact ? 8 : 12),
-                    if (editorialPage != null &&
-                        editorialPage.kicker.isNotEmpty) ...[
-                      Text(
-                        editorialPage.kicker,
-                        style: const TextStyle(
-                          color: StudentDensityTokens.muted,
-                          fontSize: 10,
-                          letterSpacing: .5,
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                      SizedBox(height: isCompact ? 4 : 6),
-                    ],
-                    Text(
-                      page.title,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                        color: _BookWidgetState.kPrimary,
-                        height: 1.25,
-                        fontWeight: FontWeight.w800,
-                      ).copyWith(fontSize: isCompact ? 22 : 24),
-                    ),
-                    if (page.partTotal > 1) ...[
-                      SizedBox(height: isCompact ? 3 : 4),
-                      Text(
-                        '${page.partNumber} / ${page.partTotal}',
-                        style: const TextStyle(
-                          color: Colors.black45,
-                          fontSize: 12,
-                        ),
-                      ),
-                    ],
-                    SizedBox(height: isCompact ? 8 : 12),
-                    Expanded(
-                      child: editorialPage != null
-                          ? _EditorialPageBody(
-                              page: editorialPage,
-                              buildParagraph: buildParagraph,
-                              compact: isCompact,
-                            )
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                for (final paragraph in page.paragraphs)
-                                  Padding(
-                                    padding: const EdgeInsets.only(bottom: 12),
-                                    child: RepaintBoundary(
-                                      child: buildParagraph(paragraph),
-                                    ),
-                                  ),
-                                for (final visual in page.visuals)
-                                  _BookVisualCard(visual: visual),
-                                if (page.graph != null) ...[
-                                  const SizedBox(height: 8),
-                                  _TextbookGraphCard(document: page.graph!),
-                                ],
-                                for (final image in page.images)
-                                  if (image.trim().isNotEmpty)
-                                    Padding(
-                                      padding: const EdgeInsets.only(
-                                        bottom: 12,
-                                      ),
-                                      child: ClipRRect(
-                                        borderRadius: BorderRadius.circular(8),
-                                        child: Image(
-                                          image: resolveImage(image),
-                                          fit: BoxFit.contain,
-                                          errorBuilder: (context, _, __) =>
-                                              Container(
-                                                height: 160,
-                                                color: const Color(0xFFEDEDED),
-                                                alignment: Alignment.center,
-                                                child: const Text(
-                                                  '이미지를 불러올 수 없습니다.',
-                                                  style: TextStyle(
-                                                    color: Colors.black54,
-                                                  ),
-                                                ),
-                                              ),
-                                        ),
-                                      ),
-                                    ),
-                              ],
-                            ),
-                    ),
-                    const SizedBox(height: 12),
-                    Row(
-                      children: [
-                        Text(
-                          'AIFlow',
-                          style: TextStyle(
-                            color: Colors.black.withValues(alpha: 0.38),
                             fontSize: 11,
-                            fontWeight: FontWeight.w700,
+                            color: Colors.black54,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                        const Spacer(),
+                      ),
+                      Text(
+                        'P  ${pageNumber.toString().padLeft(2, '0')}',
+                        style: const TextStyle(
+                          fontSize: 9,
+                          color: Colors.black38,
+                          letterSpacing: .8,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
+                  ),
+                  SizedBox(height: isCompact ? 4 : 6),
+                  const Divider(height: 1, color: Color(0x22000000)),
+                  if (editorialPage != null) ...[
+                    SizedBox(height: isCompact ? 8 : 10),
+                    Row(
+                      children: [
+                        Icon(
+                          _bookPageTemplateIcon(editorialPage.template),
+                          size: 14,
+                          color: StudentDensityTokens.ink,
+                        ),
+                        const SizedBox(width: 7),
                         Text(
-                          '$pageNumber / $totalPages',
+                          _bookPageTemplateLabel(editorialPage.template),
                           style: const TextStyle(
-                            fontSize: 12,
+                            color: StudentDensityTokens.ink,
+                            fontSize: 10,
+                            letterSpacing: .4,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
+                        const SizedBox(width: 10),
+                        Text(
+                          '$pageNumber / $totalPages',
+                          style: const TextStyle(
+                            color: StudentDensityTokens.muted,
+                            fontWeight: FontWeight.w700,
+                            fontSize: 10,
+                          ),
+                        ),
                       ],
                     ),
+                  ] else ...[
+                    SizedBox(height: isCompact ? 8 : 12),
+                    Text(
+                      'CH ${page.chapterNumber.toString().padLeft(2, '0')} | ${page.partNumber}/${page.partTotal}',
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontWeight: FontWeight.w700,
+                        fontSize: 10,
+                      ),
+                    ),
                   ],
-                ),
+                  SizedBox(height: isCompact ? 8 : 12),
+                  if (editorialPage != null &&
+                      editorialPage.kicker.isNotEmpty) ...[
+                    Text(
+                      editorialPage.kicker,
+                      style: const TextStyle(
+                        color: StudentDensityTokens.muted,
+                        fontSize: 10,
+                        letterSpacing: .5,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                    SizedBox(height: isCompact ? 4 : 6),
+                  ],
+                  Text(
+                    page.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      color: _BookWidgetState.kPrimary,
+                      height: 1.25,
+                      fontWeight: FontWeight.w800,
+                    ).copyWith(fontSize: isCompact ? 22 : 24),
+                  ),
+                  if (page.partTotal > 1) ...[
+                    SizedBox(height: isCompact ? 3 : 4),
+                    Text(
+                      '${page.partNumber} / ${page.partTotal}',
+                      style: const TextStyle(
+                        color: Colors.black45,
+                        fontSize: 12,
+                      ),
+                    ),
+                  ],
+                  SizedBox(height: isCompact ? 8 : 12),
+                  Expanded(
+                    child: editorialPage != null
+                        ? _EditorialPageBody(
+                            page: editorialPage,
+                            buildParagraph: buildParagraph,
+                            compact: isCompact,
+                          )
+                        : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              for (final paragraph in page.paragraphs)
+                                Padding(
+                                  padding: const EdgeInsets.only(bottom: 12),
+                                  child: RepaintBoundary(
+                                    child: buildParagraph(paragraph),
+                                  ),
+                                ),
+                              for (final visual in page.visuals)
+                                _BookVisualCard(visual: visual),
+                              if (page.graph != null) ...[
+                                const SizedBox(height: 8),
+                                _TextbookGraphCard(document: page.graph!),
+                              ],
+                              for (final image in page.images)
+                                if (image.trim().isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(bottom: 12),
+                                    child: ClipRRect(
+                                      borderRadius: BorderRadius.circular(8),
+                                      child: Image(
+                                        image: resolveImage(image),
+                                        fit: BoxFit.contain,
+                                        errorBuilder: (context, _, __) =>
+                                            Container(
+                                              height: 160,
+                                              color: const Color(0xFFEDEDED),
+                                              alignment: Alignment.center,
+                                              child: const Text(
+                                                '이미지를 불러올 수 없습니다.',
+                                                style: TextStyle(
+                                                  color: Colors.black54,
+                                                ),
+                                              ),
+                                            ),
+                                      ),
+                                    ),
+                                  ),
+                            ],
+                          ),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Text(
+                        'AIFlow',
+                        style: TextStyle(
+                          color: Colors.black.withValues(alpha: 0.38),
+                          fontSize: 11,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const Spacer(),
+                      Text(
+                        '$pageNumber / $totalPages',
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             ),
           ),
         );
       },
+    );
+  }
+
+  Widget _buildMobileHtmlPage(
+    BuildContext context, {
+    required double maxWidth,
+    required double maxHeight,
+    required BookPage? editorialPage,
+  }) {
+    final systemScale = MediaQuery.textScalerOf(context).scale(10) / 10;
+    final scaledText = MediaQuery.of(
+      context,
+    ).copyWith(textScaler: TextScaler.linear(systemScale * fontScale));
+    final blocks = editorialPage == null
+        ? Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (final paragraph in page.paragraphs)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: RepaintBoundary(child: buildParagraph(paragraph)),
+                ),
+              for (final visual in page.visuals)
+                _BookVisualCard(visual: visual),
+              if (page.graph != null) ...[
+                const SizedBox(height: 18),
+                _TextbookGraphCard(document: page.graph!),
+              ],
+              for (final image in page.images)
+                if (image.trim().isNotEmpty)
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 16),
+                    child: Image(
+                      image: resolveImage(image),
+                      fit: BoxFit.contain,
+                      errorBuilder: (context, _, __) => const Text(
+                        '이미지를 불러올 수 없습니다.',
+                        style: TextStyle(color: Colors.black54),
+                      ),
+                    ),
+                  ),
+            ],
+          )
+        : Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              for (
+                var index = 0;
+                index < editorialPage.blocks.length;
+                index++
+              ) ...[
+                _BookContentBlockView(
+                  block: editorialPage.blocks[index],
+                  buildParagraph: buildParagraph,
+                  compact: true,
+                ),
+                if (index != editorialPage.blocks.length - 1)
+                  const SizedBox(height: 10),
+              ],
+            ],
+          );
+
+    return SizedBox(
+      width: maxWidth,
+      height: maxHeight,
+      child: ColoredBox(
+        key: const ValueKey('reader-mobile-paper'),
+        color: Colors.white,
+        child: SingleChildScrollView(
+          physics: const ClampingScrollPhysics(),
+          padding: const EdgeInsets.fromLTRB(22, 24, 22, 30),
+          child: MediaQuery(
+            data: scaledText,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Text(
+                  '${page.chapterNumber.toString().padLeft(2, '0')} · ${page.chapterTitle}',
+                  style: const TextStyle(
+                    color: StudentDensityTokens.muted,
+                    fontSize: 12,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  page.title,
+                  style: const TextStyle(
+                    color: Color(0xFF09090B),
+                    fontSize: 32,
+                    height: 1.15,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1.2,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                blocks,
+              ],
+            ),
+          ),
+        ),
+      ),
     );
   }
 }
@@ -4964,24 +5757,32 @@ List<_ContentEntry> _buildContentEntries(List<BookChapter> chapters) {
           ),
         );
       }
-      continue;
     }
-    entries.add(
-      _ContentEntry(
-        chapterIndex: i,
-        level: 0,
-        title: chapter.title,
-        paragraphs: chapter.intro,
-        images: const [],
-        visuals: chapter.visuals,
-      ),
-    );
+    // Explicit pages are primary, not permission to discard legacy source prose.
+    // Keep introduction/sections as clearly named supplementary reading.
+    if (chapter.pages.isEmpty ||
+        chapter.intro.isNotEmpty ||
+        chapter.visuals.isNotEmpty)
+      entries.add(
+        _ContentEntry(
+          chapterIndex: i,
+          level: chapter.pages.isEmpty ? 0 : 1,
+          title: chapter.pages.isEmpty
+              ? chapter.title
+              : '보충 설명 · ${chapter.title}',
+          paragraphs: chapter.intro,
+          images: const [],
+          visuals: chapter.visuals,
+        ),
+      );
     for (final section in chapter.sections) {
       entries.add(
         _ContentEntry(
           chapterIndex: i,
           level: 1,
-          title: section.title,
+          title: chapter.pages.isEmpty
+              ? section.title
+              : '보충 설명 · ${section.title}',
           paragraphs: section.paragraphs,
           images: section.images,
           graph: section.graph,

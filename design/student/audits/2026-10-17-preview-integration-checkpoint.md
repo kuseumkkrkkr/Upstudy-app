@@ -37,7 +37,14 @@ The draft race test moved from `tools/qa/canary_create_session_race_test.dart` t
 The failure recorded in the earlier preflight remains historical evidence.
 
 Independent read-only review confirmed the catalogue refresh fix; it did not run
-the UI. Reader/tutor, clean-source compilation, Preview API readiness, rendered
+the UI. A further reader/tutor/graph/activity/default-origin suite passed **34
+tests**, and the explicit empty-base Preview contract passed **1 test**. The
+synthetic Python public-book/create/import/tutor suites passed **66 tests** with
+one dependency deprecation warning. None is evidence of real-provider delivery.
+
+Reader/chat scoped analysis reported **26 issues** (one unused optional parameter
+warning and 25 brace-style infos), with no analyzer errors. It did not pass a
+zero-issue gate. Clean-source compilation, Preview API readiness, rendered
 interaction, and live bundle verification remain separate pending gates.
 
 ## Preview routing
