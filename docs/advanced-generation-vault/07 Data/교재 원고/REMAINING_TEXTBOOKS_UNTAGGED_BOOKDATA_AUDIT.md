@@ -6,25 +6,26 @@ This audit covers the 43 recursive BookData files that lack an exact official st
 
 - For the 29 explicitly tagged 2015 `수학(상)/(하)` drafts, candidate codes come from the separate [`2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md`](2015_HIGH_SCHOOL_MATH_CONTENT_AUDIT.md), which maps integrated chapter topics to the official 2015 standards. Individual draft files do not themselves establish the exact code. Partial matches remain flagged.
 - Five other files explicitly name 2015 and have a strong subject/topic candidate. The code was checked against local official 2015 Appendix 8 extraction (`work/official-curriculum/2015_appendix8_math.txt`); course placement and page completeness still need review where stated.
+- Four course-named files were checked against the product map and official criteria: the map identifies `공통수학2` and `대수` as 2022 products (rows 21–22); the 2015 `수학Ⅱ` candidate was matched to its exact 2015 criterion. The BookData fields record candidate links only, and incomplete scope remains explicit.
 - Files without explicit edition evidence are left unresolved, even when a filename or subject title resembles a known course.
 - No code tags were written into these files. Applying any candidate tags should follow page-level math and curriculum review; do not convert these links into verified coverage.
 
 ## Results
 
-- Candidate link recorded: 32 files (includes partial and review-pending links).
+- Candidate link recorded: 36 files (includes partial and review-pending links).
 - No direct match in the current 2015 상·하 audit: 2 files.
-- Edition/criterion unresolved: 9 files.
+- Edition/criterion unresolved: 5 files.
 
 | Recursive source BookData | Classification | Candidate official code(s) | Evidence / limitation |
 |---|---|---|---|
 | `고등수학_기하_평면벡터내적_BookData_V2_시범.json` | 2015 candidate; page/course review pending | 12기하02-04 | 2015 tag + inner-product chapter title; official 2015 criteria are locally extracted. Candidate only. |
 | `고등수학_확률과통계_이항분포_BookData_시범.json` | Unresolved | — | Edition is not established; a 2022-scope reference tag is not edition evidence. |
-| `공통수학2_유리함수_BookData_시범.json` | Unresolved | — | Tag explicitly says edition comparison pending. |
-| `공통수학2_집합과명제_BookData_시범.json` | Unresolved | — | Edition is not established; product/topic title alone is insufficient. |
-| `대수_등비수열_BookData_시범.json` | Unresolved | — | Standard mapping and edition are both pending. |
+| `공통수학2_유리함수_BookData_시범.json` | 2022 candidate; partial scope | 10공수2-03-04 | Product map row 21 and official 2022 HWP code identify the course. Pages show `a/(x−h)+k`, domain exclusions, and asymptotes; full graph-property scope remains pending. |
+| `공통수학2_집합과명제_BookData_시범.json` | 2022 candidate; set topics only | 10공수2-02-01, 10공수2-02-02, 10공수2-02-03 | Product map row 21 and official 2022 HWP codes identify the course. Pages model sets, subset relations, and operations; propositions in the filename are not covered by these pages. |
+| `대수_등비수열_BookData_시범.json` | 2022 candidate; partial scope | 12대수03-03 | Product map row 22 and official 2022 HWP code identify the course. Pages show common ratio and the general term, but not the sum through the nth term named by the criterion. |
 | `미적분_2015개정_수열의극한_BookData_시범.json` | Partial topic candidate; review pending | 12미적01-01 | 2015 tag + sequence-limit topic. Only one convergent-sequence example; divergence and broader determination are not evidenced. |
 | `수학Ⅱ_2015개정_정적분과넓이_BookData_시범.json` | Partial topic candidate; review pending | 12수학Ⅱ03-05 | Left Riemann sum is shown for one linear graph; breadth of area-between-curves problems is not evidenced. |
-| `수학Ⅱ_도함수부호와증감_BookData_시범.json` | Unresolved | — | Tag says 2015 candidate, not confirmed edition; code not compared. |
+| `수학Ⅱ_도함수부호와증감_BookData_시범.json` | 2015 candidate; scope review pending | 12수학Ⅱ02-08 | The `2015 개정 후보` tag and official 2015 Appendix 8 code identify the candidate. Pages demonstrate derivative-sign reasoning for increase/decrease and a quadratic minimum; broader content review remains pending. |
 | `수학상_2015개정_초안/수학상_2015개정_거리와중점_BookData_초안.json` | 2015 상·하 topic candidate | 10수학02-01; 10수학02-02 | 02-02 is partial: current source title only covers distance/midpoint, not internal/external division points. |
 | `수학상_2015개정_초안/수학상_2015개정_근과계수의관계_BookData_초안.json` | 2015 상·하 topic candidate | 10수학01-08 | Topic/title match; still needs page-level and math review. |
 | `수학상_2015개정_초안/수학상_2015개정_나머지정리와인수정리_BookData_초안.json` | 2015 상·하 topic candidate | 10수학01-03 | Topic/title match; still needs page-level and math review. |

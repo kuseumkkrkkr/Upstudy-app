@@ -862,31 +862,31 @@
 
 | 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
 |---|---|---|---|---|
-| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | `수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json`, `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | `수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-02` | 항등식의 성질을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
+| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_이차함수와연립이차부등식_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_내분점외분점_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-03` | 직선의 방정식을 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
+| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학상_2015개정_이차함수와연립이차부등식_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | `수학상_2015개정_초안/수학상_2015개정_내분점외분점_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-06` | 원의 방정식을 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-08` | 평행이동의 의미를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_직선yx대칭_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-08` | 평행이동의 의미를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | `수학상_2015개정_초안/수학상_2015개정_직선yx대칭_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합개념과표현_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합포함관계_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-03` | 집합의 연산을 할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
@@ -910,31 +910,31 @@
 
 | 2015 기준 코드 | 공식 기준 문구 | same-edition BookData tag | chapter 구조 신호 | 상태 |
 |---|---|---|---|---|
-| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | `수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json`, `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-01` | 다항식의 사칙연산을 할 수 있다. | `수학상_2015개정_다항식곱셈나눗셈_보충V2_BookData_초안.json` | 1 files · 1 chapters · 6 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `formula`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `summary`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학01-02` | 항등식의 성질을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_항등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
+| `10수학01-03` | 나머지정리의 의미를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-04` | 다항식의 인수분해를 할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-05` | 복소수의 뜻과 성질을 이해하고 사칙연산을 할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-06` | 이차방정식의 실근과 허근의 뜻을 안다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-07` | 이차방정식에서 판별식의 의미를 이해하고 이를 설명할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-08` | 이차방정식의 근과 계수의 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-09` | 이차방정식과 이차함수의 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-10` | 이차함수의 그래프와 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학상_2015개정_포물선과직선의위치관계_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-11` | 이차함수의 최대, 최소를 이해하고, 이를 활용하여 문제를 해결할 수 있다. | `수학상_2015개정_초안/수학상_2015개정_이차함수최대최소활용_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-12` | 간단한 삼차방정식과 사차방정식을 풀 수 있다. | `수학상_2015개정_초안/수학상_2015개정_사차방정식풀이_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학01-13` | 미지수가 2개인 연립이차방정식을 풀 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학01-14` | 미지수가 1개인 연립일차부등식을 풀 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학01-15` | 절댓값을 포함한 일차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_절댓값일차부등식_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_이차함수와연립이차부등식_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_내분점외분점_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-03` | 직선의 방정식을 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
+| `10수학01-16` | 이차부등식과 이차함수의 관계를 이해하고, 이차부등식과 연립이차부등식을 풀 수 있다. | `수학상_2015개정_초안/수학상_2015개정_이차함수와연립이차부등식_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-01` | 두 점 사이의 거리를 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-02` | 선분의 내분과 외분을 이해하고, 내분점과 외분점의 좌표를 구할 수 있다. | `수학상_2015개정_초안/수학상_2015개정_내분점외분점_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-03` | 직선의 방정식을 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-04` | 두 직선의 평행 조건과 수직 조건을 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
 | `10수학02-05` | 점과 직선 사이의 거리를 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_점과직선사이거리_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
-| `10수학02-06` | 원의 방정식을 구할 수 있다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-08` | 평행이동의 의미를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
-| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | `수학상_2015개정_초안/수학(상)_2015개정_태그분권_통합BookData_초안.json`, `수학상_2015개정_초안/수학상_2015개정_직선yx대칭_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
+| `10수학02-06` | 원의 방정식을 구할 수 있다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-07` | 좌표평면에서 원과 직선의 위치 관계를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-08` | 평행이동의 의미를 이해한다. | — | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | same-edition tag 없음 · 원고 대조 필요 |
+| `10수학02-09` | 원점, 축, 축, 직선    에 대한 대칭이동의 의미를 이해한다. | `수학상_2015개정_초안/수학상_2015개정_직선yx대칭_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-01` | 집합의 개념을 이해하고, 집합을 표현할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합개념과표현_보충V2_BookData_초안.json` | 1 files · 1 chapters · 4 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-02` | 두 집합 사이의 포함 관계를 이해한다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json`, `수학하_2015개정_초안/수학하_2015개정_집합포함관계_V2_BookData_초안.json` | 2 files · 2 chapters · 8 pages · `activity`, `activity:quiz`, `answer`, `definition`, `lead`, `misconception`, `question`, `solutionStep`, `thinking` | tag 있음 · 내용 검수 필요 |
 | `10수학03-03` | 집합의 연산을 할 수 있다. | `수학하_2015개정_초안/수학(하)_2015개정_태그분권_통합BookData_초안.json` | candidate mapping: 1 files · 1 chapters · 4 pages · review pending | tag 있음 · 내용 검수 필요 |
@@ -1159,7 +1159,7 @@
 | `12대수02-03` | 사인법칙과 코사인법칙을 이해하고, 실생활 문제를 해결할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12대수03-01` | 수열의 뜻을 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
 | `12대수03-02` | 등차수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_등차수열_BookData_시범.json` | 1 files · 1 chapters · 4 pages · `answer`, `checklist`, `hint`, `lead`, `misconception`, `question`, `thinking`, `visual` | tag 있음 · 내용 검수 필요 |
-| `12대수03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | candidate mapping: 1 files · 1 chapters · 5 pages · review pending | tag 있음 · 내용 검수 필요 |
+| `12대수03-03` | 등비수열의 뜻을 알고, 일반항, 첫째항부터 제 항까지의 합을 구할 수 있다 [복구 EqEdit: n] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | candidate mapping: 2 files · 2 chapters · 8 pages · review pending | tag 있음 · 내용 검수 필요 |
 | `12대수03-04` | 의 뜻과 성질을 이해하고, 이를 활용하여 문제를 해결할 수 있다 [복구 EqEdit: SMALLSUM] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | candidate mapping: 1 files · 1 chapters · 5 pages · review pending | tag 있음 · 내용 검수 필요 |
 | `12대수03-05` | 여러 가지 수열의 첫째항부터 제 항까지의 합을 구하는 방법을 설명할 수 있다 [복구 EqEdit: n; sum _{k=1} ^{n} k; sum _{k=1} ^{n} k  ^{2}; sum _{k=1} ^{n} `k  ^{3} `] | `대수_2022개정_EqEdit복구기준_수열_Batch2_BookData_V2_시범.json` | candidate mapping: 1 files · 1 chapters · 5 pages · review pending | tag 있음 · 내용 검수 필요 |
 | `12대수03-06` | 수열의 귀납적 정의를 설명할 수 있다 | `대수_2022개정_미연결기준14모듈_Batch1_BookData_V2_시범.json` | 1 files · 1 chapters · 5 pages · `activity`, `activity:quiz`, `answer`, `checklist`, `definition`, `hint`, `lead`, `misconception`, `question`, `solutionStep`, `standard`, `summary`, `thinking`, `verification` | tag 있음 · 내용 검수 필요 |
@@ -1268,8 +1268,8 @@
 
 ## 기준-챕터 매핑 신호 감사
 
-고유 공식 판본-코드 쌍 `392`개 중 공식 코드 필드 또는 태그 신호가 있는 쌍은 `392`개, exact code가 chapter 안에 있는 쌍은 `342`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `28`개, 검토 대기 candidate chapter mapping은 `75`개, exact 또는 candidate 구조 신호가 없는 쌍은 `0`개다.
-코드 신호 출처를 나누면 공식 코드 필드 `328`쌍, 일반 태그 `233`쌍, `candidate-standard`/`성취기준 후보` 태그 `130`쌍이다. 출처 간 중복이 있어 합산하지 않는다. 태그·필드·챕터 구조 신호는 내용 충족 증거가 아니다. 이 원장에서 독립 검토 승인으로 인정한 기준 충족 수는 `0`개이며, 실제 충족 여부는 교사·독립 수학 검토 기록으로 별도 확인해야 한다.
+고유 공식 판본-코드 쌍 `392`개 중 공식 코드 필드 또는 태그 신호가 있는 쌍은 `377`개, exact code가 chapter 안에 있는 쌍은 `342`개, 단일 코드·단일 chapter BookData로 연결된 쌍은 `28`개, 검토 대기 candidate chapter mapping은 `80`개, exact 또는 candidate 구조 신호가 없는 쌍은 `0`개다.
+코드 신호 출처를 나누면 공식 코드 필드 `328`쌍, 일반 태그 `233`쌍, `candidate-standard`/`성취기준 후보` 태그 `105`쌍이다. 출처 간 중복이 있어 합산하지 않는다. 태그·필드·챕터 구조 신호는 내용 충족 증거가 아니다. 이 원장에서 독립 검토 승인으로 인정한 기준 충족 수는 `0`개이며, 실제 충족 여부는 교사·독립 수학 검토 기록으로 별도 확인해야 한다.
 아래 표는 상품별 미연결 기준 수다. 2015 수학(상)/(하) 행은 같은 코드 집합을 각각 보여 주며 공식 분권 경계가 아니다. chapter 신호는 내용의 정확성·완전성·교사 검수를 뜻하지 않는다.
 
 | # | 상품 | 기준 수 | chapter 연결 신호 없음 |
@@ -1311,7 +1311,7 @@
 
 ## 게시·권리·사람 검토 게이트 인벤토리
 
-재귀 BookData `187`개 metadata 집계: 게시 적격성 `not_eligible` 42, `unspecified` 145; 권리 상태 `pending` 33, `publication_decision_pending` 9, `unspecified` 145; 교사 검토 `pending` 42, `unspecified` 145; 수학 검토 `author_checks_recorded_independent_review_pending` 32, `independent_review_pending` 9, `pending` 1, `unspecified` 145.
+재귀 BookData `187`개 metadata 집계: 게시 적격성 `not_eligible` 46, `unspecified` 141; 권리 상태 `pending` 33, `publication_decision_pending` 9, `unknown_pending_rights_review` 4, `unspecified` 141; 교사 검토 `pending` 46, `unspecified` 141; 수학 검토 `author_checks_recorded_independent_review_pending` 32, `independent_review_pending` 9, `pending` 1, `pending_independent_review` 4, `unspecified` 141.
 현재 metadata에서 게시·권리·교사·독립 수학 검토가 모두 승인으로 확인되는 BookData는 0개다. 따라서 게시 가능 자료로 계산한 수는 0개다.
 `unspecified`는 승인이나 미승인을 뜻하지 않고 증거가 없는 상태다. `not_eligible` 및 검수 대기 문서만으로는 출판 승인할 수 없다. 이 집계는 원고 metadata 인벤토리이며 권리 문서·교사 서명·독립 수학검토 산출물을 대체하지 않는다.
 

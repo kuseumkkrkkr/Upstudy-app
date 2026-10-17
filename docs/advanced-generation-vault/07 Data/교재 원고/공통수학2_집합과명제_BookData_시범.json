@@ -2,7 +2,15 @@
   "title": "공통수학2 개념서 · 집합 연산과 포함관계",
   "subtitle": "벤 다이어그램을 조작해 원소 관계와 포함관계를 확인",
   "category": "concept_textbook_prototype",
-  "tags": ["공통수학2", "집합", "포함관계", "벤다이어그램", "시범", "교사 검수 전"],
+  "tags": [
+    "공통수학2",
+    "집합",
+    "포함관계",
+    "벤다이어그램",
+    "시범",
+    "교사 검수 전",
+    "2022 개정 후보"
+  ],
   "chapters": [
     {
       "title": "원소를 움직여 집합의 연산과 포함관계 확인",
@@ -26,8 +34,16 @@
           "title": "두 활동을 모두 하는 사람은 누구일까?",
           "kicker": "공통과 전체를 구별",
           "blocks": [
-            {"type": "lead", "title": "상황", "text": "A는 농구를 좋아하는 사람, B는 축구를 좋아하는 사람의 집합이라고 생각해 보세요."},
-            {"type": "thinking", "title": "먼저 예측", "text": "두 활동을 모두 좋아하는 사람과 하나 이상 좋아하는 사람은 각각 어느 영역에 있을까요?"}
+            {
+              "type": "lead",
+              "title": "상황",
+              "text": "A는 농구를 좋아하는 사람, B는 축구를 좋아하는 사람의 집합이라고 생각해 보세요."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 예측",
+              "text": "두 활동을 모두 좋아하는 사람과 하나 이상 좋아하는 사람은 각각 어느 영역에 있을까요?"
+            }
           ]
         },
         {
@@ -36,11 +52,31 @@
           "title": "벤 다이어그램 원소 배치 조작",
           "kicker": "원소를 A/B 집합에 넣고 빼기",
           "blocks": [
-            {"type": "lead", "title": "조작 방법", "text": "각 원소의 A/B 포함 여부를 바꾸고 교집합·합집합·차집합·여집합을 비교하세요."},
-            {"type": "question", "title": "도구 퀴즈", "text": "A={1,2,3}, B={2,3,4}일 때 A⊆B일까요? 포함되지 않는 원소를 찾아 이유를 말해 보세요."},
-            {"type": "hint", "title": "힌트", "text": "A의 원소를 하나씩 확인하고, B에 없는 원소가 있는지 찾아보세요."},
-            {"type": "answer", "title": "확인", "text": "A⊆B는 거짓입니다. 1은 A에 있지만 B에는 없으므로 반례입니다."},
-            {"type": "misconception", "title": "자주 하는 실수", "text": "여집합은 전체집합을 기준으로 정합니다. 또 A⊆B는 원의 그림 크기만 보지 말고 모든 원소를 확인합니다."}
+            {
+              "type": "lead",
+              "title": "조작 방법",
+              "text": "각 원소의 A/B 포함 여부를 바꾸고 교집합·합집합·차집합·여집합을 비교하세요."
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "A={1,2,3}, B={2,3,4}일 때 A⊆B일까요? 포함되지 않는 원소를 찾아 이유를 말해 보세요."
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "A의 원소를 하나씩 확인하고, B에 없는 원소가 있는지 찾아보세요."
+            },
+            {
+              "type": "answer",
+              "title": "확인",
+              "text": "A⊆B는 거짓입니다. 1은 A에 있지만 B에는 없으므로 반례입니다."
+            },
+            {
+              "type": "misconception",
+              "title": "자주 하는 실수",
+              "text": "여집합은 전체집합을 기준으로 정합니다. 또 A⊆B는 원의 그림 크기만 보지 말고 모든 원소를 확인합니다."
+            }
           ]
         },
         {
@@ -49,14 +85,56 @@
           "title": "연산 결과와 포함관계를 원소로 설명",
           "kicker": "목록·그림·기호 연결",
           "blocks": [
-            {"type": "question", "title": "연습", "text": "U={a,b,c,d}, A={a,c}, B={b,c}일 때 A∩B, A∪B, A\\B, Aᶜ를 구하세요."},
-            {"type": "thinking", "title": "Socratic 질문", "text": "Aᶜ를 구할 때 전체집합 U를 바꾸면 결과도 바뀔까요? 어떤 원소가 기준에 따라 달라지나요?"},
-            {"type": "hint", "title": "힌트", "text": "공통 원소, 한쪽 이상에 속하는 원소, A에만 있는 원소, U에서 A를 뺀 원소를 차례로 적으세요."},
-            {"type": "answer", "title": "정답", "text": "A∩B={c}, A∪B={a,b,c}, A\\B={a}, Aᶜ={b,d}입니다."},
-            {"type": "checklist", "title": "마무리", "items": ["교집합은 두 집합에 모두 속한다.", "합집합은 적어도 한 집합에 속한다.", "여집합은 전체집합을 기준으로 한다.", "포함관계의 반례는 누락된 원소 하나면 된다."]}
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "U={a,b,c,d}, A={a,c}, B={b,c}일 때 A∩B, A∪B, A\\B, Aᶜ를 구하세요."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "Aᶜ를 구할 때 전체집합 U를 바꾸면 결과도 바뀔까요? 어떤 원소가 기준에 따라 달라지나요?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "공통 원소, 한쪽 이상에 속하는 원소, A에만 있는 원소, U에서 A를 뺀 원소를 차례로 적으세요."
+            },
+            {
+              "type": "answer",
+              "title": "정답",
+              "text": "A∩B={c}, A∪B={a,b,c}, A\\B={a}, Aᶜ={b,d}입니다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "교집합은 두 집합에 모두 속한다.",
+                "합집합은 적어도 한 집합에 속한다.",
+                "여집합은 전체집합을 기준으로 한다.",
+                "포함관계의 반례는 누락된 원소 하나면 된다."
+              ]
+            }
           ]
         }
+      ],
+      "candidate_standard_codes": [
+        "10공수2-02-01",
+        "10공수2-02-02",
+        "10공수2-02-03"
       ]
     }
-  ]
+  ],
+  "candidate_standard_codes": [
+    "10공수2-02-01",
+    "10공수2-02-02",
+    "10공수2-02-03"
+  ],
+  "metadata": {
+    "curriculum_review_status": "official_2022_course_code_candidate; content_scope_review_pending",
+    "math_review_status": "pending_independent_review",
+    "teacher_review_status": "pending",
+    "rights_status": "unknown_pending_rights_review",
+    "publication_eligibility": "not_eligible"
+  }
 }

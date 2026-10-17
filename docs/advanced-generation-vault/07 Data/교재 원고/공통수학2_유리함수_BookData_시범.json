@@ -2,7 +2,14 @@
   "title": "공통수학2 개념서 · 유리함수와 점근선",
   "subtitle": "분모가 0인 위치와 그래프가 가까워지는 직선을 직접 관찰",
   "category": "concept_textbook_prototype",
-  "tags": ["공통수학2", "유리함수", "점근선", "시범", "판본 대조 전"],
+  "tags": [
+    "공통수학2",
+    "유리함수",
+    "점근선",
+    "시범",
+    "판본 대조 전",
+    "2022 개정 후보"
+  ],
   "chapters": [
     {
       "title": "유리함수의 점근선은 무엇을 알려 줄까?",
@@ -19,49 +26,157 @@
             "점근선에 가까워진다고 그래프가 그 직선과 꼭 만나는 것은 아니다. 특히 이 식에서는 y=k가 되려면 a/(x-h)=0이어야 하지만 a≠0이므로 그런 x는 없다."
           ],
           "graph": {
-            "items": [{"id":"rational-base","type":"function","label":"y=2/(x−1)−3","colorHex":"#2457C5","enabled":true,"expression":"2/(x-1)-3"}],
-            "settings": {"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-5,"right":5,"top":6,"bottom":-6}}
+            "items": [
+              {
+                "id": "rational-base",
+                "type": "function",
+                "label": "y=2/(x−1)−3",
+                "colorHex": "#2457C5",
+                "enabled": true,
+                "expression": "2/(x-1)-3"
+              }
+            ],
+            "settings": {
+              "showAxes": true,
+              "showGrid": true,
+              "lockViewport": true,
+              "degreeMode": false,
+              "viewport": {
+                "left": -5,
+                "right": 5,
+                "top": 6,
+                "bottom": -6
+              }
+            }
           }
         }
       ],
       "pages": [
         {
-          "id":"cm2-rational-asymptote-opening",
-          "template":"opening",
-          "title":"분모가 0이 되는 곳은 어디일까?",
-          "kicker":"그래프를 보기 전 예측",
-          "blocks":[
-            {"type":"lead","title":"오늘의 질문","text":"y=2/(x−1)−3에서 x=1을 넣으면 어떤 일이 생길까? 그래프가 가까워질 직선도 예측해 보자."},
-            {"type":"thinking","title":"먼저 생각하기","text":"분모를 0으로 만드는 x와, 분수 항이 0에 가까워지는 상황을 각각 구분해 보자."}
+          "id": "cm2-rational-asymptote-opening",
+          "template": "opening",
+          "title": "분모가 0이 되는 곳은 어디일까?",
+          "kicker": "그래프를 보기 전 예측",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "오늘의 질문",
+              "text": "y=2/(x−1)−3에서 x=1을 넣으면 어떤 일이 생길까? 그래프가 가까워질 직선도 예측해 보자."
+            },
+            {
+              "type": "thinking",
+              "title": "먼저 생각하기",
+              "text": "분모를 0으로 만드는 x와, 분수 항이 0에 가까워지는 상황을 각각 구분해 보자."
+            }
           ]
         },
         {
-          "id":"cm2-rational-asymptote-experiment",
-          "template":"experiment",
-          "title":"점근선을 움직여 보기",
-          "kicker":"a≠0, x≠h",
-          "blocks":[
-            {"type":"lead","title":"실험 안내","text":"a는 0이 아닌 값으로 고르고 h와 k를 움직인다. 그래프에서 분모가 0인 위치와 멀리서 가까워지는 높이를 따로 관찰한다."},
-            {"type":"graph","title":"유리함수 그래프","text":"예시 y=2/(x−1)−3의 정의역에서 x=1을 제외한다. 수직점근선은 x=1, 수평점근선은 y=−3이다. 조작형 원고는 함께 제공하는 HTML 시범을 참조한다.","graph":{"items":[{"id":"rational-example","type":"function","label":"y=2/(x−1)−3","colorHex":"#2457C5","enabled":true,"expression":"2/(x-1)-3"}],"settings":{"showAxes":true,"showGrid":true,"lockViewport":true,"degreeMode":false,"viewport":{"left":-5,"right":5,"top":6,"bottom":-6}}}},
-            {"type":"question","title":"도구 퀴즈","text":"a=2, h=1, k=−3일 때 제외되는 x와 두 점근선은 무엇인가?"},
-            {"type":"verification","title":"확인","text":"x=1은 분모를 0으로 만들므로 제외된다. 점근선은 x=1과 y=−3이다."},
-            {"type":"misconception","title":"점근선과 교점 혼동","text":"그래프가 y=−3에 가까워진다는 사실만으로 그 직선과 만난다고 결론 내리지 않는다. 식에 대입해 교점 가능성을 확인한다."}
+          "id": "cm2-rational-asymptote-experiment",
+          "template": "experiment",
+          "title": "점근선을 움직여 보기",
+          "kicker": "a≠0, x≠h",
+          "blocks": [
+            {
+              "type": "lead",
+              "title": "실험 안내",
+              "text": "a는 0이 아닌 값으로 고르고 h와 k를 움직인다. 그래프에서 분모가 0인 위치와 멀리서 가까워지는 높이를 따로 관찰한다."
+            },
+            {
+              "type": "graph",
+              "title": "유리함수 그래프",
+              "text": "예시 y=2/(x−1)−3의 정의역에서 x=1을 제외한다. 수직점근선은 x=1, 수평점근선은 y=−3이다. 조작형 원고는 함께 제공하는 HTML 시범을 참조한다.",
+              "graph": {
+                "items": [
+                  {
+                    "id": "rational-example",
+                    "type": "function",
+                    "label": "y=2/(x−1)−3",
+                    "colorHex": "#2457C5",
+                    "enabled": true,
+                    "expression": "2/(x-1)-3"
+                  }
+                ],
+                "settings": {
+                  "showAxes": true,
+                  "showGrid": true,
+                  "lockViewport": true,
+                  "degreeMode": false,
+                  "viewport": {
+                    "left": -5,
+                    "right": 5,
+                    "top": 6,
+                    "bottom": -6
+                  }
+                }
+              }
+            },
+            {
+              "type": "question",
+              "title": "도구 퀴즈",
+              "text": "a=2, h=1, k=−3일 때 제외되는 x와 두 점근선은 무엇인가?"
+            },
+            {
+              "type": "verification",
+              "title": "확인",
+              "text": "x=1은 분모를 0으로 만들므로 제외된다. 점근선은 x=1과 y=−3이다."
+            },
+            {
+              "type": "misconception",
+              "title": "점근선과 교점 혼동",
+              "text": "그래프가 y=−3에 가까워진다는 사실만으로 그 직선과 만난다고 결론 내리지 않는다. 식에 대입해 교점 가능성을 확인한다."
+            }
           ]
         },
         {
-          "id":"cm2-rational-asymptote-practice",
-          "template":"practice",
-          "title":"식의 이동과 정의역 설명하기",
-          "kicker":"h와 k의 역할을 분리",
-          "blocks":[
-            {"type":"question","title":"연습","text":"y=−1/(x+2)+4의 정의역에서 제외되는 값과 점근선을 구하라."},
-            {"type":"thinking","title":"Socratic 질문","text":"x+2를 0으로 만드는 x는 무엇인가? 식의 바깥에 더해진 4는 그래프가 가까워지는 높이에 어떤 영향을 줄까?"},
-            {"type":"hint","title":"힌트","text":"x+2=x−(−2)로 보고 h를 찾는다. k는 분수 항 전체를 위아래로 옮기는 값이다."},
-            {"type":"answer","title":"정답 확인","text":"x=−2를 제외한다. 수직점근선은 x=−2, 수평점근선은 y=4이다."},
-            {"type":"checklist","title":"마무리","items":["분모가 0인 x값을 정의역에서 제외한다.","x=h와 y=k를 각각 수직·수평 점근선으로 구분한다."]}
+          "id": "cm2-rational-asymptote-practice",
+          "template": "practice",
+          "title": "식의 이동과 정의역 설명하기",
+          "kicker": "h와 k의 역할을 분리",
+          "blocks": [
+            {
+              "type": "question",
+              "title": "연습",
+              "text": "y=−1/(x+2)+4의 정의역에서 제외되는 값과 점근선을 구하라."
+            },
+            {
+              "type": "thinking",
+              "title": "Socratic 질문",
+              "text": "x+2를 0으로 만드는 x는 무엇인가? 식의 바깥에 더해진 4는 그래프가 가까워지는 높이에 어떤 영향을 줄까?"
+            },
+            {
+              "type": "hint",
+              "title": "힌트",
+              "text": "x+2=x−(−2)로 보고 h를 찾는다. k는 분수 항 전체를 위아래로 옮기는 값이다."
+            },
+            {
+              "type": "answer",
+              "title": "정답 확인",
+              "text": "x=−2를 제외한다. 수직점근선은 x=−2, 수평점근선은 y=4이다."
+            },
+            {
+              "type": "checklist",
+              "title": "마무리",
+              "items": [
+                "분모가 0인 x값을 정의역에서 제외한다.",
+                "x=h와 y=k를 각각 수직·수평 점근선으로 구분한다."
+              ]
+            }
           ]
         }
+      ],
+      "candidate_standard_codes": [
+        "10공수2-03-04"
       ]
     }
-  ]
+  ],
+  "candidate_standard_codes": [
+    "10공수2-03-04"
+  ],
+  "metadata": {
+    "curriculum_review_status": "official_2022_course_code_candidate; content_scope_review_pending",
+    "math_review_status": "pending_independent_review",
+    "teacher_review_status": "pending",
+    "rights_status": "unknown_pending_rights_review",
+    "publication_eligibility": "not_eligible"
+  }
 }

@@ -383,3 +383,10 @@
 - 현재 `main`의 187개 BookData와 39개 `REVIEW_MANIFEST.json`을 기준으로 [검수 대기 목록](REMAINING_TEXTBOOKS_REVIEW_QUEUE.md)을 생성했다. manifest가 BookData를 직접 연결하는 경우는 34개, 연결 없는 BookData는 153개이며, manifest 중 5개는 `bookdata_file`도 지정하지 않는다.
 - 연결된 34개 BookData 해시는 원시 바이트 또는 CRLF 정규화 기준으로 모두 일치했다(29 normalized, 5 raw; 실제 불일치 0). 다섯 검토 게이트가 모두 명시 승인된 BookData는 0개이며, 기존 39개 manifest는 모두 `not_eligible`, 교사 검토 `pending`이다.
 - 새 인벤토리는 `tool/build_textbook_review_queue.py`로 재생성 가능하며, 미지정 상태와 manifest 부재를 별도 표기한다. 해시 일치나 생성기 검사만으로 교사·독립 수학·교육과정·권리 승인을 추정하지 않는다. 승인 근거가 없으므로 배포하지 않았다.
+
+## 2026-10-17 판본 후보 미연결 원고 4건 추가 대조
+
+- 로컬 공식 기준표와 과목 상품표를 대조해 미연결 원고 4건의 후보 코드만 BookData `candidate_standard_codes` 및 chapter 후보 필드에 기록했다: `공통수학2` 유리함수 `10공수2-03-04`, 집합 원고 `10공수2-02-01/02/03`, `대수` 등비수열 `12대수03-03`, 2015 수학Ⅱ 도함수 부호 `12수학Ⅱ02-08`. 2022 과목명은 상품표 21·22번 및 HWP 기준표에, 수학Ⅱ 코드는 2015 별책8 추출에 대조했다.
+- `공통수학2`/`대수` 자료에는 `2022 개정 후보`만 추가했고 `standard_codes`나 후보 코드 tag 문자열은 추가하지 않았다. 본문/page payload는 바뀌지 않았다. 유리함수·등비수열은 공식 기준 범위 일부가 빠져 있고, 집합 자료는 명제 내용을 포함하지 않아 모두 후보/범위 검토 상태다.
+- 미연결 감사표는 후보 연결 36개, 2015 상·하 직접 대응 없음 2개, 판본/기준 미확정 5개로 갱신했다. 26상품·1,038 product-standard 행의 범위 원장을 재생성했고, 공식 판본-코드 쌍 392개 중 field/tag 신호 377, exact chapter anchor 342, 단일 코드·단일 chapter 28, 검토 대기 candidate mapping 80, 구조 신호 없음 0개다. 구조 신호는 내용 충족이나 승인으로 보지 않는다.
+- `textbook_bookdata_inventory_roundtrip_test.dart` 4/4 통과. 검수 대기 목록도 187 BookData 기준으로 재생성했으며, 다섯 승인 게이트 전체 승인은 여전히 0개다. 배포하지 않았다.
