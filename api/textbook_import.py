@@ -116,7 +116,7 @@ def validate_graph(graph):
         if viewport['left'] >= viewport['right'] or viewport['bottom'] >= viewport['top']:
             raise ValueError('graph.viewport: invalid bounds')
     for item in sequence(graph.get('items'), 'graph.items', 32):
-        object_fields(item, 'id type label colorHex enabled expression xValues yValues xExpression yExpression tMin tMax traceParameterId', 'graph.item')
+        object_fields(item, 'id type label colorHex enabled expression xValues yValues xExpression yExpression tMin tMax traceParameterId parameterRange', 'graph.item')
         text(item.get('id', ''), 'graph.item.id', 120)
         text(item.get('label', ''), 'graph.item.label', 200)
         if not re.fullmatch(r'#[0-9a-fA-F]{6}', item.get('colorHex', '#1B402B')):
@@ -124,23 +124,43 @@ def validate_graph(graph):
         if 'enabled' in item and not isinstance(item['enabled'], bool):
             raise ValueError('graph.item.enabled: boolean required')
         if item.get('type') != 'parametric' and any(item.get(key) is not None
-                for key in ('xExpression', 'yExpression', 'tMin', 'tMax', 'traceParameterId')):
+                for key in ('xExpression', 'yExpression', 'tMin', 'tMax', 'traceParameterId', 'parameterRange')):
             raise ValueError('graph.item: parametric fields require parametric type')
         if item.get('type') == 'parametric':
-            if 't' in names:
-                raise ValueError('graph.parametric: t is the independent variable')
-            for field in ('tMin', 'tMax'):
-                number(item.get(field), 'graph.parametric.' + field)
-            if item['tMin'] >= item['tMax']:
+            domain = item.get('parameterRange')
+            variable = 't'
+            if domain is not None:
+                object_fields(domain, 'id min max step', 'graph.parameterRange')
+                variable = domain.get('id')
+                if not isinstance(variable, str) or not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,31}', variable) or variable in RESERVED | {'y'}:
+                    raise ValueError('graph.parameterRange: invalid identifier')
+                for field in ('min', 'max', 'step'):
+                    number(domain.get(field), 'graph.parameterRange.' + field)
+                low, high = domain['min'], domain['max']
+                if not 0 < domain['step'] <= high - low:
+                    raise ValueError('graph.parameterRange: invalid step')
+                for alias, bound in [('tMin', low), ('tMax', high)]:
+                    if item.get(alias) is not None:
+                        number(item[alias], 'graph.parametric.' + alias)
+                        if item[alias] != bound:
+                            raise ValueError('graph.parametric: conflicting range aliases')
+            else:
+                if 't' in names:
+                    raise ValueError('graph.parametric: t is the independent variable')
+                for field in ('tMin', 'tMax'):
+                    number(item.get(field), 'graph.parametric.' + field)
+                low, high = item['tMin'], item['tMax']
+            if low >= high:
                 raise ValueError('graph.parametric: invalid range')
-            validate_expression(item.get('xExpression'), coefficient_names, variable='t')
-            validate_expression(item.get('yExpression'), coefficient_names, variable='t')
+            coefficients = coefficient_names - {variable}
+            validate_expression(item.get('xExpression'), coefficients, variable=variable)
+            validate_expression(item.get('yExpression'), coefficients, variable=variable)
             trace_id = item.get('traceParameterId')
             if trace_id is not None:
                 if not isinstance(trace_id, str) or trace_id not in coefficient_names:
                     raise ValueError('graph.parametric: invalid trace slider')
                 slider = next(p for p in settings['parameters'] if p['id'] == trace_id)
-                if slider['min'] < item['tMin'] or slider['max'] > item['tMax']:
+                if slider['min'] < low or slider['max'] > high:
                     raise ValueError('graph.parametric: trace slider outside domain')
         elif item.get('type') == 'function':
             validate_expression(item.get('expression'), coefficient_names)

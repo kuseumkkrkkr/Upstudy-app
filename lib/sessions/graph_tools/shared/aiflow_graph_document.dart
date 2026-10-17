@@ -1,13 +1,19 @@
 enum AiFlowGraphItemType { function, line, scatter, parametric }
 
 class AiFlowGraphDocument {
-  const AiFlowGraphDocument({required this.items, required this.settings});
+  const AiFlowGraphDocument({
+    required this.items,
+    required this.settings,
+    this.extensionData = const {},
+  });
 
   final List<AiFlowGraphItem> items;
   final AiFlowGraphSettings settings;
+  final Map<String, dynamic> extensionData;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      ...extensionData,
       'items': items.map((item) => item.toJson()).toList(),
       'settings': settings.toJson(),
     };
@@ -29,6 +35,9 @@ class AiFlowGraphItem {
     this.tMin,
     this.tMax,
     this.traceParameterId,
+    this.parameterRange,
+    this.rawTypeName,
+    this.extensionData = const {},
   });
 
   final String id;
@@ -47,27 +56,35 @@ class AiFlowGraphItem {
   final double? tMax;
   final String? traceParameterId;
 
-  bool get isFunction => type == AiFlowGraphItemType.function;
+  /// Canonical manuscript domain: {id, min, max, step}. Kept verbatim.
+  final Map<String, dynamic>? parameterRange;
+
+  /// Unknown wire types remain data and must not become executable functions.
+  final String? rawTypeName;
+  final Map<String, dynamic> extensionData;
+
+  bool get isFunction =>
+      rawTypeName == null && type == AiFlowGraphItemType.function;
   bool get isDataSeries =>
       type == AiFlowGraphItemType.line || type == AiFlowGraphItemType.scatter;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      ...extensionData,
       'id': id,
-      'type': type.name,
+      'type': rawTypeName ?? type.name,
       'label': label,
       'colorHex': colorHex,
       'enabled': enabled,
       'expression': expression,
       'xValues': xValues,
       'yValues': yValues,
-      if (type == AiFlowGraphItemType.parametric) ...{
-        'xExpression': xExpression,
-        'yExpression': yExpression,
-        'tMin': tMin,
-        'tMax': tMax,
-        if (traceParameterId != null) 'traceParameterId': traceParameterId,
-      },
+      if (xExpression != null) 'xExpression': xExpression,
+      if (yExpression != null) 'yExpression': yExpression,
+      if (tMin != null) 'tMin': tMin,
+      if (tMax != null) 'tMax': tMax,
+      if (traceParameterId != null) 'traceParameterId': traceParameterId,
+      if (parameterRange != null) 'parameterRange': parameterRange,
     };
   }
 
@@ -85,6 +102,9 @@ class AiFlowGraphItem {
     double? tMin,
     double? tMax,
     String? traceParameterId,
+    Map<String, dynamic>? parameterRange,
+    String? rawTypeName,
+    Map<String, dynamic>? extensionData,
   }) {
     return AiFlowGraphItem(
       id: id ?? this.id,
@@ -100,6 +120,9 @@ class AiFlowGraphItem {
       tMin: tMin ?? this.tMin,
       tMax: tMax ?? this.tMax,
       traceParameterId: traceParameterId ?? this.traceParameterId,
+      parameterRange: parameterRange ?? this.parameterRange,
+      rawTypeName: rawTypeName ?? (type == null ? this.rawTypeName : null),
+      extensionData: extensionData ?? this.extensionData,
     );
   }
 }
@@ -112,6 +135,7 @@ class AiFlowGraphSettings {
     this.degreeMode = false,
     this.viewport,
     List<AiFlowGraphParameter>? parameters,
+    this.extensionData = const {},
   }) : _parameters = parameters;
 
   final bool showAxes;
@@ -120,12 +144,14 @@ class AiFlowGraphSettings {
   final bool degreeMode;
   final AiFlowGraphViewport? viewport;
   final List<AiFlowGraphParameter>? _parameters;
+  final Map<String, dynamic> extensionData;
 
   List<AiFlowGraphParameter> get parameters =>
       _parameters ?? const <AiFlowGraphParameter>[];
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      ...extensionData,
       'showAxes': showAxes,
       'showGrid': showGrid,
       'lockViewport': lockViewport,
@@ -142,6 +168,7 @@ class AiFlowGraphSettings {
     bool? degreeMode,
     AiFlowGraphViewport? viewport,
     List<AiFlowGraphParameter>? parameters,
+    Map<String, dynamic>? extensionData,
   }) {
     return AiFlowGraphSettings(
       showAxes: showAxes ?? this.showAxes,
@@ -150,6 +177,7 @@ class AiFlowGraphSettings {
       degreeMode: degreeMode ?? this.degreeMode,
       viewport: viewport ?? this.viewport,
       parameters: parameters ?? this.parameters,
+      extensionData: extensionData ?? this.extensionData,
     );
   }
 }
@@ -163,6 +191,7 @@ class AiFlowGraphParameter {
     required this.max,
     this.step = 0.1,
     this.role = 'coefficient',
+    this.extensionData = const {},
   });
 
   final String id;
@@ -174,9 +203,11 @@ class AiFlowGraphParameter {
 
   /// `observationX` locates a point on each curve; never a formula coefficient.
   final String role;
+  final Map<String, dynamic> extensionData;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      ...extensionData,
       'id': id,
       'label': label,
       'value': value,
@@ -195,6 +226,7 @@ class AiFlowGraphParameter {
     double? max,
     double? step,
     String? role,
+    Map<String, dynamic>? extensionData,
   }) {
     return AiFlowGraphParameter(
       id: id ?? this.id,
@@ -204,6 +236,7 @@ class AiFlowGraphParameter {
       max: max ?? this.max,
       step: step ?? this.step,
       role: role ?? this.role,
+      extensionData: extensionData ?? this.extensionData,
     );
   }
 }
@@ -214,15 +247,18 @@ class AiFlowGraphViewport {
     required this.right,
     required this.top,
     required this.bottom,
+    this.extensionData = const {},
   });
 
   final double left;
   final double right;
   final double top;
   final double bottom;
+  final Map<String, dynamic> extensionData;
 
   Map<String, dynamic> toJson() {
     return <String, dynamic>{
+      ...extensionData,
       'left': left,
       'right': right,
       'top': top,

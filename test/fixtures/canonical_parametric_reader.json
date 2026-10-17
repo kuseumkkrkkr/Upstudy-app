@@ -1,0 +1,36 @@
+{
+  "schema_version": 2,
+  "title": "합성 매개변수 범위 QA",
+  "subtitle": "저장·공개·AI 호출 없는 canonical 계약 검사",
+  "chapters": [{
+    "title": "매개변수와 접선 기울기",
+    "pages": [{
+      "id": "synthetic-canonical-parametric",
+      "title": "곡선 위의 점과 기울기",
+      "template": "experiment",
+      "blocks": [{
+        "type": "paragraph",
+        "text": "u를 움직여 x=u², y=u³ 위의 점과 dy/dx를 관찰하세요. 원점에서는 수치 미분값을 표시하지 않습니다."
+      }, {
+        "type": "graph",
+        "graph": {
+          "items": [{
+            "id": "synthetic-canonical-curve",
+            "type": "parametric",
+            "label": "x=u², y=u³",
+            "colorHex": "#1B402B",
+            "xExpression": "u^2",
+            "yExpression": "u^3",
+            "parameterRange": {"id": "u", "min": -2, "max": 2, "step": 0.05},
+            "traceParameterId": "u"
+          }],
+          "settings": {
+            "lockViewport": true,
+            "viewport": {"left": -1, "right": 5, "top": 9, "bottom": -9},
+            "parameters": [{"id": "u", "label": "추적 위치 u", "value": 1, "min": -2, "max": 2, "step": 0.5}]
+          }
+        }
+      }]
+    }]
+  }]
+}

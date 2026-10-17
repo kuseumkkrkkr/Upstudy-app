@@ -2,14 +2,24 @@
 /// Sliders are runtime observations and never overwrite authored expressions.
 const parametricGraphMathJavascript = r'''
 function parametricGraph(item, settings) {
-  const min = item.tMin, max = item.tMax;
+  const range = item.parameterRange;
+  if (range != null && (typeof range !== 'object' || Array.isArray(range))) return null;
+  const variable = range == null ? 't' : range.id;
+  if (typeof variable !== 'string' || !/^[A-Za-z][A-Za-z0-9_]{0,31}$/.test(variable) ||
+      ['x','y','pi','e','abs','max','min','sqrt','pow','exp','ln','log','sin','cos','tan',
+       'ceil','floor','round','constructor','prototype','window','parent','document','globalThis','this'].includes(variable)) return null;
+  const min = range == null ? item.tMin : range.min;
+  const max = range == null ? item.tMax : range.max;
   if (!Number.isFinite(min) || !Number.isFinite(max) || min >= max ||
       Math.abs(min) > 1e9 || Math.abs(max) > 1e9) return null;
+  if (range != null && (!Number.isFinite(range.step) || range.step <= 0 ||
+      range.step > max-min || (item.tMin != null && item.tMin !== min) ||
+      (item.tMax != null && item.tMax !== max))) return null;
   const parameters = settings.parameters || [];
-  if (parameters.some(p => p.id === 't')) return null;
-  const names = parameters.filter(p => p.role !== 'observationX').map(p => p.id);
-  const xMath = compileGraphMath(normalizeExpression(item.xExpression), names, settings.degreeMode === true, 't');
-  const yMath = compileGraphMath(normalizeExpression(item.yExpression), names, settings.degreeMode === true, 't');
+  if (range == null && parameters.some(p => p.id === 't')) return null;
+  const names = parameters.filter(p => p.role !== 'observationX' && p.id !== variable).map(p => p.id);
+  const xMath = compileGraphMath(normalizeExpression(item.xExpression), names, settings.degreeMode === true, variable);
+  const yMath = compileGraphMath(normalizeExpression(item.yExpression), names, settings.degreeMode === true, variable);
   if (!xMath || !yMath) return null;
   const x = t => xMath(t, parameterValues), y = t => yMath(t, parameterValues);
   const segments = [];

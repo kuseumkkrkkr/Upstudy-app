@@ -109,7 +109,8 @@ class BookData {
       if (coverColor != null) 'cover_color': coverColor!.toARGB32(),
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
-      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
     };
   }
 
@@ -131,7 +132,8 @@ class BookData {
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
       if (sourceSha256 != null) 'source_sha256': sourceSha256,
-      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
     };
   }
 
@@ -152,7 +154,8 @@ class BookData {
       if (curriculumVersion != null) 'curriculum_version': curriculumVersion,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
       if (sourceSha256 != null) 'source_sha256': sourceSha256,
-      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
     };
   }
 }
@@ -203,8 +206,10 @@ class BookChapter {
       'title': title,
       if (tags.isNotEmpty) 'tags': tags,
       if (standardCodes.isNotEmpty) 'standard_codes': standardCodes,
-      if (candidateStandardCodes != null) 'candidate_standard_codes': candidateStandardCodes,
-      if (sourceHtmlReference != null) 'source_html_reference': sourceHtmlReference,
+      if (candidateStandardCodes != null)
+        'candidate_standard_codes': candidateStandardCodes,
+      if (sourceHtmlReference != null)
+        'source_html_reference': sourceHtmlReference,
       'intro': intro,
       'sections': sections.map((section) => section.toJson()).toList(),
       if (visuals.isNotEmpty)
@@ -218,7 +223,8 @@ class BookChapter {
 List<String>? _readCandidateCodes(Map<String, dynamic> json) {
   if (!json.containsKey('candidate_standard_codes')) return null;
   final value = json['candidate_standard_codes'];
-  if (value is! List || value.length > 32 ||
+  if (value is! List ||
+      value.length > 32 ||
       value.any((item) => item is! String || item.length > 80)) {
     throw const FormatException('Invalid candidate standards metadata');
   }
@@ -228,8 +234,12 @@ List<String>? _readCandidateCodes(Map<String, dynamic> json) {
 String? _readSourceHtmlReference(Map<String, dynamic> json) {
   if (!json.containsKey('source_html_reference')) return null;
   final value = json['source_html_reference'];
-  if (value is! String || value.length > 240 || value.trim().isEmpty ||
-      value == '.' || value == '..' || RegExp(r'[/\\:]').hasMatch(value)) {
+  if (value is! String ||
+      value.length > 240 ||
+      value.trim().isEmpty ||
+      value == '.' ||
+      value == '..' ||
+      RegExp(r'[/\\:]').hasMatch(value)) {
     throw const FormatException('Invalid source reference metadata');
   }
   return value;
@@ -488,6 +498,16 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
           return AiFlowGraphItem(
             id: item['id']?.toString() ?? '',
             type: type,
+            rawTypeName:
+                AiFlowGraphItemType.values.any(
+                  (type) => type.name == item['type'],
+                )
+                ? null
+                : item['type']?.toString(),
+            extensionData: _graphExtensions(
+              item,
+              'id type label colorHex enabled expression xValues yValues xExpression yExpression tMin tMax traceParameterId parameterRange',
+            ),
             label: item['label']?.toString() ?? '',
             colorHex: item['colorHex']?.toString() ?? '#1B402B',
             enabled: item['enabled'] != false,
@@ -499,6 +519,9 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
             tMin: (item['tMin'] as num?)?.toDouble(),
             tMax: (item['tMax'] as num?)?.toDouble(),
             traceParameterId: item['traceParameterId']?.toString(),
+            parameterRange: item['parameterRange'] is Map
+                ? Map<String, dynamic>.from(item['parameterRange'] as Map)
+                : null,
           );
         })
         .toList(growable: false);
@@ -509,6 +532,10 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
             right: _readDouble(rawViewport['right'], 8),
             top: _readDouble(rawViewport['top'], 8),
             bottom: _readDouble(rawViewport['bottom'], -8),
+            extensionData: _graphExtensions(
+              rawViewport,
+              'left right top bottom',
+            ),
           )
         : null;
     final parameters = (settings['parameters'] as List?)
@@ -522,11 +549,16 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
             max: _readDouble(item['max'], 10),
             step: _readDouble(item['step'], 0.1),
             role: item['role']?.toString() ?? 'coefficient',
+            extensionData: _graphExtensions(
+              item,
+              'id label value min max step role',
+            ),
           ),
         )
         .toList(growable: false);
     return AiFlowGraphDocument(
       items: parsedItems,
+      extensionData: _graphExtensions(json, 'items settings'),
       settings: AiFlowGraphSettings(
         showAxes: settings['showAxes'] != false,
         showGrid: settings['showGrid'] != false,
@@ -534,11 +566,23 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
         degreeMode: settings['degreeMode'] == true,
         viewport: viewport,
         parameters: parameters,
+        extensionData: _graphExtensions(
+          settings,
+          'showAxes showGrid lockViewport degreeMode viewport parameters',
+        ),
       ),
     );
   } catch (_) {
     return null;
   }
+}
+
+Map<String, dynamic> _graphExtensions(Map source, String knownKeys) {
+  final known = knownKeys.split(' ').toSet();
+  return Map.unmodifiable({
+    for (final key in source.keys)
+      if (!known.contains(key)) key.toString(): source[key],
+  });
 }
 
 double _readDouble(dynamic value, double fallback) =>

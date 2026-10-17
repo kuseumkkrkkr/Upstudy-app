@@ -141,3 +141,42 @@ revalidated in this phase. A final canary download still matched the prior
 7,133,766-byte `7f54ee1424f0982d6c2f461c4744eaadd7954602487576f9c08eca2e9db340b8`
 bundle. Existing Cupertino font build warning and broader reader
 analyzer/style debt are not declared resolved.
+
+## Canonical manuscript compatibility follow-up (local, not deployed)
+
+This supersedes only the earlier `parameterRange` compatibility gap, not the
+full-manuscript/publication gate. Input was read as JSON only; no other
+checkout's Dart source was used or copied.
+
+- Read-only candidate canonical UTF-8/LF SHA-256:
+  `52ce6477321ce3584e495cf9b7ade69c3a6095c3be8592caaf1889558a300de0`.
+- 27 chapters / 17 graph blocks: all graph blocks pass strict server validation.
+  Whole-book validation still **fails** at `chapter: unsupported fields: unit`.
+  This is not an import/publication success; later unsupported structures may
+  remain behind that first error. Source was not copied or stored in this repo.
+- Canonical `parameterRange: {id,min,max,step}` drives the independent variable
+  (`u` in the candidate). Legacy fixed-`t` `tMin/tMax` remains supported.
+  Simultaneously supplied aliases must agree. Invalid identifiers, non-finite
+  bounds, invalid steps, executable expressions and out-of-domain traces reject.
+- Graph document/item/settings/viewport/parameter extension fields are preserved
+  as data. Unknown item types retain their wire name and do not become executable
+  functions. The UI reports unsupported types; server import still rejects
+  unapproved fields/types. Preservation is not execution/publication approval.
+- Runtime observation copies preserve extension metadata and author defaults.
+  Readout uses the actual independent-variable name rather than always `t`.
+- Python graph/import suite: **43 passed**, one existing dependency deprecation
+  warning. First focused Flutter suite: **9 passed**, including canonical/unknown
+  metadata checks. The expanded candidate/metadata rerun hit Dart compiler
+  **out-of-memory**; its result is not a pass. Single-concurrency retry was then
+  attempted, then cancelled during compilation under memory pressure (about
+  1.1 GB physical/virtual headroom observed). Expanded tests and scoped analysis
+  remain pending; no unrelated process was terminated. Do not infer a new
+  browser/bundle pass from the prior screenshots.
+- Added `tools/qa/check_bookdata_graphs.py`: mandatory expected canonical hash,
+  read-only structural audit, zero writes; returns nonzero on book/graph errors.
+  `test/fixtures/canonical_parametric_reader.json` is an independent synthetic
+  cubic fixture, not the supplied manuscript.
+
+Next: finish the expanded Flutter tests and scoped analysis when memory permits;
+build a committed-source local QA bundle and verify canonical slider/readout and
+responsive retention in the browser. Keep canary/Preview/Supabase unchanged.

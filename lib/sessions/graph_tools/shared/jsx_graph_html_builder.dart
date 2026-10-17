@@ -377,11 +377,15 @@ String buildAiFlowGraphHtml(
           const hasCursor = (settings.parameters || []).some(p => p.role === 'observationX');
           const descriptions = [];
           for (const item of payload.items || []) {
+            if (item.enabled !== false && !['function','line','scatter','parametric'].includes(item.type)) {
+              descriptions.push('지원하지 않는 그래프 유형: ' + String(item.type));
+              continue;
+            }
             if (item.enabled !== false && item.type === 'parametric') {
               const graph = parametricGraph(item, settings);
               const point = graph && graph.point;
               descriptions.push((item.label || item.id || '매개변수 곡선') + ': ' +
-                (point ? 't=' + formatFixed(point.t) + ', x=' + formatFixed(point.x) +
+                (point ? (item.parameterRange?.id || 't') + '=' + formatFixed(point.t) + ', x=' + formatFixed(point.x) +
                   ', y=' + formatFixed(point.y) + ', dy/dx≈' +
                   (point.slope === null ? '정의되지 않음' : formatFixed(Number(point.slope.toFixed(3))))
                   : graph ? '추적 위치를 선택하세요.' : '곡선 식이나 범위를 확인하세요.'));
