@@ -1,5 +1,22 @@
 import 'aiflow_graph_document.dart';
 
+/// Seeds a remounted reader iframe from validated current-page observations.
+/// Returns a renderer-only copy; authored defaults remain unchanged.
+AiFlowGraphDocument graphWithObservedParameters(
+  AiFlowGraphDocument document,
+  Map<String, double>? values,
+) {
+  final checked = validateGraphParameters(document, values);
+  if (checked == null) return document;
+  return AiFlowGraphDocument(
+    items: document.items,
+    settings: document.settings.copyWith(parameters: [
+      for (final parameter in document.settings.parameters)
+        parameter.copyWith(value: checked[parameter.id]),
+    ]),
+  );
+}
+
 /// Validates an observed runtime snapshot, never mutating author initial values.
 Map<String, double>? validateGraphParameters(
   AiFlowGraphDocument document,

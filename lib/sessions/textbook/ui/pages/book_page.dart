@@ -2819,7 +2819,7 @@ class _BookWidgetState extends State<BookWidget> {
         _graphObservationEpoch = epoch;
         _graphObservationPage = page;
       }
-      return _ReaderGraphScope(onAsk: _askAboutCurrentPage, onObserved: (document, values) {
+      return _ReaderGraphScope(onAsk: _askAboutCurrentPage, observed: (document) => _observedGraphs[document], onObserved: (document, values) {
         if (!_graphPageCurrent(book, page, epoch)) return;
         final checked = validateGraphParameters(document, values);
         if (checked != null) _observedGraphs[document] = checked;
@@ -4502,8 +4502,9 @@ class _ParsedBookPage {
 /// 필요한 변수는 절의 JSXGraph 문서다.
 /// 작동 원리는 실제 지면 안에 그래프와 조작 안내를 함께 배치해 설명과 실험을 한 시야에서 연결하는 것이다.
 class _ReaderGraphScope extends InheritedWidget {
-  const _ReaderGraphScope({required this.onObserved, required this.onAsk, required super.child});
+  const _ReaderGraphScope({required this.onObserved, required this.observed, required this.onAsk, required super.child});
   final void Function(AiFlowGraphDocument, Map<String, double>) onObserved;
+  final Map<String, double>? Function(AiFlowGraphDocument) observed;
   final VoidCallback onAsk;
   @override
   bool updateShouldNotify(_ReaderGraphScope oldWidget) => true;
@@ -4516,6 +4517,8 @@ class _TextbookGraphCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final scope = context.getInheritedWidgetOfExactType<_ReaderGraphScope>();
+    final renderedDocument = graphWithObservedParameters(document, scope?.observed(document));
     final compact = MediaQuery.sizeOf(context).width < 640;
     return Container(
       // Keep the graph's 120px minimum plus toolbar/status/parameter controls
@@ -4574,7 +4577,7 @@ class _TextbookGraphCard extends StatelessWidget {
               ],
             ),
           ),
-          Expanded(child: buildJsxGraphEmbed(document,
+          Expanded(child: buildJsxGraphEmbed(renderedDocument,
             onParametersChanged: (values) => context.getInheritedWidgetOfExactType<_ReaderGraphScope>()?.onObserved(document, values),
           )),
         ],

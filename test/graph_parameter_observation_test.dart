@@ -41,4 +41,14 @@ void main() {
     ]));
     expect(validateGraphParameters(invalid, {'observed_x': .5, 'another': 0}), isNull);
   });
+
+  test('renderer remount restores observations without mutating author defaults', () {
+    final before = jsonEncode(document.toJson());
+    final restored = graphWithObservedParameters(document, {'p': 2.5});
+    expect(restored.settings.parameters.single.value, 2.5);
+    expect(document.settings.parameters.single.value, 2);
+    expect(jsonEncode(document.toJson()), before);
+    expect(identical(graphWithObservedParameters(document, {'p': 99}), document), isTrue);
+    expect(identical(graphWithObservedParameters(document, null), document), isTrue);
+  });
 }

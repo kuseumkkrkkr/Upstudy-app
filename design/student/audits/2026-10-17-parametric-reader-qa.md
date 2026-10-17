@@ -76,3 +76,21 @@ Serve the compiled web directory with a static server, and copy the committed
 fixture to its root as `synthetic-parametric-reader.json`. Flutter SPA fallback
 HTML is not an acceptable JSON response. The QA entry is
 `tools/qa/parametric_reader_preview.dart`; only host `127.0.0.1` is accepted.
+
+### Working reader and responsive state regression
+
+The 7d85b19 build (`d888efd4a471efe7701bfc8a28bdd64ef0b88b0cfabe9ea42a1326dbe3a0e155`,
+5,108,400 bytes) matched the actual browser response, no cache/service worker.
+The served JSON was application/json with SHA-256
+`f49d51176664eb30eadad8aa93ed9db77166700a99dc4ddd9e96cdfde34f86ed`.
+Actual keyboard slider input produced u=1 → (1,2), slope≈2; u=2 → (4,10),
+slope≈3.25; u=0 → (0,0), undefined slope. Mobile screenshots were saved.
+
+Resizing to desktop then recreated the iframe and reset u to 1. This is not a
+responsive-state pass. The reader now seeds a new iframe using a validated
+renderer-only copy of current-page observations; authored values are untouched,
+and the existing page/book/session clearing and source-bound callbacks remain.
+`graphWithObservedParameters` rejects invalid observations and returns the
+original document in that case. The focused graph/smoke/account-overlay rerun
+passed **9 tests**; helper/test scoped analysis reported no issues. Corrected
+bundle and actual resize verification remain pending until the next rebuild.
