@@ -135,6 +135,7 @@ class _ExplorerState extends State<BookFunctionExplorerView> {
               child: SizedBox(
                 height: 230,
                 child: CustomPaint(
+                  key: const ValueKey('function-explorer-plot'),
                   painter: _FunctionPainter(
                     config,
                     coefficient,
@@ -361,6 +362,8 @@ class _FunctionPainter extends CustomPainter {
         ..strokeWidth = 2.5
         ..style = PaintingStyle.stroke,
     );
+    // Clip the curve, but keep boundary markers whole in the chart's margin.
+    canvas.restore();
     final guide = Paint()
       ..color = const Color(0xffc2410c)
       ..strokeWidth = 1.3;
@@ -377,7 +380,6 @@ class _FunctionPainter extends CustomPainter {
       canvas.drawLine(point(u, ymin), point(u, ymax), guide);
       canvas.drawLine(point(xmin, v), point(xmax, v), guide);
     }
-    canvas.restore();
   }
 
   @override
