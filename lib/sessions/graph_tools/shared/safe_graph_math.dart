@@ -1,9 +1,9 @@
 /// Arithmetic-only evaluator shared by web/native graph documents.
 /// Author input is parsed into bounded nodes, never evaluated as JavaScript.
 const safeGraphMathJavascript = r'''
-function compileGraphMath(source, parameterNames, degreeMode) {
+function compileGraphMath(source, parameterNames, degreeMode, variableName = 'x') {
   if (typeof source !== 'string' || source.length > 1000) return null;
-  const allowed = new Set(['x', 'pi', 'e', ...parameterNames]);
+  const allowed = new Set([variableName, 'pi', 'e', ...parameterNames]);
   const radians = value => degreeMode ? value * Math.PI / 180 : value;
   const functions = Object.freeze({
     abs: Math.abs, max: Math.max, min: Math.min, sqrt: Math.sqrt,
@@ -80,7 +80,7 @@ function compileGraphMath(source, parameterNames, degreeMode) {
   function value(node, x, parameters) {
     switch (node[0]) {
       case 'number': return node[1];
-      case 'variable': return node[1] === 'x' ? x : node[1] === 'pi' ? Math.PI : node[1] === 'e' ? Math.E : Number(parameters[node[1]]);
+      case 'variable': return node[1] === variableName ? x : node[1] === 'pi' ? Math.PI : node[1] === 'e' ? Math.E : Number(parameters[node[1]]);
       case 'call': return functions[node[1]](...node[2].map(arg => value(arg, x, parameters)));
       case 'negate': return -value(node[1], x, parameters);
       case '+': return value(node[1], x, parameters) + value(node[2], x, parameters);

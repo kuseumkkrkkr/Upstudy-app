@@ -51,7 +51,7 @@ def number(value, path):
         raise ValueError(f'{path}: finite number within +/-1e9 required')
 
 
-def validate_expression(expression, parameters=()):
+def validate_expression(expression, parameters=(), variable='x'):
     """Validate arithmetic AST, never compile/eval author expressions."""
     text(expression, 'graph.expression', 1000)
     source = re.sub(r'^\s*y\s*=\s*', '', expression, flags=re.I)
@@ -67,7 +67,7 @@ def validate_expression(expression, parameters=()):
         raise ValueError('graph.expression: expression too complex')
     for node in nodes:
         if isinstance(node, ast.Name):
-            if node.id not in {'x', 'pi', 'e', *FUNCTIONS, *parameters}:
+            if node.id not in {variable, 'pi', 'e', *FUNCTIONS, *parameters}:
                 raise ValueError('graph.expression: unknown identifier')
         elif isinstance(node, ast.Call):
             if not isinstance(node.func, ast.Name) or node.func.id not in FUNCTIONS or node.keywords or not 1 <= len(node.args) <= 8:
@@ -116,14 +116,33 @@ def validate_graph(graph):
         if viewport['left'] >= viewport['right'] or viewport['bottom'] >= viewport['top']:
             raise ValueError('graph.viewport: invalid bounds')
     for item in sequence(graph.get('items'), 'graph.items', 32):
-        object_fields(item, 'id type label colorHex enabled expression xValues yValues', 'graph.item')
+        object_fields(item, 'id type label colorHex enabled expression xValues yValues xExpression yExpression tMin tMax traceParameterId', 'graph.item')
         text(item.get('id', ''), 'graph.item.id', 120)
         text(item.get('label', ''), 'graph.item.label', 200)
         if not re.fullmatch(r'#[0-9a-fA-F]{6}', item.get('colorHex', '#1B402B')):
             raise ValueError('graph.item: invalid color')
         if 'enabled' in item and not isinstance(item['enabled'], bool):
             raise ValueError('graph.item.enabled: boolean required')
-        if item.get('type') == 'function':
+        if item.get('type') != 'parametric' and any(item.get(key) is not None
+                for key in ('xExpression', 'yExpression', 'tMin', 'tMax', 'traceParameterId')):
+            raise ValueError('graph.item: parametric fields require parametric type')
+        if item.get('type') == 'parametric':
+            if 't' in names:
+                raise ValueError('graph.parametric: t is the independent variable')
+            for field in ('tMin', 'tMax'):
+                number(item.get(field), 'graph.parametric.' + field)
+            if item['tMin'] >= item['tMax']:
+                raise ValueError('graph.parametric: invalid range')
+            validate_expression(item.get('xExpression'), coefficient_names, variable='t')
+            validate_expression(item.get('yExpression'), coefficient_names, variable='t')
+            trace_id = item.get('traceParameterId')
+            if trace_id is not None:
+                if not isinstance(trace_id, str) or trace_id not in coefficient_names:
+                    raise ValueError('graph.parametric: invalid trace slider')
+                slider = next(p for p in settings['parameters'] if p['id'] == trace_id)
+                if slider['min'] < item['tMin'] or slider['max'] > item['tMax']:
+                    raise ValueError('graph.parametric: trace slider outside domain')
+        elif item.get('type') == 'function':
             validate_expression(item.get('expression'), coefficient_names)
         elif item.get('type') in ('line', 'scatter'):
             xs, ys = item.get('xValues'), item.get('yValues')

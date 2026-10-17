@@ -1,0 +1,37 @@
+{
+  "schema_version": 2,
+  "title": "합성 매개변수 곡선 QA",
+  "subtitle": "저장·공개·AI 호출 없는 리더 호환성 검사",
+  "chapters": [{
+    "title": "매개변수 함수의 미분",
+    "pages": [{
+      "id": "synthetic-parametric",
+      "title": "곡선 위의 점과 기울기",
+      "template": "experiment",
+      "blocks": [{
+        "type": "paragraph",
+        "text": "u를 움직여 x(t)=t², y(t)=t³+t 위의 점과 dy/dx를 관찰하세요. t=0에서는 dx/dt=0이므로 기울기를 수치로 표시하지 않습니다."
+      }, {
+        "type": "graph",
+        "graph": {
+          "items": [{
+            "id": "synthetic-curve",
+            "type": "parametric",
+            "label": "x=t², y=t³+t",
+            "colorHex": "#1B402B",
+            "xExpression": "t^2",
+            "yExpression": "t^3+t",
+            "tMin": -2,
+            "tMax": 2,
+            "traceParameterId": "u"
+          }],
+          "settings": {
+            "lockViewport": true,
+            "viewport": {"left": -1, "right": 5, "top": 11, "bottom": -11},
+            "parameters": [{"id": "u", "label": "추적 위치 u", "value": 1, "min": -2, "max": 2, "step": 0.5}]
+          }
+        }
+      }]
+    }]
+  }]
+}

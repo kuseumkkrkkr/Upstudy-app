@@ -494,6 +494,11 @@ AiFlowGraphDocument? _readGraph(dynamic value) {
             expression: item['expression']?.toString(),
             xValues: _readDoubleList(item['xValues']),
             yValues: _readDoubleList(item['yValues']),
+            xExpression: item['xExpression']?.toString(),
+            yExpression: item['yExpression']?.toString(),
+            tMin: (item['tMin'] as num?)?.toDouble(),
+            tMax: (item['tMax'] as num?)?.toDouble(),
+            traceParameterId: item['traceParameterId']?.toString(),
           );
         })
         .toList(growable: false);

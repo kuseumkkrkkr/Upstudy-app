@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:s11/sessions/graph_tools/shared/aiflow_graph_document.dart';
 import 'safe_graph_math.dart';
+import 'parametric_graph_math.dart';
 
 /// 필요한 변수는 렌더링 대상 그래프 문서·매개변수 조작부·직접 조작 모드다.
 /// 작동 원리는 문서를 JSON payload로 주입해 웹뷰 내부에서 한 번만 초기 렌더링하고,
@@ -350,6 +351,7 @@ String buildAiFlowGraphHtml(
         }
 
         __AIFLOW_SAFE_MATH__
+        __AIFLOW_PARAMETRIC_MATH__
 
         function safeFunctionFromExpression(expression, degreeMode) {
           const coefficients = (currentPayload.settings?.parameters || [])
@@ -375,6 +377,16 @@ String buildAiFlowGraphHtml(
           const hasCursor = (settings.parameters || []).some(p => p.role === 'observationX');
           const descriptions = [];
           for (const item of payload.items || []) {
+            if (item.enabled !== false && item.type === 'parametric') {
+              const graph = parametricGraph(item, settings);
+              const point = graph && graph.point;
+              descriptions.push((item.label || item.id || '매개변수 곡선') + ': ' +
+                (point ? 't=' + formatFixed(point.t) + ', x=' + formatFixed(point.x) +
+                  ', y=' + formatFixed(point.y) + ', dy/dx≈' +
+                  (point.slope === null ? '정의되지 않음' : formatFixed(Number(point.slope.toFixed(3))))
+                  : graph ? '추적 위치를 선택하세요.' : '곡선 식이나 범위를 확인하세요.'));
+              continue;
+            }
             if (item.enabled === false || item.type !== 'function') continue;
             const label = item.label || item.expression || item.id || '함수';
             if (!hasCursor) {
@@ -505,6 +517,31 @@ String buildAiFlowGraphHtml(
           for (const item of items) {
             if (!item || item.enabled === false) continue;
             const type = item.type || 'function';
+            if (type === 'parametric') {
+              const graph = parametricGraph(item, settings);
+              if (!graph) continue;
+              const color = item.colorHex || palette.function;
+              const canvasPoint = point => [
+                bounds.originX + plotWidth * (point[0] - viewport.left) / (viewport.right - viewport.left),
+                bounds.originY + plotHeight * (viewport.top - point[1]) / (viewport.top - viewport.bottom)];
+              ctx.save();
+              ctx.beginPath(); ctx.rect(bounds.originX, bounds.originY, plotWidth, plotHeight); ctx.clip();
+              ctx.strokeStyle = color; ctx.lineWidth = 2 * ratio;
+              for (const segment of graph.segments) {
+                ctx.beginPath();
+                segment.forEach((point, index) => {
+                  const [cx, cy] = canvasPoint(point);
+                  if (index === 0) ctx.moveTo(cx, cy); else ctx.lineTo(cx, cy);
+                });
+                ctx.stroke(); rendered = true;
+              }
+              if (graph.point) {
+                const [cx, cy] = canvasPoint([graph.point.x, graph.point.y]);
+                ctx.fillStyle = color; ctx.beginPath(); ctx.arc(cx, cy, 4 * ratio, 0, Math.PI * 2); ctx.fill();
+              }
+              ctx.restore();
+              continue;
+            }
             if (type === 'function') {
               const color = item.colorHex || palette.function;
               const evaluator = safeFunctionFromExpression(
@@ -781,6 +818,19 @@ String buildAiFlowGraphHtml(
           for (const item of items) {
             if (!item || item.enabled === false) continue;
             const type = item.type || 'function';
+            if (type === 'parametric') {
+              const graph = parametricGraph(item, settings);
+              if (!graph) continue;
+              const color = item.colorHex || palette.function;
+              for (const segment of graph.segments) {
+                const curve = board.create('curve', [segment.map(p => p[0]), segment.map(p => p[1])],
+                  {strokeColor: color, strokeWidth: 2.2, fixed: true, withLabel: false});
+                renderedElements.push(curve); functionItems.push(curve); hasRenderable = true;
+              }
+              if (graph.point) renderedElements.push(board.create('point', [graph.point.x, graph.point.y],
+                {fixed: true, withLabel: false, size: 4, strokeColor: color, fillColor: color}));
+              continue;
+            }
             if (type === 'function') {
               const color = item.colorHex || palette.function;
               const label = item.label || item.id || '';
@@ -1068,6 +1118,7 @@ String buildAiFlowGraphHtml(
 </html>
 '''
       .replaceAll(r'__AIFLOW_SAFE_MATH__', safeGraphMathJavascript)
+      .replaceAll(r'__AIFLOW_PARAMETRIC_MATH__', parametricGraphMathJavascript)
       .replaceAll(
         r'__AIFLOW_GRAPH_CONTROLS_DISPLAY__',
         showParameterControls ? 'flex' : 'none',

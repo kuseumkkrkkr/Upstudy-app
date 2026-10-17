@@ -1,4 +1,4 @@
-enum AiFlowGraphItemType { function, line, scatter }
+enum AiFlowGraphItemType { function, line, scatter, parametric }
 
 class AiFlowGraphDocument {
   const AiFlowGraphDocument({required this.items, required this.settings});
@@ -24,6 +24,11 @@ class AiFlowGraphItem {
     this.expression,
     this.xValues,
     this.yValues,
+    this.xExpression,
+    this.yExpression,
+    this.tMin,
+    this.tMax,
+    this.traceParameterId,
   });
 
   final String id;
@@ -34,6 +39,13 @@ class AiFlowGraphItem {
   final String? expression;
   final List<double>? xValues;
   final List<double>? yValues;
+
+  /// Arithmetic x(t), y(t), bounded domain, and optional settings slider ID.
+  final String? xExpression;
+  final String? yExpression;
+  final double? tMin;
+  final double? tMax;
+  final String? traceParameterId;
 
   bool get isFunction => type == AiFlowGraphItemType.function;
   bool get isDataSeries =>
@@ -49,6 +61,13 @@ class AiFlowGraphItem {
       'expression': expression,
       'xValues': xValues,
       'yValues': yValues,
+      if (type == AiFlowGraphItemType.parametric) ...{
+        'xExpression': xExpression,
+        'yExpression': yExpression,
+        'tMin': tMin,
+        'tMax': tMax,
+        if (traceParameterId != null) 'traceParameterId': traceParameterId,
+      },
     };
   }
 
@@ -61,6 +80,11 @@ class AiFlowGraphItem {
     String? expression,
     List<double>? xValues,
     List<double>? yValues,
+    String? xExpression,
+    String? yExpression,
+    double? tMin,
+    double? tMax,
+    String? traceParameterId,
   }) {
     return AiFlowGraphItem(
       id: id ?? this.id,
@@ -71,6 +95,11 @@ class AiFlowGraphItem {
       expression: expression ?? this.expression,
       xValues: xValues ?? this.xValues,
       yValues: yValues ?? this.yValues,
+      xExpression: xExpression ?? this.xExpression,
+      yExpression: yExpression ?? this.yExpression,
+      tMin: tMin ?? this.tMin,
+      tMax: tMax ?? this.tMax,
+      traceParameterId: traceParameterId ?? this.traceParameterId,
     );
   }
 }
