@@ -18,15 +18,20 @@ Future<void> main() async {
   if (Uri.base.host != '127.0.0.1') {
     throw StateError('This synthetic reader is loopback-only');
   }
+  // The real private reader requires a session even without persistence. This
+  // non-JWT identity exists only in memory; all product requests stay blocked.
+  // ignore: invalid_use_of_visible_for_testing_member
+  ApiClient.instance.setTokenForTest('synthetic-parametric-local-only');
   final response = await http.get(
     Uri.base.resolve('synthetic-parametric-reader.json'),
   );
   if (response.statusCode != 200) {
     throw StateError('Synthetic fixture unavailable');
   }
-  final book = BookData.fromJson(
-    jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
-  );
+  final book = BookData.fromJson({
+    ...jsonDecode(utf8.decode(response.bodyBytes)) as Map<String, dynamic>,
+    'textbook_id': 'synthetic-parametric-local',
+  });
   runApp(
     MaterialApp(
       title: '합성 매개변수 리더 QA · DB/AI 없음',

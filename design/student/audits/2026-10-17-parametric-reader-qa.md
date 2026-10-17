@@ -55,3 +55,24 @@ Pending: committed-source QA build, loopback actual BookWidget slider operation,
 390/1280 screenshots, emitted bundle/fixture hashes and console inspection.
 This synthetic extension has no equivalent approved HTML fixture; captures are
 functional evidence, not HTML/before/after three-way design parity.
+
+### First actual-browser failure and QA-only fix
+
+The first 85849b4 build (JS `8d996a6c7f20c0f87ead5b51b44de46504931d6d68f692a1df50231d8dd62f49`)
+booted but correctly showed the private reader's login-required state. It is
+**rejected as graph UI evidence**. `persistenceEnabled:false` disables saving,
+not the private reader's session requirement; the initially suspected missing
+book identifier alone was not the cause.
+
+The loopback-only harness now supplies a fixed local book ID and the existing
+`setTokenForTest` in-memory non-JWT identity, with all product HTTP requests still
+mock-blocked. No production reader/authentication code changed; the identity is
+not persisted and disappears when the QA app is reloaded/closed. A new actual
+BookWidget smoke test verifies the graph card appears, no login-required notice,
+and zero product requests. It passed; live slider verification remains pending
+until the corrected release bundle is rebuilt and inspected.
+
+Serve the compiled web directory with a static server, and copy the committed
+fixture to its root as `synthetic-parametric-reader.json`. Flutter SPA fallback
+HTML is not an acceptable JSON response. The QA entry is
+`tools/qa/parametric_reader_preview.dart`; only host `127.0.0.1` is accepted.
