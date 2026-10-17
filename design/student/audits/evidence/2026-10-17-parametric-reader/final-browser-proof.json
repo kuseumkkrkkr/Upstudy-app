@@ -1,0 +1,23 @@
+{
+  "source_commit": "3e52bdd8e747e1326bbc04b5bd2d3d18036eb7e7",
+  "url": "http://127.0.0.1:9017/",
+  "js_bytes": 5108877,
+  "js_sha256": "d8447fba9b1ea46db4d5c64bbaf2abc8c07ba59750c47ca70bd2e38553588192",
+  "fixture_sha256": "f49d51176664eb30eadad8aa93ed9db77166700a99dc4ddd9e96cdfde34f86ed",
+  "bundle_http_status": 200,
+  "fixture_http_status": 200,
+  "fixture_mime": "application/json",
+  "from_disk_cache": false,
+  "from_service_worker": false,
+  "resize_preserved": true,
+  "synthetic_token_in_bundle": true,
+  "public_deployment": false,
+  "console_error_count": 0,
+  "normal_pointer_click_verified": true,
+  "product_api_network_requests_observed": 0,
+  "keyboard_and_input_verified": true,
+  "accessibility_pointer_automation": "semantic overlay intercepted locator click; manual follow-up pending",
+  "external_manuscript_contract": "parameterRange/unknown extension compatibility not yet established",
+  "network_count_scope": "captured boot responses only; all product ApiClient requests are mock-blocked",
+  "native_smoke_product_requests": 0
+}

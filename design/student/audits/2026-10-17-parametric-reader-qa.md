@@ -94,3 +94,50 @@ and the existing page/book/session clearing and source-bound callbacks remain.
 original document in that case. The focused graph/smoke/account-overlay rerun
 passed **9 tests**; helper/test scoped analysis reported no issues. Corrected
 bundle and actual resize verification remain pending until the next rebuild.
+
+## Final bounded local result (supersedes the pending rebuild items)
+
+- Code source: `3e52bdd8e747e1326bbc04b5bd2d3d18036eb7e7`, `hotfix`.
+- Committed lib snapshot: 312 files verified; D: release build completed in
+  64.5 seconds. Package routing restored byte-for-byte afterward.
+- Actual browser JS: **5,108,877 bytes**, SHA-256
+  `d8447fba9b1ea46db4d5c64bbaf2abc8c07ba59750c47ca70bd2e38553588192`,
+  matching local output; HTTP 200, not disk cache/service worker.
+- Actual fixture response: HTTP 200 application/json, unchanged SHA-256
+  `f49d51176664eb30eadad8aa93ed9db77166700a99dc4ddd9e96cdfde34f86ed`.
+- At 390×844, actual iframe input changed u=1→2, point (1,2)→(4,10),
+  approximate dy/dx 2→3.25. At u=0, undefined slope is explicitly displayed.
+- Mobile u=2 survived transition to 1280×900; desktop u=0 survived transition
+  back to 390×844. Original authored initial value remains 1.
+- Normal-mode locator click moved the actual range to 0; a real keyboard End
+  moved it to 2. With Flutter semantics enabled, pointer locator clicks were
+  intercepted by a semantics overlay; keyboard/input interaction worked, but
+  accessibility-mode pointer behavior needs manual follow-up. Do not mark full
+  accessibility acceptance passed.
+- Observed browser console errors: 0. Exploratory raw event history was evicted;
+  this is not a complete runtime-event audit. Bundle/JSON hashes were collected
+  again from fresh responses. Captured boot responses contained no product API
+  response; the synthetic transport blocks all ApiClient product HTTP calls.
+  The native smoke test recorded zero product requests. No real DB/AI operation
+  or external authentication was performed.
+- Browser metrics/cache override restored. Loopback viewer:
+  http://127.0.0.1:9017/ . Evidence is under
+  `evidence/2026-10-17-parametric-reader/`; `source7d` images/proof retain the
+  earlier working-but-resetting build, other images describe the final build.
+
+### Still not accepted
+
+The other task reported a different `parameterRange`/`rawTypeName`/`extensionData`
+contract. Those fields were not present in the original hotfix graph model;
+this work did not delete them from this worktree or copy another branch's model.
+Compatibility with that other contract and its original manuscripts is **not
+established**. Current strict import rejects unsupported fields rather than
+silently publishing a lossy conversion. Reconcile the actual data contract and
+round-trip fixture before any full-corpus compatibility or deployment claim.
+
+No Vercel Preview update, canary promotion, DB write or publication was performed
+in this local graph QA phase. Paired Preview/Supabase readiness was not
+revalidated in this phase. A final canary download still matched the prior
+7,133,766-byte `7f54ee1424f0982d6c2f461c4744eaadd7954602487576f9c08eca2e9db340b8`
+bundle. Existing Cupertino font build warning and broader reader
+analyzer/style debt are not declared resolved.

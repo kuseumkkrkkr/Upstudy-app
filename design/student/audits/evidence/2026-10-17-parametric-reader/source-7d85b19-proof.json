@@ -1,0 +1,31 @@
+{
+  "source_commit": "7d85b19d28b3d46abffe19c296de6d64187ecfc3",
+  "url": "http://127.0.0.1:9017/",
+  "js_bytes": 5108400,
+  "js_sha256": "d888efd4a471efe7701bfc8a28bdd64ef0b88b0cfabe9ea42a1326dbe3a0e155",
+  "fixture_sha256": "f49d51176664eb30eadad8aa93ed9db77166700a99dc4ddd9e96cdfde34f86ed",
+  "synthetic_token_in_bundle": true,
+  "mobile_states": [
+    {
+      "u": 1,
+      "x": 1,
+      "y": 2,
+      "slope": 2
+    },
+    {
+      "u": 2,
+      "x": 4,
+      "y": 10,
+      "slope": 3.25
+    },
+    {
+      "u": 0,
+      "x": 0,
+      "y": 0,
+      "slope": null
+    }
+  ],
+  "static_json_mime": "application/json",
+  "public_deployment": false,
+  "resize_preserved": false
+}
