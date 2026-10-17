@@ -1,0 +1,373 @@
+{
+  "scope": "exact live baseline reproduction, not latest feature deployment",
+  "deployment_id": "dpl_HTYscDjA8dNT521Pjf91UeqJsaF2",
+  "artifact_commit": "60565564b4ce58d33cc74bdd1daabe90eb349e50",
+  "snapshot_sha256": "1d2b137c4d8b8b730e88cd2eda2b1e431642714dba8593cb024aa2959dd10095",
+  "archived_files": 303,
+  "js_bytes": 7133766,
+  "js_sha256": "7f54ee1424f0982d6c2f461c4744eaadd7954602487576f9c08eca2e9db340b8",
+  "js_identical_to_live": true,
+  "build_seconds": 103.7,
+  "flutter": "3.44.6",
+  "dart": "3.12.2",
+  "target": "build/temp/canary-live-source-baseline-6056556/lib/main.dart",
+  "package_config_sha256": "6e933ebd35894e4b33e38809b540f1ad4e772a83d6487e302d6c32e4f270af1a",
+  "defines": {
+    "API_BASE_URL": "https://aiflow-web-canary.vercel.app",
+    "STUDENT_SERVICES_DEMO": true,
+    "STUDENT_STORE_DEMO": true
+  },
+  "baseline_source_staged_or_committed": false,
+  "deployed_or_promoted": false,
+  "public_file_comparisons": [
+    {
+      "path": ".last_build_id",
+      "exists": true,
+      "matches_live_source_uid": false
+    },
+    {
+      "path": "assets/AssetManifest.bin",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/AssetManifest.bin.json",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/FontManifest.json",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/NOTICES",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/assets/bookshelf.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/assets/fonts/NotoSansKR-VF.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/fonts/MaterialIcons-Regular.otf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/lib/assets/bookshelf.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_inappwebview/assets/t_rex_runner/t-rex.css",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_inappwebview/assets/t_rex_runner/t-rex.html",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_inappwebview_web/assets/web/web_support.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_map/lib/assets/flutter_map_logo.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_AMS-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Caligraphic-Bold.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Caligraphic-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Fraktur-Bold.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Fraktur-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Main-Bold.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Main-BoldItalic.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Main-Italic.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Main-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Math-BoldItalic.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Math-Italic.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_SansSerif-Bold.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_SansSerif-Italic.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_SansSerif-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Script-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Size1-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Size2-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Size3-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Size4-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/flutter_math_fork/lib/katex_fonts/fonts/KaTeX_Typewriter-Regular.ttf",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/kakao_flutter_sdk_user/assets/images/icon_account_login.svg",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/kakao_flutter_sdk_user/assets/images/icon_talk_login.svg",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/packages/kakao_flutter_sdk_user/assets/images/logo_light.svg",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/shaders/ink_sparkle.frag",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "assets/shaders/stretch_effect.frag",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/canvaskit.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/canvaskit.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/canvaskit.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/chromium/canvaskit.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/chromium/canvaskit.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/chromium/canvaskit.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/experimental_webparagraph/canvaskit.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/experimental_webparagraph/canvaskit.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/experimental_webparagraph/canvaskit.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm_heavy.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm_heavy.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/skwasm_heavy.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/wimp.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/wimp.js.symbols",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "canvaskit/wimp.wasm",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "favicon.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "flutter.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "flutter_bootstrap.js",
+      "exists": true,
+      "matches_live_source_uid": false
+    },
+    {
+      "path": "flutter_service_worker.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "icons/Icon-192.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "icons/Icon-512.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "icons/Icon-maskable-192.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "icons/Icon-maskable-512.png",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "index.html",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "main.dart.js",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "manifest.json",
+      "exists": true,
+      "matches_live_source_uid": true
+    },
+    {
+      "path": "version.json",
+      "exists": true,
+      "matches_live_source_uid": true
+    }
+  ],
+  "public_files_compared": 68,
+  "public_files_matched": 66,
+  "bootstrap_difference_review": {
+    "only_generated_service_worker_nonce_and_empty_build_descriptor": true,
+    "live_service_worker_nonce": "2369212807",
+    "rebuilt_service_worker_nonce": "1096971131",
+    "last_build_id_is_flutter_output_directory_bookkeeping": true,
+    "normalization_for_comparison_only_no_output_files_changed": true
+  }
+}

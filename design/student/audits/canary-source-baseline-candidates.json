@@ -1,0 +1,1398 @@
+{
+  "source_head": "7cd43f22be2d920818d8bf60fee6a0d4b144523a",
+  "snapshot_sha256": "1d2b137c4d8b8b730e88cd2eda2b1e431642714dba8593cb024aa2959dd10095",
+  "selection_rule": "archive differs from HEAD; checkout equals live-source snapshot after CRLF normalization",
+  "candidate_count": 86,
+  "staged_or_committed": false,
+  "counts_by_category": {
+    "build_contract": 2,
+    "other_live_student_features": 59,
+    "shared_runtime_dependency": 22,
+    "textbook_integration": 3
+  },
+  "counts_by_status": {
+    " M": 77,
+    "??": 9
+  },
+  "observed_web_compiler_inputs": 73,
+  "observed_web_build_inputs_including_pubspec_lock": 75,
+  "dependency_scope": "baseline Flutter web build, canary demos on; not all platforms or configurations",
+  "files": [
+    {
+      "path": "lib/main.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 6327,
+      "checkout_sha256": "fe7a4bb43eceb77fb5dda2b0d68e4bad8b017db789f3134d56afb142d4759bee",
+      "snapshot_sha256": "fe7a4bb43eceb77fb5dda2b0d68e4bad8b017db789f3134d56afb142d4759bee",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 3,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/shared/ui/ui.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 891,
+      "checkout_sha256": "e9bf95a0d70b0696bd1fff39e079d748de2b920634aa88ac42180a6597b5bea2",
+      "snapshot_sha256": "e9bf95a0d70b0696bd1fff39e079d748de2b920634aa88ac42180a6597b5bea2",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 1
+      }
+    },
+    {
+      "path": "lib/shared/ui/student_density/student_html_shell.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 17125,
+      "checkout_sha256": "c574b44a0832994ce45181d75159b64158104883069e759077dfea221b35aaa5",
+      "snapshot_sha256": "c574b44a0832994ce45181d75159b64158104883069e759077dfea221b35aaa5",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 237,
+        "removed": 132
+      }
+    },
+    {
+      "path": "lib/shared/ui/student_density/student_top_navigation.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 2139,
+      "checkout_sha256": "f25a17314cbc8406064dd93431ed487296aef3e57b2c64118035f318eb822441",
+      "snapshot_sha256": "f25a17314cbc8406064dd93431ed487296aef3e57b2c64118035f318eb822441",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 7,
+        "removed": 7
+      }
+    },
+    {
+      "path": "lib/shared/ui/student_density/student_density.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 20342,
+      "checkout_sha256": "9afe0bf072629d6467d14f42faa1e2fd23b2e7253fa707f54c6c6902e60a85d5",
+      "snapshot_sha256": "9afe0bf072629d6467d14f42faa1e2fd23b2e7253fa707f54c6c6902e60a85d5",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 342,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/shared/ui/ios26/ios26_chrome.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 61894,
+      "checkout_sha256": "12ffe3e9bd0c657e84911a26308f2ebd727456cb5c46a9a66e63e857f77646da",
+      "snapshot_sha256": "12ffe3e9bd0c657e84911a26308f2ebd727456cb5c46a9a66e63e857f77646da",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 13
+      }
+    },
+    {
+      "path": "lib/shared/services/storage/local_db.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 576,
+      "checkout_sha256": "6768299985ac1e32b354c322ca383c026a54bd09e99e8b3c004bd88b41a81f05",
+      "snapshot_sha256": "6768299985ac1e32b354c322ca383c026a54bd09e99e8b3c004bd88b41a81f05",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 8,
+        "removed": 3
+      }
+    },
+    {
+      "path": "lib/shared/services/storage/local_db_io.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 3092,
+      "checkout_sha256": "895bad60a9d49cf2784b5221a4534740706ca44ca4fe838f7bfb9cdbd9f85cde",
+      "snapshot_sha256": "895bad60a9d49cf2784b5221a4534740706ca44ca4fe838f7bfb9cdbd9f85cde",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 31,
+        "removed": 14
+      }
+    },
+    {
+      "path": "lib/shared/services/storage/local_db_stub.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 1118,
+      "checkout_sha256": "e0ca3479a06a03a256663a8444d11d28f249092c013b714dcaeb6a8c0c8a4996",
+      "snapshot_sha256": "e0ca3479a06a03a256663a8444d11d28f249092c013b714dcaeb6a8c0c8a4996",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 18,
+        "removed": 3
+      }
+    },
+    {
+      "path": "lib/shared/services/storage/local_db_web.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 3466,
+      "checkout_sha256": "5c554352110f6253a6f8260d3fb28f930275ae6ad88b2f2161c4eb16704958a9",
+      "snapshot_sha256": "5c554352110f6253a6f8260d3fb28f930275ae6ad88b2f2161c4eb16704958a9",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 74,
+        "removed": 36
+      }
+    },
+    {
+      "path": "lib/shared/services/api/api_contract.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 5145,
+      "checkout_sha256": "2c71b85bef1d386b7787f5b65bf50b1930b0e2c9f40bab77bd9289f22f5c138e",
+      "snapshot_sha256": "2c71b85bef1d386b7787f5b65bf50b1930b0e2c9f40bab77bd9289f22f5c138e",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 4,
+        "removed": 13
+      }
+    },
+    {
+      "path": "lib/shared/services/api/auth_service.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 7849,
+      "checkout_sha256": "36d98c5ef2dc2cb57c090f9d0226ff282bc9be1e92aeebbda7a31663dd769e6c",
+      "snapshot_sha256": "36d98c5ef2dc2cb57c090f9d0226ff282bc9be1e92aeebbda7a31663dd769e6c",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 9,
+        "removed": 2
+      }
+    },
+    {
+      "path": "lib/shared/services/api/course_service.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 28023,
+      "checkout_sha256": "b72ae6ca6f3ef72ce87e6b3d218d4e4ef07ee8b7a602c09f3f7299fc77b4a2ad",
+      "snapshot_sha256": "b72ae6ca6f3ef72ce87e6b3d218d4e4ef07ee8b7a602c09f3f7299fc77b4a2ad",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 23,
+        "removed": 28
+      }
+    },
+    {
+      "path": "lib/shared/services/api/student_facing_api_error.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 1530,
+      "checkout_sha256": "f3bd1ef393b8f573f6d5514875688555e3b9f0a608680a5784a0eb340827bcc7",
+      "snapshot_sha256": "f3bd1ef393b8f573f6d5514875688555e3b9f0a608680a5784a0eb340827bcc7",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 3,
+        "removed": 1
+      }
+    },
+    {
+      "path": "lib/shared/business/repositories/activity_store.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 28589,
+      "checkout_sha256": "6db47cd7994ac509d8c8d0c14a6c431ba72d704916f3ad3a5d6111bbfc622d2a",
+      "snapshot_sha256": "6db47cd7994ac509d8c8d0c14a6c431ba72d704916f3ad3a5d6111bbfc622d2a",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 7,
+        "removed": 6
+      }
+    },
+    {
+      "path": "lib/shared/business/repositories/bookmark_store.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 3377,
+      "checkout_sha256": "fdcd8441ca0adc7917c8128f9f5450cb1f9e86b1fb56f402c2a28c64c3b9e081",
+      "snapshot_sha256": "fdcd8441ca0adc7917c8128f9f5450cb1f9e86b1fb56f402c2a28c64c3b9e081",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 28,
+        "removed": 47
+      }
+    },
+    {
+      "path": "lib/shared/business/repositories/exam_paper_store.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 5209,
+      "checkout_sha256": "c1ed1745a96323e5e5d5720345ab2c69949ce21409dcd7ed4017d95724bf441d",
+      "snapshot_sha256": "c1ed1745a96323e5e5d5720345ab2c69949ce21409dcd7ed4017d95724bf441d",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 46,
+        "removed": 37
+      }
+    },
+    {
+      "path": "lib/shared/business/repositories/rating_store.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 2383,
+      "checkout_sha256": "56f6c9f73023af55ee0be40e40c62ed5b5ac1bb879ab2a967f42c39aeae2f219",
+      "snapshot_sha256": "56f6c9f73023af55ee0be40e40c62ed5b5ac1bb879ab2a967f42c39aeae2f219",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 8,
+        "removed": 1
+      }
+    },
+    {
+      "path": "lib/shared/business/repositories/problem_bookmark_store.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 5232,
+      "checkout_sha256": "2544057327d214617029a342147a84c98313d098a5e53bff7da37b652a0179b1",
+      "snapshot_sha256": "2544057327d214617029a342147a84c98313d098a5e53bff7da37b652a0179b1",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 39,
+        "removed": 21
+      }
+    },
+    {
+      "path": "lib/Mobiles/mobile_solve_view.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 136673,
+      "checkout_sha256": "1e1d9c66ca51694bacdafb8d257f3e20aa5cc113b9aa57168a15a91391694237",
+      "snapshot_sha256": "1e1d9c66ca51694bacdafb8d257f3e20aa5cc113b9aa57168a15a91391694237",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1872,
+        "removed": 346
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/ui/pages/flow_view_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 93918,
+      "checkout_sha256": "21b32c241245f99641ec3565d9dfcd523b878343ca4148b49d19baa829c75a35",
+      "snapshot_sha256": "21b32c241245f99641ec3565d9dfcd523b878343ca4148b49d19baa829c75a35",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 747,
+        "removed": 104
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/ui/pages/solve_analysis_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 25460,
+      "checkout_sha256": "bca3f76f041ccf6eab9f3b6cb0a9f348844517baef0a0d5079f8259a04e01765",
+      "snapshot_sha256": "bca3f76f041ccf6eab9f3b6cb0a9f348844517baef0a0d5079f8259a04e01765",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 612,
+        "removed": 310
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/ui/pages/batch_grading_report_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 5105,
+      "checkout_sha256": "82297bbd5dcef431dcee5d0919f5b1ecfe5a9cb95c1d4d5d1e539e3991422885",
+      "snapshot_sha256": "82297bbd5dcef431dcee5d0919f5b1ecfe5a9cb95c1d4d5d1e539e3991422885",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 164,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/ui/modals/problem_solve_mode.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 19327,
+      "checkout_sha256": "d208d4b0890d19474f62848feb60b8d9642fc57eeba60e8f8b6068f2f378b186",
+      "snapshot_sha256": "d208d4b0890d19474f62848feb60b8d9642fc57eeba60e8f8b6068f2f378b186",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 24,
+        "removed": 3
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/ui/modals/weakness_review_mode.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 75737,
+      "checkout_sha256": "c332d29a7bf393fabe4ba89a283294bbfd555adea0c48a1c4253d1d1aac76c55",
+      "snapshot_sha256": "c332d29a7bf393fabe4ba89a283294bbfd555adea0c48a1c4253d1d1aac76c55",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 95,
+        "removed": 66
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/session/build_page_widget.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 122678,
+      "checkout_sha256": "41d84363a78e5f29c13c883f99bedf23a39d6378aa0124049bf46fc882fc6a00",
+      "snapshot_sha256": "41d84363a78e5f29c13c883f99bedf23a39d6378aa0124049bf46fc882fc6a00",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 482,
+        "removed": 32
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/session/quick_generate_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 17608,
+      "checkout_sha256": "b8896a18a944de60e55b3f20d83012198d48ec569285d7599987e62f66d1dfd3",
+      "snapshot_sha256": "b8896a18a944de60e55b3f20d83012198d48ec569285d7599987e62f66d1dfd3",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 33
+      }
+    },
+    {
+      "path": "lib/sessions/tryout_solve/legacy_entry/tryout.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 1377,
+      "checkout_sha256": "04bcaab7ab6055c849bdf2ef77cf6ec4f15750a7418ffd44945a49c046db10b0",
+      "snapshot_sha256": "04bcaab7ab6055c849bdf2ef77cf6ec4f15750a7418ffd44945a49c046db10b0",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/textbook/ui/pages/bookbag_details_page.dart",
+      "status": "??",
+      "category": "textbook_integration",
+      "bytes": 38834,
+      "checkout_sha256": "6a88fc70c5f8a4a044a7d5421e1cc3844cd94edcdeab6868b02b34f4239da92c",
+      "snapshot_sha256": "6a88fc70c5f8a4a044a7d5421e1cc3844cd94edcdeab6868b02b34f4239da92c",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 972,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/textbook/ui/pages/docx_box.dart",
+      "status": " M",
+      "category": "textbook_integration",
+      "bytes": 159565,
+      "checkout_sha256": "6cdb8ffd57b81b22e5d5a25fbeae5ebdd8ed03ffb14102a8382476bd97ffa69b",
+      "snapshot_sha256": "6cdb8ffd57b81b22e5d5a25fbeae5ebdd8ed03ffb14102a8382476bd97ffa69b",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1271,
+        "removed": 638
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/widgets/activity_badges.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 37460,
+      "checkout_sha256": "95c360871902e758abdaed6b07e08cf47f1ec27511f4a09c19ea08bcc8b4cb58",
+      "snapshot_sha256": "95c360871902e758abdaed6b07e08cf47f1ec27511f4a09c19ea08bcc8b4cb58",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 5,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/widgets/html_home_dashboard.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 43008,
+      "checkout_sha256": "79fbea47d3e310c4f3abb0297106f2511646d4a65ff35c533f154b593ac21c83",
+      "snapshot_sha256": "79fbea47d3e310c4f3abb0297106f2511646d4a65ff35c533f154b593ac21c83",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 561,
+        "removed": 317
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/pages/activity_history_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 19024,
+      "checkout_sha256": "22a1f4c6cbcc141081694c910ee8f67595d40315c0c3be7d83fdc7a0ff1edfbf",
+      "snapshot_sha256": "22a1f4c6cbcc141081694c910ee8f67595d40315c0c3be7d83fdc7a0ff1edfbf",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 628,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/pages/mainpage_widget.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 4133,
+      "checkout_sha256": "43b27bb4be69709d0569595e2e473d1f3f6d3c87c46eafb4eef87090d68f9801",
+      "snapshot_sha256": "43b27bb4be69709d0569595e2e473d1f3f6d3c87c46eafb4eef87090d68f9801",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 3,
+        "removed": 3
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/pages/restriction_mode_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 5250,
+      "checkout_sha256": "0dacbe978cf6002992c0efe2f0d64ffd0ec1ee6d540612c0202d2fc5028d97db",
+      "snapshot_sha256": "0dacbe978cf6002992c0efe2f0d64ffd0ec1ee6d540612c0202d2fc5028d97db",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 122,
+        "removed": 4
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/pages/student_achievements_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 15398,
+      "checkout_sha256": "29a83202c9b234c982dfbc3075749b05416ff4a0a04fd6eb2e8993fa029eb3b1",
+      "snapshot_sha256": "29a83202c9b234c982dfbc3075749b05416ff4a0a04fd6eb2e8993fa029eb3b1",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 464,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/modals/curriculum_modal.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 20893,
+      "checkout_sha256": "462d70cfda82eb46c19ae1fe2f6fc6f4a3f597211888175c50177a7bc1933a4f",
+      "snapshot_sha256": "462d70cfda82eb46c19ae1fe2f6fc6f4a3f597211888175c50177a7bc1933a4f",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 72,
+        "removed": 32
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/modals/owned_marketplace_modal.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 18095,
+      "checkout_sha256": "f1d7f593a90be00213e359f8d5d72ec7310ff35abf782343d7912c0bde265e1c",
+      "snapshot_sha256": "f1d7f593a90be00213e359f8d5d72ec7310ff35abf782343d7912c0bde265e1c",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 1
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/modals/rating_detail_modal.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 35685,
+      "checkout_sha256": "c5055b5ad51899ac1a842b7231b2afadb180d679048248d809c42d433bb5ecce",
+      "snapshot_sha256": "c5055b5ad51899ac1a842b7231b2afadb180d679048248d809c42d433bb5ecce",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 865,
+        "removed": 1965
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/ui/modals/today_tasks_modal.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 11443,
+      "checkout_sha256": "556146e7d3203bee422517d90690e4062db00fecd3c10d5a51f8291c4cece657",
+      "snapshot_sha256": "556146e7d3203bee422517d90690e4062db00fecd3c10d5a51f8291c4cece657",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 2,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/student_dashboard/session/main_student_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 247741,
+      "checkout_sha256": "d8be77fe3ebcec6425d27f53ad8a5764eb8ef5ecc48f24fee225feb8e9db7b5b",
+      "snapshot_sha256": "d8be77fe3ebcec6425d27f53ad8a5764eb8ef5ecc48f24fee225feb8e9db7b5b",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 2916,
+        "removed": 462
+      }
+    },
+    {
+      "path": "lib/sessions/settings/ui/pages/settings_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 37559,
+      "checkout_sha256": "4a288df9c2bebf7fa1fc9e8161bf0ca702955d0c545b86a62dfa88e3991ea4bd",
+      "snapshot_sha256": "4a288df9c2bebf7fa1fc9e8161bf0ca702955d0c545b86a62dfa88e3991ea4bd",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 21,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/review_course/ui/pages/review_course_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 40025,
+      "checkout_sha256": "ea221eb01f91355d680733a361a079927c26c2a59a0dca6945e4e23e31417bc1",
+      "snapshot_sha256": "ea221eb01f91355d680733a361a079927c26c2a59a0dca6945e4e23e31417bc1",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 472,
+        "removed": 22
+      }
+    },
+    {
+      "path": "lib/sessions/legacy_cleanup/session/study_center.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 30289,
+      "checkout_sha256": "eca268b0f254cead896018fbae4cde7353e0add4f6357010908d49df8c1a4569",
+      "snapshot_sha256": "eca268b0f254cead896018fbae4cde7353e0add4f6357010908d49df8c1a4569",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 4,
+        "removed": 2
+      }
+    },
+    {
+      "path": "lib/sessions/landing/ui/pages/student_tutorial_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 36627,
+      "checkout_sha256": "8fccb79baf1a0cf70ba4e266ab5b8190ac83564bbac7949199dd70995df88493",
+      "snapshot_sha256": "8fccb79baf1a0cf70ba4e266ab5b8190ac83564bbac7949199dd70995df88493",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 207,
+        "removed": 30
+      }
+    },
+    {
+      "path": "lib/sessions/learning_tools/ui/pages/focus_mode_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 22203,
+      "checkout_sha256": "24605bc4dddedd72d13822be3f40d6acedb70b68dbb1079e19ba48ca357789c2",
+      "snapshot_sha256": "24605bc4dddedd72d13822be3f40d6acedb70b68dbb1079e19ba48ca357789c2",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 384,
+        "removed": 126
+      }
+    },
+    {
+      "path": "lib/sessions/learning_tools/ui/pages/notepad_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 99234,
+      "checkout_sha256": "3b7b20347525257fa3247c5dc6fd90da15cbf7fc80a2b95b3bd22ea1b289fcbf",
+      "snapshot_sha256": "3b7b20347525257fa3247c5dc6fd90da15cbf7fc80a2b95b3bd22ea1b289fcbf",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1243,
+        "removed": 456
+      }
+    },
+    {
+      "path": "lib/sessions/learning_tools/ui/pages/student_learning_tools_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 16618,
+      "checkout_sha256": "b4f5aec5f110e0308f983ee35c8ab4bc0efdace05a6b69c6ccbb1f0c5990e3be",
+      "snapshot_sha256": "b4f5aec5f110e0308f983ee35c8ab4bc0efdace05a6b69c6ccbb1f0c5990e3be",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 25,
+        "removed": 25
+      }
+    },
+    {
+      "path": "lib/sessions/learning_tools/ui/pages/timer_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 35308,
+      "checkout_sha256": "cfdcbc77bc500d675b104d41529ed98954001039167f4c1ca6428446b9ca472f",
+      "snapshot_sha256": "cfdcbc77bc500d675b104d41529ed98954001039167f4c1ca6428446b9ca472f",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 379,
+        "removed": 41
+      }
+    },
+    {
+      "path": "lib/sessions/graph_tools/session/jsx_graph_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 66646,
+      "checkout_sha256": "39fe3f61c417eb3a897e0a2fb1d5297d7a2507aa06c25fa81af349cee692b2e1",
+      "snapshot_sha256": "39fe3f61c417eb3a897e0a2fb1d5297d7a2507aa06c25fa81af349cee692b2e1",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 377,
+        "removed": 1691
+      }
+    },
+    {
+      "path": "lib/sessions/friend/friend.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 1851,
+      "checkout_sha256": "a6cb6592d0da8a7fd4b6bc4c944b87bc88ffa9ac8ed4f8aa7ecba6ae44bde059",
+      "snapshot_sha256": "a6cb6592d0da8a7fd4b6bc4c944b87bc88ffa9ac8ed4f8aa7ecba6ae44bde059",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 2
+      }
+    },
+    {
+      "path": "lib/sessions/friend/ui/friend_screen.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 207242,
+      "checkout_sha256": "6c75b9eb157859464d5afecef0c30bb289ef6ce26681992e20dbe95775a46c1f",
+      "snapshot_sha256": "6c75b9eb157859464d5afecef0c30bb289ef6ce26681992e20dbe95775a46c1f",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 308,
+        "removed": 577
+      }
+    },
+    {
+      "path": "lib/sessions/exam_paper/ui/exam_grading_report_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 59598,
+      "checkout_sha256": "815835def87757abc8458745bee9bb6ccf30f753113cf761f2bcc1ad5360aff9",
+      "snapshot_sha256": "815835def87757abc8458745bee9bb6ccf30f753113cf761f2bcc1ad5360aff9",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 752,
+        "removed": 168
+      }
+    },
+    {
+      "path": "lib/sessions/exam_paper/shared/exam_paper_models.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 6585,
+      "checkout_sha256": "4cbb3a1398b39b584db7a2fbe2e8afe9c9d1cebad4377fb6b1e92d07bd6abc3d",
+      "snapshot_sha256": "4cbb3a1398b39b584db7a2fbe2e8afe9c9d1cebad4377fb6b1e92d07bd6abc3d",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 4,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/exam_paper/business/exam_paper_state.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 11057,
+      "checkout_sha256": "191898e08b3e8b77d806bbb4f9645bf0b9e3fa7272c2d0f971a6f458ad90722e",
+      "snapshot_sha256": "191898e08b3e8b77d806bbb4f9645bf0b9e3fa7272c2d0f971a6f458ad90722e",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 16,
+        "removed": 3
+      }
+    },
+    {
+      "path": "lib/sessions/exam_paper/business/exam_paper_state_grading.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 27008,
+      "checkout_sha256": "a195d439cdb096147569567c75020a3e370e93be1afc3a765a1300c17324ab94",
+      "snapshot_sha256": "a195d439cdb096147569567c75020a3e370e93be1afc3a765a1300c17324ab94",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 52,
+        "removed": 36
+      }
+    },
+    {
+      "path": "lib/sessions/course/ui/course_catalog_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 129087,
+      "checkout_sha256": "60dfca46c2322be604040a4e45846c5fed1cffc5240b849774a1a0feacea1025",
+      "snapshot_sha256": "60dfca46c2322be604040a4e45846c5fed1cffc5240b849774a1a0feacea1025",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 235,
+        "removed": 100
+      }
+    },
+    {
+      "path": "lib/sessions/course/ui/course_curriculum_scene_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 9075,
+      "checkout_sha256": "7e4e2635415c2899dba564333e2150d7bfeeee10830e114037ed96bf448c1b10",
+      "snapshot_sha256": "7e4e2635415c2899dba564333e2150d7bfeeee10830e114037ed96bf448c1b10",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 162,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/sessions/course/session/course_learning_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 87357,
+      "checkout_sha256": "cbf8529128ca04ef63783790cb87d5784cb3b8293dc922d18d4148ad3aa1a112",
+      "snapshot_sha256": "cbf8529128ca04ef63783790cb87d5784cb3b8293dc922d18d4148ad3aa1a112",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 240,
+        "removed": 52
+      }
+    },
+    {
+      "path": "lib/sessions/auth/ui/pages/profile_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 115368,
+      "checkout_sha256": "49f28d075aaaec338f725c8ea0a32f4e4d16c0b241490d4284c06097b2b8927a",
+      "snapshot_sha256": "49f28d075aaaec338f725c8ea0a32f4e4d16c0b241490d4284c06097b2b8927a",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 693,
+        "removed": 247
+      }
+    },
+    {
+      "path": "lib/sessions/auth/ui/pages/login_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 26568,
+      "checkout_sha256": "6a3fa29263754b6d65e0e51f17d4703ec07ecc7cc2c79ac6e381faab753ac852",
+      "snapshot_sha256": "6a3fa29263754b6d65e0e51f17d4703ec07ecc7cc2c79ac6e381faab753ac852",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 87,
+        "removed": 29
+      }
+    },
+    {
+      "path": "lib/sessions/auth/ui/pages/signup_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 49689,
+      "checkout_sha256": "745467a007bcc468b56efdd25f0bfa6f83c407330c7887252a52a195da7ebe9f",
+      "snapshot_sha256": "745467a007bcc468b56efdd25f0bfa6f83c407330c7887252a52a195da7ebe9f",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 185,
+        "removed": 113
+      }
+    },
+    {
+      "path": "lib/features/wrong_answer/wrong_answer_list_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 112223,
+      "checkout_sha256": "644380d317b715937cb5a95e8faf71be87f0a8b3cd7f365a03cb7c2fedd53875",
+      "snapshot_sha256": "644380d317b715937cb5a95e8faf71be87f0a8b3cd7f365a03cb7c2fedd53875",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 1886,
+        "removed": 283
+      }
+    },
+    {
+      "path": "lib/features/textbook/textbook.dart",
+      "status": " M",
+      "category": "textbook_integration",
+      "bytes": 227,
+      "checkout_sha256": "376ec7eb87861539b56032a000dd384edc06a2179c82dd2e2303c9652529686a",
+      "snapshot_sha256": "376ec7eb87861539b56032a000dd384edc06a2179c82dd2e2303c9652529686a",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 1,
+        "removed": 1
+      }
+    },
+    {
+      "path": "lib/features/student_schedule/confirmed_course_completion.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 2628,
+      "checkout_sha256": "c3f3f1e3206732de9e5d4b6f446d163eabb1047c57abc7fd14524f2d80f7338d",
+      "snapshot_sha256": "c3f3f1e3206732de9e5d4b6f446d163eabb1047c57abc7fd14524f2d80f7338d",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 80,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/features/student_schedule/curriculum_history_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 17623,
+      "checkout_sha256": "9f5388dac906cb1865c178c7b76acc7a08b35fb0edb95622be747ca0b9dc9153",
+      "snapshot_sha256": "9f5388dac906cb1865c178c7b76acc7a08b35fb0edb95622be747ca0b9dc9153",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 436,
+        "removed": 189
+      }
+    },
+    {
+      "path": "lib/features/student_schedule/schedule_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 72797,
+      "checkout_sha256": "67c5399ca8751e1da99e77dca35842bbeb24e638f70d02f9c3c7b85fdd79c74b",
+      "snapshot_sha256": "67c5399ca8751e1da99e77dca35842bbeb24e638f70d02f9c3c7b85fdd79c74b",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 687,
+        "removed": 255
+      }
+    },
+    {
+      "path": "lib/features/level_test/level_test_home_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 37984,
+      "checkout_sha256": "a4ff3a2a89e6ffd94cd6748bdbbf87871438e660fcd6d626d7586b46b0d8bcbc",
+      "snapshot_sha256": "a4ff3a2a89e6ffd94cd6748bdbbf87871438e660fcd6d626d7586b46b0d8bcbc",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 204,
+        "removed": 257
+      }
+    },
+    {
+      "path": "lib/features/level_test/level_test_result_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 37182,
+      "checkout_sha256": "c473d36a1722c81e7c2a70aac2a5ba4b0a9f8aabc724e1b718edf2a3f9788019",
+      "snapshot_sha256": "c473d36a1722c81e7c2a70aac2a5ba4b0a9f8aabc724e1b718edf2a3f9788019",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 93,
+        "removed": 40
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_create_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 19144,
+      "checkout_sha256": "8df8e24f5a4cdc311735f6663e54a28eb1f233c5919c7adb38de6db1159a420d",
+      "snapshot_sha256": "8df8e24f5a4cdc311735f6663e54a28eb1f233c5919c7adb38de6db1159a420d",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 501,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_detail_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 123203,
+      "checkout_sha256": "d1634919819c96e63921b82f56a98a11c0f363bf3205e3d4a9ed47f92f27f7e0",
+      "snapshot_sha256": "d1634919819c96e63921b82f56a98a11c0f363bf3205e3d4a9ed47f92f27f7e0",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 831,
+        "removed": 128
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_find_page.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 23748,
+      "checkout_sha256": "a3384f9990e927460a9400d3fe734204d95744908c211fa76cabb0d697d4b7d6",
+      "snapshot_sha256": "a3384f9990e927460a9400d3fe734204d95744908c211fa76cabb0d697d4b7d6",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 723,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_join_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 28111,
+      "checkout_sha256": "4594aaa182f174f54e0c0d2ba3db547bf629aec341a6af52aceff1f84776635e",
+      "snapshot_sha256": "4594aaa182f174f54e0c0d2ba3db547bf629aec341a6af52aceff1f84776635e",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 395,
+        "removed": 161
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_list_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 76450,
+      "checkout_sha256": "0f81696f1d5b153a5e87a4aeead7ee8f578476128bad095469fbd6e83b03958d",
+      "snapshot_sha256": "0f81696f1d5b153a5e87a4aeead7ee8f578476128bad095469fbd6e83b03958d",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 294,
+        "removed": 332
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_study.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 240,
+      "checkout_sha256": "3e30d9a035b0b0098f96f0b691f32a47b24d647a7060d5e211cfbb1c05359d18",
+      "snapshot_sha256": "3e30d9a035b0b0098f96f0b691f32a47b24d647a7060d5e211cfbb1c05359d18",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 2,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/features/group_study/group_share_presentation.dart",
+      "status": "??",
+      "category": "other_live_student_features",
+      "bytes": 1517,
+      "checkout_sha256": "dabe899383160229559a1ee53d1ed1844e19afb19b14821ea5a339dfe1d9e834",
+      "snapshot_sha256": "dabe899383160229559a1ee53d1ed1844e19afb19b14821ea5a339dfe1d9e834",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 33,
+        "removed": 0
+      }
+    },
+    {
+      "path": "lib/features/course_runtime/course_runtime_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 5133,
+      "checkout_sha256": "692d27268dc9ac90cbb4186e6a64394d5823cd497a48d9b73c7d4796cccf95df",
+      "snapshot_sha256": "692d27268dc9ac90cbb4186e6a64394d5823cd497a48d9b73c7d4796cccf95df",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 18,
+        "removed": 2
+      }
+    },
+    {
+      "path": "lib/features/course_runtime/teacher_textbook_reader_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 160,
+      "checkout_sha256": "909f664509ceeec2fefea971ddcbf38b0dda3c38a2688dd91e3336248e05cd7c",
+      "snapshot_sha256": "909f664509ceeec2fefea971ddcbf38b0dda3c38a2688dd91e3336248e05cd7c",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 2,
+        "removed": 1703
+      }
+    },
+    {
+      "path": "lib/features/course_runtime/teacher_textbook_reader/teacher_textbook_reader_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 164,
+      "checkout_sha256": "c19789cdb690cc3067bf8107c19253cbb7130414e2025607f7850aad2ed85e5e",
+      "snapshot_sha256": "c19789cdb690cc3067bf8107c19253cbb7130414e2025607f7850aad2ed85e5e",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 2,
+        "removed": 1721
+      }
+    },
+    {
+      "path": "lib/features/arena/arena_api.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 7673,
+      "checkout_sha256": "68835efada1bb38861c59073587914288d9a145b46b47f093151a1b78969c791",
+      "snapshot_sha256": "68835efada1bb38861c59073587914288d9a145b46b47f093151a1b78969c791",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 75,
+        "removed": 60
+      }
+    },
+    {
+      "path": "lib/features/arena/arena_page.dart",
+      "status": " M",
+      "category": "other_live_student_features",
+      "bytes": 216399,
+      "checkout_sha256": "dc671634b2763b319b3ec81642bc4db5c5976db5a42968b8dce4a9de16b7289f",
+      "snapshot_sha256": "dc671634b2763b319b3ec81642bc4db5c5976db5a42968b8dce4a9de16b7289f",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 4373,
+        "removed": 1144
+      }
+    },
+    {
+      "path": "lib/app/pages.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 3221,
+      "checkout_sha256": "ef9556c815b5ce08e191bfea4699efddf536ce30129aa7f1f5ff0606982cb5ff",
+      "snapshot_sha256": "ef9556c815b5ce08e191bfea4699efddf536ce30129aa7f1f5ff0606982cb5ff",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": false,
+      "diffstat_vs_head": {
+        "added": 0,
+        "removed": 2
+      }
+    },
+    {
+      "path": "lib/app/router.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 29936,
+      "checkout_sha256": "1589566eee332c52247180d5deaee5336fcc072bc918508b2d1db4fcff3b4d71",
+      "snapshot_sha256": "1589566eee332c52247180d5deaee5336fcc072bc918508b2d1db4fcff3b4d71",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 297,
+        "removed": 9
+      }
+    },
+    {
+      "path": "lib/app/student_route_registry.dart",
+      "status": " M",
+      "category": "shared_runtime_dependency",
+      "bytes": 13934,
+      "checkout_sha256": "aa67e4215747ebb1aea7d75ee964b5ecbc07d6815a7d0a421b60394b6a9f040a",
+      "snapshot_sha256": "aa67e4215747ebb1aea7d75ee964b5ecbc07d6815a7d0a421b60394b6a9f040a",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": true,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 66,
+        "removed": 38
+      }
+    },
+    {
+      "path": "pubspec.yaml",
+      "status": " M",
+      "category": "build_contract",
+      "bytes": 2804,
+      "checkout_sha256": "f31959e151e648e1884735878e5f54864109ec676870bbfa44acc16f69c3f530",
+      "snapshot_sha256": "f31959e151e648e1884735878e5f54864109ec676870bbfa44acc16f69c3f530",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 0,
+        "removed": 1
+      }
+    },
+    {
+      "path": "pubspec.lock",
+      "status": " M",
+      "category": "build_contract",
+      "bytes": 27870,
+      "checkout_sha256": "2b82b7dd75d7fe78e580cb2f470150a11d8c827ea4f23517e818e2c65bca88c8",
+      "snapshot_sha256": "2b82b7dd75d7fe78e580cb2f470150a11d8c827ea4f23517e818e2c65bca88c8",
+      "matches_snapshot_normalized": true,
+      "matches_snapshot_raw": true,
+      "in_observed_web_compiler_dependencies": false,
+      "observed_web_build_input": true,
+      "diffstat_vs_head": {
+        "added": 0,
+        "removed": 16
+      }
+    }
+  ]
+}
