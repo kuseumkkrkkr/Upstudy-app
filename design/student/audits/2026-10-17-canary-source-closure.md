@@ -66,4 +66,6 @@ The large HEAD diffs include preexisting live integration. Comparing against the
 
 Next bounded task: decide the75 observed web baseline inputs (not an automatic86-file commit), review the five mixed-file deltas against the live snapshot, and pin their required new files/deletions explicitly. The existing D: worktree remains untouched while that decision is pending. A different chat's/new branch's API proposal is not part of this source baseline and has not been imported or validated here.
 
+Subsequent read-only preflight pinned the proposed input hashes but found a reproducible pre-write account-transition regression in the newer working createTextbook wrapper. The same diagnostic passes on the verified live source. No source baseline was staged and no new app/API candidate was deployed. See [2026-10-17-canary-review-preflight.md](2026-10-17-canary-review-preflight.md); prior baseline reproduction remains valid and must not be confused with latest-feature release approval.
+
 This report proves artifact lineage and live runtime-code reproduction while identifying the remaining source-integration gap. It does not establish whole-app security,200-session capacity, clean-HEAD reproducibility, latest-feature canary deployment or commercial readiness.
