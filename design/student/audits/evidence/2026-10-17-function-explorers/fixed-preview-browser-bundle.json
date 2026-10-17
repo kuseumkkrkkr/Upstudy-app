@@ -1,0 +1,41 @@
+{
+  "deployment_id": "dpl_4o7iNFV69qen4aogmSCyuFnPFCpX",
+  "url": "https://aiflow-web-canary-armuxdj2c-cw20208021-9200s-projects.vercel.app/",
+  "source_commit": "eb5d5d97027f45d91d96362039f7b14cd2a6689f",
+  "js_bytes": 5780627,
+  "js_sha256": "a83958d02bf753116bc88e2964a87a3167ff7ee8c185d64abada2882326f05d8",
+  "fixture_sha256": "ed69e4db18d0a9f2a7ae3977e60f32d63af78b356f81fe913b429846499ed084",
+  "browser_http_status": 200,
+  "from_disk_cache": false,
+  "from_service_worker": false,
+  "synthetic_only": true,
+  "private_manuscript_uploaded": false,
+  "api_deployed": false,
+  "production_alias_promoted": false,
+  "checks": [
+    "three native pages rendered at1280",
+    "power minimum and maximum markers whole at1280",
+    "power minimum guide and maximum at390",
+    "power slider -2 -> readout0.25 and inverse-2",
+    "manual guide stage1",
+    "hint show",
+    "reset base2 exponent2 stage0 hint hidden",
+    "resize retains selected state",
+    "independent screenshot review found endpoint fix and no marker overlap"
+  ],
+  "limits": [
+    "not full historical HTML parity",
+    "not full keyboard/screen-reader verification",
+    "private actual manuscript new-build recheck not performed",
+    "product canary source closure unresolved"
+  ],
+  "screenshots": [
+    "fixed-radical-1280.png",
+    "fixed-power-endpoint-max-1280.png",
+    "fixed-power-endpoint-min-1280.png",
+    "fixed-power-min-guide-390.png",
+    "fixed-power-hint-390.png",
+    "fixed-rational-1280.png",
+    "fixed-power-endpoint-max-390.png"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "root_url": "https://aiflow-web-canary-g31y3bzrs-cw20208021-9200s-projects.vercel.app/",
+  "deployment_id": "dpl_EsYZ6iSYPVMNjmaJig46vq5byn1n",
+  "source_commit": "040a20cb052fb5520913539fb19c36e34f8f91cd",
+  "preview_kind": "synthetic harness only",
+  "status": 200,
+  "mime": "application/javascript",
+  "js_bytes": 5780578,
+  "js_sha256": "3d3bd19269b19a991934acc61e74e57d6d496a27a4de7adfc6b4db60f4034315",
+  "fixture_status": 200,
+  "fixture_sha256": "ed69e4db18d0a9f2a7ae3977e60f32d63af78b356f81fe913b429846499ed084",
+  "disk_cache": false,
+  "service_worker": false,
+  "screenshots": [
+    "preview-power-1280.png",
+    "preview-power-390.png",
+    "preview-power-controls-390.png",
+    "preview-radical-1280.png",
+    "preview-radical-390.png",
+    "preview-radical-controls-1280.png",
+    "preview-radical-reentry-1280.png",
+    "preview-radical-restored-390.png",
+    "preview-rational-1280.png",
+    "preview-rational-390.png",
+    "preview-rational-changed-1280.png"
+  ],
+  "local_js_sha256": "3d3bd19269b19a991934acc61e74e57d6d496a27a4de7adfc6b4db60f4034315",
+  "control_checks": [
+    "radical b slider, step2 and hint",
+    "radical same values/guide/hint after 390 resize and page reentry",
+    "rational h=0,k=3 guide and reset to authored defaults",
+    "power x=-2, three manual guide steps, hint and reset"
+  ]
+}
