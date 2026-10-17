@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:path/path.dart' as p;
 import 'package:sqflite/sqflite.dart';
+import 'package:s11/shared/services/api/api_client.dart';
 
 import 'local_db.dart';
 
@@ -49,41 +50,57 @@ CREATE TABLE IF NOT EXISTS $_tableKeyValue (
   }
 
   @override
-  Future<String?> getString(String key) async {
+  Future<String?> getString(
+    String key, {
+    ApiSessionScope? scope,
+    bool forceRefresh = false,
+  }) async {
+    scope ??= await ApiClient.instance.requireSessionScope();
+    ApiClient.instance.assertSessionScope(scope);
     final db = await _open();
+    ApiClient.instance.assertSessionScope(scope);
     final rows = await db.query(
       _tableKeyValue,
       columns: const ['value'],
       where: 'key = ?',
-      whereArgs: [key],
+      whereArgs: ['${scope.namespace}::$key'],
       limit: 1,
     );
+    ApiClient.instance.assertSessionScope(scope);
     if (rows.isEmpty) return null;
     return rows.first['value'] as String?;
   }
 
   @override
-  Future<void> setString(String key, String value) async {
+  Future<void> setString(
+    String key,
+    String value, {
+    ApiSessionScope? scope,
+  }) async {
+    scope ??= await ApiClient.instance.requireSessionScope();
+    ApiClient.instance.assertSessionScope(scope);
     final db = await _open();
-    await db.insert(
-      _tableKeyValue,
-      {
-        'key': key,
-        'value': value,
-        'updated_at': DateTime.now().millisecondsSinceEpoch,
-      },
-      conflictAlgorithm: ConflictAlgorithm.replace,
-    );
+    ApiClient.instance.assertSessionScope(scope);
+    await db.insert(_tableKeyValue, {
+      'key': '${scope.namespace}::$key',
+      'value': value,
+      'updated_at': DateTime.now().millisecondsSinceEpoch,
+    }, conflictAlgorithm: ConflictAlgorithm.replace);
+    ApiClient.instance.assertSessionScope(scope);
   }
 
   @override
-  Future<void> delete(String key) async {
+  Future<void> delete(String key, {ApiSessionScope? scope}) async {
+    scope ??= await ApiClient.instance.requireSessionScope();
+    ApiClient.instance.assertSessionScope(scope);
     final db = await _open();
+    ApiClient.instance.assertSessionScope(scope);
     await db.delete(
       _tableKeyValue,
       where: 'key = ?',
-      whereArgs: [key],
+      whereArgs: ['${scope.namespace}::$key'],
     );
+    ApiClient.instance.assertSessionScope(scope);
   }
 }
 

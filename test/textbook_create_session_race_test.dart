@@ -1,4 +1,4 @@
-// Diagnostic release gate: MockClient only, no real account or server writes.
+// Regression release gate: MockClient only, no real account or server writes.
 import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';

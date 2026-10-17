@@ -7,6 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:s11/shared/services/api/api_contract.dart';
 import 'package:s11/shared/services/auth/auth_storage.dart';
 
+/// 개인 캐시 작업의 출처. 토큰 원문 대신 해시와 세대만 보관한다.
+@immutable
+class ApiSessionScope {
+  const ApiSessionScope(this.namespace, this.generation);
+  final String namespace;
+  final int generation;
+}
+
 class ApiResponse<T> {
   final bool success;
   final T? data;
@@ -223,6 +231,9 @@ class StudyGroupInviteMeta {
   final bool lockEnabled;
   final String inviteCode;
 
+  /// Server display classification only; null means unknown, never permission.
+  final bool? isTeacherGroup;
+
   StudyGroupInviteMeta({
     required this.groupId,
     required this.name,
@@ -231,6 +242,7 @@ class StudyGroupInviteMeta {
     required this.members,
     required this.lockEnabled,
     required this.inviteCode,
+    this.isTeacherGroup,
   });
 
   factory StudyGroupInviteMeta.fromJson(Map<String, dynamic> json) {
@@ -242,6 +254,13 @@ class StudyGroupInviteMeta {
       members: (json['members'] as num?)?.toInt() ?? 0,
       lockEnabled: json['lock_enabled'] == true,
       inviteCode: (json['invite_code'] ?? '').toString(),
+      isTeacherGroup: json['is_teacher_group'] is bool
+          ? json['is_teacher_group'] as bool
+          : switch (json['owner_role']) {
+              'teacher' => true,
+              'student' => false,
+              _ => null,
+            },
     );
   }
 }
@@ -639,6 +658,7 @@ class SolveAnalysisResponse {
   final List<String> questModel;
   final List<String> warnings;
   final Map<String, dynamic>? debugInfo;
+  final String? gradeProof;
 
   SolveAnalysisResponse({
     this.correctRate,
@@ -655,6 +675,7 @@ class SolveAnalysisResponse {
     this.questModel = const [],
     this.warnings = const [],
     this.debugInfo,
+    this.gradeProof,
   });
 
   factory SolveAnalysisResponse.fromJson(Map<String, dynamic> json) {
@@ -676,7 +697,7 @@ class SolveAnalysisResponse {
           ? Map<String, dynamic>.from(json['details'] as Map)
           : null,
       status: status,
-      stepCorrectness: stepCorrectness.isNotEmpty
+      stepCorrectness: stepCorrectness.isNotEmpty || json['grade_proof'] != null
           ? stepCorrectness
           : _stepCorrectnessFromStatus(status),
       isCorrect: parsedIsCorrect ?? _isCorrectFromStatus(status),
@@ -695,6 +716,7 @@ class SolveAnalysisResponse {
       debugInfo: json['debug'] is Map
           ? Map<String, dynamic>.from(json['debug'] as Map)
           : null,
+      gradeProof: json['grade_proof']?.toString(),
     );
   }
 
@@ -1438,70 +1460,142 @@ class ApiClient {
   static final Map<String, _CachedApiResponse> _memoryCache = {};
   static final Map<String, Future<http.Response>> _inflightCacheRequests = {};
   int _cacheGeneration = 0;
+  int _sessionGeneration = 0;
   final _sessionChanges = ValueNotifier<int>(0);
+  Future<void> _sessionStorageWrites = Future<void>.value();
+  Future<String>? _tokenRestore;
 
-  /// Changes when credentials are restored, replaced or cleared. Readers must
-  /// discard account-local activity state; the value is not a user identifier.
   ValueListenable<int> get sessionChanges => _sessionChanges;
+  String get sessionCacheNamespace => _userCacheTag(_token);
+
+  Future<ApiSessionScope> requireSessionScope() async {
+    await _ensureToken();
+    return ApiSessionScope(sessionCacheNamespace, _sessionGeneration);
+  }
+
+  bool isCurrentSessionScope(ApiSessionScope scope) =>
+      hasAuthenticatedSession &&
+      scope.namespace == sessionCacheNamespace &&
+      scope.generation == _sessionGeneration;
+
+  void assertSessionScope(ApiSessionScope scope) {
+    if (!isCurrentSessionScope(scope)) {
+      throw ApiException(
+        statusCode: 409,
+        message: 'Authentication context changed',
+        code: 'session_changed',
+      );
+    }
+  }
+
+  int _publishSession(String? token) {
+    _token = token?.trim();
+    if (_token?.isEmpty ?? false) _token = null;
+    _cacheGeneration++;
+    _sessionChanges.value = ++_sessionGeneration;
+    return _sessionGeneration;
+  }
+
+  Future<void> _storeSession(int generation, Future<void> Function() write) {
+    final operation = _sessionStorageWrites.then((_) async {
+      if (generation == _sessionGeneration) await write();
+    });
+    // One client serializes auth persistence; callers still receive write errors.
+    _sessionStorageWrites = operation.catchError((Object _) {});
+    return operation;
+  }
 
   /// 필요한 변수는 메모리에 적재된 현재 JWT다.
   /// 작동 원리: 라우트가 생성되는 순간 토큰 존재 여부를 동기적으로 확인해, 앱 시작 후 로그인한 세션도 즉시 반영한다.
   bool get hasAuthenticatedSession => _token?.trim().isNotEmpty ?? false;
 
   Future<String> _ensureToken() async {
-    if (_token != null) return _token!;
-    final prefs = await SharedPreferences.getInstance();
-    _token =
-        prefs.getString('jwt_token') ?? await AuthStorage.instance.readToken();
-    if (_token != null) {
-      _sessionChanges.value++;
+    if (_token?.trim().isNotEmpty ?? false) {
+      _token = _token!.trim();
       return _token!;
     }
-    throw ApiException(statusCode: 401, message: 'Missing auth token');
+    if (_tokenRestore != null) return _tokenRestore!;
+    late final Future<String> restore;
+    restore = _restoreToken().whenComplete(() {
+      if (identical(_tokenRestore, restore)) _tokenRestore = null;
+    });
+    _tokenRestore = restore;
+    return restore;
+  }
+
+  Future<String> _restoreToken() async {
+    final generation = _sessionGeneration;
+    await _sessionStorageWrites;
+    if (generation == _sessionGeneration && _token == null) {
+      final prefs = await SharedPreferences.getInstance();
+      final stored = prefs.getString('jwt_token')?.trim();
+      final restored = stored?.isNotEmpty == true
+          ? stored
+          : (await AuthStorage.instance.readToken())?.trim();
+      if (generation == _sessionGeneration && restored?.isNotEmpty == true) {
+        _publishSession(restored);
+      }
+    }
+    if (_token?.isNotEmpty ?? false) return _token!;
+    throw ApiException(
+      statusCode: 401,
+      message: 'Missing auth token',
+      code: 'auth_required',
+    );
   }
 
   /// 필요한 변수는 새 인증 토큰과 선택 사용자명이다.
   /// 기존 사용자와 토큰이 달라지면 이전 네임스페이스를 먼저 비워 계정 간 응답 혼입을 막는다.
   Future<void> setToken(String token, {String? username}) async {
-    if (_token != null && _token != token) {
-      await clearUserCache(token: _token);
-    }
-    _token = token;
-    _sessionChanges.value++;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('jwt_token', token);
-    if (username != null) {
-      await prefs.setString('username', username);
-    }
-    await AuthStorage.instance.saveToken(token, username: username);
+    final normalized = token.trim();
+    if (normalized.isEmpty)
+      throw ArgumentError('Authentication token required');
+    final previous = _token;
+    final generation = _publishSession(normalized);
+    final persisted = _storeSession(generation, () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('jwt_token', normalized);
+      if (username != null) await prefs.setString('username', username);
+      await AuthStorage.instance.saveToken(normalized, username: username);
+    });
+    await Future.wait<void>([
+      persisted,
+      if (previous != null && previous != normalized)
+        clearUserCache(token: previous),
+    ]);
+    assertSessionScope(ApiSessionScope(_userCacheTag(normalized), generation));
   }
 
   /// 현재 토큰을 변수로 사용해 해당 사용자의 메모리·영속 캐시와 진행 GET을 정리한다.
   /// 캐시 세대를 올린 뒤 인증 정보를 지워, 늦게 끝난 요청이 로그아웃 후 캐시를 되살리지 못하게 한다.
-  Future<void> clearToken() async {
-    await clearUserCache(token: _token);
-    _token = null;
-    _sessionChanges.value++;
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove('jwt_token');
-    await prefs.remove('username');
-    await AuthStorage.instance.clear();
+  Future<void> clearToken({String? expectedToken}) async {
+    if (expectedToken != null && _token != expectedToken) return;
+    final previous = _token;
+    final generation = _publishSession(null);
+    final persisted = _storeSession(generation, () async {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('jwt_token');
+      await prefs.remove('username');
+      await AuthStorage.instance.clear();
+    });
+    await Future.wait<void>([persisted, clearUserCache(token: previous)]);
+    if (generation != _sessionGeneration) {
+      throw ApiException(
+        statusCode: 409,
+        message: 'Authentication context changed',
+        code: 'session_changed',
+      );
+    }
   }
 
   /// 테스트에서 라우트의 세션 분기만 검증할 때 사용하는 비영속 토큰 주입이다.
   /// 실제 로그인·로그아웃은 [setToken]/[clearToken]을 사용해 저장소까지 갱신한다.
   @visibleForTesting
-  void setTokenForTest(String token) {
-    _token = token;
-    _sessionChanges.value++;
-  }
+  void setTokenForTest(String token) => _publishSession(token);
 
   /// 테스트 종료 시 네트워크·플랫폼 저장소를 건드리지 않고 메모리 세션만 지운다.
   @visibleForTesting
-  void clearTokenForTest() {
-    _token = null;
-    _sessionChanges.value++;
-  }
+  void clearTokenForTest() => _publishSession(null);
 
   Future<UserProfile> getMyProfile() async {
     final res = await _get<Map<String, dynamic>>(
@@ -1575,13 +1669,19 @@ class ApiClient {
     bool useCache = false,
     bool forceRefresh = false,
     Duration? cacheTtl,
+    ApiSessionScope? expectedScope,
   }) async {
+    if (expectedScope != null) assertSessionScope(expectedScope);
     await _ensureToken();
+    if (expectedScope != null) assertSessionScope(expectedScope);
     final uri = ApiContract.uri(path, query: query);
+    final authorization = _headers['Authorization'];
+    final requestGeneration = _cacheGeneration;
     final key = _cacheKey(path, query);
     final nowMs = DateTime.now().millisecondsSinceEpoch;
 
     final cached = useCache && !forceRefresh ? await _readCache(key) : null;
+    _assertRequestSession(authorization, requestGeneration);
     final ttlToUse = cacheTtl ?? _fallbackCacheTtl;
 
     if (useCache && cached != null && cached.isFresh(nowMs)) {
@@ -1596,8 +1696,6 @@ class ApiClient {
         'If-Modified-Since': cached.lastModified,
     };
 
-    final requestGeneration = _cacheGeneration;
-
     /// 필요한 변수는 캐시 키·조건부 요청 헤더·현재 캐시 세대다.
     /// 네트워크에서는 원시 응답만 합치고, 각 호출자는 자신의 parser로 별도 변환한다.
     Future<http.Response> requestRaw() async {
@@ -1610,6 +1708,7 @@ class ApiClient {
       log('GET $uri ($logSuffix)', name: 'ApiClient');
 
       final res = await _httpClient.get(uri, headers: requestHeaders);
+      _assertRequestSession(authorization, requestGeneration);
       await _clearTokenOnUnauthorized(res);
 
       if (useCache && res.statusCode == 304 && cached != null) {
@@ -1635,11 +1734,32 @@ class ApiClient {
     final future = _inflightCacheRequests.putIfAbsent(key, requestRaw);
     try {
       final response = await future;
+      _assertRequestSession(
+        authorization,
+        requestGeneration,
+        allowSignedOut: response.statusCode == 401,
+      );
       return _parse(response, parser);
     } finally {
       if (identical(_inflightCacheRequests[key], future)) {
         _inflightCacheRequests.remove(key);
       }
+    }
+  }
+
+  void _assertRequestSession(
+    String? authorization,
+    int generation, {
+    bool allowSignedOut = false,
+  }) {
+    if (allowSignedOut && _token == null) return;
+    if (authorization != _headers['Authorization'] ||
+        generation != _cacheGeneration) {
+      throw ApiException(
+        statusCode: 409,
+        message: 'Authentication context changed',
+        code: 'session_changed',
+      );
     }
   }
 
@@ -1801,12 +1921,11 @@ class ApiClient {
     Map<String, dynamic> body, {
     T Function(dynamic)? parser,
     Map<String, String>? extraHeaders,
-    int? expectedSessionGeneration,
+    ApiSessionScope? expectedScope,
   }) async {
+    if (expectedScope != null) assertSessionScope(expectedScope);
     await _ensureToken();
-    if (expectedSessionGeneration != null && expectedSessionGeneration != _sessionChanges.value) {
-      throw ApiException(statusCode: 409, message: 'Login changed; reopen the page');
-    }
+    if (expectedScope != null) assertSessionScope(expectedScope);
     final uri = ApiContract.uri(path);
     log('POST $uri', name: 'ApiClient');
     final res = await _httpClient.post(
@@ -1814,10 +1933,10 @@ class ApiClient {
       headers: <String, String>{..._headers, ...?extraHeaders},
       body: jsonEncode(body),
     );
-    if (expectedSessionGeneration != null && expectedSessionGeneration != _sessionChanges.value) {
-      throw ApiException(statusCode: 409, message: 'Login changed; reopen the page');
-    }
     await _clearTokenOnUnauthorized(res);
+    if (expectedScope != null && res.statusCode != 401) {
+      assertSessionScope(expectedScope);
+    }
     return _parse(res, parser);
   }
 
@@ -1825,8 +1944,11 @@ class ApiClient {
     String path,
     Map<String, dynamic> body, {
     T Function(dynamic)? parser,
+    ApiSessionScope? expectedScope,
   }) async {
+    if (expectedScope != null) assertSessionScope(expectedScope);
     await _ensureToken();
+    if (expectedScope != null) assertSessionScope(expectedScope);
     final uri = ApiContract.uri(path);
     log('PUT $uri', name: 'ApiClient');
     final res = await _httpClient.put(
@@ -1835,6 +1957,8 @@ class ApiClient {
       body: jsonEncode(body),
     );
     await _clearTokenOnUnauthorized(res);
+    if (expectedScope != null && res.statusCode != 401)
+      assertSessionScope(expectedScope);
     return _parse(res, parser);
   }
 
@@ -1859,8 +1983,11 @@ class ApiClient {
     String path, {
     Map<String, dynamic>? body,
     T Function(dynamic)? parser,
+    ApiSessionScope? expectedScope,
   }) async {
+    if (expectedScope != null) assertSessionScope(expectedScope);
     await _ensureToken();
+    if (expectedScope != null) assertSessionScope(expectedScope);
     final uri = ApiContract.uri(path);
     log('DELETE $uri', name: 'ApiClient');
     final res = await _httpClient.delete(
@@ -1869,12 +1996,17 @@ class ApiClient {
       body: body == null ? null : jsonEncode(body),
     );
     await _clearTokenOnUnauthorized(res);
+    if (expectedScope != null && res.statusCode != 401)
+      assertSessionScope(expectedScope);
     return _parse(res, parser);
   }
 
   Future<void> _clearTokenOnUnauthorized(http.Response res) async {
-    if (res.statusCode == 401) {
-      await clearToken();
+    final sentAuthorization = res.request?.headers['Authorization'];
+    if (res.statusCode == 401 &&
+        sentAuthorization != null &&
+        sentAuthorization == _headers['Authorization']) {
+      await clearToken(expectedToken: sentAuthorization.substring(7));
     }
   }
 
@@ -2402,6 +2534,8 @@ class ApiClient {
     String? query,
     String? kind,
     String? gradeBand,
+    String? subject,
+    String? difficulty,
     String? price,
     int offset = 0,
     int limit = 20,
@@ -2413,6 +2547,10 @@ class ApiClient {
         if (kind != null && kind.trim().isNotEmpty) 'kind': kind.trim(),
         if (gradeBand != null && gradeBand.trim().isNotEmpty)
           'grade_band': gradeBand.trim(),
+        if (subject != null && subject.trim().isNotEmpty)
+          'subject': subject.trim(),
+        if (difficulty != null && difficulty.trim().isNotEmpty)
+          'difficulty': difficulty.trim(),
         if (price != null && price.trim().isNotEmpty) 'price': price.trim(),
         'offset': '$offset',
         'limit': '$limit',
@@ -2486,14 +2624,34 @@ class ApiClient {
   /// 필요한 변수는 구매할 공개 상품 ID다.
   /// 작동 원리는 서버에서 코인 차감과 보유 등록을 멱등 처리하고 갱신된 상품을 반환하는 것이다.
   Future<Map<String, dynamic>> purchaseMarketplaceListing(
-    String listingId,
-  ) async {
+    String listingId, {
+    required ApiSessionScope expectedScope,
+  }) async {
     final response = await _post<Map<String, dynamic>>(
       '/marketplace/listings/${Uri.encodeComponent(listingId)}/purchase',
       const <String, dynamic>{},
       parser: (data) => Map<String, dynamic>.from(data as Map),
+      expectedScope: expectedScope,
     );
-    return response.data ?? const <String, dynamic>{};
+    final purchase = response.data;
+    final returnedId = (purchase?['id'] ?? purchase?['listing_id'])?.toString();
+    if (!response.success ||
+        purchase == null ||
+        purchase['owned'] != true ||
+        returnedId != listingId) {
+      throw ApiException(
+        statusCode: 502,
+        message: 'marketplace_purchase_response_invalid',
+        code: 'invalid_purchase_response',
+      );
+    }
+    try {
+      await invalidateCachePath('/marketplace/listings');
+    } catch (_) {
+      // A successful purchase remains successful if local cache cleanup fails.
+    }
+    assertSessionScope(expectedScope);
+    return purchase;
   }
 
   /// 필요한 변수는 보유 상품 ID·현재 문제 위치·완료 여부다.
@@ -2552,31 +2710,10 @@ class ApiClient {
     if (quest is Map) {
       return Map<String, dynamic>.from(quest);
     }
-    final queuedRequestId = (payload['request_id'] ?? requestId)?.toString();
-    if (queuedRequestId == null || queuedRequestId.isEmpty) {
-      throw ApiException(statusCode: 500, message: 'Missing quest data');
-    }
-    final pollStartedAt = DateTime.now();
-    for (var i = 0; i < 70; i++) {
-      final elapsed = DateTime.now().difference(pollStartedAt);
-      final delay = elapsed < const Duration(seconds: 2)
-          ? const Duration(milliseconds: 200)
-          : const Duration(milliseconds: 700);
-      await Future<void>.delayed(delay);
-      final status = await fetchQuestGenerateStatus(requestId: queuedRequestId);
-      final state = status['status']?.toString();
-      final statusQuest = status['quest'];
-      if (statusQuest is Map) {
-        return Map<String, dynamic>.from(statusQuest);
-      }
-      if (state == 'failed' || state == 'error' || state == 'cancelled') {
-        throw ApiException(
-          statusCode: 500,
-          message: status['error']?.toString() ?? 'Quest generation failed',
-        );
-      }
-    }
-    throw ApiException(statusCode: 408, message: 'Quest generation timed out');
+    throw ApiException(
+      statusCode: 502,
+      message: 'Quest generation response did not contain a quest',
+    );
   }
 
   Future<Map<String, dynamic>> cancelQuestGeneration({
@@ -2685,10 +2822,11 @@ class ApiClient {
     int? selectedIndex,
     String? userAnswer,
     List<int>? flowOrder,
+    String? submissionId,
   }) async {
     final token = await _ensureToken();
-    final uri = ApiContract.uri('/analysis/solve/variant-grade');
-    final response = await http.post(
+    final uri = ApiContract.uri(ApiPaths.analysisVariantGrade);
+    final response = await _httpClient.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
@@ -2699,6 +2837,7 @@ class ApiClient {
         if (selectedIndex != null) 'selected_index': selectedIndex,
         if (userAnswer != null) 'user_answer': userAnswer,
         if (flowOrder != null) 'flow_order': flowOrder,
+        if (submissionId != null) 'submission_id': submissionId,
       }),
     );
     if (response.statusCode != 200) {
@@ -2707,7 +2846,56 @@ class ApiClient {
         message: 'Failed to grade variant solve',
       );
     }
-    return jsonDecode(response.body) as Map<String, dynamic>;
+    try {
+      final result = jsonDecode(response.body);
+      if (result is! Map<String, dynamic> ||
+          result['quest_id'] != questId ||
+          (result.containsKey('flow_evaluated') &&
+              result['flow_evaluated'] is! bool) ||
+          [
+            'raw_correct',
+            'pass',
+            'answer_correct',
+            'flow_correct',
+          ].any((key) => result[key] is! bool) ||
+          result['raw_correct'] != result['pass'] ||
+          result['raw_correct'] !=
+              (result['answer_correct'] == true &&
+                  result['flow_correct'] == true)) {
+        throw const FormatException('Invalid grading result');
+      }
+      final steps = result['step_correctness'];
+      if (flowOrder != null &&
+          flowOrder.isNotEmpty &&
+          (steps is! List || steps.length != flowOrder.length)) {
+        throw const FormatException('Missing server step results');
+      }
+      if (steps != null) {
+        if (steps is! List) throw const FormatException('Invalid step results');
+        for (var index = 0; index < steps.length; index++) {
+          final step = steps[index];
+          if (step is! Map ||
+              step['step_id'] is! int ||
+              step['flow_number'] is! int ||
+              step['step_id'] != index + 1 ||
+              step['flow_number'] != index + 1 ||
+              step['correct'] is! bool) {
+            throw const FormatException('Invalid server step result');
+          }
+        }
+        if (steps.isNotEmpty &&
+            result['flow_correct'] !=
+                steps.every((step) => (step as Map)['correct'] == true)) {
+          throw const FormatException('Inconsistent server step verdicts');
+        }
+      }
+      return result;
+    } on FormatException {
+      throw ApiException(
+        statusCode: 502,
+        message: '채점 응답을 확인하지 못했습니다. 다시 시도해 주세요.',
+      );
+    }
   }
 
   Future<Map<String, dynamic>> loadCourseProblemSolve({
@@ -3651,6 +3839,60 @@ class ExamStatus {
   }
 }
 
+class LevelityBand {
+  final String tier;
+  final double allocation;
+  final double retention;
+  final double up;
+  final double down;
+
+  const LevelityBand({
+    required this.tier,
+    required this.allocation,
+    required this.retention,
+    required this.up,
+    required this.down,
+  });
+
+  factory LevelityBand.fromJson(Map<String, dynamic> json) => LevelityBand(
+    tier: json['tier'] as String? ?? '',
+    allocation: (json['allocation'] as num?)?.toDouble() ?? 0,
+    retention: (json['retention'] as num?)?.toDouble() ?? 0,
+    up: (json['up'] as num?)?.toDouble() ?? 0,
+    down: (json['down'] as num?)?.toDouble() ?? 0,
+  );
+}
+
+class UserLevelity {
+  final String? tier;
+  final double? percentile;
+  final double? progress;
+  final int cohortSize;
+  final bool available;
+  final List<LevelityBand> bands;
+
+  const UserLevelity({
+    required this.tier,
+    required this.percentile,
+    required this.progress,
+    required this.cohortSize,
+    required this.available,
+    required this.bands,
+  });
+
+  factory UserLevelity.fromJson(Map<String, dynamic> json) => UserLevelity(
+    tier: json['tier'] as String?,
+    percentile: (json['percentile'] as num?)?.toDouble(),
+    progress: (json['progress'] as num?)?.toDouble(),
+    cohortSize: (json['cohort_size'] as num?)?.toInt() ?? 0,
+    available: json['available'] != false,
+    bands: (json['bands'] as List? ?? const [])
+        .whereType<Map>()
+        .map((band) => LevelityBand.fromJson(Map<String, dynamic>.from(band)))
+        .toList(growable: false),
+  );
+}
+
 class UserRating {
   final double rating;
   final double ovr;
@@ -3658,6 +3900,7 @@ class UserRating {
   final double recentAccuracy;
   final int loseStreak;
   final bool placementCompleted;
+  final UserLevelity? levelity;
   const UserRating({
     required this.rating,
     required this.ovr,
@@ -3665,6 +3908,7 @@ class UserRating {
     required this.recentAccuracy,
     required this.loseStreak,
     this.placementCompleted = false,
+    this.levelity,
   });
   factory UserRating.fromJson(Map<String, dynamic> json) => UserRating(
     rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
@@ -3673,6 +3917,11 @@ class UserRating {
     recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
     loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
     placementCompleted: json['placement_completed'] == true,
+    levelity: json['levelity'] is Map
+        ? UserLevelity.fromJson(
+            Map<String, dynamic>.from(json['levelity'] as Map),
+          )
+        : null,
   );
 }
 
@@ -3716,6 +3965,10 @@ class LevelTestPlacementQuestion {
 class LevelTestPlacementSession {
   final String sessionId;
   final String templateId;
+  final String trackId;
+  final String trackLabel;
+  final String form;
+  final String formLabel;
   final int questionCount;
   final int timeLimitSeconds;
   final List<LevelTestPlacementQuestion> questions;
@@ -3723,6 +3976,10 @@ class LevelTestPlacementSession {
   const LevelTestPlacementSession({
     required this.sessionId,
     required this.templateId,
+    required this.trackId,
+    required this.trackLabel,
+    required this.form,
+    required this.formLabel,
     required this.questionCount,
     required this.timeLimitSeconds,
     required this.questions,
@@ -3732,9 +3989,13 @@ class LevelTestPlacementSession {
     return LevelTestPlacementSession(
       sessionId: (json['session_id'] ?? '').toString(),
       templateId: (json['template_id'] ?? '').toString(),
+      trackId: (json['track_id'] ?? '').toString(),
+      trackLabel: (json['track_label'] ?? '').toString(),
+      form: (json['form'] ?? '').toString(),
+      formLabel: (json['form_label'] ?? '').toString(),
       questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
       timeLimitSeconds:
-          (json['time_limit_seconds'] as num?)?.toInt() ?? 30 * 60,
+          (json['time_limit_seconds'] as num?)?.toInt() ?? 60 * 60,
       questions: (json['questions'] as List<dynamic>? ?? const [])
           .map(
             (e) => LevelTestPlacementQuestion.fromJson(
@@ -3765,42 +4026,70 @@ class LevelTestDifficultyBand {
       );
 }
 
-class LevelTestEstimatedBand {
-  final String grade;
-  final int ovrMin;
-  final int ovrMax;
-  final double expectedCorrect;
+class LevelTestAssessmentForm {
+  final String id;
+  final String label;
+  final int questionCount;
+  final int poolCount;
 
-  const LevelTestEstimatedBand({
-    required this.grade,
-    required this.ovrMin,
-    required this.ovrMax,
-    required this.expectedCorrect,
+  const LevelTestAssessmentForm({
+    required this.id,
+    required this.label,
+    required this.questionCount,
+    required this.poolCount,
   });
 
-  factory LevelTestEstimatedBand.fromJson(Map<String, dynamic> json) =>
-      LevelTestEstimatedBand(
-        grade: (json['grade'] ?? '').toString(),
-        ovrMin: (json['ovr_min'] as num?)?.toInt() ?? 0,
-        ovrMax: (json['ovr_max'] as num?)?.toInt() ?? 0,
-        expectedCorrect: (json['expected_correct'] as num?)?.toDouble() ?? 0.0,
+  factory LevelTestAssessmentForm.fromJson(Map<String, dynamic> json) =>
+      LevelTestAssessmentForm(
+        id: (json['id'] ?? '').toString(),
+        label: (json['label'] ?? '').toString(),
+        questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+        poolCount: (json['pool_count'] as num?)?.toInt() ?? 0,
+      );
+}
+
+class LevelTestAssessmentTrack {
+  final String id;
+  final String label;
+  final List<LevelTestAssessmentForm> forms;
+
+  const LevelTestAssessmentTrack({
+    required this.id,
+    required this.label,
+    required this.forms,
+  });
+
+  factory LevelTestAssessmentTrack.fromJson(Map<String, dynamic> json) =>
+      LevelTestAssessmentTrack(
+        id: (json['id'] ?? '').toString(),
+        label: (json['label'] ?? '').toString(),
+        forms: (json['forms'] as List<dynamic>? ?? const [])
+            .map(
+              (entry) => LevelTestAssessmentForm.fromJson(
+                Map<String, dynamic>.from(entry as Map),
+              ),
+            )
+            .toList(),
       );
 }
 
 class LevelTestPlacementStats {
   final int questionCount;
+  final int poolCount;
   final List<LevelTestDifficultyBand> difficultyBands;
-  final List<LevelTestEstimatedBand> estimatedBands;
+  final List<LevelTestAssessmentTrack> tracks;
 
   const LevelTestPlacementStats({
     required this.questionCount,
+    required this.poolCount,
     required this.difficultyBands,
-    required this.estimatedBands,
+    this.tracks = const [],
   });
 
   factory LevelTestPlacementStats.fromJson(Map<String, dynamic> json) =>
       LevelTestPlacementStats(
         questionCount: (json['question_count'] as num?)?.toInt() ?? 25,
+        poolCount: (json['pool_count'] as num?)?.toInt() ?? 0,
         difficultyBands:
             (json['difficulty_bands'] as List<dynamic>? ?? const [])
                 .map(
@@ -3809,9 +4098,9 @@ class LevelTestPlacementStats {
                   ),
                 )
                 .toList(),
-        estimatedBands: (json['estimated_bands'] as List<dynamic>? ?? const [])
+        tracks: (json['tracks'] as List<dynamic>? ?? const [])
             .map(
-              (entry) => LevelTestEstimatedBand.fromJson(
+              (entry) => LevelTestAssessmentTrack.fromJson(
                 Map<String, dynamic>.from(entry as Map),
               ),
             )
@@ -3821,53 +4110,54 @@ class LevelTestPlacementStats {
 
 class LevelTestPlacementResult {
   final String sessionId;
-  final double rating;
-  final double ovr;
-  final double ovrDelta;
-  final double recentAccuracy;
-  final int loseStreak;
-  final double confidence;
+  final String trackId;
+  final String trackLabel;
+  final String form;
+  final String formLabel;
+  final int questionCount;
+  final int correctCount;
+  final double accuracy;
+  final int elapsedSeconds;
+  final List<Map<String, dynamic>> difficultyResults;
   final List<Map<String, dynamic>> strongTags;
   final List<Map<String, dynamic>> weakTags;
 
   const LevelTestPlacementResult({
     required this.sessionId,
-    required this.rating,
-    required this.ovr,
-    required this.ovrDelta,
-    required this.recentAccuracy,
-    required this.loseStreak,
-    required this.confidence,
+    required this.questionCount,
+    required this.correctCount,
+    required this.accuracy,
+    required this.elapsedSeconds,
+    required this.difficultyResults,
     required this.strongTags,
     required this.weakTags,
+    this.trackId = '',
+    this.trackLabel = '',
+    this.form = '',
+    this.formLabel = '',
   });
 
   factory LevelTestPlacementResult.fromJson(Map<String, dynamic> json) {
     return LevelTestPlacementResult(
       sessionId: (json['session_id'] ?? '').toString(),
-      rating: (json['rating'] as num?)?.toDouble() ?? 0.0,
-      ovr: (json['ovr'] as num?)?.toDouble() ?? 0.0,
-      ovrDelta: (json['ovr_delta'] as num?)?.toDouble() ?? 0.0,
-      recentAccuracy: (json['recent_accuracy'] as num?)?.toDouble() ?? 0.0,
-      loseStreak: (json['lose_streak'] as num?)?.toInt() ?? 0,
-      confidence: (json['confidence'] as num?)?.toDouble() ?? 0.0,
+      trackId: (json['track_id'] ?? '').toString(),
+      trackLabel: (json['track_label'] ?? '').toString(),
+      form: (json['form'] ?? '').toString(),
+      formLabel: (json['form_label'] ?? '').toString(),
+      questionCount: (json['question_count'] as num?)?.toInt() ?? 0,
+      correctCount: (json['correct_count'] as num?)?.toInt() ?? 0,
+      accuracy: (json['accuracy'] as num?)?.toDouble() ?? 0.0,
+      elapsedSeconds: (json['elapsed_seconds'] as num?)?.toInt() ?? 0,
+      difficultyResults:
+          (json['difficulty_results'] as List<dynamic>? ?? const [])
+              .map((e) => Map<String, dynamic>.from(e as Map))
+              .toList(),
       strongTags: (json['strong_tags'] as List<dynamic>? ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
       weakTags: (json['weak_tags'] as List<dynamic>? ?? const [])
           .map((e) => Map<String, dynamic>.from(e as Map))
           .toList(),
-    );
-  }
-
-  UserRating toUserRating() {
-    return UserRating(
-      rating: rating,
-      ovr: ovr,
-      ovrDelta: ovrDelta,
-      recentAccuracy: recentAccuracy,
-      loseStreak: loseStreak,
-      placementCompleted: true,
     );
   }
 }
@@ -4194,38 +4484,20 @@ extension ApiClientLegacyCompat on ApiClient {
     bool forceRefresh = false,
     Duration? cacheTtl,
   }) async {
-    final previousToken = _token;
     await _ensureToken();
-    final effectiveToken = _token;
-    if (effectiveToken == null) {
-      return ApiResponse<T>(
-        success: false,
-        data: null,
-        message: 'No auth token',
-      );
-    }
-
-    final oldToken = previousToken;
-    if (effectiveToken != oldToken) {
-      _token = effectiveToken;
-    }
 
     final query = <String, String>{};
     uri.queryParameters.forEach((key, value) {
       query[key] = value;
     });
-    try {
-      return await _get<T>(
-        uri.path,
-        query: query.isEmpty ? null : query,
-        parser: parser,
-        useCache: useCache,
-        forceRefresh: forceRefresh,
-        cacheTtl: cacheTtl,
-      );
-    } finally {
-      _token = oldToken;
-    }
+    return _get<T>(
+      uri.path,
+      query: query.isEmpty ? null : query,
+      parser: parser,
+      useCache: useCache,
+      forceRefresh: forceRefresh,
+      cacheTtl: cacheTtl,
+    );
   }
 
   // 기존 authedGet 동작은 캐시를 쓰지 않는 Response 반환을 유지한다.
@@ -4233,19 +4505,8 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<String> requireToken() => _ensureToken();
 
   Future<http.Response> authedGet(Uri uri, {String? token}) async {
-    final previousToken = _token;
-    if (token != null && token != previousToken) {
-      _token = token;
-    } else if (_token == null) {
-      await _ensureToken();
-    }
-    final jwt = token ?? _token!;
-
-    try {
-      return http.get(uri, headers: {'Authorization': 'Bearer $jwt'});
-    } finally {
-      _token = previousToken;
-    }
+    final jwt = token ?? await _ensureToken();
+    return http.get(uri, headers: {'Authorization': 'Bearer $jwt'});
   }
 
   Future<http.Response> authedPost(
@@ -4254,7 +4515,7 @@ extension ApiClientLegacyCompat on ApiClient {
     Object? body,
   }) async {
     final jwt = token ?? await _ensureToken();
-    return http.post(
+    return _httpClient.post(
       uri,
       headers: {
         'Authorization': 'Bearer $jwt',
@@ -4264,21 +4525,38 @@ extension ApiClientLegacyCompat on ApiClient {
     );
   }
 
-  Future<String?> getUserStorage(String key) async {
+  Future<String?> getUserStorage(
+    String key, {
+    ApiSessionScope? scope,
+    bool forceRefresh = false,
+  }) async {
     final resp = await _get(
       '/user/storage/$key',
-      useCache: true,
+      useCache: !forceRefresh,
       cacheTtl: const Duration(minutes: 1),
+      expectedScope: scope,
     );
+    if (!resp.success) {
+      await invalidateCachePath('/user/storage/$key');
+      throw StateError('User storage read was rejected');
+    }
     return (resp.data as Map?)?['value']?.toString();
   }
 
-  Future<void> setUserStorage(String key, String value) async {
-    await _put('/user/storage/$key', {'value': value});
+  Future<void> setUserStorage(
+    String key,
+    String value, {
+    ApiSessionScope? scope,
+  }) async {
+    final result = await _put('/user/storage/$key', {
+      'value': value,
+    }, expectedScope: scope);
+    if (!result.success) throw StateError('User storage write was rejected');
   }
 
-  Future<void> deleteUserStorage(String key) async {
-    await _delete('/user/storage/$key');
+  Future<void> deleteUserStorage(String key, {ApiSessionScope? scope}) async {
+    final result = await _delete('/user/storage/$key', expectedScope: scope);
+    if (!result.success) throw StateError('User storage delete was rejected');
   }
 
   Future<String> createExam({
@@ -4485,7 +4763,7 @@ extension ApiClientLegacyCompat on ApiClient {
 
   Future<List<ProblemHabit>> fetchProblemHabits({int? days, int? limit}) async {
     final res = await _get(
-      '/habit/problem',
+      ApiPaths.problemHabits,
       query: {
         if (days != null) 'days': '$days',
         if (limit != null) 'limit': '$limit',
@@ -4515,7 +4793,7 @@ extension ApiClientLegacyCompat on ApiClient {
     if (codebaseId == null || seed == null) {
       return <String, dynamic>{};
     }
-    final res = await _post<Map<String, dynamic>>('/habit/problem/replay', {
+    final res = await _post<Map<String, dynamic>>(ApiPaths.problemHabitReplay, {
       'codebase_id': codebaseId,
       'seed': seed.toString(),
     }, parser: (d) => Map<String, dynamic>.from(d as Map));
@@ -4551,10 +4829,14 @@ extension ApiClientLegacyCompat on ApiClient {
     List<int>? studentWorkImage,
     List<int>? heatmapImage,
     List<int>? problemImage,
+    String? submissionId,
   }) async {
     final body = <String, dynamic>{};
     if (payload != null) body.addAll(payload);
     if (examId != null && examId.isNotEmpty) body['exam_id'] = examId;
+    if (submissionId != null && submissionId.trim().isNotEmpty) {
+      body['submission_id'] = submissionId.trim();
+    }
     if (solves != null) body['solves'] = solves;
     if (studentWorkImage != null) {
       body['student_work_image'] = base64Encode(studentWorkImage);
@@ -4565,35 +4847,39 @@ extension ApiClientLegacyCompat on ApiClient {
     if (problemImage != null) {
       body['problem_image'] = base64Encode(problemImage);
     }
-    if (ApiContract.ocrQueueBaseUrl.trim().isNotEmpty) {
-      return _submitSolveAnalysisQueued(body);
+    if ((body['quest_id']?.toString().trim().isEmpty ?? true) ||
+        studentWorkImage == null ||
+        studentWorkImage.isEmpty) {
+      throw ApiException(
+        statusCode: 422,
+        message: '필기 채점에는 문항 ID와 작성한 필기 이미지가 필요합니다.',
+      );
     }
-    final res = await _post<Map<String, dynamic>>(
-      '/analysis/solve',
-      body,
-      parser: (d) => Map<String, dynamic>.from(d as Map),
-    );
-    return SolveAnalysisResponse.fromJson(res.data ?? const {});
+    if (ApiContract.ocrQueueBaseUrl.trim().isEmpty) {
+      throw ApiException(
+        statusCode: 503,
+        message: '필기 인식 서버 주소가 설정되지 않았습니다. 관리자에게 문의해 주세요.',
+      );
+    }
+    return _submitSolveAnalysisQueued(body);
   }
 
-  /// 필요한 변수는 기존 `/analysis/solve` JSON과 Vercel 큐 URL이다.
-  /// 작동 원리는 작업을 한 번 등록한 뒤 완료·실패까지 제한 시간 동안 폴링해 기존 응답 형식을 그대로 돌려주는 것이다.
+  /// 필요 변수는 문항 ID, 필기 이미지, 제출 ID 및 Vercel OCR 큐 URL이다.
+  /// 작동 원리는 TexTeller OCR 접수 후 Vercel/Kiln 채점 완료를 기다려 기존 응답 계약을 반환한다.
   Future<SolveAnalysisResponse> _submitSolveAnalysisQueued(
     Map<String, dynamic> body,
   ) async {
     final token = await _ensureToken();
-    final base = ApiContract.ocrQueueBaseUrl.trim().replaceFirst(
-      RegExp(r'/+$'),
-      '',
-    );
+    final base = ApiContract.ocrQueueBaseUrl.replaceFirst(RegExp(r'/+$'), '');
     final createUri = Uri.parse('$base/jobs');
+    final submissionId = body['submission_id']?.toString().trim();
+    final idempotencyMaterial = submissionId != null && submissionId.isNotEmpty
+        ? 'ocr:$submissionId'
+        : 'ocr:${DateTime.now().microsecondsSinceEpoch}:${jsonEncode(body)}';
     final idempotencyKey = sha256
-        .convert(
-          utf8.encode(
-            '$token:${DateTime.now().microsecondsSinceEpoch}:${jsonEncode(body)}',
-          ),
-        )
+        .convert(utf8.encode(idempotencyMaterial))
         .toString();
+    final queuedPayload = <String, dynamic>{...body, 'grade_after_ocr': true};
     final created = await _httpClient.post(
       createUri,
       headers: <String, String>{
@@ -4601,7 +4887,10 @@ extension ApiClientLegacyCompat on ApiClient {
         'Authorization': 'Bearer $token',
         'X-Idempotency-Key': idempotencyKey,
       },
-      body: jsonEncode(<String, dynamic>{'mode': 'solve', 'payload': body}),
+      body: jsonEncode(<String, dynamic>{
+        'mode': 'ocr',
+        'payload': queuedPayload,
+      }),
     );
     await _clearTokenOnUnauthorized(created);
     final createdBody = _decodeQueueResponse(created);
@@ -4615,6 +4904,7 @@ extension ApiClientLegacyCompat on ApiClient {
 
     const pollInterval = Duration(seconds: 1);
     const maxPolls = 240;
+    var gradeRequested = false;
     for (var attempt = 0; attempt < maxPolls; attempt++) {
       if (attempt > 0) await Future<void>.delayed(pollInterval);
       final response = await _httpClient.get(
@@ -4625,13 +4915,49 @@ extension ApiClientLegacyCompat on ApiClient {
       final job = _decodeQueueResponse(response);
       final jobStatus = (job['status'] ?? '').toString();
       if (jobStatus == 'completed') {
-        final result = job['result'];
-        if (result is Map) {
-          return SolveAnalysisResponse.fromJson(
-            Map<String, dynamic>.from(result),
+        final gradeStatus = (job['grade_status'] ?? 'not_required').toString();
+        if (gradeStatus == 'completed') {
+          final result = job['grade_result'];
+          if (result is Map) {
+            return SolveAnalysisResponse.fromJson(
+              Map<String, dynamic>.from(result),
+            );
+          }
+          throw ApiException(statusCode: 502, message: '채점 결과 형식이 잘못되었습니다.');
+        }
+        if (gradeStatus == 'failed') {
+          throw ApiException(
+            statusCode: 502,
+            message: '필기 채점에 실패했습니다. 다시 제출해 주세요.',
           );
         }
-        throw ApiException(statusCode: 502, message: 'OCR 결과 형식이 잘못되었습니다.');
+        if (gradeStatus == 'not_required') {
+          throw ApiException(
+            statusCode: 409,
+            message: '필기 채점에 필요한 문항 정보가 없습니다.',
+          );
+        }
+        if (gradeStatus == 'pending' && !gradeRequested) {
+          final gradeResponse = await _httpClient.post(
+            Uri.parse('$base/jobs/$jobId/grade'),
+            headers: <String, String>{
+              'Authorization': 'Bearer $token',
+              'Content-Type': 'application/json',
+            },
+          );
+          await _clearTokenOnUnauthorized(gradeResponse);
+          final gradeBody = _decodeQueueResponse(gradeResponse);
+          if ((gradeBody['status'] ?? '').toString() == 'completed') {
+            final result = gradeBody['result'];
+            if (result is Map) {
+              return SolveAnalysisResponse.fromJson(
+                Map<String, dynamic>.from(result),
+              );
+            }
+            throw ApiException(statusCode: 502, message: '채점 결과 형식이 잘못되었습니다.');
+          }
+          gradeRequested = true;
+        }
       }
       if (jobStatus == 'failed') {
         throw ApiException(
@@ -4678,7 +5004,8 @@ extension ApiClientLegacyCompat on ApiClient {
     List<String>? tags,
     List<Map<String, dynamic>>? stepCorrectness,
     num? answerTime,
-    String? submissionId,
+    required String submissionId,
+    required String gradeProof,
   }) async {
     final id = questId?.trim();
     if (id == null || id.isEmpty || isCorrect == null) {
@@ -4690,22 +5017,37 @@ extension ApiClientLegacyCompat on ApiClient {
         loseStreak: 0,
       );
     }
+    if (gradeProof.trim().isEmpty) {
+      throw const FormatException('서버 채점 증명이 없어 레이팅을 갱신할 수 없습니다.');
+    }
     final res = await _post<Map<String, dynamic>>('/rating/submit', {
       'quest_id': id,
       'is_correct': isCorrect,
       'tags': tags ?? const <String>[],
       if (answerTime != null) 'answer_time': answerTime,
       'step_correctness': stepCorrectness ?? const <Map<String, dynamic>>[],
-      if (submissionId != null && submissionId.trim().isNotEmpty)
-        'submission_id': submissionId.trim(),
+      'submission_id': submissionId.trim(),
+      'grade_proof': gradeProof.trim(),
     }, parser: (d) => Map<String, dynamic>.from(d as Map));
+    await _invalidateRatingCaches();
     return UserRating.fromJson(res.data ?? const {});
   }
 
-  Future<LevelTestPlacementSession> startLevelTestPlacement() async {
+  /// 서버에서 레이팅을 갱신한 뒤 내 OVR과 태그별 레이팅 캐시를 함께 비운다.
+  Future<void> _invalidateRatingCaches() async {
+    await Future.wait([
+      invalidateCachePath('/rating/user'),
+      invalidateCachePath('/rating/tags'),
+    ]);
+  }
+
+  Future<LevelTestPlacementSession> startLevelTestPlacement({
+    required String trackId,
+    required String form,
+  }) async {
     final res = await _post<Map<String, dynamic>>(
       '/level-tests/placement/start',
-      const <String, dynamic>{},
+      <String, dynamic>{'track_id': trackId, 'form': form},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return LevelTestPlacementSession.fromJson(res.data ?? const {});
@@ -4739,6 +5081,7 @@ extension ApiClientLegacyCompat on ApiClient {
       <String, dynamic>{'answers': answers, 'elapsed_seconds': elapsedSeconds},
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
+    await _invalidateRatingCaches();
     return LevelTestPlacementResult.fromJson(res.data ?? const {});
   }
 
@@ -4874,16 +5217,45 @@ extension ApiClientLegacyCompat on ApiClient {
     return AccountSummary.fromJson(res.data ?? const <String, dynamic>{});
   }
 
-  /// Save a private draft remotely; creation never grants public eligibility.
+  /// Import exact UTF-8 source. The server verifies its SHA and owns retry identity.
+  Future<Map<String, dynamic>> importTextbookSource(
+    String source,
+    String sha256, {
+    required ApiSessionScope expectedScope,
+  }) async {
+    final response = await _post<Map<String, dynamic>>(
+      '/textbooks/import',
+      {'source': source, 'sha256': sha256},
+      parser: (data) => Map<String, dynamic>.from(data as Map),
+      expectedScope: expectedScope,
+    );
+    final book = response.data;
+    if (!response.success || book == null ||
+        (book['textbook_id']?.toString().isEmpty ?? true) ||
+        book['source_sha256'] != sha256.toLowerCase()) {
+      throw ApiException(statusCode: 502, message: 'textbook_import_response_invalid');
+    }
+    assertSessionScope(expectedScope);
+    try { await invalidateCachePath('/textbooks'); } catch (_) {}
+    assertSessionScope(expectedScope);
+    return book;
+  }
+
+  /// Save a private draft under the caller's captured session scope.
+  /// Capture the scope before constructing the draft; a response guard alone
+  /// cannot prevent a write after the account changes. Creation never publishes.
   Future<Map<String, dynamic>> createTextbook(
-    Map<String, dynamic> payload,
-  ) async {
+    Map<String, dynamic> payload, {
+    required ApiSessionScope expectedScope,
+  }) async {
+    assertSessionScope(expectedScope);
     final token = await _ensureToken();
     final generation = _sessionChanges.value;
     final response = await _post<Map<String, dynamic>>(
       '/textbooks',
       payload,
       parser: (data) => Map<String, dynamic>.from(data as Map),
+      expectedScope: expectedScope,
     );
     final book = response.data;
     if (!response.success ||
@@ -4979,6 +5351,51 @@ extension ApiClientLegacyCompat on ApiClient {
       parser: (d) => Map<String, dynamic>.from(d as Map),
     );
     return DailyQuestBundle.fromJson(res.data ?? const <String, dynamic>{});
+  }
+
+  /// Public catalogue metadata. No manuscript upload or publication from clients.
+  Future<List<Map<String, dynamic>>> listPublicTextbooks({
+    bool ownedOnly = false,
+    ApiSessionScope? expectedScope,
+  }) async {
+    final res = await _get<Map<String, dynamic>>(
+      ownedOnly ? '/marketplace/textbooks/owned' : '/marketplace/textbooks',
+      expectedScope: expectedScope,
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    final items = res.data?['items'];
+    if (!res.success || items is! List) {
+      throw ApiException(statusCode: 502, message: 'public_textbooks_response_invalid');
+    }
+    return items.map((value) {
+      if (value is! Map || value['price_points'] != 0 ||
+          !RegExp(r'^published-[0-9a-f]{64}$').hasMatch(value['textbook_id']?.toString() ?? '')) {
+        throw ApiException(statusCode: 502, message: 'public_textbooks_response_invalid');
+      }
+      return Map<String, dynamic>.from(value);
+    }).toList(growable: false);
+  }
+
+  /// Server fixes price at zero; retry identity is the immutable book ID.
+  Future<void> acquirePublicTextbook(
+    String bookId, {
+    required ApiSessionScope expectedScope,
+  }) async {
+    if (!RegExp(r'^published-[0-9a-f]{64}$').hasMatch(bookId)) {
+      throw const FormatException('Invalid public textbook ID');
+    }
+    final response = await _post<Map<String, dynamic>>(
+      '/marketplace/textbooks/$bookId/purchase',
+      const {},
+      expectedScope: expectedScope,
+      parser: (d) => Map<String, dynamic>.from(d as Map),
+    );
+    assertSessionScope(expectedScope);
+    if (!response.success || response.data?['owned'] != true ||
+        response.data?['textbook_id'] != bookId || response.data?['price_points'] != 0) {
+      throw ApiException(statusCode: 502, message: 'public_textbook_acquisition_response_invalid');
+    }
+    await invalidateCachePath('/textbooks');
   }
 
   Future<List<Map<String, dynamic>>> listTextbooks({
@@ -5226,7 +5643,40 @@ extension ApiClientLegacyCompat on ApiClient {
   Future<ContinueState?> loadContinueStrokes({
     String? kind,
     String? targetId,
-  }) async => null;
+  }) async {
+    final query = _continueTarget(kind, targetId);
+    try {
+      final response = await _get<Map<String, dynamic>>(
+        '/continue/strokes',
+        query: query,
+        parser: (value) => Map<String, dynamic>.from(value as Map),
+      );
+      final data = response.data!;
+      if (data['target_id'] != query['target_id']) {
+        throw const FormatException('이어하기 응답의 대상 ID가 일치하지 않습니다.');
+      }
+      return ContinueState(
+        targetId: data['target_id'] as String,
+        strokes: List<dynamic>.from(data['strokes'] as List),
+        updatedAt: data['updated_at'] as String?,
+        allowBack: data['allow_back'] == true,
+      );
+    } on ApiException catch (error) {
+      if (error.statusCode == 404 &&
+          error.message == 'no continue session found')
+        return null;
+      rethrow;
+    }
+  }
+
+  Map<String, String> _continueTarget(String? kind, String? targetId) {
+    final resolvedKind = kind ?? 'problem';
+    final id = targetId?.trim() ?? '';
+    if (!{'problem', 'exam'}.contains(resolvedKind) || id.isEmpty) {
+      throw ArgumentError('유효한 이어하기 종류와 대상 ID가 필요합니다.');
+    }
+    return {'kind': resolvedKind, 'target_id': id};
+  }
 
   Future<void> saveContinueStrokes({
     String? kind,
@@ -5235,7 +5685,16 @@ extension ApiClientLegacyCompat on ApiClient {
     bool? forcedExit,
     bool? completed,
     bool allowBack = false,
-  }) async {}
+  }) async {
+    final target = _continueTarget(kind, targetId);
+    await _post<Map<String, dynamic>>('/continue/strokes', {
+      ...target,
+      'strokes': strokes,
+      'forced_exit': forcedExit ?? true,
+      'completed': completed ?? false,
+      'allow_back': allowBack,
+    });
+  }
 
   Future<void> recordSolveHistory({
     required String questId,
@@ -5305,14 +5764,33 @@ extension ApiClientLegacyCompat on ApiClient {
     final res = await _get(
       '/rating/tags',
       parser: (d) {
-        final items = (d['tags'] as List<dynamic>?) ?? const [];
+        final rawItems = d['tags'];
+        if (rawItems is! List) {
+          throw const FormatException('rating_tags_missing');
+        }
+        final items = rawItems;
         return items.map((e) {
-          final m = e as Map<String, dynamic>;
+          if (e is! Map) throw const FormatException('rating_tag_invalid');
+          final m = Map<String, dynamic>.from(e);
+          final tag = m['tag']?.toString().trim() ?? '';
+          final rating = m['rating'];
+          final delta = m['delta'];
+          final attempts = m['attempts'];
+          if (tag.isEmpty ||
+              rating is! num ||
+              !rating.isFinite ||
+              delta is! num ||
+              !delta.isFinite ||
+              attempts is! num ||
+              !attempts.isFinite ||
+              attempts < 0) {
+            throw const FormatException('rating_tag_invalid');
+          }
           return TagRating(
-            tag: (m['tag'] ?? '').toString(),
-            rating: (m['rating'] as num?)?.toDouble() ?? 0.0,
-            delta: (m['delta'] as num?)?.toDouble() ?? 0.0,
-            attempts: (m['attempts'] as int?) ?? 0,
+            tag: tag,
+            rating: rating.toDouble(),
+            delta: delta.toDouble(),
+            attempts: attempts.toInt(),
           );
         }).toList();
       },
@@ -5747,6 +6225,7 @@ extension ApiClientLegacyCompat on ApiClient {
     String? ocr,
     List<Map<String, String>> history = const [],
     List<Map<String, dynamic>> graphContext = const [],
+    ApiSessionScope? expectedScope,
   }) async {
     final res = await _post<ServerChatMessage>(
       ApiPaths.serverChatMessage,
@@ -5764,9 +6243,9 @@ extension ApiClientLegacyCompat on ApiClient {
         if (history.isNotEmpty) 'history': history,
         if (graphContext.isNotEmpty) 'graph_context': graphContext,
       },
-      expectedSessionGeneration: _sessionChanges.value,
       parser: (d) =>
           ServerChatMessage.fromJson(Map<String, dynamic>.from(d as Map)),
+      expectedScope: expectedScope,
     );
     return res.data ?? const ServerChatMessage();
   }
@@ -5777,10 +6256,14 @@ class ApiException implements Exception {
   final String message;
   final int? retryAfterSeconds;
 
+  /// 로컬 인증 부재 등 명시적으로 확인된 오류만 구분한다. 서버 메시지를 추측하지 않는다.
+  final String? code;
+
   ApiException({
     required this.statusCode,
     required this.message,
     this.retryAfterSeconds,
+    this.code,
   });
 
   @override

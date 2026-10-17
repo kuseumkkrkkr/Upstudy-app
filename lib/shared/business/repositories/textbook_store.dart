@@ -1,6 +1,9 @@
 import 'dart:convert';
+import 'dart:async';
+import 'package:http/http.dart' as http;
 
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 
 import 'package:s11/shared/data/models/textbook.dart';
 import 'package:s11/shared/data/models/concept_textbooks.dart';
@@ -9,7 +12,6 @@ import 'package:s11/shared/services/storage/local_db.dart';
 
 class TextbookStore {
   static const String _libraryKey = 'textbook_library_v1';
-  static const String _libraryCacheKey = 'textbook_library_cache_v1';
   static const String _cachePrefix = 'textbook_cache_v1_';
   static const int maxLibraryItems = 10;
 
@@ -103,10 +105,39 @@ class TextbookStore {
   static Future<List<BookData>>? _loadFuture;
   static List<BookData>? _libraryCache;
   static Future<List<BookData>>? _libraryFuture;
+  static bool _sessionListenerAttached = false;
+  static ApiSessionScope? _scope;
+
+  static void _listenForSessionChanges() {
+    if (_sessionListenerAttached) return;
+    _sessionListenerAttached = true;
+    ApiClient.instance.sessionChanges.addListener(() {
+      _scope = null;
+      _cache = <BookData>[];
+      _libraryCache = null;
+      _loadFuture = null;
+      _libraryFuture = null;
+    });
+  }
+
+  static Future<ApiSessionScope> _requireScope([
+    ApiSessionScope? expected,
+  ]) async {
+    _listenForSessionChanges();
+    final scope = expected ?? await ApiClient.instance.requireSessionScope();
+    ApiClient.instance.assertSessionScope(scope);
+    _scope = scope;
+    return scope;
+  }
 
   /// 현재 세션에서 실제로 읽은 교재만 반환한다.
   /// 네트워크·저장소가 비어 있을 때 샘플 교재를 상용 데이터처럼 노출하지 않는다.
-  static List<BookData> get cachedBooks => List.unmodifiable(_cache);
+  static List<BookData> get cachedBooks {
+    _listenForSessionChanges();
+    return _scope != null && ApiClient.instance.isCurrentSessionScope(_scope!)
+        ? List.unmodifiable(_cache)
+        : const <BookData>[];
+  }
 
   static Future<List<BookData>> load({
     String? category,
@@ -150,14 +181,19 @@ class TextbookStore {
     final concept = kConceptTextbooks[id];
     if (concept != null) return concept;
     if (id == 'concept_book_common') return kAllConceptBook;
-    final cached = await _loadCachedBook(id);
+    final scope = await _requireScope();
+    final cached = await _loadCachedBook(id, scope);
+    ApiClient.instance.assertSessionScope(scope);
     if (cached != null) return cached;
-    final remote = await _fetchRemoteBook(id);
+    final remote = await _fetchRemoteBook(id, scope);
+    ApiClient.instance.assertSessionScope(scope);
     if (remote != null) {
-      await _saveCachedBook(remote);
+      await _saveCachedBook(remote, scope);
+      ApiClient.instance.assertSessionScope(scope);
       return remote;
     }
     final all = await _loadAll();
+    ApiClient.instance.assertSessionScope(scope);
     return _firstWhereOrNull<BookData>(all, (book) => book.id == id);
   }
 
@@ -168,68 +204,120 @@ class TextbookStore {
   }
 
   static Future<BookData> create(BookData draft) async {
+    final scope = await _requireScope();
     final payload = draft.toCreateJson();
-    final createdRaw = await ApiClient.instance.createTextbook(payload);
-    final created = BookData.fromJson(createdRaw);
+    final createdRaw = await ApiClient.instance.createTextbook(
+      payload,
+      expectedScope: scope,
+    );
+    return _rememberCreatedBook(createdRaw, scope);
+  }
+
+  static Future<BookData> importSource(String source, String sha256, {
+    required ApiSessionScope expectedScope,
+  }) async {
+    final scope = await _requireScope(expectedScope);
+    final raw = await ApiClient.instance.importTextbookSource(source, sha256, expectedScope: scope);
+    return _rememberCreatedBook(raw, scope);
+  }
+
+  static Future<BookData> _rememberCreatedBook(Map<String, dynamic> raw, ApiSessionScope scope) async {
+    ApiClient.instance.assertSessionScope(scope);
+    final previous = _firstWhereOrNull<BookData>(
+      [...(_libraryCache ?? const <BookData>[]), ...cachedBooks],
+      (book) => book.id == raw['textbook_id'],
+    );
+    final merged = Map<String, dynamic>.from(raw);
+    if (previous != null && previous.progress > ((raw['progress'] as num?)?.toDouble() ?? 0)) {
+      merged['progress'] = previous.progress;
+      merged['progress_label'] = previous.progressLabel;
+    }
+    final created = BookData.fromJson(merged);
     if (created.id.trim().isEmpty) {
       throw const FormatException('textbook_create_missing_id');
     }
     _cache = [created, ...cachedBooks.where((book) => book.id != created.id)];
-    await _saveBook(created);
-    await addToLibrary(created);
+    await _saveBook(created, scope);
+    ApiClient.instance.assertSessionScope(scope);
+    await addToLibrary(created, scope: scope);
+    ApiClient.instance.assertSessionScope(scope);
     return created;
   }
 
   static Future<List<BookData>> loadLibrary({bool forceRefresh = false}) async {
+    final scope = await _requireScope();
     if (!forceRefresh && _libraryCache != null) {
       return _libraryCache!;
     }
     if (_libraryFuture != null && !forceRefresh) {
       return _libraryFuture!;
     }
-    _libraryFuture = _fetchLibraryMeta(forceRefresh: forceRefresh).whenComplete(
-      () {
-        _libraryFuture = null;
-      },
-    );
-    return _libraryFuture!;
+    final future = _fetchLibraryMeta(forceRefresh: forceRefresh);
+    _libraryFuture = future;
+    try {
+      final books = await future;
+      ApiClient.instance.assertSessionScope(scope);
+      return books;
+    } finally {
+      if (identical(_libraryFuture, future)) _libraryFuture = null;
+    }
   }
 
-  static Future<void> saveLibraryMeta(List<BookData> books) async {
+  static Future<void> saveLibraryMeta(
+    List<BookData> books, {
+    ApiSessionScope? scope,
+  }) async {
+    scope = await _requireScope(scope);
     final payload = jsonEncode(
       books.map((book) => book.toLibraryJson()).toList(),
     );
-    try {
-      await ApiClient.instance.setUserStorage(_libraryKey, payload);
-    } catch (_) {}
-    _libraryCache = books;
-    await LocalDb.instance.setString(_libraryCacheKey, payload);
+    if (!kIsWeb) {
+      await ApiClient.instance.setUserStorage(
+        _libraryKey,
+        payload,
+        scope: scope,
+      );
+      ApiClient.instance.assertSessionScope(scope);
+    }
+    await LocalDb.instance.setString(_libraryKey, payload, scope: scope);
+    ApiClient.instance.assertSessionScope(scope);
+    _libraryCache = List<BookData>.from(books);
   }
 
-  static Future<void> addToLibrary(BookData book) async {
+  static Future<void> addToLibrary(
+    BookData book, {
+    ApiSessionScope? scope,
+  }) async {
+    scope = await _requireScope(scope);
     final items = await loadLibrary();
+    ApiClient.instance.assertSessionScope(scope);
     if (items.any((entry) => entry.id == book.id)) return;
     final updated = [...items, _stripToLibraryMeta(book)];
     final trimmed = updated.length > maxLibraryItems
         ? updated.sublist(updated.length - maxLibraryItems)
         : updated;
-    await saveLibraryMeta(trimmed);
+    await saveLibraryMeta(trimmed, scope: scope);
   }
 
   // 필요 변수: 보관함에서 제거할 교재 ID. 작동 원리: 교재 원본은 지우지 않고
   // 사용자 보관함 메타데이터에서만 제외해 다시 내려받거나 마켓에서 찾을 수 있게 한다.
   static Future<void> removeFromLibrary(String bookId) async {
+    final scope = await _requireScope();
     final id = bookId.trim();
     if (id.isEmpty) return;
     final items = await loadLibrary();
+    ApiClient.instance.assertSessionScope(scope);
     await saveLibraryMeta(
       items.where((item) => item.id != id).toList(growable: false),
+      scope: scope,
     );
   }
 
   static Future<void> download(BookData book) async {
-    await addToLibrary(book);
-    await _saveBook(book);
+    final scope = await _requireScope();
+    await addToLibrary(book, scope: scope);
+    ApiClient.instance.assertSessionScope(scope);
+    await _saveBook(book, scope);
   }
 
   static Future<bool> hasLocalCopy(String id) async {
@@ -238,38 +326,48 @@ class TextbookStore {
   }
 
   static Future<List<BookData>> _loadAll({bool forceRefresh = false}) async {
+    final scope = await _requireScope();
     if (!forceRefresh && _cache.isNotEmpty) {
       return _cache;
     }
     if (_loadFuture != null && !forceRefresh) {
       return _loadFuture!;
     }
-    _loadFuture = _fetchRemote().whenComplete(() => _loadFuture = null);
-    return _loadFuture!;
+    final future = _fetchRemote();
+    _loadFuture = future;
+    try {
+      final books = await future;
+      ApiClient.instance.assertSessionScope(scope);
+      return books;
+    } finally {
+      if (identical(_loadFuture, future)) _loadFuture = null;
+    }
   }
 
   static Future<List<BookData>> _fetchRemote() async {
-    try {
-      final raw = await ApiClient.instance.listTextbooks();
-      final books = raw.map(BookData.fromJson).toList();
-      _cache = books;
-      return _cache;
-    } catch (_) {}
-    final local = await _loadStoredBooks();
-    if (local.isNotEmpty) {
-      _cache = local;
-      return _cache;
-    }
-    throw StateError('교재 목록을 불러오지 못했습니다.');
+    final scope = await _requireScope();
+    final raw = await ApiClient.instance.listTextbooks();
+    ApiClient.instance.assertSessionScope(scope);
+    final books = raw.map(BookData.fromJson).toList();
+    _cache = books;
+    return books;
   }
 
-  static Future<BookData?> _fetchRemoteBook(String id) async {
+  static Future<BookData?> _fetchRemoteBook(
+    String id, [
+    ApiSessionScope? expected,
+  ]) async {
+    final scope = await _requireScope(expected);
     try {
       final raw = await ApiClient.instance.getTextbook(id);
+      ApiClient.instance.assertSessionScope(scope);
       final book = BookData.fromJson(raw);
       return book.id.trim().isEmpty ? null : book;
-    } catch (_) {
-      return null;
+    } on ApiException catch (error) {
+      if (error.statusCode == 401 || error.statusCode == 403) rethrow;
+      ApiClient.instance.assertSessionScope(scope);
+      if (error.statusCode == 404) return null;
+      rethrow;
     }
   }
 
@@ -287,128 +385,151 @@ class TextbookStore {
       createdAt: book.createdAt,
       updatedAt: book.updatedAt,
       createdBy: book.createdBy,
+      curriculumVersion: book.curriculumVersion,
+      standardCodes: book.standardCodes,
+      sourceSha256: book.sourceSha256,
       schemaVersion: book.schemaVersion,
+      candidateStandardCodes: book.candidateStandardCodes,
     );
   }
 
   static Future<List<BookData>> _fetchLibraryMeta({
     bool forceRefresh = false,
   }) async {
-    if (!forceRefresh) {
-      final cached = await _loadLibraryFromStorage();
-      if (cached != null && cached.isNotEmpty && _hasLibraryHeaders(cached)) {
-        _libraryCache = cached;
-        return cached;
-      }
-      if (cached != null && cached.isNotEmpty) {
-        final hydrated = await _hydrateLibraryHeaders(cached);
-        if (hydrated.isNotEmpty) {
-          await saveLibraryMeta(hydrated);
-          return hydrated;
-        }
-      }
-    }
-
+    final scope = await _requireScope();
+    final stored =
+        await _loadLibraryFromStorage(forceRefresh: forceRefresh) ??
+        const <BookData>[];
+    ApiClient.instance.assertSessionScope(scope);
+    final books = _hasLibraryHeaders(stored)
+        ? stored
+        : await _hydrateLibraryHeaders(stored);
+    ApiClient.instance.assertSessionScope(scope);
+    final List<Map<String, dynamic>> published;
     try {
-      final raw = await ApiClient.instance.listTextbooks();
-      final books = raw.map(BookData.fromJson).toList();
-      final meta = books.map(_stripToLibraryMeta).toList();
-      await saveLibraryMeta(meta);
-      return meta;
-    } catch (_) {}
-
-    if (!forceRefresh) {
-      final localFallback = await _loadLibraryFromLocal();
-      if (localFallback != null) {
-        _libraryCache = localFallback;
-        return localFallback;
-      }
+      published = await ApiClient.instance.listPublicTextbooks(
+        ownedOnly: true,
+        expectedScope: scope,
+      );
+    } catch (error) {
+      ApiClient.instance.assertSessionScope(scope);
+      final transient =
+          (error is ApiException && error.statusCode >= 500) ||
+          error is http.ClientException || error is TimeoutException;
+      // Preserve the existing native offline contract, but never turn auth
+      // errors or an unknown/empty library into a successful empty response.
+      if (kIsWeb || books.isEmpty || !transient) rethrow;
+      _libraryCache = books;
+      return books;
     }
-
-    throw StateError('교재 보관함을 불러오지 못했습니다.');
+    ApiClient.instance.assertSessionScope(scope);
+    // Public acquisitions are server-owned, not subject to the personal ten-item
+    // cache limit. Existing local reading progress wins for a matching ID.
+    final merged = <String, BookData>{
+      for (final item in published)
+        item['textbook_id'].toString(): BookData.fromJson(item),
+      for (final book in books) book.id: book,
+    }.values.toList(growable: false);
+    _libraryCache = merged;
+    return merged;
   }
 
-  static Future<BookData?> _loadCachedBook(String id) async {
-    final raw = await LocalDb.instance.getString('$_cachePrefix$id');
+  static Future<BookData?> _loadCachedBook(
+    String id, [
+    ApiSessionScope? expected,
+  ]) async {
+    final scope = await _requireScope(expected);
+    final raw = await LocalDb.instance.getString(
+      '$_cachePrefix$id',
+      scope: scope,
+    );
+    ApiClient.instance.assertSessionScope(scope);
     if (raw == null || raw.isEmpty) return null;
-    try {
-      final decoded = jsonDecode(raw);
-      if (decoded is Map<String, dynamic>) {
-        return BookData.fromJson(decoded);
-      }
-      if (decoded is Map) {
-        return BookData.fromJson(Map<String, dynamic>.from(decoded));
-      }
-    } catch (_) {}
-    return null;
+    final decoded = jsonDecode(raw);
+    if (decoded is Map<String, dynamic>) {
+      return BookData.fromJson(decoded);
+    }
+    if (decoded is Map) {
+      return BookData.fromJson(Map<String, dynamic>.from(decoded));
+    }
+    throw const FormatException('Invalid cached textbook');
   }
 
-  static Future<void> _saveCachedBook(BookData book) async {
+  static Future<void> _saveCachedBook(
+    BookData book,
+    ApiSessionScope scope,
+  ) async {
     final payload = jsonEncode(book.toJson());
-    await LocalDb.instance.setString('$_cachePrefix${book.id}', payload);
+    await LocalDb.instance.setString(
+      '$_cachePrefix${book.id}',
+      payload,
+      scope: scope,
+    );
   }
 
-  static Future<void> _saveBook(BookData book) async {
-    await _saveCachedBook(book);
+  static Future<void> _saveBook(BookData book, ApiSessionScope scope) async {
+    ApiClient.instance.assertSessionScope(scope);
+    await _saveCachedBook(book, scope);
+    ApiClient.instance.assertSessionScope(scope);
     final library = await _loadLibraryMetaEntries();
+    ApiClient.instance.assertSessionScope(scope);
     if (!library.any((entry) => entry.id == book.id)) {
       final updated = [...library, _stripToLibraryMeta(book)];
-      await saveLibraryMeta(_trimLibrary(updated));
+      await saveLibraryMeta(_trimLibrary(updated), scope: scope);
     }
   }
 
-  static Future<List<BookData>?> _loadLibraryFromStorage() async {
-    List<BookData>? items;
-    try {
-      final raw = await ApiClient.instance.getUserStorage(_libraryKey);
-      items = _parseLibraryMeta(raw);
-    } catch (_) {
-      items = null;
-    }
-    if (items != null) {
-      await LocalDb.instance.setString(
-        _libraryCacheKey,
-        jsonEncode(items.map((book) => book.toLibraryJson()).toList()),
+  static Future<List<BookData>?> _loadLibraryFromStorage({
+    bool forceRefresh = false,
+  }) async {
+    final scope = await _requireScope();
+    String? raw;
+    if (kIsWeb) {
+      raw = await LocalDb.instance.getString(
+        _libraryKey,
+        scope: scope,
+        forceRefresh: forceRefresh,
       );
+    } else {
+      try {
+        raw = await ApiClient.instance.getUserStorage(
+          _libraryKey,
+          scope: scope,
+          forceRefresh: forceRefresh,
+        );
+        ApiClient.instance.assertSessionScope(scope);
+        if (raw == null) {
+          await LocalDb.instance.delete(_libraryKey, scope: scope);
+        } else {
+          await LocalDb.instance.setString(_libraryKey, raw, scope: scope);
+        }
+      } on ApiException catch (error) {
+        if (error.statusCode == 401 || error.statusCode == 403) rethrow;
+        ApiClient.instance.assertSessionScope(scope);
+        if (error.statusCode == 404) {
+          await LocalDb.instance.delete(_libraryKey, scope: scope);
+          return null;
+        }
+        if (error.statusCode < 500) rethrow;
+        raw = await LocalDb.instance.getString(_libraryKey, scope: scope);
+        if (raw == null) rethrow;
+      } on http.ClientException {
+        ApiClient.instance.assertSessionScope(scope);
+        raw = await LocalDb.instance.getString(_libraryKey, scope: scope);
+        if (raw == null) rethrow;
+      } on TimeoutException {
+        ApiClient.instance.assertSessionScope(scope);
+        raw = await LocalDb.instance.getString(_libraryKey, scope: scope);
+        if (raw == null) rethrow;
+      }
     }
-    return items;
-  }
-
-  static Future<List<BookData>?> _loadLibraryFromLocal() async {
-    final raw = await LocalDb.instance.getString(_libraryCacheKey);
+    ApiClient.instance.assertSessionScope(scope);
     return _parseLibraryMeta(raw);
-  }
-
-  static Future<List<BookData>> _loadStoredBooks() async {
-    final library = await _loadLibraryMetaEntries();
-    if (library.isEmpty) return <BookData>[];
-    final result = <BookData>[];
-    for (final entry in library) {
-      final cached = await _loadCachedBook(entry.id);
-      if (cached != null) {
-        result.add(cached);
-        continue;
-      }
-      if (entry.chapters.isNotEmpty) {
-        result.add(entry);
-        continue;
-      }
-      final remote = await _fetchRemoteBook(entry.id);
-      if (remote != null) {
-        result.add(remote);
-        continue;
-      }
-      result.add(entry);
-    }
-    return result;
   }
 
   static Future<List<BookData>> _loadLibraryMetaEntries() async {
     final storage = await _loadLibraryFromStorage();
-    if (storage != null && storage.isNotEmpty) return storage;
-    final local = await _loadLibraryFromLocal();
-    if (local != null && local.isNotEmpty) return local;
-    return const <BookData>[];
+    return storage ?? const <BookData>[];
   }
 
   static List<BookData> _trimLibrary(List<BookData> books) {
@@ -435,8 +556,10 @@ class TextbookStore {
         }
         return items;
       }
-    } catch (_) {}
-    return null;
+    } on FormatException {
+      rethrow;
+    }
+    throw const FormatException('Invalid textbook library');
   }
 
   static bool _hasLibraryHeaders(List<BookData> books) {
@@ -447,13 +570,15 @@ class TextbookStore {
   static Future<List<BookData>> _hydrateLibraryHeaders(
     List<BookData> items,
   ) async {
+    final scope = await _requireScope();
     final result = <BookData>[];
     for (final item in items) {
       if (item.title.trim().isNotEmpty) {
         result.add(item);
         continue;
       }
-      final fetched = await _fetchRemoteBook(item.id);
+      final fetched = await _fetchRemoteBook(item.id, scope);
+      ApiClient.instance.assertSessionScope(scope);
       if (fetched != null) {
         result.add(_stripToLibraryMeta(fetched));
       }
